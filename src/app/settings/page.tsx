@@ -196,6 +196,39 @@ export default function SettingsPage() {
         }));
     }
 
+    function handleDeptChange(targetKpi: any, newDeptId: string | null) {
+        const oldDeptId = targetKpi.owner_dept_id;
+
+        setKpis(prev => {
+            // 1. まず全データの部署を更新した一時的なリストを作る
+            let next = prev.map(k => k.id === targetKpi.id ? { ...k, owner_dept_id: newDeptId } : k);
+
+            // 2. 移動先 (newDeptId) での代表重複チェック
+            // もし移動先グループに既に代表がいるなら、移動してきたKPIのスターは外す
+            const hasMainInNewDept = next.some(k => k.id !== targetKpi.id && k.owner_dept_id === newDeptId && k.is_main);
+            if (hasMainInNewDept && targetKpi.is_main) {
+                next = next.map(k => k.id === targetKpi.id ? { ...k, is_main: false } : k);
+            }
+
+            // 3. 移動元 (oldDeptId) での代表不在チェック
+            // もし移動元にKPIが残っているのに代表がいなくなったなら、最初の1つを代表にする
+            const remainingInOld = next.filter(k => k.owner_dept_id === oldDeptId);
+            const hasMainInOld = remainingInOld.some(k => k.is_main);
+            if (remainingInOld.length > 0 && !hasMainInOld) {
+                const firstId = remainingInOld[0].id;
+                next = next.map(k => k.id === firstId ? { ...k, is_main: true } : k);
+            }
+
+            // 4. 移動先で代表が一人もいなくなった場合（新規部署への移動など）の補填
+            const inNew = next.filter(k => k.owner_dept_id === newDeptId);
+            if (inNew.length > 0 && !inNew.some(k => k.is_main)) {
+                next = next.map(k => k.id === inNew[0].id ? { ...k, is_main: true } : k);
+            }
+
+            return next;
+        });
+    }
+
     return (
         <div className="min-h-screen bg-slate-50 pb-20">
             <Header />
@@ -362,7 +395,7 @@ export default function SettingsPage() {
                                                     <label className="block text-[10px] font-bold text-slate-400 mb-1 ml-1 uppercase">主担当部署 (任意)</label>
                                                     <select
                                                         value={kpi.owner_dept_id || ""}
-                                                        onChange={(e) => setKpis(kpis.map(k => k.id === kpi.id ? { ...k, owner_dept_id: e.target.value || null } : k))}
+                                                        onChange={(e) => handleDeptChange(kpi, e.target.value || null)}
                                                         className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-800 focus:border-teal outline-none"
                                                     >
                                                         <option value="">-- 指定なし --</option>
