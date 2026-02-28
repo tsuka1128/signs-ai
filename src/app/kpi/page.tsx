@@ -206,14 +206,16 @@ export default function KpiInputPage() {
                     </div>
 
                     <div className="overflow-x-auto custom-scrollbar relative">
-                        <table className="w-full text-left border-collapse" style={{ minWidth: "1000px" }}>
+                        <table className="w-full text-left border-collapse table-layout-fixed" style={{ minWidth: "1200px" }}>
                             <thead>
                                 <tr>
-                                    <th className="sticky left-0 top-0 z-30 w-[110px] sm:w-[260px] bg-white border-b border-r border-slate-200 p-3 shadow-[2px_0_12px_-4px_rgba(0,0,0,0.05)] text-center">
+                                    {/* 1. KPI Name (Sticky Left 0) - Width: 260px */}
+                                    <th className="sticky left-0 top-0 z-40 w-[260px] min-w-[260px] bg-white border-b border-r border-slate-200 p-3 shadow-[2px_0_12px_-4px_rgba(0,0,0,0.05)] text-center">
                                         <span className="text-[10px] font-black text-slate-500 tracking-widest uppercase ml-1">項目名 / 部署</span>
                                     </th>
 
-                                    <th className="sticky left-[110px] sm:left-[260px] top-0 z-30 w-[110px] sm:w-[240px] bg-[#F0FDF4] border-b border-r-2 border-slate-300 p-2.5 shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)]">
+                                    {/* 2. Current Month (Sticky Left 260px) - Width: 240px */}
+                                    <th className="sticky left-[260px] top-0 z-40 w-[240px] min-w-[240px] bg-[#F0FDF4] border-b border-r-2 border-slate-300 p-2.5 shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)]">
                                         <div className="flex items-center justify-between px-1">
                                             <div className="text-[13px] font-black text-teal-800 tracking-tight flex items-center gap-1.5">
                                                 <div className="w-1.5 h-1.5 rounded-full bg-teal animate-pulse" />
@@ -223,8 +225,9 @@ export default function KpiInputPage() {
                                         </div>
                                     </th>
 
+                                    {/* 3. Past Months (Scrollable) - Width: 180px each */}
                                     {pastMonths.map(pm => (
-                                        <th key={pm.month} className="w-[110px] sm:w-[180px] bg-slate-50 border-b border-r border-slate-200 p-2.5 text-center">
+                                        <th key={pm.month} className="w-[180px] min-w-[180px] bg-slate-50 border-b border-r border-slate-200 p-2.5 text-center">
                                             <div className="text-[11px] font-black text-slate-500">{pm.label}</div>
                                         </th>
                                     ))}
@@ -234,7 +237,8 @@ export default function KpiInputPage() {
                             <tbody>
                                 {kpiDefinitions.map((kpi, index) => (
                                     <tr key={kpi.id} className="group border-b border-slate-200 bg-white">
-                                        <td className="sticky left-0 z-20 bg-white group-hover:bg-slate-50 border-b border-r border-slate-200 p-0 shadow-[2px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors align-top w-[110px] sm:w-[260px]">
+                                        {/* 1. KPI Name (Sticky Left 0) */}
+                                        <td className="sticky left-0 z-30 bg-white group-hover:bg-slate-50 border-b border-r border-slate-200 p-0 shadow-[2px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors align-top w-[260px]">
                                             <div className="flex flex-col h-full justify-between p-3 border-r border-slate-200">
                                                 <div className="flex items-center gap-2 mb-2 ml-1">
                                                     <span className="text-[10px] font-black text-slate-300 w-3">{index + 1}.</span>
@@ -251,10 +255,11 @@ export default function KpiInputPage() {
                                             </div>
                                         </td>
 
-                                        <td className="sticky left-[110px] sm:left-[260px] z-20 bg-[#F0FDF4] group-hover:bg-[#E9FBF0] border-r-2 border-slate-300 p-0 shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)] transition-colors align-top w-[110px] sm:w-[240px]">
+                                        {/* 2. Current Month Input (Sticky Left 260px) */}
+                                        <td className="sticky left-[260px] z-30 bg-[#F0FDF4] group-hover:bg-[#E9FBF0] border-r-2 border-slate-300 p-0 shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)] transition-colors align-top w-[240px]">
                                             <div className="flex flex-col h-full w-full">
                                                 <div className="flex flex-1 items-stretch border-b border-white">
-                                                    <div className="w-7 sm:w-11 flex items-center justify-center bg-white/70 border-r border-white/50 text-[10px] font-black text-teal-800 shrink-0">実績</div>
+                                                    <div className="w-11 flex items-center justify-center bg-white/70 border-r border-white/50 text-[10px] font-black text-teal-800 shrink-0">実績</div>
                                                     <input
                                                         type="number"
                                                         value={actuals[kpi.id] || ""}
@@ -264,7 +269,7 @@ export default function KpiInputPage() {
                                                     />
                                                 </div>
                                                 <div className="flex flex-1 items-stretch">
-                                                    <div className="w-7 sm:w-11 flex items-center justify-center bg-white/40 border-r border-white/50 text-[9px] font-bold text-slate-500 shrink-0">目標</div>
+                                                    <div className="w-11 flex items-center justify-center bg-white/40 border-r border-white/50 text-[9px] font-bold text-slate-500 shrink-0">目標</div>
                                                     <input
                                                         type="number"
                                                         value={targets[kpi.id] || ""}
@@ -276,19 +281,20 @@ export default function KpiInputPage() {
                                             </div>
                                         </td>
 
+                                        {/* 3. Past Months (Read-only) */}
                                         {pastMonths.map(pm => {
                                             const record = records[`${pm.month}_${kpi.id}`];
                                             return (
-                                                <td key={pm.month} className="p-0 border-r border-slate-200 align-top bg-white group-hover:bg-slate-50 transition-colors w-[110px] sm:w-[180px]">
+                                                <td key={pm.month} className="p-0 border-r border-slate-200 align-top bg-white group-hover:bg-slate-50 transition-colors w-[180px]">
                                                     <div className="flex flex-col h-full w-full">
                                                         <div className="flex flex-1 items-stretch border-b border-slate-100">
-                                                            <div className="w-7 sm:w-10 flex items-center justify-center bg-slate-50 border-r border-slate-100 text-[9px] font-bold text-slate-400 shrink-0">実績</div>
+                                                            <div className="w-10 flex items-center justify-center bg-slate-50 border-r border-slate-100 text-[9px] font-bold text-slate-400 shrink-0">実績</div>
                                                             <div className="flex-1 text-right px-4 py-2 text-[12px] font-bold text-slate-700 bg-transparent flex items-center justify-end">
                                                                 {record ? record.value.toLocaleString() : <span className="text-slate-200">-</span>}
                                                             </div>
                                                         </div>
                                                         <div className="flex flex-1 items-stretch">
-                                                            <div className="w-7 sm:w-10 flex items-center justify-center bg-slate-50/50 border-r border-slate-100/50 text-[8px] font-medium text-slate-400 shrink-0">目標</div>
+                                                            <div className="w-10 flex items-center justify-center bg-slate-50/50 border-r border-slate-100/50 text-[8px] font-medium text-slate-400 shrink-0">目標</div>
                                                             <div className="flex-1 text-right px-4 py-1.5 text-[11px] font-medium text-slate-400/80 bg-slate-50/20 flex items-center justify-end">
                                                                 {record?.target_value ? record.target_value.toLocaleString() : <span className="text-slate-200">-</span>}
                                                             </div>
