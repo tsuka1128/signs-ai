@@ -204,26 +204,27 @@ export default function KpiInputPage() {
 
                     <div className="flex items-center gap-4 shrink-0">
                         {/* ロック切替ボタン */}
-                        <div className="flex items-center bg-slate-200 p-1 rounded-full shadow-inner relative w-32 h-10 overflow-hidden cursor-pointer select-none"
-                            onClick={() => setIsLocked(!isLocked)}>
-                            <div className={`absolute top-1 bottom-1 w-[60px] bg-white rounded-full shadow-md transition-all duration-300 ease-out flex items-center justify-center ${isLocked ? 'left-1' : 'left-[65px]'}`}>
-                                {isLocked ? <Lock className="w-3.5 h-3.5 text-slate-600" /> : <Unlock className="w-3.5 h-3.5 text-teal" />}
+                        <div className="flex flex-col items-end gap-1.5">
+                            <span className="text-[10px] font-bold text-slate-400 mr-2 uppercase tracking-wider">過去実績の編集</span>
+                            <div className="flex items-center bg-slate-200 p-1 rounded-full shadow-inner relative w-32 h-9 overflow-hidden cursor-pointer select-none"
+                                onClick={() => setIsLocked(!isLocked)}>
+                                <div className={`absolute top-1 bottom-1 w-[60px] bg-white rounded-full shadow-sm transition-all duration-300 border border-slate-100 ease-out flex items-center justify-center z-20 ${isLocked ? 'left-1' : 'left-[65px]'}`}>
+                                    {isLocked ? <Lock className="w-3.5 h-3.5 text-slate-400" /> : <Unlock className="w-3.5 h-3.5 text-teal" />}
+                                </div>
+                                <span className={`flex-1 text-center text-[9px] font-black z-10 transition-colors pl-2 ${isLocked ? 'text-slate-600' : 'text-slate-400'}`}>LOCKED</span>
+                                <span className={`flex-1 text-center text-[9px] font-black z-10 transition-colors pr-2 ${!isLocked ? 'text-teal' : 'text-slate-400'}`}>EDIT</span>
                             </div>
-                            <span className={`flex-1 text-center text-[10px] font-black z-10 transition-colors ${isLocked ? 'text-slate-600' : 'text-slate-400'}`}>LOCK</span>
-                            <span className={`flex-1 text-center text-[10px] font-black z-10 transition-colors ${!isLocked ? 'text-teal' : 'text-slate-400'}`}>OPEN</span>
                         </div>
 
                         <button
                             onClick={handleSave}
-                            disabled={isSaving || isLocked}
-                            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm ${isSaved
+                            disabled={isSaving}
+                            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm h-9 mt-auto ${isSaved
                                 ? "bg-emerald-500 text-white shadow-emerald-500/20"
-                                : isLocked
-                                    ? "bg-slate-300 text-slate-500 cursor-not-allowed opacity-60"
-                                    : "bg-teal hover:bg-teal/90 text-white hover:shadow-md hover:scale-[1.02]"
+                                : "bg-teal hover:bg-teal/90 text-white hover:shadow-md hover:scale-[1.02]"
                                 }`}
                         >
-                            {isSaved ? "保存しました" : isSaving ? "保存中..." : "この内容で保存する"}
+                            {isSaved ? "保存しました" : isSaving ? "保存中..." : "保存する"}
                             <Save className="w-4 h-4 ml-1" />
                         </button>
                     </div>
@@ -236,9 +237,13 @@ export default function KpiInputPage() {
                             <h2 className="text-sm font-black tracking-tight">全社・部署（基本）</h2>
                             <Badge className="bg-teal-500/20 text-teal-300 border-none text-[9px] px-2 py-0">Main</Badge>
                         </div>
-                        {!isLocked && (
+                        {!isLocked ? (
                             <div className="text-[10px] font-bold text-teal-400 flex items-center gap-1.5 animate-pulse">
-                                <Unlock className="w-3 h-3" /> 一括編集モード：全期間の編集が可能です
+                                <Unlock className="w-3 h-3" /> 過去実績の編集モードが有効です
+                            </div>
+                        ) : (
+                            <div className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5">
+                                <Lock className="w-3 h-3" /> 今月度のみ入力可能
                             </div>
                         )}
                     </div>
@@ -293,6 +298,9 @@ export default function KpiInputPage() {
                                         {allMonths.map((m, idx) => {
                                             const key = `${m.month}_${kpi.id}`;
                                             const editData = editValues[key] || { value: "", target: "" };
+                                            // 今月度(idx === 0)は常に編集可能、それ以外は isLocked に従う
+                                            const canEdit = idx === 0 || !isLocked;
+
                                             return (
                                                 <td key={m.month}
                                                     className={`p-0 border-r border-slate-200 align-top transition-colors w-[180px] ${idx === 0
@@ -304,7 +312,7 @@ export default function KpiInputPage() {
                                                         <div className={`flex flex-1 items-stretch border-b ${idx === 0 ? "border-white" : "border-slate-100"}`}>
                                                             <div className={`w-10 flex items-center justify-center border-r text-[9px] font-black shrink-0 ${idx === 0 ? "bg-white/70 border-white/50 text-teal-800" : "bg-slate-50 border-slate-100 text-slate-400"
                                                                 }`}>実績</div>
-                                                            {isLocked ? (
+                                                            {!canEdit ? (
                                                                 <div className={`flex-1 text-right px-4 py-3 text-sm font-black flex items-center justify-end ${idx === 0 ? "text-teal-900" : "text-slate-700"}`}>
                                                                     {editData.value ? Number(editData.value).toLocaleString() : <span className="text-slate-200">-</span>}
                                                                 </div>
@@ -323,7 +331,7 @@ export default function KpiInputPage() {
                                                         <div className="flex flex-1 items-stretch">
                                                             <div className={`w-10 flex items-center justify-center border-r text-[8px] font-bold shrink-0 ${idx === 0 ? "bg-white/40 border-white/50 text-slate-500" : "bg-slate-50/50 border-slate-100/50 text-slate-400"
                                                                 }`}>目標</div>
-                                                            {isLocked ? (
+                                                            {!canEdit ? (
                                                                 <div className={`flex-1 text-right px-4 py-2 text-[11px] font-bold flex items-center justify-end ${idx === 0 ? "text-slate-500" : "text-slate-400/80"}`}>
                                                                     {editData.target ? Number(editData.target).toLocaleString() : <span className="text-slate-200">-</span>}
                                                                 </div>
