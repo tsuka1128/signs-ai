@@ -253,7 +253,7 @@ export default function KpiInputPage() {
                     </div>
 
                     <div className="overflow-x-auto custom-scrollbar relative">
-                        <table className="w-full text-left border-collapse table-layout-fixed" style={{ minWidth: "1200px" }}>
+                        <table className="w-full text-left border-collapse table-layout-fixed" style={{ minWidth: "1600px" }}>
                             <thead>
                                 <tr>
                                     {/* 1. KPI Name (Sticky Left 0) - Width: 220px (デモ版比率) */}
@@ -261,12 +261,12 @@ export default function KpiInputPage() {
                                         <span className="text-[9px] font-black text-slate-400 tracking-widest uppercase">項目名 / 部署</span>
                                     </th>
 
-                                    {/* All Months as headers */}
+                                    {/* All Months as headers - Width 200px for PC */}
                                     {allMonths.map((m, idx) => (
                                         <th key={m.month}
-                                            className={`sticky top-0 z-40 w-[150px] min-w-[150px] border-b border-r border-slate-200 p-2 text-center transition-colors ${idx === 0
-                                                ? "left-[220px] bg-[#F0FDF4] shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)] z-50 border-r-2 border-slate-200"
-                                                : "bg-slate-50"
+                                            className={`sticky top-0 z-40 w-[200px] min-w-[200px] border-b border-r border-slate-200 p-2 text-center transition-colors ${idx === 0
+                                                    ? "left-[220px] bg-[#F0FDF4] shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)] z-50 border-r-2 border-slate-200"
+                                                    : "bg-slate-50"
                                                 }`}>
                                             <div className="flex flex-col items-center gap-0.5">
                                                 <div className={`text-[12px] font-black tracking-tighter ${idx === 0 ? "text-teal-900" : "text-slate-500"}`}>{m.label}</div>
@@ -282,7 +282,7 @@ export default function KpiInputPage() {
                                     <tr key={kpi.id} className="group border-b border-slate-200 bg-white">
                                         {/* 1. KPI Name (Sticky Left 0) */}
                                         <td className="sticky left-0 z-30 bg-white group-hover:bg-slate-50 border-b border-r border-slate-200 p-0 shadow-[2px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors align-top w-[220px]">
-                                            <div className="flex flex-col h-full justify-between p-3">
+                                            <div className="flex flex-col h-full justify-between p-3 min-h-[90px]">
                                                 <div className="flex items-start gap-2 mb-2 ml-1">
                                                     <span className="text-[10px] font-black text-slate-300 mt-0.5">{index + 1}.</span>
                                                     <div className="flex flex-col">
@@ -304,48 +304,44 @@ export default function KpiInputPage() {
 
                                             return (
                                                 <td key={m.month}
-                                                    className={`p-0 border-r border-slate-200 align-top transition-colors w-[150px] ${idx === 0
+                                                    className={`p-0 border-r border-slate-200 align-top transition-colors w-[200px] ${idx === 0
                                                             ? "sticky left-[220px] z-30 bg-[#F0FDF4] group-hover:bg-[#E9FBF0] border-r-2 border-slate-200 shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)]"
                                                             : "bg-white group-hover:bg-slate-50"
                                                         }`}>
-                                                    <div className="flex flex-col h-full w-full min-h-[80px]">
-                                                        {/* 実績部 (flex-1 で高さを確保) */}
-                                                        <div className={`flex-1 flex flex-col justify-center border-b ${idx === 0 ? "border-white" : "border-slate-100"}`}>
-                                                            <div className="flex items-center justify-between px-3">
-                                                                <span className={`text-[9px] font-black ${idx === 0 ? "text-teal-700" : "text-slate-400"}`}>実績</span>
-                                                                {!canEdit ? (
-                                                                    <span className={`text-[14px] font-black ${idx === 0 ? "text-teal-900" : "text-slate-700"}`}>
-                                                                        {editData.value ? editData.value : "-"}
-                                                                    </span>
-                                                                ) : (
-                                                                    <input
-                                                                        type="number"
-                                                                        value={editData.value}
-                                                                        onChange={(e) => handleInputChange(m.month, kpi.id, 'value', e.target.value)}
-                                                                        placeholder="---"
-                                                                        className={`w-[80px] text-right text-[14px] font-black outline-none bg-transparent placeholder-slate-200 ${idx === 0 ? "text-teal-900" : "text-slate-700"}`}
-                                                                    />
-                                                                )}
-                                                            </div>
+                                                    <div className="grid grid-rows-2 w-full min-h-[90px]">
+                                                        {/* 実績部 (Gridの1行目) */}
+                                                        <div className={`flex items-center justify-between px-4 border-b h-full ${idx === 0 ? "border-white" : "border-slate-100"}`}>
+                                                            <span className={`text-[9px] font-black shrink-0 ${idx === 0 ? "text-teal-700" : "text-slate-400"}`}>実績</span>
+                                                            {!canEdit ? (
+                                                                <span className={`text-[14px] font-black truncate w-full text-right ${idx === 0 ? "text-teal-900" : "text-slate-700"}`}>
+                                                                    {editData.value ? editData.value : "-"}
+                                                                </span>
+                                                            ) : (
+                                                                <input
+                                                                    type="number"
+                                                                    value={editData.value}
+                                                                    onChange={(e) => handleInputChange(m.month, kpi.id, 'value', e.target.value)}
+                                                                    placeholder="---"
+                                                                    className={`w-full text-right text-[14px] font-black outline-none bg-transparent placeholder-slate-200 ${idx === 0 ? "text-teal-900" : "text-slate-700"}`}
+                                                                />
+                                                            )}
                                                         </div>
-                                                        {/* 目標部 (flex-1 で均等に) */}
-                                                        <div className="flex-1 flex flex-col justify-center">
-                                                            <div className="flex items-center justify-between px-3">
-                                                                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">目標</span>
-                                                                {!canEdit ? (
-                                                                    <span className="text-[11px] font-bold text-slate-400">
-                                                                        {editData.target ? editData.target : "-"}
-                                                                    </span>
-                                                                ) : (
-                                                                    <input
-                                                                        type="number"
-                                                                        value={editData.target}
-                                                                        onChange={(e) => handleInputChange(m.month, kpi.id, 'target', e.target.value)}
-                                                                        placeholder="---"
-                                                                        className="w-[80px] text-right text-[11px] font-bold outline-none bg-transparent placeholder-slate-200 text-slate-400"
-                                                                    />
-                                                                )}
-                                                            </div>
+                                                        {/* 目標部 (Gridの2行目) */}
+                                                        <div className="flex items-center justify-between px-4 h-full">
+                                                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter shrink-0">目標</span>
+                                                            {!canEdit ? (
+                                                                <span className="text-[11px] font-bold text-slate-400 truncate w-full text-right">
+                                                                    {editData.target ? editData.target : "-"}
+                                                                </span>
+                                                            ) : (
+                                                                <input
+                                                                    type="number"
+                                                                    value={editData.target}
+                                                                    onChange={(e) => handleInputChange(m.month, kpi.id, 'target', e.target.value)}
+                                                                    placeholder="---"
+                                                                    className="w-full text-right text-[11px] font-bold outline-none bg-transparent placeholder-slate-200 text-slate-400"
+                                                                />
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </td>
