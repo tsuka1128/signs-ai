@@ -197,7 +197,7 @@ export default function KpiInputPage() {
                             月次KPI一括入力
                             <Badge className="bg-teal/10 text-teal border-none text-[10px] font-bold px-2">管理者向け</Badge>
                         </h1>
-                        <p className="text-slate-500 text-base mt-2 max-w-2xl font-medium">全社のKPIの実績と目標を入力します。過去11ヶ月の実績を振り返りながら入力が可能です。</p>
+                        <p className="text-slate-500 text-base mt-2 max-w-2xl font-medium">全社のKPIの実績と目標を入力します。直近1年分の推移を確認しながら、入力・編集が可能です。</p>
                     </div>
 
                     <div className="flex items-center gap-2 sm:gap-4 shrink-0 mt-4 sm:mt-0">
