@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase";
 import { Header } from "@/components/layout/Header";
 import { MainInsightCard } from "@/components/dashboard/MainInsightCard";
 import { TabBar } from "@/components/ui/TabBar";
@@ -260,11 +261,91 @@ export default function DashboardPage() {
   const [orgView, setOrgView] = useState("dept");
   const [month, setMonth] = useState("default");
 
+  const [realDepts, setRealDepts] = useState<any[]>([]);
+  const [realKpis, setRealKpis] = useState<any[]>([]);
+  const [realSem, setRealSem] = useState<string>("");
+
+  useEffect(() => {
+    async function loadData() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: comp } = await supabase.from('users').select('company_id').eq('id', user.id).single();
+      if (!comp?.company_id) return;
+
+      const [d, k, s] = await Promise.all([
+        supabase.from('departments').select('*').eq('company_id', comp.company_id).order('created_at', { ascending: true }),
+        supabase.from('kpi_definitions').select('*').eq('company_id', comp.company_id).order('sort_order', { ascending: true }),
+        supabase.from('semantic_layers').select('content').eq('company_id', comp.company_id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+      ]);
+
+      if (d.data && d.data.length > 0) setRealDepts(d.data);
+      if (k.data && k.data.length > 0) {
+        setRealKpis(k.data);
+        // もし現在選択中のselKpiが実データのIDに存在しなければ、最初のKPIを選択
+        if (!k.data.some((kpi: any) => `kpi_${kpi.id}` === selKpi) && selKpi === "mrr") {
+          setSelKpi(`kpi_${k.data[0].id}`);
+        }
+      }
+      if (s.data?.content) setRealSem(s.data.content);
+    }
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const getSimulatedIndex = (deptName: string) => {
+    if (deptName.includes("営業")) return 0; // sales
+    if (deptName.includes("マーケ")) return 1; // mktg
+    if (deptName.includes("開発") || deptName.includes("エンジニア")) return 2; // dev
+    if (deptName.includes("財務") || deptName.includes("経理")) return 3; // fin
+    if (deptName.includes("CS") || deptName.includes("カスタマー")) return 4; // cs
+    if (deptName.includes("人事") || deptName.includes("HR")) return 5; // hr
+    return -1;
+  };
+
+  const displayDepts = realDepts.length > 0 ? realDepts.map((d, i) => {
+    let dummyIdx = getSimulatedIndex(d.name);
+    if (dummyIdx === -1) dummyIdx = i % deptData.length;
+    const dummyRef = deptData[dummyIdx];
+
+    return {
+      ...d,
+      ...dummyRef,
+      id: d.id, // Replace dummy id with real UUID
+      name: d.name,
+      head: d.headcount || dummyRef.head,
+      kpis: realKpis.filter(k => k.owner_dept_id === d.id).map((k: any) => ({
+        name: k.name,
+        val: `${k.target_default ?? 100}${k.unit}`,
+        ach: 100, // Dummy
+        type: "stack"
+      })).concat(dummyRef.kpis).slice(0, 3), // Fallback
+      kpiName: realKpis.find(k => k.owner_dept_id === d.id)?.name || dummyRef.kpiName
+    };
+  }) : deptData;
+
+  const displayKpis = realKpis.length > 0 ? realKpis.map((k, i) => {
+    const dummyRef = kpiDefs[i % kpiDefs.length];
+    return {
+      ...k,
+      ...dummyRef, // preserve dummy history fields like `prev`, `voices`
+      id: `kpi_${k.id}`,
+      name: k.name,
+      unit: k.unit,
+      target: k.target_value || dummyRef.target,
+      val: dummyRef.val, // Keep dummy tracking history
+      dept: realDepts.find(d => d.id === k.owner_department_id)?.name || dummyRef.dept,
+    };
+  }) : kpiDefs;
+
+  const displaySem = realSem || semTextDefault;
+
   const ins = insights[tab];
-  const selectedKpiDef = kpiDefs.find(k => k.id === selKpi)!;
+  const selectedKpiDef = displayKpis.find(k => k.id === selKpi) || displayKpis[0];
   const achRate = selectedKpiDef.target ? Math.round((selectedKpiDef.val / selectedKpiDef.target) * 100) : null;
 
-  const currentMatData = (matView === "product" ? products : deptData).map(d => {
+  const currentMatData = (matView === "product" ? products : displayDepts).map(d => {
     let head = d.head;
     let productivity = d.productivity;
     let pulse = d.pulse;
@@ -562,7 +643,7 @@ export default function DashboardPage() {
             <div className="space-y-4">
               {/* KPI Summary Row */}
               <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                {kpiDefs.map(k => (
+                {displayKpis.map(k => (
                   <KpiSummaryCard
                     key={k.id}
                     name={k.name}
@@ -640,7 +721,7 @@ export default function DashboardPage() {
                   <Badge className="bg-slate-50 text-slate-400 border-none ml-2 tracking-tighter text-[10px] uppercase font-bold">{selectedKpiDef.name}に関する声</Badge>
                 </div>
                 <div className="space-y-3">
-                  {selectedKpiDef.voices.map((v, i) => {
+                  {selectedKpiDef.voices?.map((v: any, i: number) => {
                     const moodColor = v.mood === "sun" ? "bg-emerald-50/50 border-emerald-100" : v.mood === "rain" ? "bg-rose-50/50 border-rose-100" : "bg-amber-50/50 border-amber-100";
                     return (
                       <div key={i} className={`p-5 rounded-2xl border flex gap-4 transition-all hover:translate-x-1 ${moodColor}`}>
@@ -844,8 +925,21 @@ export default function DashboardPage() {
 
           {sec === "semantic" && (
             <SemanticLayer
-              initialText={semTextDefault}
-              onSave={(txt: string) => console.log("Saved:", txt)}
+              initialText={displaySem}
+              onSave={async (txt: string) => {
+                const supabase = createClient();
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+                const { data: comp } = await supabase.from('users').select('company_id').eq('id', user.id).single();
+                if (!comp?.company_id) return;
+
+                await supabase.from('semantic_layers').insert({
+                  company_id: comp.company_id,
+                  content: txt,
+                  valid_from: new Date().toISOString()
+                });
+                setRealSem(txt);
+              }}
             />
           )}
 

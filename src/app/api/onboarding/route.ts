@@ -77,7 +77,20 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (companyError || !company) {
-            throw new Error("企業の作成に失敗しました");
+            throw new Error(`企業の作成に失敗しました: ${companyError?.message || "データが取得できません"}`);
+        }
+
+        // ★追加: 会社を作ったらすぐにユーザーと紐付ける（以降のRLSチェックを通すため）
+        const { error: userError } = await supabase.from("users").upsert({
+            id: user.id,
+            company_id: company.id,
+            email: user.email ?? "",
+            display_name: user.user_metadata?.full_name ?? user.email ?? "",
+            role: "admin",
+        });
+
+        if (userError) {
+            throw new Error(`ユーザープロフィールの更新に失敗しました: ${userError.message}`);
         }
 
         // 3. 部署を一括作成
@@ -93,7 +106,7 @@ export async function POST(request: NextRequest) {
             .select("id, name");
 
         if (deptError || !createdDepts) {
-            throw new Error("部署の作成に失敗しました");
+            throw new Error(`部署の作成に失敗しました: ${deptError?.message}`);
         }
 
         // 4. KPI定義を一括作成（owner_dept_index を実際の部署 ID に変換）
@@ -110,7 +123,7 @@ export async function POST(request: NextRequest) {
         );
 
         if (kpiError) {
-            throw new Error("KPIの作成に失敗しました");
+            throw new Error(`KPIの作成に失敗しました: ${kpiError.message}`);
         }
 
         // 5. セマンティックレイヤーを作成（テキストがある場合のみ）
@@ -122,21 +135,8 @@ export async function POST(request: NextRequest) {
             });
 
             if (semError) {
-                throw new Error("経営方針の保存に失敗しました");
+                throw new Error(`経営方針の保存に失敗しました: ${semError.message}`);
             }
-        }
-
-        // 6. users テーブルにプロフィールを作成・更新
-        const { error: userError } = await supabase.from("users").upsert({
-            id: user.id,
-            company_id: company.id,
-            email: user.email ?? "",
-            display_name: user.user_metadata?.full_name ?? user.email ?? "",
-            role: "admin",
-        });
-
-        if (userError) {
-            throw new Error("ユーザープロフィールの更新に失敗しました");
         }
 
         return NextResponse.json({ success: true, companyId: company.id });

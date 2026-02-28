@@ -9,7 +9,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 /** 認証不要のパス（パブリックルート） */
-const PUBLIC_ROUTES = ["/", "/login", "/marketing", "/survey"];
+const PUBLIC_ROUTES = ["/", "/login", "/marketing", "/survey", "/auth/callback"];
 
 /**
  * パスがパブリックルートかどうかを判定する
@@ -64,7 +64,7 @@ export async function middleware(request: NextRequest) {
     // 認証済みかつ /login へのアクセス → ダッシュボードへ
     if (user && pathname === "/login") {
         const dashboardUrl = request.nextUrl.clone();
-        dashboardUrl.pathname = "/dashboard";
+        dashboardUrl.pathname = "/";
         return NextResponse.redirect(dashboardUrl);
     }
 

@@ -122,6 +122,10 @@ export function SemanticLayer({ initialText, onSave }: SemanticLayerProps) {
 
     // Sync latest text
     useEffect(() => {
+        setCurrentText(initialText);
+    }, [initialText]);
+
+    useEffect(() => {
         VERSION_CONTENTS["v1.2"] = currentText;
     }, [currentText]);
 

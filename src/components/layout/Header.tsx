@@ -3,9 +3,11 @@
 import { Badge } from "@/components/ui/Badge";
 import Link from "next/link";
 import { useState } from "react";
+import { Settings } from "lucide-react";
 
 export function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
 
     return (
         <header className="bg-gradient-to-br from-white via-slate-50 to-white px-5 py-6 border-b border-slate-200 relative z-[100]">
@@ -24,19 +26,47 @@ export function Header() {
                 {/* PC Menu */}
                 <div className="hidden sm:flex items-center gap-6 text-right">
                     <div className="flex items-center gap-3">
-                        <Link href="/kpi" className="text-[10px] font-bold bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-1">
-                            📊 KPI入力
-                        </Link>
+
                         <Link href="/marketing" className="text-[10px] font-bold bg-slate-800 text-white px-3 py-1.5 rounded-full hover:bg-teal transition-colors shadow-sm flex items-center gap-1">
                             🚀 マーケティングLP
                         </Link>
                         <Link href="/form" className="text-[10px] font-bold bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-1">
                             💬 アンケート
                         </Link>
-                    </div>
-                    <div>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">株式会社サンプルSaaS</p>
-                        <p className="text-xs font-black text-slate-800 tabular-nums">2026.02</p>
+                        <div className="relative">
+                            <button
+                                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                                className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold hover:ring-2 hover:ring-teal-300 transition-all ml-2 outline-none shadow-sm"
+                            >
+                                <span className="text-xs">SS</span>
+                            </button>
+
+                            {isProfileOpen && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setIsProfileOpen(false)}></div>
+                                    <div className="absolute top-full mt-3 right-0 w-60 bg-white border border-slate-200 rounded-xl shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-200 text-left">
+                                        <div className="px-4 py-3 border-b border-slate-100 mb-2">
+                                            <p className="text-xs text-slate-500 font-medium mb-1">Signed in as</p>
+                                            <p className="text-sm font-bold text-slate-800 truncate">株式会社サンプルSaaS</p>
+                                        </div>
+
+                                        <Link href="/kpi" onClick={() => setIsProfileOpen(false)} className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-teal transition-colors flex items-center gap-2">
+                                            📊 Monthly KPI Input
+                                        </Link>
+
+                                        <Link href="/settings" onClick={() => setIsProfileOpen(false)} className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-teal transition-colors flex items-center gap-2">
+                                            <Settings className="w-4 h-4 text-slate-400" /> Settings
+                                        </Link>
+
+                                        <div className="h-px bg-slate-100 my-2"></div>
+
+                                        <button onClick={() => setIsProfileOpen(false)} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                                            Sign out
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -66,16 +96,19 @@ export function Header() {
                         <Link href="/" onClick={() => setIsMenuOpen(false)} className="col-span-2 text-sm font-bold bg-white border-2 border-slate-100 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:border-slate-300 flex items-center justify-center gap-2">
                             <span className="text-lg">📈</span> ダッシュボード
                         </Link>
-                        <Link href="/kpi" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:bg-slate-50 flex items-center justify-center gap-1.5">
-                            <span className="text-lg">📊</span> KPI入力
-                        </Link>
                         <Link href="/form" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:bg-slate-50 flex items-center justify-center gap-1.5">
                             <span className="text-lg">💬</span> 調査
                         </Link>
+                        <Link href="/marketing" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold bg-slate-800 text-white px-4 py-3 rounded-xl shadow-md flex items-center justify-center gap-1.5 hover:bg-teal-600 transition-colors">
+                            <span className="text-lg">🚀</span> LP
+                        </Link>
+                        <Link href="/kpi" onClick={() => setIsMenuOpen(false)} className="col-span-2 text-sm font-bold bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:bg-slate-50 flex items-center justify-center gap-1.5">
+                            <span className="text-lg">📊</span> KPI入力
+                        </Link>
+                        <Link href="/settings" onClick={() => setIsMenuOpen(false)} className="col-span-2 text-sm font-bold bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:bg-slate-50 flex items-center justify-center gap-1.5">
+                            <Settings className="w-5 h-5 text-slate-400" /> 設定
+                        </Link>
                     </div>
-                    <Link href="/marketing" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold bg-slate-800 text-white px-4 py-3.5 rounded-xl shadow-md flex items-center justify-center gap-2 hover:bg-teal-600 transition-colors">
-                        <span className="text-lg">🚀</span> マーケティングLPへ
-                    </Link>
                 </div>
             )}
         </header>
