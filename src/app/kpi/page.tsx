@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
-import { Info, Save, ArrowLeft, Building2 } from "lucide-react";
+import { Info, Save, ArrowLeft, Building2, Lock, Unlock } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 
 // KPI定義の型
@@ -30,11 +30,9 @@ export default function KpiInputPage() {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<any>(null);
     const [kpiDefinitions, setKpiDefinitions] = useState<KpiDefinition[]>([]);
-    const [pastMonths, setPastMonths] = useState<{ month: string, label: string }[]>([]);
-    const [records, setRecords] = useState<Record<string, KpiRecord>>({}); // key: month_kpiId
-    const [actuals, setActuals] = useState<Record<string, string>>({}); // key: kpiId
-    const [targets, setTargets] = useState<Record<string, string>>({}); // key: kpiId
-    const [currentMonthStr, setCurrentMonthStr] = useState("");
+    const [allMonths, setAllMonths] = useState<{ month: string, label: string }[]>([]);
+    const [editValues, setEditValues] = useState<Record<string, { value: string, target: string }>>({}); // key: month_kpiId
+    const [isLocked, setIsLocked] = useState(true);
 
     const [isSaving, setIsSaving] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
@@ -62,12 +60,10 @@ export default function KpiInputPage() {
             const monthStr = `${yyyy}-${mm}`;
             months.push({
                 month: monthStr,
-                label: i === 0 ? "今月" : `${yyyy} / ${mm}`
+                label: i === 0 ? "今月度" : `${yyyy} / ${mm}`
             });
         }
-        setPastMonths(months.slice(1)); // 過去分
-        const currentMonth = months[0].month;
-        setCurrentMonthStr(currentMonth);
+        setAllMonths(months);
 
         // 2. ユーザーの所属企業情報を取得してKPI定義を取得
         const { data: userData } = await supabase
@@ -101,21 +97,24 @@ export default function KpiInputPage() {
                 .in('recorded_month', monthList)
                 .in('kpi_definition_id', formattedKpis.map(k => k.id));
 
-            const recMap: Record<string, KpiRecord> = {};
-            const currentActuals: Record<string, string> = {};
-            const currentTargets: Record<string, string> = {};
+            const initialEditValues: Record<string, { value: string, target: string }> = {};
 
-            recs?.forEach(r => {
-                recMap[`${r.recorded_month}_${r.kpi_definition_id}`] = r;
-                if (r.recorded_month === currentMonth) {
-                    currentActuals[r.kpi_definition_id] = String(r.value);
-                    currentTargets[r.kpi_definition_id] = r.target_value ? String(r.target_value) : "";
-                }
+            // 全ての組み合わせを空文字で初期化
+            formattedKpis.forEach(kpi => {
+                monthList.forEach(month => {
+                    initialEditValues[`${month}_${kpi.id}`] = { value: "", target: "" };
+                });
             });
 
-            setRecords(recMap);
-            setActuals(currentActuals);
-            setTargets(currentTargets);
+            // 既存データで上書き
+            recs?.forEach(r => {
+                initialEditValues[`${r.recorded_month}_${r.kpi_definition_id}`] = {
+                    value: String(r.value),
+                    target: r.target_value !== null ? String(r.target_value) : ""
+                };
+            });
+
+            setEditValues(initialEditValues);
         }
         setLoading(false);
     };
@@ -124,12 +123,23 @@ export default function KpiInputPage() {
         if (!user || kpiDefinitions.length === 0) return;
         setIsSaving(true);
 
-        const upsertData = kpiDefinitions.map(kpi => ({
-            kpi_definition_id: kpi.id,
-            recorded_month: currentMonthStr,
-            value: Number(actuals[kpi.id] || 0),
-            target_value: targets[kpi.id] ? Number(targets[kpi.id]) : null
-        }));
+        const upsertData: any[] = [];
+        Object.entries(editValues).forEach(([key, data]) => {
+            const [month, kpiId] = key.split('_');
+            if (data.value !== "" || data.target !== "") {
+                upsertData.push({
+                    kpi_definition_id: kpiId,
+                    recorded_month: month,
+                    value: Number(data.value || 0),
+                    target_value: data.target !== "" ? Number(data.target) : null
+                });
+            }
+        });
+
+        if (upsertData.length === 0) {
+            setIsSaving(false);
+            return;
+        }
 
         const { error } = await supabase
             .from('kpi_records')
@@ -140,10 +150,21 @@ export default function KpiInputPage() {
             alert("保存に失敗しました。");
         } else {
             setIsSaved(true);
+            setIsLocked(true); // 保存後はロックする
             setTimeout(() => setIsSaved(false), 3000);
             fetchInitialData();
         }
         setIsSaving(false);
+    };
+
+    const handleInputChange = (month: string, kpiId: string, field: 'value' | 'target', val: string) => {
+        setEditValues(prev => ({
+            ...prev,
+            [`${month}_${kpiId}`]: {
+                ...prev[`${month}_${kpiId}`],
+                [field]: val
+            }
+        }));
     };
 
     if (loading) {
@@ -181,13 +202,25 @@ export default function KpiInputPage() {
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex items-center gap-4 shrink-0">
+                        {/* ロック切替ボタン */}
+                        <div className="flex items-center bg-slate-200 p-1 rounded-full shadow-inner relative w-32 h-10 overflow-hidden cursor-pointer select-none"
+                            onClick={() => setIsLocked(!isLocked)}>
+                            <div className={`absolute top-1 bottom-1 w-[60px] bg-white rounded-full shadow-md transition-all duration-300 ease-out flex items-center justify-center ${isLocked ? 'left-1' : 'left-[65px]'}`}>
+                                {isLocked ? <Lock className="w-3.5 h-3.5 text-slate-600" /> : <Unlock className="w-3.5 h-3.5 text-teal" />}
+                            </div>
+                            <span className={`flex-1 text-center text-[10px] font-black z-10 transition-colors ${isLocked ? 'text-slate-600' : 'text-slate-400'}`}>LOCK</span>
+                            <span className={`flex-1 text-center text-[10px] font-black z-10 transition-colors ${!isLocked ? 'text-teal' : 'text-slate-400'}`}>OPEN</span>
+                        </div>
+
                         <button
                             onClick={handleSave}
-                            disabled={isSaving}
+                            disabled={isSaving || isLocked}
                             className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm ${isSaved
                                 ? "bg-emerald-500 text-white shadow-emerald-500/20"
-                                : "bg-teal hover:bg-teal/90 text-white hover:shadow-md hover:scale-[1.02]"
+                                : isLocked
+                                    ? "bg-slate-300 text-slate-500 cursor-not-allowed opacity-60"
+                                    : "bg-teal hover:bg-teal/90 text-white hover:shadow-md hover:scale-[1.02]"
                                 }`}
                         >
                             {isSaved ? "保存しました" : isSaving ? "保存中..." : "この内容で保存する"}
@@ -203,10 +236,15 @@ export default function KpiInputPage() {
                             <h2 className="text-sm font-black tracking-tight">全社・部署（基本）</h2>
                             <Badge className="bg-teal-500/20 text-teal-300 border-none text-[9px] px-2 py-0">Main</Badge>
                         </div>
+                        {!isLocked && (
+                            <div className="text-[10px] font-bold text-teal-400 flex items-center gap-1.5 animate-pulse">
+                                <Unlock className="w-3 h-3" /> 一括編集モード：全期間の編集が可能です
+                            </div>
+                        )}
                     </div>
 
                     <div className="overflow-x-auto custom-scrollbar relative">
-                        <table className="w-full text-left border-collapse table-layout-fixed" style={{ minWidth: "1200px" }}>
+                        <table className="w-full text-left border-collapse table-layout-fixed" style={{ minWidth: "1400px" }}>
                             <thead>
                                 <tr>
                                     {/* 1. KPI Name (Sticky Left 0) - Width: 260px */}
@@ -214,21 +252,17 @@ export default function KpiInputPage() {
                                         <span className="text-[10px] font-black text-slate-500 tracking-widest uppercase ml-1">項目名 / 部署</span>
                                     </th>
 
-                                    {/* 2. Current Month (Sticky Left 260px) - Width: 240px */}
-                                    <th className="sticky left-[260px] top-0 z-40 w-[240px] min-w-[240px] bg-[#F0FDF4] border-b border-r-2 border-slate-300 p-2.5 shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)]">
-                                        <div className="flex items-center justify-between px-1">
-                                            <div className="text-[13px] font-black text-teal-800 tracking-tight flex items-center gap-1.5">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-teal animate-pulse" />
-                                                今月度
+                                    {/* All Months as headers */}
+                                    {allMonths.map((m, idx) => (
+                                        <th key={m.month}
+                                            className={`sticky top-0 z-40 w-[180px] min-w-[180px] border-b border-r border-slate-200 p-2.5 text-center transition-colors ${idx === 0
+                                                    ? "left-[260px] bg-[#F0FDF4] shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)] z-50 border-r-2 border-slate-300"
+                                                    : "bg-slate-50"
+                                                }`}>
+                                            <div className="flex flex-col items-center gap-0.5">
+                                                <div className={`text-[11px] font-black ${idx === 0 ? "text-teal-800" : "text-slate-500"}`}>{m.label}</div>
+                                                {idx === 0 && <span className="text-[8px] font-bold text-teal-600 bg-teal/10 px-1 py-0.5 rounded uppercase">Latest</span>}
                                             </div>
-                                            <span className="text-[9px] font-bold text-teal-600 bg-teal/10 px-1.5 py-0.5 rounded uppercase">Input</span>
-                                        </div>
-                                    </th>
-
-                                    {/* 3. Past Months (Scrollable) - Width: 180px each */}
-                                    {pastMonths.map(pm => (
-                                        <th key={pm.month} className="w-[180px] min-w-[180px] bg-slate-50 border-b border-r border-slate-200 p-2.5 text-center">
-                                            <div className="text-[11px] font-black text-slate-500">{pm.label}</div>
                                         </th>
                                     ))}
                                     <th className="bg-slate-50 border-b border-slate-200 w-full min-w-[100px]"></th>
@@ -255,49 +289,54 @@ export default function KpiInputPage() {
                                             </div>
                                         </td>
 
-                                        {/* 2. Current Month Input (Sticky Left 260px) */}
-                                        <td className="sticky left-[260px] z-30 bg-[#F0FDF4] group-hover:bg-[#E9FBF0] border-r-2 border-slate-300 p-0 shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)] transition-colors align-top w-[240px]">
-                                            <div className="flex flex-col h-full w-full">
-                                                <div className="flex flex-1 items-stretch border-b border-white">
-                                                    <div className="w-11 flex items-center justify-center bg-white/70 border-r border-white/50 text-[10px] font-black text-teal-800 shrink-0">実績</div>
-                                                    <input
-                                                        type="number"
-                                                        value={actuals[kpi.id] || ""}
-                                                        onChange={(e) => setActuals({ ...actuals, [kpi.id]: e.target.value })}
-                                                        placeholder="未入力"
-                                                        className="w-full text-right px-4 py-3 text-sm font-black text-teal-900 bg-transparent outline-none focus:bg-white placeholder-teal-300/30"
-                                                    />
-                                                </div>
-                                                <div className="flex flex-1 items-stretch">
-                                                    <div className="w-11 flex items-center justify-center bg-white/40 border-r border-white/50 text-[9px] font-bold text-slate-500 shrink-0">目標</div>
-                                                    <input
-                                                        type="number"
-                                                        value={targets[kpi.id] || ""}
-                                                        onChange={(e) => setTargets({ ...targets, [kpi.id]: e.target.value })}
-                                                        placeholder="未設定"
-                                                        className="w-full text-right px-4 py-2 text-[11px] font-bold text-slate-500 bg-transparent outline-none focus:bg-white/80 placeholder-slate-300/30"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </td>
-
-                                        {/* 3. Past Months (Read-only) */}
-                                        {pastMonths.map(pm => {
-                                            const record = records[`${pm.month}_${kpi.id}`];
+                                        {/* All Months data cells */}
+                                        {allMonths.map((m, idx) => {
+                                            const key = `${m.month}_${kpi.id}`;
+                                            const editData = editValues[key] || { value: "", target: "" };
                                             return (
-                                                <td key={pm.month} className="p-0 border-r border-slate-200 align-top bg-white group-hover:bg-slate-50 transition-colors w-[180px]">
+                                                <td key={m.month}
+                                                    className={`p-0 border-r border-slate-200 align-top transition-colors w-[180px] ${idx === 0
+                                                            ? "sticky left-[260px] z-30 bg-[#F0FDF4] group-hover:bg-[#E9FBF0] border-r-2 border-slate-300 shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)]"
+                                                            : "bg-white group-hover:bg-slate-50"
+                                                        }`}>
                                                     <div className="flex flex-col h-full w-full">
-                                                        <div className="flex flex-1 items-stretch border-b border-slate-100">
-                                                            <div className="w-10 flex items-center justify-center bg-slate-50 border-r border-slate-100 text-[9px] font-bold text-slate-400 shrink-0">実績</div>
-                                                            <div className="flex-1 text-right px-4 py-2 text-[12px] font-bold text-slate-700 bg-transparent flex items-center justify-end">
-                                                                {record ? record.value.toLocaleString() : <span className="text-slate-200">-</span>}
-                                                            </div>
+                                                        {/* 実績部 */}
+                                                        <div className={`flex flex-1 items-stretch border-b ${idx === 0 ? "border-white" : "border-slate-100"}`}>
+                                                            <div className={`w-10 flex items-center justify-center border-r text-[9px] font-black shrink-0 ${idx === 0 ? "bg-white/70 border-white/50 text-teal-800" : "bg-slate-50 border-slate-100 text-slate-400"
+                                                                }`}>実績</div>
+                                                            {isLocked ? (
+                                                                <div className={`flex-1 text-right px-4 py-3 text-sm font-black flex items-center justify-end ${idx === 0 ? "text-teal-900" : "text-slate-700"}`}>
+                                                                    {editData.value ? Number(editData.value).toLocaleString() : <span className="text-slate-200">-</span>}
+                                                                </div>
+                                                            ) : (
+                                                                <input
+                                                                    type="number"
+                                                                    value={editData.value}
+                                                                    onChange={(e) => handleInputChange(m.month, kpi.id, 'value', e.target.value)}
+                                                                    placeholder="未入力"
+                                                                    className={`w-full text-right px-4 py-3 text-sm font-black outline-none focus:bg-white placeholder-slate-300/30 bg-transparent ${idx === 0 ? "text-teal-900" : "text-slate-700"
+                                                                        }`}
+                                                                />
+                                                            )}
                                                         </div>
+                                                        {/* 目標部 */}
                                                         <div className="flex flex-1 items-stretch">
-                                                            <div className="w-10 flex items-center justify-center bg-slate-50/50 border-r border-slate-100/50 text-[8px] font-medium text-slate-400 shrink-0">目標</div>
-                                                            <div className="flex-1 text-right px-4 py-1.5 text-[11px] font-medium text-slate-400/80 bg-slate-50/20 flex items-center justify-end">
-                                                                {record?.target_value ? record.target_value.toLocaleString() : <span className="text-slate-200">-</span>}
-                                                            </div>
+                                                            <div className={`w-10 flex items-center justify-center border-r text-[8px] font-bold shrink-0 ${idx === 0 ? "bg-white/40 border-white/50 text-slate-500" : "bg-slate-50/50 border-slate-100/50 text-slate-400"
+                                                                }`}>目標</div>
+                                                            {isLocked ? (
+                                                                <div className={`flex-1 text-right px-4 py-2 text-[11px] font-bold flex items-center justify-end ${idx === 0 ? "text-slate-500" : "text-slate-400/80"}`}>
+                                                                    {editData.target ? Number(editData.target).toLocaleString() : <span className="text-slate-200">-</span>}
+                                                                </div>
+                                                            ) : (
+                                                                <input
+                                                                    type="number"
+                                                                    value={editData.target}
+                                                                    onChange={(e) => handleInputChange(m.month, kpi.id, 'target', e.target.value)}
+                                                                    placeholder="未設定"
+                                                                    className={`w-full text-right px-4 py-2 text-[11px] font-bold outline-none focus:bg-white/80 placeholder-slate-300/30 bg-transparent ${idx === 0 ? "text-slate-500" : "text-slate-400"
+                                                                        }`}
+                                                                />
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </td>
