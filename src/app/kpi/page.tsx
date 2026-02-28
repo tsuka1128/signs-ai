@@ -305,13 +305,13 @@ export default function KpiInputPage() {
                                             return (
                                                 <td key={m.month}
                                                     className={`p-0 border-r border-slate-200 align-top transition-colors w-[150px] ${idx === 0
-                                                        ? "sticky left-[220px] z-30 bg-[#F0FDF4] group-hover:bg-[#E9FBF0] border-r-2 border-slate-200 shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)]"
-                                                        : "bg-white group-hover:bg-slate-50"
+                                                            ? "sticky left-[220px] z-30 bg-[#F0FDF4] group-hover:bg-[#E9FBF0] border-r-2 border-slate-200 shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)]"
+                                                            : "bg-white group-hover:bg-slate-50"
                                                         }`}>
-                                                    <div className="flex flex-col h-full w-full">
-                                                        {/* 実績部 */}
-                                                        <div className={`flex flex-col items-stretch border-b ${idx === 0 ? "border-white" : "border-slate-100"}`}>
-                                                            <div className="flex items-center justify-between px-3 pt-2">
+                                                    <div className="flex flex-col h-full w-full min-h-[80px]">
+                                                        {/* 実績部 (flex-1 で高さを確保) */}
+                                                        <div className={`flex-1 flex flex-col justify-center border-b ${idx === 0 ? "border-white" : "border-slate-100"}`}>
+                                                            <div className="flex items-center justify-between px-3">
                                                                 <span className={`text-[9px] font-black ${idx === 0 ? "text-teal-700" : "text-slate-400"}`}>実績</span>
                                                                 {!canEdit ? (
                                                                     <span className={`text-[14px] font-black ${idx === 0 ? "text-teal-900" : "text-slate-700"}`}>
@@ -328,10 +328,10 @@ export default function KpiInputPage() {
                                                                 )}
                                                             </div>
                                                         </div>
-                                                        {/* 目標部 */}
-                                                        <div className="flex flex-col items-stretch pb-2">
-                                                            <div className="flex items-center justify-between px-3 pt-1">
-                                                                <span className="text-[8px] font-bold text-slate-400">目標</span>
+                                                        {/* 目標部 (flex-1 で均等に) */}
+                                                        <div className="flex-1 flex flex-col justify-center">
+                                                            <div className="flex items-center justify-between px-3">
+                                                                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">目標</span>
                                                                 {!canEdit ? (
                                                                     <span className="text-[11px] font-bold text-slate-400">
                                                                         {editData.target ? editData.target : "-"}
