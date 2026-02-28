@@ -315,13 +315,17 @@ export default function DashboardPage() {
       id: d.id, // Replace dummy id with real UUID
       name: d.name,
       head: d.headcount || dummyRef.head,
-      kpis: realKpis.filter(k => k.owner_dept_id === d.id).map((k: any) => ({
-        name: k.name,
-        val: `${k.target_default ?? 100}${k.unit}`,
-        ach: 100, // Dummy
-        type: "stack"
-      })).concat(dummyRef.kpis).slice(0, 3), // Fallback
-      kpiName: realKpis.find(k => k.owner_dept_id === d.id)?.name || dummyRef.kpiName
+      kpis: realKpis.filter(k => k.owner_dept_id === d.id)
+        .sort((a, b) => (b.is_main ? 1 : 0) - (a.is_main ? 1 : 0))
+        .map((k: any) => ({
+          name: k.name,
+          val: `${k.target_default ?? 100}${k.unit}`,
+          ach: 100, // Dummy
+          type: "stack"
+        })).concat(dummyRef.kpis).slice(0, 3), // Fallback
+      kpiName: realKpis.find(k => k.owner_dept_id === d.id && k.is_main)?.name ||
+        realKpis.find(k => k.owner_dept_id === d.id)?.name ||
+        dummyRef.kpiName
     };
   }) : deptData;
 

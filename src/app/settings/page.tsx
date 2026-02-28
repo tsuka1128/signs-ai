@@ -7,7 +7,8 @@ import { createClient } from "@/lib/supabase";
 import { Header } from "@/components/layout/Header";
 import { TabBar } from "@/components/ui/TabBar";
 import { Badge } from "@/components/ui/Badge";
-import { Save, Plus, Trash2 } from "lucide-react";
+import { Save, Plus, Trash2, Star } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState("company");
@@ -98,7 +99,8 @@ export default function SettingsPage() {
                 name: kpi.name,
                 unit: kpi.unit || "",
                 target_default: kpi.target_default || null,
-                owner_dept_id: kpi.owner_dept_id || null
+                owner_dept_id: kpi.owner_dept_id || null,
+                is_main: kpi.is_main || false
             });
             if (!error) loadData();
             else alert("追加に失敗しました");
@@ -107,7 +109,8 @@ export default function SettingsPage() {
                 name: kpi.name,
                 unit: kpi.unit || "",
                 target_default: kpi.target_default || null,
-                owner_dept_id: kpi.owner_dept_id || null
+                owner_dept_id: kpi.owner_dept_id || null,
+                is_main: kpi.is_main || false
             }).eq('id', kpi.id);
             if (!error) alert("KPI設定を更新しました");
             else alert("更新に失敗しました");
@@ -126,7 +129,7 @@ export default function SettingsPage() {
     }
 
     function handleAddKpi() {
-        setKpis([...kpis, { id: `new_${Date.now()}`, name: "", unit: "", target_default: null, owner_dept_id: null, company_id: company?.id }]);
+        setKpis([...kpis, { id: `new_${Date.now()}`, name: "", unit: "", target_default: null, owner_dept_id: null, is_main: false, company_id: company?.id }]);
     }
 
     return (
@@ -304,7 +307,22 @@ export default function SettingsPage() {
                                                         ))}
                                                     </select>
                                                 </div>
-                                                <div className="sm:col-span-6 flex items-center justify-end gap-2">
+                                                <div className="sm:col-span-3">
+                                                    <label className="block text-[10px] font-bold text-slate-400 mb-1 ml-1 uppercase">代表設定</label>
+                                                    <button
+                                                        onClick={() => setKpis(kpis.map(k => k.id === kpi.id ? { ...k, is_main: !k.is_main } : k))}
+                                                        className={cn(
+                                                            "w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all font-bold text-xs",
+                                                            kpi.is_main
+                                                                ? "bg-amber-50 border-amber-200 text-amber-600 shadow-sm"
+                                                                : "bg-white border-slate-100 text-slate-400 hover:border-slate-200"
+                                                        )}
+                                                    >
+                                                        <Star className={cn("w-3.5 h-3.5", kpi.is_main ? "fill-amber-500" : "")} />
+                                                        {kpi.is_main ? "代表KPI" : "設定する"}
+                                                    </button>
+                                                </div>
+                                                <div className="sm:col-span-3 flex items-center justify-end gap-2">
                                                     <button
                                                         onClick={() => handleSaveKpi(kpi)}
                                                         className="px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-teal hover:bg-teal/5 text-xs font-bold shadow-sm transition-all flex items-center gap-1.5"
