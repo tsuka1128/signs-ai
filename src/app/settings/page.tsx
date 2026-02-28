@@ -47,7 +47,30 @@ export default function SettingsPage() {
         if (deptData) setDepts(deptData);
 
         const { data: kpiData } = await supabase.from('kpi_definitions').select('*').eq('company_id', compRef.company_id).order('sort_order', { ascending: true });
-        if (kpiData) setKpis(kpiData.map(k => ({ ...k, is_main: !!k.is_main })));
+        if (kpiData) {
+            const rawKpis = kpiData.map(k => ({ ...k, is_main: !!k.is_main }));
+            // 部署ごとに「1つだけ代表」を強制するための正規化
+            const deptMainSet = new Set();
+            const normalized = rawKpis.map(k => {
+                const deptId = k.owner_dept_id || "none";
+                if (k.is_main && !deptMainSet.has(deptId)) {
+                    deptMainSet.add(deptId);
+                    return k;
+                }
+                return { ...k, is_main: false };
+            });
+
+            // 代表が一人もいない部署について、最初のKPIを代表にする
+            const finalKpis = normalized.map(k => {
+                const deptId = k.owner_dept_id || "none";
+                if (!deptMainSet.has(deptId)) {
+                    deptMainSet.add(deptId);
+                    return { ...k, is_main: true };
+                }
+                return k;
+            });
+            setKpis(finalKpis);
+        }
 
         setLoading(false);
     }
@@ -140,18 +163,34 @@ export default function SettingsPage() {
     }
 
     function handleAddKpi() {
-        setKpis([...kpis, { id: `new_${Date.now()}`, name: "", unit: "", target_default: null, owner_dept_id: null, is_main: false, company_id: company?.id }]);
+        const newKpi = {
+            id: `new_${Date.now()}`,
+            name: "",
+            unit: "",
+            target_default: null,
+            owner_dept_id: null,
+            is_main: false,
+            company_id: company?.id
+        };
+        // その部署（未指定含む）にKPIが1つもなければ、代表にする
+        const hasKpisInGroup = kpis.some(k => k.owner_dept_id === null);
+        if (!hasKpisInGroup) newKpi.is_main = true;
+
+        setKpis([...kpis, newKpi]);
     }
 
     function handleToggleMainKpi(targetKpi: any) {
+        // 既に代表であるものをオフにすることは「1部署1代表」の原則から禁止
+        if (targetKpi.is_main) return;
+
         setKpis(kpis.map(k => {
-            // 同じ部署の他のKPIの代表フラグを折る
+            // 同じ部署の他のKPIを強制的に解除
             if (k.owner_dept_id === targetKpi.owner_dept_id && k.id !== targetKpi.id) {
                 return { ...k, is_main: false };
             }
-            // ターゲット自身をトグル
+            // ターゲットを代表に設定
             if (k.id === targetKpi.id) {
-                return { ...k, is_main: !k.is_main };
+                return { ...k, is_main: true };
             }
             return k;
         }));
