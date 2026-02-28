@@ -225,18 +225,6 @@ export default function KpiInputPage() {
                     </div>
                 </div>
 
-                {/* ロック切替トグルをテーブル外、またはヘッダー内に適切に配置 (デモ版に合わせる) */}
-                <div className="flex justify-start mb-6">
-                    <div className="flex items-center bg-slate-200 p-1 rounded-full shadow-inner relative w-[130px] h-9 overflow-hidden cursor-pointer select-none"
-                        onClick={() => setIsLocked(!isLocked)}>
-                        <div className={`absolute top-1 bottom-1 w-[60px] bg-white rounded-full shadow-md transition-all duration-300 border border-slate-100 ease-out flex items-center justify-center z-20 ${isLocked ? 'left-1' : 'left-[65px]'}`}>
-                            {isLocked ? <Lock className="w-3.5 h-3.5 text-slate-400" /> : <Unlock className="w-3.5 h-3.5 text-teal" />}
-                        </div>
-                        <span className={`flex-1 text-center text-[9px] font-black z-10 transition-colors pl-2 ${isLocked ? 'text-slate-600' : 'text-slate-400'}`}>LOCK</span>
-                        <span className={`flex-1 text-center text-[9px] font-black z-10 transition-colors pr-2 ${!isLocked ? 'text-teal' : 'text-slate-400'}`}>OPEN</span>
-                    </div>
-                </div>
-
                 <div className="bg-white shadow-[0_4px_24px_-8px_rgba(0,0,0,0.05)] border border-slate-800 overflow-hidden relative mx-auto w-full rounded-[16px]">
                     <div className={`px-5 py-4 bg-slate-800 text-white border-b border-slate-700 flex items-center justify-between`}>
                         <div className="flex items-center gap-2.5">
@@ -244,9 +232,24 @@ export default function KpiInputPage() {
                             <h2 className="text-sm font-black tracking-tight">全社・部署（基本）</h2>
                             <Badge className="bg-teal-500/20 text-teal-300 border-none text-[9px] px-2 py-0 uppercase tracking-tighter">Main</Badge>
                         </div>
-                        <div className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-widest">
-                            {isLocked ? <><Lock className="w-3 h-3" /> 今月度のみ入力可能</> : <><Unlock className="w-3 h-3 text-teal-400" /> 過去実績の編集モード有効</>}
-                        </div>
+
+                        {/* ロック状態切り替え（アイコンクリックで操作） */}
+                        <button
+                            onClick={() => setIsLocked(!isLocked)}
+                            className="text-[10px] font-bold flex items-center gap-1.5 uppercase tracking-widest hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors group"
+                        >
+                            {isLocked ? (
+                                <>
+                                    <Lock className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-300 transition-colors" />
+                                    <span className="text-slate-400 group-hover:text-slate-300">今月度のみ入力可能</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Unlock className="w-3.5 h-3.5 text-teal-400 animate-pulse" />
+                                    <span className="text-teal-400">過去実績の編集モード有効</span>
+                                </>
+                            )}
+                        </button>
                     </div>
 
                     <div className="overflow-x-auto custom-scrollbar relative">
@@ -262,8 +265,8 @@ export default function KpiInputPage() {
                                     {allMonths.map((m, idx) => (
                                         <th key={m.month}
                                             className={`sticky top-0 z-40 w-[150px] min-w-[150px] border-b border-r border-slate-200 p-2 text-center transition-colors ${idx === 0
-                                                    ? "left-[220px] bg-[#F0FDF4] shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)] z-50 border-r-2 border-slate-200"
-                                                    : "bg-slate-50"
+                                                ? "left-[220px] bg-[#F0FDF4] shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)] z-50 border-r-2 border-slate-200"
+                                                : "bg-slate-50"
                                                 }`}>
                                             <div className="flex flex-col items-center gap-0.5">
                                                 <div className={`text-[12px] font-black tracking-tighter ${idx === 0 ? "text-teal-900" : "text-slate-500"}`}>{m.label}</div>
@@ -302,8 +305,8 @@ export default function KpiInputPage() {
                                             return (
                                                 <td key={m.month}
                                                     className={`p-0 border-r border-slate-200 align-top transition-colors w-[150px] ${idx === 0
-                                                            ? "sticky left-[220px] z-30 bg-[#F0FDF4] group-hover:bg-[#E9FBF0] border-r-2 border-slate-200 shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)]"
-                                                            : "bg-white group-hover:bg-slate-50"
+                                                        ? "sticky left-[220px] z-30 bg-[#F0FDF4] group-hover:bg-[#E9FBF0] border-r-2 border-slate-200 shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)]"
+                                                        : "bg-white group-hover:bg-slate-50"
                                                         }`}>
                                                     <div className="flex flex-col h-full w-full">
                                                         {/* 実績部 */}
