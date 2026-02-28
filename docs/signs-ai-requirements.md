@@ -4,7 +4,7 @@
 **運営:** 株式会社Taion  
 **コンセプト:** 「組織に体温を。」— 数字（KPI）と熱量（現場の声）を融合するAI経営参謀  
 **ターゲット:** SaaS企業（従業員50〜300名規模を初期想定）  
-**最終更新:** 2026-02-18
+**最終更新:** 2026-02-28
 
 ---
 
@@ -22,7 +22,7 @@
 
 | ライブラリ | 用途 |
 |---|---|
-| React (Vite) | UIフレームワーク |
+| Next.js (App Router) | UIフレームワーク・SSR・ルーティング |
 | Tailwind CSS | スタイリング |
 | Framer Motion | アニメーション・トランジション |
 | Recharts | KPIカード内のミニチャート（推移表示） |
@@ -31,9 +31,10 @@
 
 | サービス | 用途 | 費用目安 |
 |---|---|---|
-| Firebase Authentication | Googleログイン認証 | 無料枠内 |
-| Firebase Firestore | テナント情報・ユーザー情報・メタデータ管理 | 無料枠内 |
-| Google Sheets API | KPIデータ・アンケート回答・AI診断結果の読み書き | 無料 |
+| Supabase Auth | Googleログイン認証 | 無料枠内 |
+| Supabase (PostgreSQL) | テナント・ユーザー・業績・体温・AI履歴の統合管理 | 無料枠外（月次スケール可） |
+| pgvector (PostgreSQL) | AI診断履歴・セマンティックレイヤーのベクトル検索（将来拡張） | 無料枠内 |
+| Google Sheets API | KPIデータ・アンケート回答の外部入力インターフェース | 無料 |
 | Google Cloud (サービスアカウント) | Sheets APIへのサーバーサイド認証 | 無料枠内 |
 | Vercel Serverless Functions | API Routes（Sheets操作・AI呼び出しのプロキシ） | 無料枠内 |
 
@@ -51,123 +52,41 @@
 
 ---
 
+## 1-6. 技術選定の背景（Supabaseの採用理由）
+
+Signs AI のプロダクト特性を考慮し、当初の Firebase 案から SQL インフラである **Supabase** へ変更した。
+
+1.  **高度な分析性能**: 「前月比」「部署間偏差」「人件費ROI」など、マルチテナントを跨ぐ複雑な集計クエリを SQL 側で高速かつ正確に実行するため。
+2.  **AI連携の拡張性**: `pgvector` を用いて、過去のAI診断履歴や経営方針をベクトル検索可能にし、AI診断の精度（コンテキスト理解）を向上させるため。
+3.  **データ整合性の担保**: 指標（KPI）と感情（体温）という、性質の異なるデータをリレーショナルに紐付け、時系列での組織変遷を型安全に管理するため。
+
+---
+
 ## 2. マルチテナント設計
 
-### 2-1. テナント = 1企業 = 1スプレッドシート
+### 2-1. テナント = 1企業
 
-```
-Firestore（メタデータ）
-└── tenants/
-    └── {tenant_id}/
-        ├── name: "株式会社〇〇"
-        ├── spreadsheet_id: "1aBcDeFgHiJkLmNoPqRsTuVwXyZ..."
-        ├── created_at: timestamp
-        ├── plan: "trial"
-        └── semantic_markdown: "# 経営方針 v1.0\n..."
-```
+- すべてのデータは **Supabase (PostgreSQL)** に統合管理。`company_id` による行レベルのテナント分離。
+- テナント新規作成時、Supabaseに企業レコードを作成し、必要に応じてGoogle Sheets APIで**テンプレートスプレッドシートを自動コピー**（スプレッドシート入力を利用する場合）。
+- テナント間のデータは `company_id` による完全分離。
 
-- テナント新規作成時、Google Sheets APIで**テンプレートスプレッドシートを自動コピー**し、`spreadsheet_id`をFirestoreに保存
-- 全てのSheets操作は `tenant_id` → `spreadsheet_id` の参照を経由し、テナント間のデータは完全に分離
+### 2-2. データ入力方式（デュアルインプット）
 
-### 2-2. テンプレートスプレッドシート構成
+管理者は以下の2つの方法でデータを入力可能。どちらから入力しても最終的にSupabaseに格納される。
 
-1テナントにつき1つのスプレッドシートを発行。以下の4シートで構成。
-
-| シート名 | 役割 |
-|---|---|
-| `t_kpi_logs` | KPI実績・目標・個別体温の月次ログ |
-| `t_survey_responses` | 匿名アンケートの回答蓄積 |
-| `t_ai_insights` | AI診断結果の出力先 |
-| `m_departments` | 部署マスタ（部署名・人数・部署ID） |
+| 入力方式 | 用途 | 特徴 |
+|---|---|---|
+| Web画面（KPI入力画面） | 通常の月次入力 | リアルタイムバリデーション・UIガイド |
+| Google スプレッドシート | 過去データの一括投入・大量入力 | 馴染みのあるUI・コピペ対応 |
 
 ---
 
-## 3. データモデル（スプレッドシート）
+## 3. データモデル
 
-### 3-1. `t_kpi_logs`（KPI月次ログ）
+データの正本（Single Source of Truth）は **Supabase (PostgreSQL)** です。
+詳細なテーブル定義は [database-schema.md](file:///Users/tsukagoshiyuta/.gemini/antigravity/scratch/signs-ai/docs/database-schema.md) を参照。
 
-縦積み（EAV形式）で管理。KPIの追加・削除にシート構造変更が不要。
-
-| 列名 | 型 | 説明 |
-|---|---|---|
-| year_month | string | `2026/02` |
-| department | string | 部署名 |
-| kpi_name | string | KPI項目名（管理者が自由命名） |
-| actual | number | 実績値 |
-| target | number / 空欄 | 目標値（任意） |
-| pulse_coefficient | number | 個別体温係数（1.2 / 1.0 / 0.5） |
-
-### 3-2. `t_survey_responses`（アンケート回答）
-
-| 列名 | 型 | 説明 |
-|---|---|---|
-| year_month | string | `2026/02` |
-| department | string | 部署名 |
-| q1_excitement | number(1-5) | ワクワク度 |
-| q2_decision_speed | number(1-5) | 意思決定スピード |
-| q3_transparency | number(1-5) | 情報の透明性 |
-| q4_friction | number(1-5) | 無駄な摩擦の少なさ |
-| q5_psychological_safety | number(1-5) | 心理的安全性 |
-| q6_role_clarity | number(1-5) | 役割の明確さ |
-| q7_feedback_frequency | number(1-5) | フィードバック頻度 |
-| q8_workload_health | number(1-5) | リソース健全性 |
-| q9_customer_impact | number(1-5) | 顧客貢献実感 |
-| q10_challenge_room | number(1-5) | 挑戦の余白 |
-| q11_kpi_readiness | number(1-5) | KPI達成への準備度 |
-| bottleneck_tags | string | 選択式（カンマ区切り） |
-| cross_dept_feedback | string | 他部署フィードバック（自由記述） |
-| free_comment | string | 本音コメント（自由記述） |
-| related_kpi | string | 本音コメントが関連するKPI名（プルダウン選択） |
-| submitted_at | timestamp | 回答日時 |
-
-### 3-3. `t_ai_insights`（AI診断結果）
-
-| 列名 | 型 | 説明 |
-|---|---|---|
-| year_month | string | `2026/02` |
-| department | string | 部署名（`全社` も含む） |
-| target_role | string | `Executive` / `Admin` / `Manager` / `Player` |
-| insight_text | string | 140文字以内の診断テキスト |
-| overall_weather | string | `☀️` / `☁️` / `☔️` |
-| trend_arrow | string | `↑` / `↓` / `→` |
-| generated_at | timestamp | 生成日時 |
-
-### 3-4. `m_departments`（部署マスタ）
-
-| 列名 | 型 | 説明 |
-|---|---|---|
-| dept_id | string | 一意の部署ID（URLに使用） |
-| dept_name | string | 部署表示名 |
-| headcount | number | 在籍人数 |
-| updated_at | timestamp | 最終更新日 |
-
----
-
-## 4. Firestore データモデル（メタデータ）
-
-```
-tenants/{tenant_id}
-├── name: string
-├── spreadsheet_id: string
-├── created_at: timestamp
-├── plan: string ("trial" | "paid")
-├── semantic_markdown: string  ← セマンティックレイヤー（Markdown本文）
-├── semantic_updated_at: timestamp
-│
-├── users/{uid}
-│   ├── email: string
-│   ├── display_name: string
-│   ├── role: string ("executive" | "admin" | "manager" | "player")
-│   └── department: string (dept_id参照)
-│
-└── kpi_definitions/{kpi_id}
-    ├── name: string ("商談数", "MRR" など)
-    ├── unit: string ("件", "円", "%" など)
-    ├── target_default: number / null
-    ├── owner_dept: string (dept_id参照。主担当部署)
-    ├── sort_order: number
-    └── created_at: timestamp
-```
+スプレッドシートからの一括インポート時は、Vercel Serverless Functions がシートを読み取り、バリデーション後に Supabase へ書き込みます。
 
 ---
 
@@ -178,8 +97,8 @@ tenants/{tenant_id}
 | 要素 | 仕様 |
 |---|---|
 | コンセプト表示 | 「組織に体温を。」「140文字で会社の体温を可視化する」 |
-| Googleログインボタン | Firebase Auth連携。新規はテナント作成フローへ |
-| 料金表示 | 「月額5万円（トライアル無料）」 |
+| Googleログインボタン | Supabase Auth連携。新規はテナント作成フローへ |
+| 料金表示 | Free / Team（月額3万円）/ Standard（月額5万円）/ Pro（月額10万円〜） |
 | デザイントーン | ホワイト × ミントグリーン × 淡いブルー。Apple的清潔感 |
 
 ### 5-2. 初期設定画面（テナント作成後1回のみ）
@@ -396,7 +315,7 @@ AI診断時に「このKPIの担当部署はこう言っている」としてコ
 Claude APIへ送るプロンプトに以下を全て含める。
 
 ```
-1. セマンティックレイヤー（Markdown本文） ← Firestoreから取得
+1. セマンティックレイヤー（Markdown本文） ← Supabaseから取得
 2. 当月のKPIログ（t_kpi_logs）
 3. 前月のKPIログ（比較用）
 4. 当月のアンケート集計結果（部署別平均・ボトルネック集計・自由記述サマリー）
@@ -439,7 +358,7 @@ Claude APIへ送るプロンプトに以下を全て含める。
 
 ### 9-2. 保存先
 
-Firestoreの `tenants/{tenant_id}/semantic_markdown` フィールド（string型）。
+Supabaseの `semantic_layers` テーブル。`valid_from` / `valid_to` による履歴管理付き。
 
 ### 9-3. 推奨テンプレート
 
@@ -467,8 +386,8 @@ Firestoreの `tenants/{tenant_id}/semantic_markdown` フィールド（string型
 
 - 管理設定画面内にMarkdownテキストエリア（等幅フォント）
 - プレビュー機能（任意。MVP後でも可）
-- 「保存」ボタンで Firestore に即反映
-- 更新日時を `semantic_updated_at` に記録
+- 「保存」ボタンで Supabase に即反映
+- 更新日時を `valid_from` に記録
 
 ---
 
@@ -478,7 +397,7 @@ Firestoreの `tenants/{tenant_id}/semantic_markdown` フィールド（string型
 
 | ロール | 認証 | 閲覧範囲 |
 |---|---|---|
-| Admin（管理者） | Googleログイン（Firebase Auth） | 全画面・全階層の診断を閲覧可能 |
+| Admin（管理者） | Googleログイン（Supabase Auth） | 全画面・全階層の診断を閲覧可能 |
 | アンケート回答者 | 認証なし（URL直接アクセス） | アンケート画面のみ |
 
 ### 10-2. V2以降（予定）
@@ -497,14 +416,14 @@ Firestoreの `tenants/{tenant_id}/semantic_markdown` フィールド（string型
 ### 11-1. テナント初期設定フロー
 
 ```
-管理者がGoogleログイン
+管理者がGoogleログイン（Supabase Auth）
   → 新規ユーザー判定
   → 企業名入力
   → 部署登録（名称・人数、複数追加）
   → KPI定義登録（名称・単位・目標値、最大10個）
   → セマンティックレイヤー入力（Markdown、スキップ可）
-  → [システム] テンプレートスプレッドシートを自動コピー
-  → [システム] m_departments にマスタ書き込み
+  → [システム] Supabaseにテナント情報を作成
+  → [システム] テンプレートスプレッドシートを自動コピー（任意）
   → ダッシュボードへ遷移
 ```
 
@@ -520,22 +439,21 @@ Firestoreの `tenants/{tenant_id}/semantic_markdown` フィールド（string型
 【集計タイミング（管理者が手動実行）】
   5. 管理者: 「集計を実行する」ボタンを押下
   6. [システム] スコアリングロジック実行
-     - t_kpi_logs から当月・前月データ取得
-     - t_survey_responses から当月回答を集計
+     - Supabaseの kpi_records から当月・前月データ取得
+     - survey_responses から当月回答を集計
      - 体温係数・天気・矢印を算出
   7. [システム] Claude APIに診断プロンプト送信
      - セマンティックレイヤー + KPIデータ + アンケート集計 を入力
      - 4階層 × 各部署 + 全社分の診断を生成
-  8. [システム] t_ai_insights に結果を書き込み
-  9. [システム] アンケート回答数をリセット（次月用）
-  10. ダッシュボードに最新の天気・診断・KPIが反映
+  8. [システム] ai_insights テーブルに結果を書き込み
+  9. ダッシュボードに最新の天気・診断・KPIが反映
 ```
 
 ### 11-3. セマンティックレイヤー更新フロー
 
 ```
 管理者: 設定画面でMarkdownを編集・保存
-  → Firestoreの semantic_markdown を上書き
+  → Supabaseの semantic_layers に新バージョンとして保存（旧版は履歴として残る）
   → 次回の「集計を実行する」時にAIが新方針を参照
 ```
 
@@ -575,7 +493,7 @@ Firestoreの `tenants/{tenant_id}/semantic_markdown` フィールド（string型
 
 | フェーズ | 期間 | 内容 |
 |---|---|---|
-| Phase 1 | Week 1-2 | 環境構築・Firebase/Sheets API接続・テナント作成フロー・部署/KPI定義画面 |
+| Phase 1 | Week 1-2 | 環境構築・Supabase/Sheets API接続・テナント作成フロー・部署/KPI定義画面 |
 | Phase 2 | Week 3-4 | ダッシュボードUI・KPI入力画面・スコアリングロジック実装 |
 | Phase 3 | Week 5-6 | アンケート画面（スマホ対応）・回答蓄積・集計ロジック |
 | Phase 4 | Week 7-8 | Claude API連携・140文字診断生成・ダッシュボード統合・デザイン仕上げ |
