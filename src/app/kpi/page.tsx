@@ -50,10 +50,10 @@ export default function KpiInputPage() {
         }
         setUser(authUser);
 
-        // 1. 直近7ヶ月分（今月 + 過去6ヶ月）の月リストを生成
+        // 1. 直近12ヶ月分（今月 + 過去11ヶ月）の月リストを生成
         const months: { month: string, label: string }[] = [];
         const now = new Date();
-        for (let i = 0; i < 7; i++) {
+        for (let i = 0; i < 12; i++) {
             const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const yyyy = d.getFullYear();
             const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -253,7 +253,7 @@ export default function KpiInputPage() {
                     </div>
 
                     <div className="overflow-x-auto custom-scrollbar relative">
-                        <table className="w-full text-left border-collapse table-layout-fixed" style={{ minWidth: "1600px" }}>
+                        <table className="w-full text-left border-collapse table-layout-fixed" style={{ minWidth: "2500px" }}>
                             <thead>
                                 <tr>
                                     {/* 1. KPI Name (Sticky Left 0) - Width: 220px */}
@@ -265,8 +265,8 @@ export default function KpiInputPage() {
                                     {allMonths.map((m, idx) => (
                                         <th key={m.month}
                                             className={`sticky top-0 z-40 w-[200px] min-w-[200px] border-b border-r border-slate-200 p-2 text-center transition-colors ${idx === 0
-                                                    ? "left-[220px] bg-[#F0FDF4] shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)] z-50 border-r-2 border-slate-200"
-                                                    : "bg-slate-50"
+                                                ? "left-[220px] bg-[#F0FDF4] shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)] z-50 border-r-2 border-slate-200"
+                                                : "bg-slate-50"
                                                 }`}>
                                             <div className="flex flex-col items-center gap-0.5">
                                                 <div className={`text-[12px] font-black tracking-tighter ${idx === 0 ? "text-teal-900" : "text-slate-500"}`}>{m.label}</div>
@@ -305,8 +305,8 @@ export default function KpiInputPage() {
                                             return (
                                                 <td key={m.month}
                                                     className={`p-0 border-r border-slate-200 align-top transition-colors w-[200px] min-w-[200px] ${idx === 0
-                                                            ? "sticky left-[220px] z-30 bg-[#F0FDF4] group-hover:bg-[#E9FBF0] border-r-2 border-slate-200 shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)]"
-                                                            : "bg-white group-hover:bg-slate-50"
+                                                        ? "sticky left-[220px] z-30 bg-[#F0FDF4] group-hover:bg-[#E9FBF0] border-r-2 border-slate-200 shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)]"
+                                                        : "bg-white group-hover:bg-slate-50"
                                                         }`}>
                                                     <div className="flex flex-col w-full h-full min-h-[90px]">
                                                         {/* 実績部 (45px) */}
