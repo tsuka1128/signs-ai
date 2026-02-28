@@ -32,6 +32,7 @@ function SurveyFormContent() {
 
     const [questions, setQuestions] = useState<Question[]>([]);
     const [departments, setDepartments] = useState<Department[]>([]);
+    const [resolvedCompanyId, setResolvedCompanyId] = useState<string | null>(null);
 
     const [department, setDepartment] = useState("");
     const [answers, setAnswers] = useState<Record<string, number>>({});
@@ -41,20 +42,51 @@ function SurveyFormContent() {
 
     // 回答状況のチェックとデータ取得
     useEffect(() => {
-        if (!companyId) {
-            setError("会社IDが指定されていません。正しいURLからアクセスしてください。");
-            setLoading(false);
-            return;
-        }
-
         const checkAndFetch = async () => {
-            // 1. 重複回答チェック (LocalStorage)
-            const storageKey = `signs_ai_answered_${companyId}_2026_02`;
-            if (localStorage.getItem(storageKey) === "true") {
-                setHasAnswered(true);
-            }
+            setLoading(true);
+            setError(null);
+
+            let effectiveCompanyId = companyId;
 
             try {
+                // 1. URLパラメータにない場合、ログインユーザーから取得を試みる
+                if (!effectiveCompanyId) {
+                    const { data: { user: authUser } } = await supabase.auth.getUser();
+                    if (authUser) {
+                        const { data: userData } = await supabase
+                            .from('users')
+                            .select('company_id')
+                            .eq('id', authUser.id)
+                            .single();
+                        if (userData?.company_id) {
+                            effectiveCompanyId = userData.company_id;
+                        }
+                    }
+                }
+
+                // 2. それでもない場合（デモ用フォールバック）、DB内の最初の企業を取得
+                if (!effectiveCompanyId) {
+                    const { data: companies } = await supabase
+                        .from('companies')
+                        .select('id')
+                        .limit(1);
+                    if (companies && companies.length > 0) {
+                        effectiveCompanyId = companies[0].id;
+                    }
+                }
+
+                if (!effectiveCompanyId) {
+                    setError("対象の企業を特定できませんでした。正しいリンクからアクセスしてください。");
+                    setLoading(false);
+                    return;
+                }
+
+                // 1. 重複回答チェック (LocalStorage)
+                const storageKey = `signs_ai_answered_${effectiveCompanyId}_2026_02`;
+                if (localStorage.getItem(storageKey) === "true") {
+                    setHasAnswered(true);
+                }
+
                 // 2. 設問取得
                 const { data: qData, error: qErr } = await supabase
                     .from('survey_questions')
@@ -68,10 +100,11 @@ function SurveyFormContent() {
                 const { data: dData, error: dErr } = await supabase
                     .from('departments')
                     .select('id, name')
-                    .eq('company_id', companyId);
+                    .eq('company_id', effectiveCompanyId);
 
                 if (dErr) throw dErr;
                 setDepartments(dData || []);
+                setResolvedCompanyId(effectiveCompanyId);
 
                 if (!dData || dData.length === 0) {
                     setError("該当する企業の部署情報が見つかりません。");
@@ -85,7 +118,7 @@ function SurveyFormContent() {
         };
 
         checkAndFetch();
-    }, [companyId]);
+    }, [companyId, supabase]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -112,7 +145,7 @@ function SurveyFormContent() {
             const { data: response, error: rErr } = await supabase
                 .from('survey_responses')
                 .insert({
-                    company_id: companyId,
+                    company_id: resolvedCompanyId,
                     department_id: department,
                     recorded_month: currentMonth,
                     free_comment: freeComment,
@@ -137,7 +170,9 @@ function SurveyFormContent() {
             if (aErr) throw aErr;
 
             // 3. 成功処理
-            localStorage.setItem(`signs_ai_answered_${companyId}_2026_02`, "true");
+            if (resolvedCompanyId) {
+                localStorage.setItem(`signs_ai_answered_${resolvedCompanyId}_2026_02`, "true");
+            }
             setHasAnswered(true);
             window.scrollTo(0, 0);
         } catch (err: any) {
@@ -149,7 +184,9 @@ function SurveyFormContent() {
     };
 
     const resetDemo = () => {
-        localStorage.removeItem(`signs_ai_answered_${companyId}_2026_02`);
+        if (resolvedCompanyId) {
+            localStorage.removeItem(`signs_ai_answered_${resolvedCompanyId}_2026_02`);
+        }
         setHasAnswered(false);
         setAnswers({});
         setKpiImprovement("");
