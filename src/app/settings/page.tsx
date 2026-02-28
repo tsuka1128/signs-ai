@@ -198,31 +198,33 @@ export default function SettingsPage() {
 
     function handleDeptChange(targetKpi: any, newDeptId: string | null) {
         const oldDeptId = targetKpi.owner_dept_id;
+        const targetId = targetKpi.id;
 
         setKpis(prev => {
-            // 1. まず全データの部署を更新した一時的なリストを作る
-            let next = prev.map(k => k.id === targetKpi.id ? { ...k, owner_dept_id: newDeptId } : k);
+            // 1. 部署を更新
+            let next = prev.map(k => k.id === targetId ? { ...k, owner_dept_id: newDeptId } : k);
 
-            // 2. 移動先 (newDeptId) での代表重複チェック
-            // もし移動先グループに既に代表がいるなら、移動してきたKPIのスターは外す
-            const hasMainInNewDept = next.some(k => k.id !== targetKpi.id && k.owner_dept_id === newDeptId && k.is_main);
-            if (hasMainInNewDept && targetKpi.is_main) {
-                next = next.map(k => k.id === targetKpi.id ? { ...k, is_main: false } : k);
+            // 2. 移動先 (newDeptId) の整合性をとる
+            // 移動先グループを取得
+            const inNewDept = next.filter(k => k.owner_dept_id === newDeptId);
+            const mainsInNew = inNewDept.filter(k => k.is_main);
+
+            if (mainsInNew.length > 1) {
+                // 重複が発生した場合。
+                // もともと移動先で代表だったものを優先し、移動してきた自分を解除する
+                next = next.map(k => (k.id === targetId && k.is_main) ? { ...k, is_main: false } : k);
+            } else if (inNewDept.length > 0 && mainsInNew.length === 0) {
+                // 移動先で代表が不在になった場合（新規作成直後の部署など）
+                next = next.map(k => k.id === inNewDept[0].id ? { ...k, is_main: true } : k);
             }
 
-            // 3. 移動元 (oldDeptId) での代表不在チェック
-            // もし移動元にKPIが残っているのに代表がいなくなったなら、最初の1つを代表にする
-            const remainingInOld = next.filter(k => k.owner_dept_id === oldDeptId);
-            const hasMainInOld = remainingInOld.some(k => k.is_main);
-            if (remainingInOld.length > 0 && !hasMainInOld) {
-                const firstId = remainingInOld[0].id;
-                next = next.map(k => k.id === firstId ? { ...k, is_main: true } : k);
-            }
+            // 3. 移動元 (oldDeptId) の整合性をとる
+            const inOldDept = next.filter(k => k.owner_dept_id === oldDeptId);
+            const mainsInOld = inOldDept.filter(k => k.is_main);
 
-            // 4. 移動先で代表が一人もいなくなった場合（新規部署への移動など）の補填
-            const inNew = next.filter(k => k.owner_dept_id === newDeptId);
-            if (inNew.length > 0 && !inNew.some(k => k.is_main)) {
-                next = next.map(k => k.id === inNew[0].id ? { ...k, is_main: true } : k);
+            if (inOldDept.length > 0 && mainsInOld.length === 0) {
+                // 移動元で代表がいなくなったので、残った最初のKPIを代表にする
+                next = next.map(k => k.id === inOldDept[0].id ? { ...k, is_main: true } : k);
             }
 
             return next;
