@@ -47,7 +47,7 @@ export default function SettingsPage() {
         if (deptData) setDepts(deptData);
 
         const { data: kpiData } = await supabase.from('kpi_definitions').select('*').eq('company_id', compRef.company_id).order('sort_order', { ascending: true });
-        if (kpiData) setKpis(kpiData);
+        if (kpiData) setKpis(kpiData.map(k => ({ ...k, is_main: !!k.is_main })));
 
         setLoading(false);
     }
@@ -112,7 +112,18 @@ export default function SettingsPage() {
                 owner_dept_id: kpi.owner_dept_id || null,
                 is_main: kpi.is_main || false
             }).eq('id', kpi.id);
-            if (!error) alert("KPI設定を更新しました");
+            if (!error) {
+                // 代表KPIとして保存された場合、同一部署の他のKPIは代表から外す
+                if (kpi.is_main && kpi.owner_dept_id) {
+                    await supabase.from('kpi_definitions')
+                        .update({ is_main: false })
+                        .eq('company_id', company.id)
+                        .eq('owner_dept_id', kpi.owner_dept_id)
+                        .neq('id', kpi.id);
+                }
+                alert("KPI設定を更新しました");
+                loadData(); // 状態を再同期
+            }
             else alert("更新に失敗しました");
         }
     }
@@ -130,6 +141,20 @@ export default function SettingsPage() {
 
     function handleAddKpi() {
         setKpis([...kpis, { id: `new_${Date.now()}`, name: "", unit: "", target_default: null, owner_dept_id: null, is_main: false, company_id: company?.id }]);
+    }
+
+    function handleToggleMainKpi(targetKpi: any) {
+        setKpis(kpis.map(k => {
+            // 同じ部署の他のKPIの代表フラグを折る
+            if (k.owner_dept_id === targetKpi.owner_dept_id && k.id !== targetKpi.id) {
+                return { ...k, is_main: false };
+            }
+            // ターゲット自身をトグル
+            if (k.id === targetKpi.id) {
+                return { ...k, is_main: !k.is_main };
+            }
+            return k;
+        }));
     }
 
     return (
@@ -310,7 +335,7 @@ export default function SettingsPage() {
                                                 <div className="sm:col-span-3">
                                                     <label className="block text-[10px] font-bold text-slate-400 mb-1 ml-1 uppercase">代表設定</label>
                                                     <button
-                                                        onClick={() => setKpis(kpis.map(k => k.id === kpi.id ? { ...k, is_main: !k.is_main } : k))}
+                                                        onClick={() => handleToggleMainKpi(kpi)}
                                                         className={cn(
                                                             "w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all font-bold text-xs",
                                                             kpi.is_main
