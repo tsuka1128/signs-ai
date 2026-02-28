@@ -256,12 +256,12 @@ export default function KpiInputPage() {
                         <table className="w-full text-left border-collapse table-layout-fixed" style={{ minWidth: "1600px" }}>
                             <thead>
                                 <tr>
-                                    {/* 1. KPI Name (Sticky Left 0) - Width: 220px (デモ版比率) */}
+                                    {/* 1. KPI Name (Sticky Left 0) - Width: 220px */}
                                     <th className="sticky left-0 top-0 z-40 w-[220px] min-w-[220px] bg-white border-b border-r border-slate-200 p-3 shadow-[2px_0_12px_-4px_rgba(0,0,0,0.05)] text-center">
                                         <span className="text-[9px] font-black text-slate-400 tracking-widest uppercase">項目名 / 部署</span>
                                     </th>
 
-                                    {/* All Months as headers - Width 200px for PC */}
+                                    {/* All Months as headers - PC 200px */}
                                     {allMonths.map((m, idx) => (
                                         <th key={m.month}
                                             className={`sticky top-0 z-40 w-[200px] min-w-[200px] border-b border-r border-slate-200 p-2 text-center transition-colors ${idx === 0
@@ -291,12 +291,12 @@ export default function KpiInputPage() {
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <span className="text-[10px] text-slate-400 font-bold pr-2">{kpi.unit}</span>
+                                                    <span className="text-[10px] text-slate-400 font-bold pr-1.5">{kpi.unit}</span>
                                                 </div>
                                             </div>
                                         </td>
 
-                                        {/* All Months data cells */}
+                                        {/* All Months data cells - PC 200px */}
                                         {allMonths.map((m, idx) => {
                                             const key = `${m.month}_${kpi.id}`;
                                             const editData = editValues[key] || { value: "", target: "" };
@@ -304,16 +304,16 @@ export default function KpiInputPage() {
 
                                             return (
                                                 <td key={m.month}
-                                                    className={`p-0 border-r border-slate-200 align-top transition-colors w-[200px] ${idx === 0
+                                                    className={`p-0 border-r border-slate-200 align-top transition-colors w-[200px] min-w-[200px] ${idx === 0
                                                             ? "sticky left-[220px] z-30 bg-[#F0FDF4] group-hover:bg-[#E9FBF0] border-r-2 border-slate-200 shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)]"
                                                             : "bg-white group-hover:bg-slate-50"
                                                         }`}>
-                                                    <div className="grid grid-rows-2 w-full min-h-[90px]">
-                                                        {/* 実績部 (Gridの1行目) */}
-                                                        <div className={`flex items-center justify-between px-4 border-b h-full ${idx === 0 ? "border-white" : "border-slate-100"}`}>
+                                                    <div className="flex flex-col w-full h-full min-h-[90px]">
+                                                        {/* 実績部 (45px) */}
+                                                        <div className={`h-[45px] flex items-center justify-between px-4 border-b ${idx === 0 ? "border-white" : "border-slate-100"}`}>
                                                             <span className={`text-[9px] font-black shrink-0 ${idx === 0 ? "text-teal-700" : "text-slate-400"}`}>実績</span>
                                                             {!canEdit ? (
-                                                                <span className={`text-[14px] font-black truncate w-full text-right ${idx === 0 ? "text-teal-900" : "text-slate-700"}`}>
+                                                                <span className={`text-[14px] font-black text-right w-full ${idx === 0 ? "text-teal-900" : "text-slate-700"}`}>
                                                                     {editData.value ? editData.value : "-"}
                                                                 </span>
                                                             ) : (
@@ -326,11 +326,11 @@ export default function KpiInputPage() {
                                                                 />
                                                             )}
                                                         </div>
-                                                        {/* 目標部 (Gridの2行目) */}
-                                                        <div className="flex items-center justify-between px-4 h-full">
+                                                        {/* 目標部 (45px) */}
+                                                        <div className="h-[45px] flex items-center justify-between px-4">
                                                             <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter shrink-0">目標</span>
                                                             {!canEdit ? (
-                                                                <span className="text-[11px] font-bold text-slate-400 truncate w-full text-right">
+                                                                <span className="text-[11px] font-bold text-slate-400 text-right w-full">
                                                                     {editData.target ? editData.target : "-"}
                                                                 </span>
                                                             ) : (
