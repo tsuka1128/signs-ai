@@ -8,15 +8,13 @@
 CREATE POLICY "users_can_insert_own_profile" ON users
   FOR INSERT WITH CHECK (auth.uid() = id);
 
--- 2. companies テーブルの INSERT を許可
--- (まだ会社に所属していないユーザーが、新しい会社を作成できるようにする)
--- USING (true) ではなく WITH CHECK (true) を明示
+-- 2. 企業の新規登録・参照を許可
+-- (insertした直後に、まだ所属していない状態でもIDを取得できるように SELECT 権限を緩和)
 DROP POLICY IF EXISTS "users_own_company" ON companies;
+DROP POLICY IF EXISTS "users_own_company_select" ON companies;
 
 CREATE POLICY "users_own_company_select" ON companies
-  FOR SELECT USING (
-    id IN (SELECT company_id FROM users WHERE id = auth.uid())
-  );
+  FOR SELECT USING (auth.uid() IS NOT NULL);
 
 CREATE POLICY "users_own_company_insert" ON companies
   FOR INSERT WITH CHECK (true);
