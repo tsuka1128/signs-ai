@@ -44,8 +44,10 @@ export default function SettingsPage() {
             return;
         }
 
-        const { data: compRef } = await supabase.from('users').select('company_id').eq('id', user.id).single();
-        if (!compRef?.company_id) {
+        const { data: compRef, error: uErr } = await supabase.from('users').select('company_id').eq('id', user.id).single();
+        if (uErr || !compRef?.company_id) {
+            console.error("User or Company not found:", uErr);
+            setCompany({ error: "ユーザー情報または所属企業が見つかりませんでした。再度オンボーディングを行ってください。" });
             setLoading(false);
             return;
         }
@@ -353,6 +355,11 @@ export default function SettingsPage() {
                     </div>
                 ) : (
                     <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm transition-all duration-300">
+                        {company?.error && (
+                            <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl text-rose-600 text-sm font-bold animate-in slide-in-from-top-2">
+                                ⚠️ {company.error}
+                            </div>
+                        )}
 
                         {/* 企業情報 */}
                         {activeTab === "company" && company && (

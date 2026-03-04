@@ -210,54 +210,57 @@ export default function KpiInputPage() {
         }
         setAllMonths(months);
 
-        const { data: userData } = await supabase.from('users').select('company_id').eq('id', authUser.id).single();
-        if (userData?.company_id) {
-            // 企業設定（第2軸名称）取得
-            const { data: companyData } = await supabase.from('companies').select('kpi_secondary_axis_name').eq('id', userData.company_id).single();
-            if (companyData) setSecondaryAxisName(companyData.kpi_secondary_axis_name || "第2軸");
+        const { data: userData, error: uErr } = await supabase.from('users').select('company_id').eq('id', authUser.id).single();
+        if (uErr || !userData?.company_id) {
+            console.error("User company not found:", uErr);
+            setLoading(false);
+            return;
+        }
+        // 企業設定（第2軸名称）取得
+        const { data: companyData } = await supabase.from('companies').select('kpi_secondary_axis_name').eq('id', userData.company_id).single();
+        if (companyData) setSecondaryAxisName(companyData.kpi_secondary_axis_name || "第2軸");
 
-            // 第2軸項目取得
-            const { data: axisData } = await supabase.from('kpi_axes').select('*').eq('company_id', userData.company_id).order('sort_order', { ascending: true });
-            setAxes(axisData || []);
+        // 第2軸項目取得
+        const { data: axisData } = await supabase.from('kpi_axes').select('*').eq('company_id', userData.company_id).order('sort_order', { ascending: true });
+        setAxes(axisData || []);
 
-            // KPI定義取得
-            const { data: kpis } = await supabase.from('kpi_definitions').select('id, name, unit, owner_dept_id, departments(name)').eq('company_id', userData.company_id).order('sort_order', { ascending: true });
-            const formattedKpis = (kpis || []).map((k: any) => ({
-                id: k.id,
-                name: k.name,
-                unit: k.unit,
-                owner_dept_id: k.owner_dept_id,
-                owner_dept_name: k.departments?.name || "未設定"
-            }));
-            setKpiDefinitions(formattedKpis);
+        // KPI定義取得
+        const { data: kpis } = await supabase.from('kpi_definitions').select('id, name, unit, owner_dept_id, departments(name)').eq('company_id', userData.company_id).order('sort_order', { ascending: true });
+        const formattedKpis = (kpis || []).map((k: any) => ({
+            id: k.id,
+            name: k.name,
+            unit: k.unit,
+            owner_dept_id: k.owner_dept_id,
+            owner_dept_name: k.departments?.name || "未設定"
+        }));
+        setKpiDefinitions(formattedKpis);
 
-            // 実績値取得
-            const monthList = months.map(m => m.month);
-            const { data: recs } = await supabase.from('kpi_records').select('*').in('recorded_month', monthList).in('kpi_definition_id', formattedKpis.map(k => k.id));
+        // 実績値取得
+        const monthList = months.map(m => m.month);
+        const { data: recs } = await supabase.from('kpi_records').select('*').in('recorded_month', monthList).in('kpi_definition_id', formattedKpis.map(k => k.id));
 
-            const initialEditValues: Record<string, { value: string, target: string }> = {};
+        const initialEditValues: Record<string, { value: string, target: string }> = {};
 
-            // 全ての組み合わせを初期化 (基本軸)
-            formattedKpis.forEach(kpi => {
-                monthList.forEach(month => {
-                    initialEditValues[`${month}_${kpi.id}_main`] = { value: "", target: "" };
-                    // 第2軸分も初期化
-                    (axisData || []).forEach(axis => {
-                        initialEditValues[`${month}_${kpi.id}_${axis.id}`] = { value: "", target: "" };
-                    });
+        // 全ての組み合わせを初期化 (基本軸)
+        formattedKpis.forEach(kpi => {
+            monthList.forEach(month => {
+                initialEditValues[`${month}_${kpi.id}_main`] = { value: "", target: "" };
+                // 第2軸分も初期化
+                (axisData || []).forEach(axis => {
+                    initialEditValues[`${month}_${kpi.id}_${axis.id}`] = { value: "", target: "" };
                 });
             });
+        });
 
-            // 既存データで上書き
-            recs?.forEach(r => {
-                const axisKey = r.axis_id || 'main';
-                initialEditValues[`${r.recorded_month}_${r.kpi_definition_id}_${axisKey}`] = {
-                    value: String(r.value),
-                    target: r.target_value !== null ? String(r.target_value) : ""
-                };
-            });
-            setEditValues(initialEditValues);
-        }
+        // 既存データで上書き
+        recs?.forEach(r => {
+            const axisKey = r.axis_id || 'main';
+            initialEditValues[`${r.recorded_month}_${r.kpi_definition_id}_${axisKey}`] = {
+                value: String(r.value),
+                target: r.target_value !== null ? String(r.target_value) : ""
+            };
+        });
+        setEditValues(initialEditValues);
         setLoading(false);
     };
 
