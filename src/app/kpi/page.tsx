@@ -142,7 +142,7 @@ function KpiTable({ title, axisId, isMain, kpiDefinitions, allMonths, editValues
                                                 <div className="h-[45px] flex items-center justify-between px-4">
                                                     <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter shrink-0">目標</span>
                                                     {!canEdit ? (
-                                                        <span className="text-[11px] font-bold text-slate-400 text-right w-full">
+                                                        <span className="text-[14px] font-black text-slate-400 text-right w-full">
                                                             {editData.target ? editData.target : "-"}
                                                         </span>
                                                     ) : (
@@ -151,7 +151,7 @@ function KpiTable({ title, axisId, isMain, kpiDefinitions, allMonths, editValues
                                                             value={editData.target}
                                                             onChange={(e) => onInputChange(m.month, kpi.id, axisId, 'target', e.target.value)}
                                                             placeholder="---"
-                                                            className="w-full text-right text-[11px] font-bold outline-none bg-transparent placeholder-slate-200 text-slate-400"
+                                                            className="w-full text-right text-[14px] font-black outline-none bg-transparent placeholder-slate-200 text-slate-400"
                                                         />
                                                     )}
                                                 </div>
