@@ -334,7 +334,7 @@ export default function DashboardPage() {
         const monthAnswers = deptResponses
           .filter(r => r.recorded_month === month)
           .flatMap(r => r.survey_answers || []);
-        if (monthAnswers.length === 0) return pulseScore * (0.8 + Math.random() * 0.4); // データなければランダム気味
+        if (monthAnswers.length === 0) return 0; // データなければ 0
         return monthAnswers.reduce((sum, a) => sum + a.score, 0) / monthAnswers.length;
       });
 
@@ -392,12 +392,12 @@ export default function DashboardPage() {
         const monthAnswers = axisResponses
           .filter(r => r.recorded_month === month)
           .flatMap(r => r.survey_answers || []);
-        if (monthAnswers.length === 0) return pulseScore * (0.8 + Math.random() * 0.4);
+        if (monthAnswers.length === 0) return 0; // データなければ 0
         return monthAnswers.reduce((sum, a) => sum + a.score, 0) / monthAnswers.length;
       });
 
       return {
-        ...axis,
+        ...(axis as any),
         id: axis.id,
         name: axis.name,
         head: dummyProd.head, // リソース量はまだモック
@@ -409,7 +409,7 @@ export default function DashboardPage() {
         weather: pulseScore >= 4.0 ? "sun" : pulseScore >= 3.0 ? "cloud" : "rain",
         arrow: "flat",
         kpis: dummyProd.kpis
-      } as any;
+      };
     });
   }, [realAxes, realResponses, last6Months]);
 

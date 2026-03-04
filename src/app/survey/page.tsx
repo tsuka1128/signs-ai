@@ -67,28 +67,62 @@ export default function SurveyDashboard() {
         return [...base, ...deptTabs, ...axisTabs];
     }, [depts, axes]);
 
+    const last6Months = useMemo(() => {
+        const dates = [];
+        const now = new Date();
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            dates.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`);
+        }
+        return dates;
+    }, []);
+
     const currentData = useMemo(() => {
         let filtered = allResponses;
+        let viewName = "全社";
+
         if (view.startsWith("dept_")) {
             const deptId = view.replace("dept_", "");
+            const dept = depts.find(d => d.id === deptId);
+            viewName = dept ? `${dept.name}` : "不明な部署";
             filtered = allResponses.filter(r => r.department_id === deptId);
         } else if (view.startsWith("axis_")) {
             const axisId = view.replace("axis_", "");
+            const axis = axes.find(a => a.id === axisId);
+            viewName = axis ? `${axis.name}` : "不明な軸項目";
             filtered = allResponses.filter(r => r.axis_id === axisId);
         }
 
         const qScores = questions.map(q => {
-            const answers = filtered.flatMap(r => r.survey_answers || []).filter(a => a.question_id === q.id);
+            // 当月（最後の一ヶ月）のスコアを表示
+            const latestMonth = last6Months[last6Months.length - 1];
+            const answers = filtered
+                .filter(r => r.recorded_month === latestMonth)
+                .flatMap(r => r.survey_answers || [])
+                .filter(a => a.question_id === q.id);
             if (answers.length === 0) return 0;
             return answers.reduce((sum, a) => sum + a.score, 0) / answers.length;
         });
 
         const avgPulse = qScores.length > 0 ? qScores.reduce((a, b) => a + b, 0) / qScores.length : 0;
 
-        // 簡易AIコメント生成（スコアに基づいた動的生成）
+        // 過去6ヶ月の推移を計算
+        const pulseHistory = last6Months.map(month => {
+            const monthFiltered = filtered.filter(r => r.recorded_month === month);
+            if (monthFiltered.length === 0) return 0;
+            const monthScores = questions.map(q => {
+                const answers = monthFiltered.flatMap(r => r.survey_answers || []).filter(a => a.question_id === q.id);
+                if (answers.length === 0) return 0;
+                return answers.reduce((sum, a) => sum + a.score, 0) / answers.length;
+            });
+            const validScores = monthScores.filter(s => s > 0);
+            return validScores.length > 0 ? validScores.reduce((a, b) => a + b, 0) / validScores.length : 0;
+        });
+
+        // 簡易AIコメント生成
         let comment = "回答データがまだ蓄積されていません。現場の声を集めることから始めましょう。";
         if (filtered.length > 0) {
-            const lowScoreQ = qScores.map((s, i) => ({ s, i })).filter(x => x.s < 3.0).sort((a, b) => a.s - b.s)[0];
+            const lowScoreQ = qScores.map((s, i) => ({ s, i })).filter(x => x.s > 0 && x.s < 3.0).sort((a, b) => a.s - b.s)[0];
             if (lowScoreQ) {
                 comment = `${questions[lowScoreQ.i].text} のスコアが低迷しています。現場では心理的安全性やリソースの不足を感じている可能性があります。早急なヒアリングを推奨します。`;
             } else {
@@ -97,12 +131,20 @@ export default function SurveyDashboard() {
         }
 
         return {
+            viewName,
             scores: qScores,
             pulse: avgPulse,
-            pulseHistory: [avgPulse * 0.9, avgPulse * 0.95, avgPulse * 1.05, avgPulse * 0.98, avgPulse * 1.02, avgPulse], // モック推移
+            pulseHistory: pulseHistory,
             aiComment: comment
         };
-    }, [view, allResponses]);
+    }, [view, allResponses, last6Months, depts, axes]);
+
+    const monthLabels = useMemo(() => {
+        return last6Months.map(m => {
+            const mm = m.split("-")[1];
+            return `${parseInt(mm)}月`;
+        });
+    }, [last6Months]);
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20 font-sans">
@@ -161,7 +203,7 @@ export default function SurveyDashboard() {
                     <div className="h-40 w-full pt-4">
                         <DetailLineChart
                             data={currentData.pulseHistory}
-                            labels={["9月", "10月", "11月", "12月", "1月", "2月"]}
+                            labels={monthLabels}
                             color={currentData.pulse >= 3.5 ? "#10B981" : currentData.pulse >= 2.5 ? "#F59E0B" : "#EF4444"}
                             height={140}
                         />
@@ -176,7 +218,7 @@ export default function SurveyDashboard() {
                             <div className="w-10 h-10 rounded-2xl bg-teal/10 flex items-center justify-center text-xl shadow-inner shadow-teal/5">🧠</div>
                             <div>
                                 <h3 className="text-sm font-bold text-slate-800">AI組織分析レポート</h3>
-                                <p className="text-[10px] text-teal font-black uppercase tracking-widest">{view === "all" ? "Whole Company" : `${view.toUpperCase()} DEPARTMENT`}</p>
+                                <p className="text-[10px] text-teal font-black uppercase tracking-widest">{currentData.viewName}</p>
                             </div>
                         </div>
                         <div className="bg-slate-50/50 rounded-2xl p-5 border border-slate-50">

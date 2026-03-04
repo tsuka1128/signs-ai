@@ -14,18 +14,24 @@ export function DetailLineChart({ data, labels, color = "#10B981", height = 120 
     const chartWidth = width - padding.left - padding.right;
     const chartHeight = height - padding.top - padding.bottom;
 
-    const min = data.length > 0 ? Math.min(...data) : 0;
-    const max = data.length > 0 ? Math.max(...data) : 5;
+    // 有効なデータ（> 0）のインデックスと値のみを抽出
+    const validData = data.map((v, i) => ({ v, i })).filter(d => d.v > 0);
+
+    const min = validData.length > 0 ? Math.min(...validData.map(d => d.v)) : 0;
+    const max = validData.length > 0 ? Math.max(...validData.map(d => d.v)) : 5;
     const range = max - min || 1; // 0除算防止
 
-    const points = data.map((v, i) => {
-        const x = padding.left + (data.length > 1 ? (i / (data.length - 1)) * chartWidth : 0.5 * chartWidth);
-        const y = padding.top + chartHeight - ((v - min) / range) * chartHeight;
+    const points = validData.map((d) => {
+        // X座標は元のインデックス (0~5) に基づいて配置（月がずれないようにする）
+        const x = padding.left + (data.length > 1 ? (d.i / (data.length - 1)) * chartWidth : 0.5 * chartWidth);
+        const y = padding.top + chartHeight - ((d.v - min) / range) * chartHeight;
         return { x, y };
     });
 
     const pathData = points.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(" ");
-    const areaData = `${pathData} L ${points[points.length - 1].x} ${padding.top + chartHeight} L ${points[0].x} ${padding.top + chartHeight} Z`;
+    const areaData = points.length > 0
+        ? `${pathData} L ${points[points.length - 1].x} ${padding.top + chartHeight} L ${points[0].x} ${padding.top + chartHeight} Z`
+        : "";
 
     return (
         <div className="w-full">
