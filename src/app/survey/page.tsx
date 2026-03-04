@@ -100,30 +100,37 @@ export default function SurveyDashboard() {
             filtered = allResponses.filter(r => r.axis_id === axisId);
         }
 
-        const qScores = questions.map(q => {
-            // 当月（最後の一ヶ月）のスコアを表示
-            const latestMonth = last6Months[last6Months.length - 1];
-            const answers = filtered
+        const latestMonth = last6Months[last6Months.length - 1];
+        const latestAnswers = filtered
+            .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
+            .flatMap(r => r.survey_answers || []);
+
+        // 設問ごとのスコアを order 順で取得（UUIDベースの question_id での絞り込みを廃止）
+        // 1回答あたり11設問分の answers が並んでいる前提で、インデックス別に集計
+        const qScores = questions.map((_, qi) => {
+            // 各回答レコードから qi 番目のスコアを取得（sort_order順に保存されている想定）
+            const scoresForQ: number[] = [];
+            filtered
                 .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
-                .flatMap(r => r.survey_answers || [])
-                .filter(a => a.question_id === q.id);
-            if (answers.length === 0) return 0;
-            return answers.reduce((sum, a) => sum + a.score, 0) / answers.length;
+                .forEach(r => {
+                    const ans = r.survey_answers || [];
+                    if (ans[qi]) scoresForQ.push(ans[qi].score);
+                });
+            if (scoresForQ.length === 0) return 0;
+            return scoresForQ.reduce((sum: number, s: number) => sum + s, 0) / scoresForQ.length;
         });
 
-        const avgPulse = qScores.length > 0 ? qScores.reduce((a, b) => a + b, 0) / qScores.length : 0;
+        const avgPulse = latestAnswers.length > 0
+            ? latestAnswers.reduce((sum: number, a: any) => sum + a.score, 0) / latestAnswers.length
+            : 0;
 
         // 過去6ヶ月の推移を計算
         const pulseHistory = last6Months.map(month => {
-            const monthFiltered = filtered.filter(r => normalizeMonth(r.recorded_month) === month);
-            if (monthFiltered.length === 0) return 0;
-            const monthScores = questions.map(q => {
-                const answers = monthFiltered.flatMap(r => r.survey_answers || []).filter(a => a.question_id === q.id);
-                if (answers.length === 0) return 0;
-                return answers.reduce((sum, a) => sum + a.score, 0) / answers.length;
-            });
-            const validScores = monthScores.filter(s => s > 0);
-            return validScores.length > 0 ? validScores.reduce((a, b) => a + b, 0) / validScores.length : 0;
+            const monthAnswers = filtered
+                .filter(r => normalizeMonth(r.recorded_month) === month)
+                .flatMap(r => r.survey_answers || []);
+            if (monthAnswers.length === 0) return 0;
+            return monthAnswers.reduce((sum: number, a: any) => sum + a.score, 0) / monthAnswers.length;
         });
 
         // 簡易AIコメント生成

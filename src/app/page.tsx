@@ -284,27 +284,33 @@ export default function DashboardPage() {
     }
 
     const latestMonth = last6Months[5];
-    const qScores = questions.map(q => {
-      const answers = filtered
+    const latestAnswers = filtered
+      .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
+      .flatMap(r => r.survey_answers || []);
+
+    // question_id の UUID vs 整数不一致を回避するため、インデックスベースで設問別スコアを集計
+    const qScores = questions.map((_, qi) => {
+      const scoresForQ: number[] = [];
+      filtered
         .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
-        .flatMap(r => r.survey_answers || [])
-        .filter(a => a.question_id === q.id);
-      if (answers.length === 0) return 0;
-      return answers.reduce((sum, a) => sum + a.score, 0) / answers.length;
+        .forEach(r => {
+          const ans = r.survey_answers || [];
+          if (ans[qi]) scoresForQ.push(ans[qi].score);
+        });
+      if (scoresForQ.length === 0) return 0;
+      return scoresForQ.reduce((sum: number, s: number) => sum + s, 0) / scoresForQ.length;
     });
 
-    const avgPulse = qScores.length > 0 ? qScores.reduce((a, b) => a + b, 0) / qScores.length : 0;
+    const avgPulse = latestAnswers.length > 0
+      ? latestAnswers.reduce((sum: number, a: any) => sum + a.score, 0) / latestAnswers.length
+      : 0;
 
     const pulseHistory = last6Months.map(month => {
       const monthAnswers = filtered
         .filter(r => normalizeMonth(r.recorded_month) === month)
         .flatMap(r => r.survey_answers || []);
       if (monthAnswers.length === 0) return 0;
-      const scores = questions.map(q => {
-        const answers = monthAnswers.filter(a => a.question_id === q.id);
-        return answers.length > 0 ? answers.reduce((sum, a) => sum + a.score, 0) / answers.length : 0;
-      }).filter(s => s > 0);
-      return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+      return monthAnswers.reduce((sum: number, a: any) => sum + a.score, 0) / monthAnswers.length;
     });
 
     let comment = "回答データが蓄積されていません。";
