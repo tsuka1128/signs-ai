@@ -21,6 +21,11 @@ interface Department {
     name: string;
 }
 
+interface Axis {
+    id: string;
+    name: string;
+}
+
 function SurveyFormContent() {
     const searchParams = useSearchParams();
     const companyId = searchParams.get("company_id");
@@ -32,9 +37,12 @@ function SurveyFormContent() {
 
     const [questions, setQuestions] = useState<Question[]>([]);
     const [departments, setDepartments] = useState<Department[]>([]);
+    const [axes, setAxes] = useState<Axis[]>([]);
+    const [secondaryAxisName, setSecondaryAxisName] = useState("第2軸");
     const [resolvedCompanyId, setResolvedCompanyId] = useState<string | null>(null);
 
     const [department, setDepartment] = useState("");
+    const [axisId, setAxisId] = useState("");
     const [answers, setAnswers] = useState<Record<string, number>>({});
     const [kpiImprovement, setKpiImprovement] = useState("");
     const [freeComment, setFreeComment] = useState("");
@@ -106,6 +114,13 @@ function SurveyFormContent() {
                 setDepartments(dData || []);
                 setResolvedCompanyId(effectiveCompanyId);
 
+                // 4. 第2軸情報取得
+                const { data: cData } = await supabase.from('companies').select('kpi_secondary_axis_name').eq('id', effectiveCompanyId).single();
+                if (cData) setSecondaryAxisName(cData.kpi_secondary_axis_name);
+
+                const { data: aData } = await supabase.from('kpi_axes').select('id, name').eq('company_id', effectiveCompanyId).order('sort_order', { ascending: true });
+                setAxes(aData || []);
+
                 if (!dData || dData.length === 0) {
                     setError("該当する企業の部署情報が見つかりません。");
                 }
@@ -141,12 +156,15 @@ function SurveyFormContent() {
 
         try {
             // 1. response 保存
-            const currentMonth = "2026-02"; // 本来は動的に決定
+            const now = new Date();
+            const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+
             const { data: response, error: rErr } = await supabase
                 .from('survey_responses')
                 .insert({
                     company_id: resolvedCompanyId,
                     department_id: department,
+                    axis_id: axisId || null,
                     recorded_month: currentMonth,
                     free_comment: freeComment,
                     cross_dept_feedback: kpiImprovement // KPI改善案をこちらに格納
@@ -268,6 +286,27 @@ function SurveyFormContent() {
                                 </select>
                             </div>
 
+                            {/* Step 1.5: 第2軸選択 */}
+                            {axes.length > 0 && (
+                                <div className="bg-white p-6 sm:p-10 rounded-3xl shadow-sm border border-slate-100">
+                                    <label className="text-[13px] font-bold text-slate-600 mb-6 flex items-center gap-3">
+                                        <span className="bg-slate-100 text-slate-500 w-6 h-6 rounded-full flex items-center justify-center text-[10px]">1.5</span>
+                                        あなたの所属する{secondaryAxisName}を教えてください
+                                    </label>
+                                    <select
+                                        value={axisId}
+                                        onChange={(e) => setAxisId(e.target.value)}
+                                        className="w-full bg-slate-50 border-transparent rounded-2xl p-4 text-[13px] font-bold text-slate-700 outline-none focus:ring-2 focus:ring-teal/20"
+                                        required
+                                    >
+                                        <option value="">タップして選択...</option>
+                                        {axes.map(a => (
+                                            <option key={a.id} value={a.id}>{a.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
                             {/* Step 2: 選択式 */}
                             <div className="bg-white p-6 sm:p-10 rounded-3xl shadow-sm border border-slate-100">
                                 <div className="flex items-center justify-between mb-8 sticky top-0 bg-white/95 backdrop-blur-md py-4 z-40">
@@ -360,8 +399,8 @@ function SurveyFormContent() {
                             <div className="text-center pt-8 pb-4">
                                 <button
                                     type="submit"
-                                    disabled={isSubmitting || Object.keys(answers).length < questions.length || !department || kpiImprovement.length < 100}
-                                    className={`px-14 py-4 rounded-full font-black text-[13px] transition-all ${isSubmitting || Object.keys(answers).length < questions.length || !department || kpiImprovement.length < 100
+                                    disabled={isSubmitting || Object.keys(answers).length < questions.length || !department || (axes.length > 0 && !axisId) || kpiImprovement.length < 100}
+                                    className={`px-14 py-4 rounded-full font-black text-[13px] transition-all ${isSubmitting || Object.keys(answers).length < questions.length || !department || (axes.length > 0 && !axisId) || kpiImprovement.length < 100
                                         ? "bg-slate-200 text-slate-400 cursor-not-allowed"
                                         : "bg-teal text-white shadow-lg hover:scale-105"
                                         }`}
