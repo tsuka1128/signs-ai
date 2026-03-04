@@ -12,7 +12,7 @@
  * 完了後は /dashboard へ遷移します。
  */
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase";
@@ -56,7 +56,7 @@ interface OnboardingState {
 /** KPI 単位の候補 */
 const UNIT_OPTIONS = ["件", "万円", "円", "%", "名", "pt", "個", "回", "日", "時間", "その他"];
 
-export default function OnboardingPage() {
+function OnboardingContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const supabase = createClient();
@@ -784,5 +784,17 @@ export default function OnboardingPage() {
                 設定は後からいつでも変更できます
             </p>
         </div>
+    );
+}
+
+export default function OnboardingPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
+            </div>
+        }>
+            <OnboardingContent />
+        </Suspense>
     );
 }
