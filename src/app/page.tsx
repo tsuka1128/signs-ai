@@ -401,12 +401,15 @@ export default function DashboardPage() {
         id: axis.id,
         name: axis.name,
         head: dummyProd.head, // リソース量はまだモック
+        productivity: dummyProd.productivity, // マトリックス描画に必須
+        kpiAch: dummyProd.kpiAch, // 円のサイズ計算に必須
+        mrr: dummyProd.mrr,
         pulse: Number(pulseScore.toFixed(1)),
         pulseHistory,
         weather: pulseScore >= 4.0 ? "sun" : pulseScore >= 3.0 ? "cloud" : "rain",
         arrow: "flat",
         kpis: dummyProd.kpis
-      };
+      } as any;
     });
   }, [realAxes, realResponses, last6Months]);
 
