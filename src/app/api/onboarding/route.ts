@@ -68,19 +68,21 @@ export async function POST(request: NextRequest) {
                 if (cErr || !company) throw new Error("デモ企業の作成に失敗しました");
 
                 // 3. ユーザーと紐付け
-                await supabase.from("users").upsert({
+                const { error: uErr } = await supabase.from("users").upsert({
                     id: user.id,
                     company_id: company.id,
                     role: "admin",
                     email: user.email ?? "",
                     display_name: user.user_metadata?.full_name ?? user.email ?? ""
                 });
+                if (uErr) throw new Error(`ユーザーの紐付けに失敗しました: ${uErr.message}`);
 
                 // 4. デモ部署作成
                 const depts = ["経営層", "経企・人事", "営業部", "カスタマーサクセス", "開発部"];
-                const { data: createdDepts } = await supabase.from("departments").insert(
+                const { data: createdDepts, error: dErr } = await supabase.from("departments").insert(
                     depts.map(name => ({ company_id: company.id, name, headcount: 10 }))
                 ).select("id, name");
+                if (dErr || !createdDepts) throw new Error(`デモ部署の作成に失敗しました: ${dErr?.message}`);
 
                 // 5. デモKPI作成
                 const kpiNames = ["MRR", "リード数", "商談化率", "解約率", "従業員体温スコア"];
