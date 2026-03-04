@@ -118,14 +118,14 @@ export default function SettingsPage() {
                 headcount: dept.headcount
             });
             if (!error) loadData();
-            else alert("追加に失敗しました");
+            else alert(`追加に失敗しました: ${error.message}`);
         } else {
             const { error } = await supabase.from('departments').update({
                 name: dept.name,
                 headcount: dept.headcount
             }).eq('id', dept.id);
             if (!error) alert("部署情報を更新しました");
-            else alert("更新に失敗しました");
+            else alert(`更新に失敗しました: ${error.message}`);
         }
     }
 
@@ -182,7 +182,7 @@ export default function SettingsPage() {
                 is_main: kpi.is_main || false
             });
             if (!error) loadData();
-            else alert("追加に失敗しました");
+            else alert(`追加に失敗しました: ${error.message}`);
         } else {
             const { error } = await supabase.from('kpi_definitions').update({
                 name: kpi.name,
@@ -203,7 +203,7 @@ export default function SettingsPage() {
                 alert("KPI設定を更新しました");
                 loadData(); // 状態を再同期
             }
-            else alert("更新に失敗しました");
+            else alert(`更新に失敗しました: ${error.message}`);
         }
     }
 
@@ -301,7 +301,7 @@ export default function SettingsPage() {
                 sort_order: axes.length
             });
             if (!error) loadData();
-            else alert("追加に失敗しました");
+            else alert(`追加に失敗しました: ${error.message}`);
         } else {
             const { error } = await supabase.from('kpi_axes').update({
                 name: axis.name
@@ -311,7 +311,7 @@ export default function SettingsPage() {
                 loadData();
                 alert(`${secondaryAxisName}を保存しました`);
             }
-            else alert("更新に失敗しました");
+            else alert(`更新に失敗しました: ${error.message}`);
         }
     }
 
