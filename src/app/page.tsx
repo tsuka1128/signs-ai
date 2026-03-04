@@ -400,10 +400,10 @@ export default function DashboardPage() {
         ...(axis as any),
         id: axis.id,
         name: axis.name,
-        head: dummyProd.head, // リソース量はまだモック
-        productivity: dummyProd.productivity, // マトリックス描画に必須
-        kpiAch: dummyProd.kpiAch, // 円のサイズ計算に必須
-        mrr: dummyProd.mrr,
+        head: (dummyProd as any).head, // リソース量はまだモック
+        productivity: (dummyProd as any).productivity, // マトリックス描画に必須
+        kpiAch: (dummyProd as any).kpiAch, // 円のサイズ計算に必須
+        mrr: (dummyProd as any).mrr,
         pulse: Number(pulseScore.toFixed(1)),
         pulseHistory,
         weather: pulseScore >= 4.0 ? "sun" : pulseScore >= 3.0 ? "cloud" : "rain",
