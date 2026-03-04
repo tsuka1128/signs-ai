@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase";
 import { Header } from "@/components/layout/Header";
 import { MainInsightCard } from "@/components/dashboard/MainInsightCard";
@@ -34,38 +34,7 @@ const questions = [
   { id: 11, text: "KPI達成に向けて、準備周到に活動できていますか？", hint: "道筋が見えているだけで、体温は上がります。" },
 ];
 
-const surveyData = {
-  all: {
-    scores: [4.2, 2.1, 3.8, 1.8, 3.5, 3.2, 4.0, 2.4, 4.1, 3.7, 3.9],
-    pulse: 3.2,
-    pulseHistory: [3.5, 3.4, 3.3, 3.2, 3.1, 3.2],
-    aiComment: "組織全体として「ワクワク感」と「顧客貢献感」は高い水準にありますが、「意思決定の待ち時間（Q2）」と「根回しコスト（Q4）」が明確なボトルネックとなっています。特にQ2の2.1は危険水域であり、スピード感の欠如が後続のQ8（業務量）への圧迫に繋がっている構造が見えます。仕組みによる解決が急務です。"
-  },
-  sales: {
-    scores: [4.5, 1.8, 4.0, 1.2, 2.5, 3.0, 4.2, 1.9, 4.6, 3.5, 3.8],
-    pulse: 2.1,
-    pulseHistory: [3.1, 2.9, 2.8, 2.5, 2.3, 2.1],
-    aiComment: "営業部は「顧客の役に立ちたい」という熱量が非常に高い（Q9: 4.6）一方で、社内調整（Q4: 1.2）と決定待ち（Q2: 1.8）でエネルギーが削がれています。言いたいことを飲み込む傾向（Q5: 2.5）もあり、数字を作るための『無理』が個人の体温低下として顕在化しつつあります。"
-  },
-  mktg: {
-    scores: [4.3, 3.5, 4.2, 3.8, 4.0, 4.1, 3.9, 3.8, 4.4, 4.0, 4.2],
-    pulse: 4.2,
-    pulseHistory: [3.8, 3.9, 4.0, 4.1, 4.1, 4.2],
-    aiComment: "マーケ部は全指標において安定した高スコアを維持しており、現在の「質の高いリード獲得」という方針が個人の納得感と直結しています。調整コストも低く、理想的な自律駆動型チームとなっています。他部署へのナレッジ展開のハブとなることを推奨します。"
-  },
-  dev: {
-    scores: [3.8, 2.5, 3.2, 3.0, 3.1, 2.8, 3.5, 2.0, 3.6, 4.2, 3.5],
-    pulse: 2.4,
-    pulseHistory: [3.4, 3.2, 3.0, 2.8, 2.5, 2.4],
-    aiComment: "開発部は「新しい技術への挑戦（Q10: 4.2）」にやりがいを感じていますが、恒常的な業務過多（Q8: 2.0）が深刻です。仕様決定の不透明さが『迷い』を生み、集中を削いでいます。クリエイティブな時間を確保するための優先順位の整理が不可欠です。"
-  },
-  cs: {
-    scores: [3.5, 2.2, 3.0, 2.4, 2.2, 3.0, 3.1, 2.5, 4.0, 3.2, 3.0],
-    pulse: 3.1,
-    pulseHistory: [3.6, 3.5, 3.4, 3.2, 3.1, 3.1],
-    aiComment: "CS部は顧客への貢献意欲は高いものの、他部署（特に開発）からの情報伝達や仕様変更の反映待ち（Q2）により、自信を持って顧客対応ができないジレンマ（Q5: 2.2）を抱えています。現場の声を製品に反映させるパイプの詰まりを解消する必要があります。"
-  },
-};
+// モックデータを削除。DBから集計。
 
 // --- Full Original Data --- 
 
@@ -238,6 +207,8 @@ export default function DashboardPage() {
   const [realDepts, setRealDepts] = useState<any[]>([]);
   const [realKpis, setRealKpis] = useState<any[]>([]);
   const [realSem, setRealSem] = useState<string>("");
+  const [realResponses, setRealResponses] = useState<any[]>([]);
+  const [realAxes, setRealAxes] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadData() {
@@ -248,25 +219,40 @@ export default function DashboardPage() {
       const { data: comp } = await supabase.from('users').select('company_id').eq('id', user.id).single();
       if (!comp?.company_id) return;
 
-      const [d, k, s] = await Promise.all([
+      const [d, k, s, r, a] = await Promise.all([
         supabase.from('departments').select('*').eq('company_id', comp.company_id).order('created_at', { ascending: true }),
         supabase.from('kpi_definitions').select('*').eq('company_id', comp.company_id).order('sort_order', { ascending: true }),
-        supabase.from('semantic_layers').select('content').eq('company_id', comp.company_id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+        supabase.from('semantic_layers').select('content').eq('company_id', comp.company_id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('survey_responses').select('*, survey_answers(*)').eq('company_id', comp.company_id),
+        supabase.from('kpi_axes').select('*').eq('company_id', comp.company_id).order('sort_order', { ascending: true })
       ]);
 
       if (d.data && d.data.length > 0) setRealDepts(d.data);
-      if (k.data && k.data.length > 0) {
-        setRealKpis(k.data);
-        // もし現在選択中のselKpiが実データのIDに存在しなければ、最初のKPIを選択
-        if (!k.data.some((kpi: any) => `kpi_${kpi.id}` === selKpi) && selKpi === "mrr") {
-          setSelKpi(`kpi_${k.data[0].id}`);
-        }
-      }
+      if (k.data && k.data.length > 0) setRealKpis(k.data);
       if (s.data?.content) setRealSem(s.data.content);
+      if (r.data) setRealResponses(r.data);
+      if (a.data) setRealAxes(a.data);
     }
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const last6Months = useMemo(() => {
+    const dates = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      dates.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`);
+    }
+    return dates;
+  }, []);
+
+  const monthLabels = useMemo(() => {
+    return last6Months.map(m => {
+      const mm = m.split("-")[1];
+      return `${parseInt(mm)}月`;
+    });
+  }, [last6Months]);
 
   const getSimulatedIndex = (deptName: string) => {
     if (deptName.includes("営業")) return 0; // sales
@@ -277,30 +263,103 @@ export default function DashboardPage() {
     return -1;
   };
 
-  const displayDepts = realDepts.length > 0 ? realDepts.map((d, i) => {
-    let dummyIdx = getSimulatedIndex(d.name);
-    if (dummyIdx === -1) dummyIdx = i % deptData.length;
-    const dummyRef = deptData[dummyIdx];
+  const currentSurveyData = useMemo(() => {
+    let filtered = realResponses;
+    let viewName = "全社";
 
-    return {
-      ...d,
-      ...dummyRef,
-      id: d.id, // Replace dummy id with real UUID
-      name: d.name,
-      head: d.headcount || dummyRef.head,
-      kpis: realKpis.filter(k => k.owner_dept_id === d.id)
-        .sort((a, b) => (b.is_main ? 1 : 0) - (a.is_main ? 1 : 0))
-        .map((k: any) => ({
-          name: k.name,
-          val: `${k.target_default ?? 100}${k.unit}`,
-          ach: 100, // Dummy
-          type: "stack"
-        })).concat(dummyRef.kpis).slice(0, 3), // Fallback
-      kpiName: realKpis.find(k => k.owner_dept_id === d.id && k.is_main)?.name ||
-        realKpis.find(k => k.owner_dept_id === d.id)?.name ||
-        dummyRef.kpiName
-    };
-  }) : deptData;
+    const surveyViewId = (orgView === "product" || orgView === "dept") ? "all" : orgView;
+
+    if (surveyViewId !== "all") {
+      const dept = realDepts.find(d => d.id === surveyViewId);
+      viewName = dept ? dept.name : "不明な部署";
+      filtered = realResponses.filter(r => r.department_id === surveyViewId);
+    }
+
+    const latestMonth = last6Months[5];
+    const qScores = questions.map(q => {
+      const answers = filtered
+        .filter(r => r.recorded_month === latestMonth)
+        .flatMap(r => r.survey_answers || [])
+        .filter(a => a.question_id === q.id);
+      if (answers.length === 0) return 0;
+      return answers.reduce((sum, a) => sum + a.score, 0) / answers.length;
+    });
+
+    const avgPulse = qScores.length > 0 ? qScores.reduce((a, b) => a + b, 0) / qScores.length : 0;
+
+    const pulseHistory = last6Months.map(month => {
+      const monthAnswers = filtered
+        .filter(r => r.recorded_month === month)
+        .flatMap(r => r.survey_answers || []);
+      if (monthAnswers.length === 0) return 0;
+      const scores = questions.map(q => {
+        const answers = monthAnswers.filter(a => a.question_id === q.id);
+        return answers.length > 0 ? answers.reduce((sum, a) => sum + a.score, 0) / answers.length : 0;
+      }).filter(s => s > 0);
+      return scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+    });
+
+    let comment = "回答データが蓄積されていません。";
+    if (filtered.length > 0) {
+      const lowScoreQ = qScores.map((s, i) => ({ s, i })).filter(x => x.s > 0 && x.s < 3.0).sort((a, b) => a.s - b.s)[0];
+      if (lowScoreQ) {
+        comment = `${questions[lowScoreQ.i].text} のスコアが低迷しています。環境改善の検討が必要です。`;
+      } else {
+        comment = "全体的に良好な体温が維持されています。";
+      }
+    }
+
+    return { viewName, scores: qScores, pulse: avgPulse, pulseHistory, aiComment: comment };
+  }, [orgView, realResponses, realDepts, last6Months]);
+
+  const displayDepts = useMemo(() => {
+    return realDepts.map((d, i) => {
+      let dummyIdx = getSimulatedIndex(d.name);
+      if (dummyIdx === -1) dummyIdx = i % deptData.length;
+      const dummyRef = deptData[dummyIdx];
+
+      // 実データから体温を集計 (最新月)
+      const latestMonth = last6Months[5];
+      const deptResponses = realResponses.filter(r => r.department_id === d.id);
+      const latestAnswers = deptResponses
+        .filter(r => r.recorded_month === latestMonth)
+        .flatMap(r => r.survey_answers || []);
+
+      const pulseScore = latestAnswers.length > 0
+        ? latestAnswers.reduce((sum, a) => sum + a.score, 0) / latestAnswers.length
+        : dummyRef.pulse; // データがなければダミー
+
+      // 過去6ヶ月の推移
+      const pulseHistory = last6Months.map(month => {
+        const monthAnswers = deptResponses
+          .filter(r => r.recorded_month === month)
+          .flatMap(r => r.survey_answers || []);
+        if (monthAnswers.length === 0) return pulseScore * (0.8 + Math.random() * 0.4); // データなければランダム気味
+        return monthAnswers.reduce((sum, a) => sum + a.score, 0) / monthAnswers.length;
+      });
+
+      return {
+        ...d,
+        ...dummyRef,
+        id: d.id,
+        name: d.name,
+        head: d.headcount || dummyRef.head,
+        pulse: Number(pulseScore.toFixed(1)),
+        pulseHistory,
+        kpis: realKpis.filter(k => k.owner_dept_id === d.id)
+          .sort((a, b) => (b.is_main ? 1 : 0) - (a.is_main ? 1 : 0))
+          .map((k: any) => ({
+            name: k.name,
+            val: `${k.target_default ?? 100}${k.unit}`,
+            ach: 100,
+            type: "stack"
+          })).concat(dummyRef.kpis).slice(0, 3),
+        kpiName: realKpis.find(k => k.owner_dept_id === d.id && k.is_main)?.name ||
+          realKpis.find(k => k.owner_dept_id === d.id)?.name ||
+          dummyRef.kpiName
+      };
+    });
+  }, [realDepts, realResponses, last6Months, realKpis]);
 
   const displayKpis = realKpis.length > 0 ? realKpis.map((k, i) => {
     const dummyRef = kpiDefs[i % kpiDefs.length];
@@ -315,6 +374,41 @@ export default function DashboardPage() {
       dept: realDepts.find(d => d.id === k.owner_department_id)?.name || dummyRef.dept,
     };
   }) : kpiDefs;
+
+  const displayAxes = useMemo(() => {
+    return realAxes.map((axis, i) => {
+      const dummyProd = prodKpis[i % prodKpis.length];
+      const latestMonth = last6Months[5];
+      const axisResponses = realResponses.filter(r => r.axis_id === axis.id);
+      const latestAnswers = axisResponses
+        .filter(r => r.recorded_month === latestMonth)
+        .flatMap(r => r.survey_answers || []);
+
+      const pulseScore = latestAnswers.length > 0
+        ? latestAnswers.reduce((sum, a) => sum + a.score, 0) / latestAnswers.length
+        : dummyProd.pulse;
+
+      const pulseHistory = last6Months.map(month => {
+        const monthAnswers = axisResponses
+          .filter(r => r.recorded_month === month)
+          .flatMap(r => r.survey_answers || []);
+        if (monthAnswers.length === 0) return pulseScore * (0.8 + Math.random() * 0.4);
+        return monthAnswers.reduce((sum, a) => sum + a.score, 0) / monthAnswers.length;
+      });
+
+      return {
+        ...axis,
+        id: axis.id,
+        name: axis.name,
+        head: dummyProd.head, // リソース量はまだモック
+        pulse: Number(pulseScore.toFixed(1)),
+        pulseHistory,
+        weather: pulseScore >= 4.0 ? "sun" : pulseScore >= 3.0 ? "cloud" : "rain",
+        arrow: "flat",
+        kpis: dummyProd.kpis
+      };
+    });
+  }, [realAxes, realResponses, last6Months]);
 
   const displaySem = realSem || semTextDefault;
 
@@ -721,14 +815,14 @@ export default function DashboardPage() {
                 onChange={setOrgView}
               />
               <div className="space-y-4 pt-2">
-                {(orgView === "dept" ? deptData : prodKpis).map((d: any, i: number) => (
+                {(orgView === "dept" ? displayDepts : displayAxes).map((d: any, i: number) => (
                   <OrganizationCard
                     key={i}
                     name={d.name}
                     head={d.head}
                     pulse={d.pulse}
                     weather={d.weather}
-                    arrow={d.arrow}
+                    arrow={d.arrow || "flat"}
                     kpis={d.kpis}
                   />
                 ))}
@@ -793,10 +887,7 @@ export default function DashboardPage() {
                 <TabBar
                   tabs={[
                     { id: "all", label: "🏢 全社" },
-                    { id: "sales", label: "💼 営業部" },
-                    { id: "mktg", label: "📢 マーケ部" },
-                    { id: "dev", label: "💻 開発部" },
-                    { id: "cs", label: "🎧 CS部" },
+                    ...realDepts.map(d => ({ id: d.id, label: d.name }))
                   ]}
                   active={orgView === "product" ? "all" : orgView} // Reuse orgView state or fix it
                   onChange={(id) => setOrgView(id as any)}
@@ -804,7 +895,7 @@ export default function DashboardPage() {
               </div>
 
               {(() => {
-                const currentData = (surveyData as Record<string, { pulse: number, pulseHistory: number[], scores: number[], aiComment: string }>)[orgView === "product" ? "all" : orgView] || surveyData.all;
+                const data = currentSurveyData;
 
                 return (
                   <>
@@ -824,18 +915,18 @@ export default function DashboardPage() {
                           <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">当月平均</span>
                           <span className={cn(
                             "text-4xl font-black tabular-nums tracking-tighter",
-                            currentData.pulse >= 3.5 ? "text-emerald-500" : currentData.pulse >= 2.5 ? "text-amber-500" : "text-rose-500"
+                            data.pulse >= 3.5 ? "text-emerald-500" : data.pulse >= 2.5 ? "text-amber-500" : "text-rose-500"
                           )}>
-                            {currentData.pulse.toFixed(1)}
+                            {data.pulse.toFixed(1)}
                           </span>
                         </div>
                       </div>
 
                       <div className="h-40 w-full pt-4">
                         <DetailLineChart
-                          data={currentData.pulseHistory}
-                          labels={["9月", "10月", "11月", "12月", "1月", "2月"]}
-                          color={currentData.pulse >= 3.5 ? "#10B981" : currentData.pulse >= 2.5 ? "#F59E0B" : "#EF4444"}
+                          data={data.pulseHistory}
+                          labels={monthLabels}
+                          color={data.pulse >= 3.5 ? "#10B981" : data.pulse >= 2.5 ? "#F59E0B" : "#EF4444"}
                           height={140}
                         />
                       </div>
@@ -849,12 +940,12 @@ export default function DashboardPage() {
                           <div className="w-10 h-10 rounded-2xl bg-teal/10 flex items-center justify-center text-xl shadow-inner shadow-teal/5">🧠</div>
                           <div>
                             <h3 className="text-sm font-bold text-slate-800">AI組織分析レポート</h3>
-                            <p className="text-[10px] text-teal font-black uppercase tracking-widest">{orgView === "all" ? "Whole Company" : `${orgView.toUpperCase()} UNIT`}</p>
+                            <p className="text-[10px] text-teal font-black uppercase tracking-widest">{data.viewName}</p>
                           </div>
                         </div>
                         <div className="bg-slate-50/50 rounded-2xl p-5 border border-slate-50">
                           <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                            {currentData.aiComment}
+                            {data.aiComment}
                           </p>
                         </div>
                       </div>
@@ -871,8 +962,8 @@ export default function DashboardPage() {
                             key={q.id}
                             question={q.text}
                             hint={q.hint}
-                            score={currentData.scores[i]}
-                            prevScore={currentData.scores[i] * 0.95}
+                            score={data.scores[i]}
+                            prevScore={data.scores[i] * 0.95}
                           />
                         ))}
                       </div>

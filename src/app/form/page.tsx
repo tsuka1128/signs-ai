@@ -194,8 +194,9 @@ function SurveyFormContent() {
             setHasAnswered(true);
             window.scrollTo(0, 0);
         } catch (err: any) {
-            console.error("Submit error:", err);
-            alert("送信に失敗しました。ネットワーク状況を確認してください。");
+            console.error("Submit error details:", err);
+            const msg = err.message || "不明なエラー";
+            alert(`送信に失敗しました。\n理由: ${msg}\n\nネットワーク状況を確認し、改善しない場合は管理者にお問い合わせください。`);
         } finally {
             setIsSubmitting(false);
         }
