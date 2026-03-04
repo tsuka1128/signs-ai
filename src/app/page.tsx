@@ -327,7 +327,7 @@ export default function DashboardPage() {
 
       const pulseScore = latestAnswers.length > 0
         ? latestAnswers.reduce((sum, a) => sum + a.score, 0) / latestAnswers.length
-        : dummyRef.pulse; // データがなければダミー
+        : 0; // データがなければ 0 (モックを排除)
 
       // 過去6ヶ月の推移
       const pulseHistory = last6Months.map(month => {
