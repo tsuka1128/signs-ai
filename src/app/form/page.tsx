@@ -57,6 +57,9 @@ function SurveyFormContent() {
             let effectiveCompanyId = companyId;
 
             try {
+                const now = new Date();
+                const currentMonthPart = `${now.getFullYear()}_${String(now.getMonth() + 1).padStart(2, '0')}`;
+
                 // 1. URLパラメータにない場合、ログインユーザーから取得を試みる
                 if (!effectiveCompanyId) {
                     const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -90,7 +93,7 @@ function SurveyFormContent() {
                 }
 
                 // 1. 重複回答チェック (LocalStorage)
-                const storageKey = `signs_ai_answered_${effectiveCompanyId}_2026_02`;
+                const storageKey = `signs_ai_answered_${effectiveCompanyId}_${currentMonthPart}`;
                 if (localStorage.getItem(storageKey) === "true") {
                     setHasAnswered(true);
                 }
@@ -204,7 +207,9 @@ function SurveyFormContent() {
 
     const resetDemo = () => {
         if (resolvedCompanyId) {
-            localStorage.removeItem(`signs_ai_answered_${resolvedCompanyId}_2026_02`);
+            const now = new Date();
+            const currentMonthPart = `${now.getFullYear()}_${String(now.getMonth() + 1).padStart(2, '0')}`;
+            localStorage.removeItem(`signs_ai_answered_${resolvedCompanyId}_${currentMonthPart}`);
         }
         setHasAnswered(false);
         setAnswers({});
@@ -240,7 +245,9 @@ function SurveyFormContent() {
                 <div className="text-center mb-10 mt-6 relative z-10">
                     <div className="inline-flex flex-col items-center">
                         <h1 className="text-2xl font-black text-slate-800 tracking-tighter mb-2">Signs AI</h1>
-                        <Badge className="bg-teal/10 text-teal border-none text-[10px] font-bold py-1 px-3">2026年2月度 ボイスチェック</Badge>
+                        <Badge className="bg-teal/10 text-teal border-none text-[10px] font-bold py-1 px-3">
+                            {new Date().getFullYear()}年{new Date().getMonth() + 1}月度 ボイスチェック
+                        </Badge>
                     </div>
                 </div>
 
