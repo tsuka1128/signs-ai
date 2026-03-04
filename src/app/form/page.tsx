@@ -267,45 +267,45 @@ function SurveyFormContent() {
                         </p>
 
                         <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
-                            {/* Step 1: 所属部署 */}
-                            <div className="bg-white p-6 sm:p-10 rounded-3xl shadow-sm border border-slate-100">
-                                <label className="text-[13px] font-bold text-slate-600 mb-6 flex items-center gap-3">
-                                    <span className="bg-slate-100 text-slate-500 w-6 h-6 rounded-full flex items-center justify-center text-[10px]">1</span>
-                                    あなたの所属部署を教えてください
-                                </label>
-                                <select
-                                    value={department}
-                                    onChange={(e) => setDepartment(e.target.value)}
-                                    className="w-full bg-slate-50 border-transparent rounded-2xl p-4 text-[13px] font-bold text-slate-700 outline-none focus:ring-2 focus:ring-teal/20"
-                                    required
-                                >
-                                    <option value="">タップして選択...</option>
-                                    {departments.map(d => (
-                                        <option key={d.id} value={d.id}>{d.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* Step 1.5: 第2軸選択 */}
-                            {axes.length > 0 && (
-                                <div className="bg-white p-6 sm:p-10 rounded-3xl shadow-sm border border-slate-100">
+                            {/* Step 1: 所属属性 */}
+                            <div className="bg-white p-6 sm:p-10 rounded-3xl shadow-sm border border-slate-100 space-y-8">
+                                <div>
                                     <label className="text-[13px] font-bold text-slate-600 mb-6 flex items-center gap-3">
-                                        <span className="bg-slate-100 text-slate-500 w-6 h-6 rounded-full flex items-center justify-center text-[10px]">1.5</span>
-                                        あなたの所属する{secondaryAxisName}を教えてください
+                                        <span className="bg-slate-100 text-slate-500 w-6 h-6 rounded-full flex items-center justify-center text-[10px]">1</span>
+                                        あなたの所属部署を教えてください
                                     </label>
                                     <select
-                                        value={axisId}
-                                        onChange={(e) => setAxisId(e.target.value)}
+                                        value={department}
+                                        onChange={(e) => setDepartment(e.target.value)}
                                         className="w-full bg-slate-50 border-transparent rounded-2xl p-4 text-[13px] font-bold text-slate-700 outline-none focus:ring-2 focus:ring-teal/20"
                                         required
                                     >
                                         <option value="">タップして選択...</option>
-                                        {axes.map(a => (
-                                            <option key={a.id} value={a.id}>{a.name}</option>
+                                        {departments.map(d => (
+                                            <option key={d.id} value={d.id}>{d.name}</option>
                                         ))}
                                     </select>
                                 </div>
-                            )}
+
+                                {axes.length > 0 && (
+                                    <div className="pt-6 border-t border-slate-100/60">
+                                        <label className="text-[13px] font-bold text-slate-600 mb-6 flex items-center gap-3">
+                                            あなたの所属する{secondaryAxisName}を教えてください
+                                        </label>
+                                        <select
+                                            value={axisId}
+                                            onChange={(e) => setAxisId(e.target.value)}
+                                            className="w-full bg-slate-50 border-transparent rounded-2xl p-4 text-[13px] font-bold text-slate-700 outline-none focus:ring-2 focus:ring-teal/20"
+                                            required
+                                        >
+                                            <option value="">タップして選択...</option>
+                                            {axes.map(a => (
+                                                <option key={a.id} value={a.id}>{a.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+                            </div>
 
                             {/* Step 2: 選択式 */}
                             <div className="bg-white p-6 sm:p-10 rounded-3xl shadow-sm border border-slate-100">
