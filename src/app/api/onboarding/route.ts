@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
                 // 5. デモKPI作成
                 const kpiNames = ["MRR", "リード数", "商談化率", "解約率", "従業員体温スコア"];
                 const units = ["万円", "件", "%", "%", "pt"];
-                await supabase.from("kpi_definitions").insert(
+                const { error: kErr } = await supabase.from("kpi_definitions").insert(
                     kpiNames.map((name, i) => ({
                         company_id: company.id,
                         name,
@@ -94,9 +94,11 @@ export async function POST(request: NextRequest) {
                         owner_dept_id: createdDepts ? createdDepts[i % createdDepts.length].id : null
                     }))
                 );
+                if (kErr) throw new Error(`デモKPIの作成に失敗しました: ${kErr.message}`);
 
                 return NextResponse.json({ success: true, companyId: company.id });
             } catch (e: any) {
+                console.error("TAIONデモ作成エラー:", e.message);
                 return NextResponse.json({ message: e.message }, { status: 500 });
             }
         }
@@ -179,7 +181,7 @@ export async function POST(request: NextRequest) {
             throw new Error(`企業の作成に失敗しました: ${companyError?.message || "データが取得できません"}`);
         }
 
-        // ★追加: 会社を作ったらすぐにユーザーと紐付ける（以降のRLSチェックを通すため）
+        // 2. ユーザープロフィールの更新
         const { error: userError } = await supabase.from("users").upsert({
             id: user.id,
             company_id: company.id,
