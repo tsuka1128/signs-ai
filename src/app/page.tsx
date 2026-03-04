@@ -386,7 +386,7 @@ export default function DashboardPage() {
 
       const pulseScore = latestAnswers.length > 0
         ? latestAnswers.reduce((sum, a) => sum + a.score, 0) / latestAnswers.length
-        : dummyProd.pulse;
+        : 0;
 
       const pulseHistory = last6Months.map(month => {
         const monthAnswers = axisResponses
