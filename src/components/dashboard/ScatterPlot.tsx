@@ -28,21 +28,23 @@ export function ScatterPlot({ data, isProduct = false, month, onMonthChange, onP
     const [hoveredId, setHoveredId] = useState<string | null>(null);
     const W = 680;
     const H = 680; // 正方形に固定
-    const PAD = { t: 40, r: 40, b: 80, l: 45 };
+    const PAD = { t: 60, r: 60, b: 80, l: 60 };
     const pw = W - PAD.l - PAD.r;
     const ph = H - PAD.t - PAD.b;
 
     const { maxH, maxY } = useMemo(() => {
-        const maxH = Math.max(...data.map((d) => d.head)) * 1.3;
-        const maxY = Math.max(...data.map((d) => d.productivity)) * 1.2;
+        const hValues = data.map((d) => d.head);
+        const yValues = data.map((d) => d.productivity);
+        const maxH = hValues.length > 0 ? Math.max(...hValues, 10) * 1.5 : 50;
+        const maxY = yValues.length > 0 ? Math.max(...yValues, 10) * 1.5 : 200;
         return { maxH, maxY };
     }, [data]);
 
     const midX = PAD.l + pw / 2;
     const midY = PAD.t + ph / 2;
 
-    const cx = (h: number) => PAD.l + (h / maxH) * pw;
-    const cy = (val: number) => PAD.t + ph - (val / maxY) * ph;
+    const cx = (h: number) => PAD.l + Math.max(0, Math.min(1, h / maxH)) * pw;
+    const cy = (val: number) => PAD.t + ph - Math.max(0, Math.min(1, val / maxY)) * ph;
 
     const yLabelWord = "高生産性";
     const yLabelWordLow = "低生産性";
@@ -65,7 +67,7 @@ export function ScatterPlot({ data, isProduct = false, month, onMonthChange, onP
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const renderChart = () => (
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto font-sans select-none overflow-visible">
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto font-sans select-none relative">
             {/* Quadrants */}
             {quads.map((q, i) => (
                 <g key={i}>
