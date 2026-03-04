@@ -44,132 +44,14 @@ const products = [
   { id: "c", name: "オプションサービス C", head: 9, productivity: 156, pulse: 4.3, weather: "sun" as const, kpiAch: 118, prevHead: 8, prevProductivity: 145, prevPulse: 4.1, prevWeather: "sun", prevKpiAch: 105, kpiName: "MRR", mrr: 460, prevMrr: 380 }
 ];
 
-const deptData = [
-  {
-    id: "sales", name: "営業部", head: 15, productivity: 260, pulse: 2.1, pulseHistory: [3.1, 2.9, 2.8, 2.5, 2.3, 2.1], weather: "rain" as const, arrow: "down" as const, kpiAch: 108, prevHead: 14, prevProductivity: 250, prevPulse: 2.5, prevWeather: "cloud", prevKpiAch: 102, kpiName: "受注金額",
-    kpis: [
-      { name: "月次売上", val: "4,200万", ach: 108, type: "stack" },
-      { name: "新規契約件数", val: "15件", ach: 92, type: "stack" },
-      { name: "平均客単価", val: "280万", ach: 110, type: "rate" }
-    ]
-  },
-  {
-    id: "mktg", name: "マーケティング部", head: 4, productivity: 280, pulse: 4.2, pulseHistory: [3.8, 3.9, 4.0, 4.1, 4.1, 4.2], weather: "sun" as const, arrow: "up" as const, kpiAch: 90, prevHead: 4, prevProductivity: 260, prevPulse: 4.0, prevWeather: "sun", prevKpiAch: 105, kpiName: "有効リード数",
-    kpis: [
-      { name: "有効リード獲得数", val: "128件", ach: 112, type: "stack" },
-      { name: "商談獲得数", val: "42件", ach: 90, type: "stack" }
-    ]
-  },
-  {
-    id: "dev", name: "開発部", head: 22, productivity: 80, pulse: 2.4, pulseHistory: [3.4, 3.2, 3.0, 2.8, 2.5, 2.4], weather: "rain" as const, arrow: "down" as const, kpiAch: 80, prevHead: 20, prevProductivity: 85, prevPulse: 2.8, prevWeather: "cloud", prevKpiAch: 85, kpiName: "リリース頻度",
-    kpis: [
-      { name: "ベロシティ", val: "120pt", ach: 85, type: "stack" },
-      { name: "障害発生率", val: "0.2%", ach: 110, type: "inverse" }
-    ]
-  },
-  {
-    id: "cs", name: "カスタマーサクセス部", head: 7, productivity: 110, pulse: 3.1, pulseHistory: [3.6, 3.5, 3.4, 3.2, 3.1, 3.1], weather: "cloud" as const, arrow: "flat" as const, kpiAch: 72, prevHead: 6, prevProductivity: 115, prevPulse: 3.4, prevWeather: "cloud", prevKpiAch: 80, kpiName: "解約率",
-    kpis: [
-      { name: "顧客解約率", val: "1.8%", ach: 115, type: "inverse" },
-      { name: "アップセル成約額", val: "450万", ach: 90, type: "stack" }
-    ]
-  },
-  {
-    id: "hr", name: "人事総務部", head: 3, productivity: 190, pulse: 4.0, pulseHistory: [3.9, 3.9, 3.8, 3.9, 4.0, 4.0], weather: "sun" as const, arrow: "up" as const, kpiAch: 105, prevHead: 3, prevProductivity: 180, prevPulse: 3.8, prevWeather: "sun", prevKpiAch: 95, kpiName: "採用進捗",
-    kpis: [
-      { name: "採用充足率", val: "85%", ach: 105, type: "rate" },
-      { name: "離職率", val: "4.2%", ach: 120, type: "inverse" }
-    ]
-  }
-];
-
-const prodKpis = [
-  {
-    id: "prod_a", name: "プロダクトA", head: 22, pulse: 3.8, pulseHistory: [3.6, 3.7, 3.6, 3.7, 3.8, 3.8], weather: "sun" as const, arrow: "up" as const,
-    kpis: [
-      { name: "MRR", val: "1,800万", ach: 115, type: "stack" },
-      { name: "解約率", val: "1.8%", ach: 110, type: "inverse" },
-      { name: "NPS", val: "42pt", ach: 105, type: "rate" }
-    ]
-  },
-  {
-    id: "prod_b", name: "プロダクトB", head: 14, pulse: 2.1, pulseHistory: [3.0, 2.9, 2.7, 2.4, 2.2, 2.1], weather: "rain" as const, arrow: "down" as const,
-    kpis: [
-      { name: "MRR", val: "520万", ach: 68, type: "stack" },
-      { name: "解約率", val: "8.1%", ach: 37, type: "inverse" },
-      { name: "NPS", val: "18pt", ach: 45, type: "rate" }
-    ]
-  },
-  {
-    id: "prod_c", name: "プロダクトC", head: 9, pulse: 4.3, pulseHistory: [3.9, 4.0, 4.1, 4.2, 4.3, 4.3], weather: "sun" as const, arrow: "up" as const,
-    kpis: [
-      { name: "MRR", val: "460万", ach: 128, type: "stack" },
-      { name: "解約率", val: "2.2%", ach: 95, type: "inverse" },
-      { name: "NPS", val: "38pt", ach: 95, type: "rate" }
-    ]
-  }
-];
-
-const kpiDefs = [
-  {
-    id: "mrr", name: "月次売上", unit: "万円", val: 4200, target: 4000, prev: [3200, 3450, 3680, 3890, 4000, 4200], dept: "営業部", voices: [
-      { text: "目標超過だが、トップ営業への依存度が依然として高い", mood: "cloud" },
-      { text: "大型案件による見かけの数字。利益率の精査が必要", mood: "cloud" },
-      { text: "新規顧客の獲得コストが想定より上がっている", mood: "rain" }
-    ]
-  },
-  {
-    id: "leads", name: "有効リード獲得数", unit: "件", val: 128, target: 120, prev: [95, 102, 110, 115, 120, 128], dept: "マーケティング部", voices: [
-      { text: "コンテンツマーケティング経由の質が高いリードが増加", mood: "sun" },
-      { text: "広告費に対する獲得単価(CPA)が改善傾向にある", mood: "sun" }
-    ]
-  },
-  {
-    id: "mktg_opps", name: "商談獲得数", unit: "件", val: 42, target: 50, prev: [38, 42, 48, 51, 47, 42], dept: "マーケティング部", voices: [
-      { text: "リード数は増えたが、商談化率が伸び悩んでいる", mood: "cloud" },
-      { text: "インサイドセールのリソース不足が露呈し始めている", mood: "rain" }
-    ]
-  },
-  {
-    id: "contracts", name: "新規契約件数", unit: "件", val: 15, target: 12, prev: [8, 10, 12, 11, 13, 15], dept: "営業部", voices: [
-      { text: "中小規模案件のクロージングが効率化できている", mood: "sun" },
-      { text: "契約管理プロセスの工数が増えており、現場の心理的負荷が高い", mood: "cloud" }
-    ]
-  },
-  {
-    id: "churn", name: "顧客解約率", unit: "%", val: 1.8, target: 2.0, prev: [2.5, 2.3, 2.2, 2.0, 1.9, 1.8], dept: "カスタマーサクセス部", voices: [
-      { text: "ハイタッチ対応の強化により、主要顧客の継続意向が向上", mood: "sun" },
-      { text: "オンボーディングの自動化が一部の顧客には不評", mood: "cloud" }
-    ]
-  },
-  {
-    id: "velocity", name: "ベロシティ", unit: "pt", val: 120, target: 140, prev: [100, 110, 115, 125, 130, 120], dept: "開発部", voices: [
-      { text: "技術的負債の返済に工数を割いたため、新機能開発が停滞", mood: "cloud" },
-      { text: "レビュープロセスのボトルネック化により、リリース速度が低下", mood: "rain" }
-    ]
-  },
-  {
-    id: "recruit", name: "採用充足率", unit: "%", val: 85, target: 100, prev: [70, 75, 80, 82, 85, 85], dept: "人事総務部", voices: [
-      { text: "エージェント経由の応募は多いが、カルチャーマッチが課題", mood: "cloud" },
-      { text: "面接官のリソース確保が難しく、先行プロセスが滞留気味", mood: "cloud" }
-    ]
-  }
-];
-
 const insights = {
-  exec: { icon: "👔", title: "経営層", tone: "戦略的分析", text: "月次売上は目標を超過していますが、営業部の「体温」2.1は組織的な歪みを示唆しています。ボイスチェックでは特定個人への業務集中と、開発部門との連携摩擦が主要な懸念事項として挙がっています。持続可能な成長のためには、プロセスの標準化が急務です。" },
-  admin: { icon: "📋", title: "経企・人事", tone: "構造分析", text: "開発部のベロシティ低下と、CS部の解約率改善が相関しています。品質重視へのシフトは成果を上げていますが、開発現場では承認フローの停滞が心理的負荷となっています。採用充足率の維持と並行し、意思決定の迅速化が求められます。" },
-  mgr: { icon: "🎯", title: "マネージャー", tone: "現場支援", text: "現場メンバーから『突発的な仕様変更』と『リード質の乖離』が主要ボトルネックとして挙がっています。期待値調整の仕組み化により、現場の心理的安全性を確保することが生産性回復の鍵となります。" },
-  player: { icon: "💪", title: "現場", tone: "前向きな共有", text: "LP改修後のリード質向上について、営業現場からポジティブな反応が出ています。事務作業などの『非本質的な時間』を削減し、顧客に向き合う時間を最大化する流れができつつあります。" }
+  exec: { icon: "👔", title: "経営層", tone: "戦略的分析", text: "組織方針に基づき、各部署の体温スコアとKPI達成状況を俯瞰的に分析します。現在、実データの蓄積を開始した段階です。" },
+  admin: { icon: "📋", title: "経企・人事", tone: "構造分析", text: "全部署のコンディションを横断的にモニタリングします。データ不足箇所は早急なアクションが必要です。" },
+  mgr: { icon: "🎯", title: "マネージャー", tone: "現場支援", text: "担当部署のボイスチェックに基づき、現場メンバーの心理的安全性と生産性の両立を支援します。" },
+  player: { icon: "💪", title: "現場", tone: "前向きな共有", text: "SignsAIを通じて現場の今の声を可視化し、より良い働き方の実現に向けたフィードバックを行います。" }
 };
 
-const actions = [
-  { pri: "🔴 緊急", title: "営業部の属人化を解消するためのプロセス標準化", desc: "トップ営業への依存が限界に達しており、メンバーの疲弊が顕著。商談フェーズの定義とナレッジ共有を2月中に完了させる。", dept: "営業部", owner: "営業部長" },
-  { pri: "🔴 緊急", title: "社内承認フローの簡素化（2段階への圧縮）", desc: "全部署で『決定待ち』による体温低下が発生。CEO直轄プロジェクトとして承認プロセスの見直しを断行する。", dept: "全社", owner: "CEO" },
-  { pri: "🟡 今月中", title: "開発・マーケ間のリード品質基準の再定義", desc: "獲得数は目標達成しているが、営業現場の期待値と乖離がある。スコアリング条件を実態に合わせてアップデートする。", dept: "マーケ×営業", owner: "マーケ部長" },
-  { pri: "🟡 今月中", title: "離職リスクが懸念されるメンバーへの重点フォロー", desc: "体温低下が著しい入社1年目メンバーを中心に、メンターによる1on1の頻度を週1回に増やす。", dept: "人事総務部", owner: "人事責任者" },
-  { pri: "🟢 継続", title: "CS部のアップセル成功事例をセールスイネーブルメントに活用", desc: "好調な既存顧客フォローのノウハウを新規営業にも転用し、全体の客単価向上を図るサイクルを構築する。", dept: "CS→営業", owner: "CS部長" }
-];
+const actions: any[] = [];
 
 const semTextDefault = `# 組織方針 v1.5 (2026年3月〜)
 
@@ -328,10 +210,6 @@ export default function DashboardPage() {
 
   const displayDepts = useMemo(() => {
     return realDepts.map((d, i) => {
-      let dummyIdx = getSimulatedIndex(d.name);
-      if (dummyIdx === -1) dummyIdx = i % deptData.length;
-      const dummyRef = deptData[dummyIdx];
-
       // 実データから体温を集計 (最新月)
       const latestMonth = last6Months[5];
       const deptResponses = realResponses.filter(r => r.department_id === d.id);
@@ -353,45 +231,47 @@ export default function DashboardPage() {
       });
 
       return {
-        ...d,
-        ...dummyRef,
         id: d.id,
         name: d.name,
-        head: d.headcount || dummyRef.head,
+        head: d.headcount || 0,
+        productivity: 150, // マトリックス用の中立値
         pulse: Number(pulseScore.toFixed(1)),
         pulseHistory,
+        weather: pulseScore >= 4.0 ? "sun" : pulseScore >= 3.0 ? "cloud" : "rain",
+        arrow: "flat",
+        kpiAch: 100, // マトリックス用の中立値
+        // kpis は DB から取得した実データのみ（ダミーは連結しない）
         kpis: realKpis.filter(k => k.owner_dept_id === d.id)
           .sort((a, b) => (b.is_main ? 1 : 0) - (a.is_main ? 1 : 0))
           .map((k: any) => ({
             name: k.name,
-            val: `${k.target_default ?? 100}${k.unit}`,
-            ach: 100,
+            val: `${k.val ?? k.target_default ?? '-'}${k.unit ?? ''}`,
+            ach: k.ach ?? 100,
             type: "stack"
-          })).concat(dummyRef.kpis).slice(0, 3),
+          })).slice(0, 3),
         kpiName: realKpis.find(k => k.owner_dept_id === d.id && k.is_main)?.name ||
           realKpis.find(k => k.owner_dept_id === d.id)?.name ||
-          dummyRef.kpiName
+          ""
       };
     });
   }, [realDepts, realResponses, last6Months, realKpis]);
 
   const displayKpis = realKpis.length > 0 ? realKpis.map((k, i) => {
-    const dummyRef = kpiDefs[i % kpiDefs.length];
     return {
       ...k,
-      ...dummyRef, // preserve dummy history fields like `prev`, `voices`
       id: `kpi_${k.id}`,
       name: k.name,
       unit: k.unit,
-      target: k.target_value || dummyRef.target,
-      val: dummyRef.val, // Keep dummy tracking history
-      dept: realDepts.find(d => d.id === k.owner_department_id)?.name || dummyRef.dept,
+      target: k.target_value || 0,
+      val: k.val || 0,
+      dept: realDepts.find(d => d.id === k.owner_department_id)?.name || "",
+      voices: [],
+      prev: []
     };
-  }) : kpiDefs;
+  }) : [];
 
   const displayAxes = useMemo(() => {
     return realAxes.map((axis, i) => {
-      const dummyProd = prodKpis[i % prodKpis.length];
       const latestMonth = last6Months[5];
       const axisResponses = realResponses.filter(r => r.axis_id === axis.id);
       const latestAnswers = axisResponses
@@ -414,15 +294,15 @@ export default function DashboardPage() {
         ...(axis as any),
         id: axis.id,
         name: axis.name,
-        head: (dummyProd as any).head, // リソース量はまだモック
-        productivity: (dummyProd as any).productivity, // マトリックス描画に必須
-        kpiAch: (dummyProd as any).kpiAch, // 円のサイズ計算に必須
-        mrr: (dummyProd as any).mrr,
+        head: 0,
+        productivity: 150, // マトリックス描画に必須
+        kpiAch: 100, // 円のサイズ計算に必須
+        mrr: 0,
         pulse: Number(pulseScore.toFixed(1)),
         pulseHistory,
         weather: pulseScore >= 4.0 ? "sun" : pulseScore >= 3.0 ? "cloud" : "rain",
         arrow: "flat",
-        kpis: dummyProd.kpis
+        kpis: [] // 軸別のKPIはまだDBにないため空にする
       };
     });
   }, [realAxes, realResponses, last6Months]);
@@ -431,7 +311,7 @@ export default function DashboardPage() {
 
   const ins = insights[tab];
   const selectedKpiDef = displayKpis.find(k => k.id === selKpi) || displayKpis[0];
-  const achRate = selectedKpiDef.target ? Math.round((selectedKpiDef.val / selectedKpiDef.target) * 100) : null;
+  const achRate = (selectedKpiDef && selectedKpiDef.target) ? Math.round((selectedKpiDef.val / selectedKpiDef.target) * 100) : null;
 
   const currentMatData = (matView === "product" ? displayAxes : displayDepts).map(d => {
     let head = d.head;
@@ -439,70 +319,6 @@ export default function DashboardPage() {
     let pulse = d.pulse;
     let kpiAch = d.kpiAch;
     let mrr = 'mrr' in d ? d.mrr : undefined;
-
-    // --- 部署別のタイムラプスストーリー（体温に連動して生産性も変化） ---
-    // Sales: 6m前(少数精鋭,高スコア) -> Now(拡大で崩壊,低スコア)
-    // Dev: 6m前(順調) -> Now(拡大で低迷)
-    // Marketing: 6m前(低迷) -> Now(V字回復)
-    if (d.id === "sales") {
-      if (month === "1m") { head = 14; productivity = 85; pulse = 2.8; kpiAch = 92; }
-      else if (month === "3m") { head = 13; productivity = 120; pulse = 3.5; kpiAch = 105; }
-      else if (month === "6m") { head = 10; productivity = 160; pulse = 4.1; kpiAch = 130; }
-      else if (month !== "default") { head = 15; productivity = 70; pulse = 2.1; kpiAch = 85; } // current: OVERWEIGHT
-    }
-    else if (d.id === "dev") {
-      if (month === "1m") { head = 21; productivity = 75; pulse = 2.6; kpiAch = 88; }
-      else if (month === "3m") { head = 20; productivity = 95; pulse = 3.2; kpiAch = 100; }
-      else if (month === "6m") { head = 18; productivity = 120; pulse = 3.8; kpiAch = 110; }
-      else if (month !== "default") { head = 22; productivity = 65; pulse = 2.4; kpiAch = 80; } // current: OVERWEIGHT
-    }
-    else if (d.id === "mktg") {
-      if (month === "1m") { head = 4; productivity = 230; pulse = 3.8; kpiAch = 105; }
-      else if (month === "3m") { head = 4; productivity = 180; pulse = 3.4; kpiAch = 95; }
-      else if (month === "6m") { head = 3; productivity = 130; pulse = 3.1; kpiAch = 85; }
-      else if (month !== "default") { head = 4; productivity = 270; pulse = 4.0; kpiAch = 120; } // current: PIONEER V字回復
-    }
-    // --- プロダクト別のタイムラプスストーリー ---
-    // Prod B: 6m前(順調) -> Now(拡大で崩壊, 低体温・低生産性)
-    // Prod C: 6m前(低迷) -> Now(少人数で超高効率, 高体温・高生産性へ成長)
-    // Prod A: 6m前(普通) -> Now(順調にSCALE, 体温も安定上昇)
-    else if (d.id === "prod_b" || d.id === "b") {
-      if (month === "1m") { head = 13; productivity = 80; pulse = 2.6; mrr = 850; kpiAch = 85; }
-      else if (month === "3m") { head = 12; productivity = 110; pulse = 2.9; mrr = 950; kpiAch = 95; }
-      else if (month === "6m") { head = 10; productivity = 140; pulse = 3.8; mrr = 1100; kpiAch = 105; }
-      else if (month !== "default") { head = 14; productivity = 60; pulse = 2.1; mrr = 720; kpiAch = 75; } // current: OVERWEIGHT
-    }
-    else if (d.id === "prod_c" || d.id === "c") {
-      if (month === "1m") { head = 9; productivity = 145; pulse = 4.1; mrr = 420; kpiAch = 112; }
-      else if (month === "3m") { head = 8; productivity = 130; pulse = 3.8; mrr = 380; kpiAch = 105; }
-      else if (month === "6m") { head = 7; productivity = 115; pulse = 3.2; mrr = 280; kpiAch = 95; }
-      else if (month !== "default") { head = 9; productivity = 156; pulse = 4.3; mrr = 460; kpiAch = 118; } // current: PIONEER
-    }
-    else if (d.id === "prod_a" || d.id === "a") {
-      if (month === "1m") { head = 20; productivity = 120; pulse = 3.7; mrr = 1600; kpiAch = 100; }
-      else if (month === "3m") { head = 18; productivity = 115; pulse = 3.5; mrr = 1400; kpiAch = 95; }
-      else if (month === "6m") { head = 15; productivity = 110; pulse = 3.4; mrr = 1100; kpiAch = 90; }
-      else if (month !== "default") { head = 22; productivity = 129; pulse = 3.8; mrr = 1800; kpiAch = 105; } // current: SCALE
-    }
-    // その他の部署・プロダクトは適度に変動
-    else {
-      if (month === "1m") {
-        head = ("prevHead" in d && d.prevHead !== undefined) ? d.prevHead : d.head;
-        productivity = ("prevProductivity" in d && d.prevProductivity !== undefined) ? d.prevProductivity : d.productivity - 10;
-        pulse = ("prevPulse" in d && d.prevPulse !== undefined) ? d.prevPulse : d.pulse - 0.2;
-        mrr = mrr ? mrr - 100 : undefined;
-      } else if (month === "3m") {
-        head = Math.max(1, d.head - 1);
-        productivity = d.productivity - 25;
-        pulse = d.pulse - 0.4;
-        mrr = mrr ? mrr - 250 : undefined;
-      } else if (month === "6m") {
-        head = Math.max(1, d.head - 2);
-        productivity = d.productivity - 40;
-        pulse = d.pulse - 0.6;
-        mrr = mrr ? mrr - 400 : undefined;
-      }
-    }
 
     pulse = Number(pulse.toFixed(1));
     const weather = pulse >= 4.0 ? "sun" : pulse >= 3.0 ? "cloud" : "rain";
@@ -730,97 +546,117 @@ export default function DashboardPage() {
 
           {sec === "kpi" && (
             <div className="space-y-4">
-              {/* KPI Summary Row */}
-              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                {displayKpis.map(k => (
-                  <KpiSummaryCard
-                    key={k.id}
-                    name={k.name}
-                    value={k.val.toLocaleString()}
-                    unit={k.unit}
-                    isActive={selKpi === k.id}
-                    onClick={() => setSelKpi(k.id)}
-                  />
-                ))}
-              </div>
-
-              {/* Major Detail Block */}
-              <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-8">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-4">
-                    <h3 className="text-xl font-bold text-slate-800">{selectedKpiDef.name}</h3>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <Badge className="bg-slate-100 text-slate-500 font-bold border-none">担当: {selectedKpiDef.dept}</Badge>
-                      {selectedKpiDef.target && (
-                        <span className="text-xs text-slate-400 font-bold">目標: {selectedKpiDef.target.toLocaleString()}{selectedKpiDef.unit}</span>
-                      )}
-                      {achRate !== null && (
-                        <Badge className={cn(
-                          "border-none font-black",
-                          achRate >= 100 ? "bg-emerald-50 text-emerald-500" : "bg-rose-50 text-rose-500"
-                        )}>
-                          達成率 {achRate}%
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-baseline gap-1.5 justify-end">
-                      <span className="text-5xl font-black text-slate-800 tabular-nums tracking-tighter">{selectedKpiDef.val.toLocaleString()}</span>
-                      <span className="text-lg font-bold text-slate-400">{selectedKpiDef.unit}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">6ヶ月推移</div>
-                  <div className="h-40 w-full">
-                    <DetailLineChart
-                      data={selectedKpiDef.prev}
-                      labels={["9月", "10月", "11月", "12月", "1月", "2月"]}
-                      color={selectedKpiDef.prev[5] >= selectedKpiDef.prev[4] ? "#10B981" : "#EF4444"}
-                    />
-                  </div>
-                </div>
-
-                {achRate !== null && (
-                  <div className="space-y-4 pt-4 border-t border-slate-50">
-                    <div className="flex justify-between items-center text-[11px] font-black uppercase tracking-widest">
-                      <span className="text-slate-400">目標進捗</span>
-                      <span className={achRate >= 100 ? "text-emerald-500" : "text-rose-500"}>{achRate}%</span>
-                    </div>
-                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className={cn(
-                          "h-full rounded-full transition-all duration-1000",
-                          achRate >= 100 ? "bg-emerald-400" : "bg-rose-400"
-                        )}
-                        style={{ width: `${Math.min(achRate, 100)}%` }}
+              {displayKpis.length > 0 ? (
+                <>
+                  {/* KPI Summary Row */}
+                  <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    {displayKpis.map(k => (
+                      <KpiSummaryCard
+                        key={k.id}
+                        name={k.name}
+                        value={k.val.toLocaleString()}
+                        unit={k.unit}
+                        isActive={selKpi === k.id}
+                        onClick={() => setSelKpi(k.id)}
                       />
-                    </div>
+                    ))}
                   </div>
-                )}
-              </div>
 
-              {/* Voices Details */}
-              <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-6">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">🗣️</span>
-                  <h4 className="text-base font-bold text-slate-800">{selectedKpiDef.dept}の匿名アンケート要約</h4>
-                  <Badge className="bg-slate-50 text-slate-400 border-none ml-2 tracking-tighter text-[10px] uppercase font-bold">{selectedKpiDef.name}に関する声</Badge>
-                </div>
-                <div className="space-y-3">
-                  {selectedKpiDef.voices?.map((v: any, i: number) => {
-                    const moodColor = v.mood === "sun" ? "bg-emerald-50/50 border-emerald-100" : v.mood === "rain" ? "bg-rose-50/50 border-rose-100" : "bg-amber-50/50 border-amber-100";
-                    return (
-                      <div key={i} className={`p-5 rounded-2xl border flex gap-4 transition-all hover:translate-x-1 ${moodColor}`}>
-                        <span className="text-xl shrink-0">{v.mood === "sun" ? "☀️" : v.mood === "cloud" ? "☁️" : "☔️"}</span>
-                        <p className="text-sm text-slate-700 leading-relaxed font-medium">{v.text}</p>
+                  {/* Major Detail Block */}
+                  {selectedKpiDef && (
+                    <>
+                      <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-8">
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-4">
+                            <h3 className="text-xl font-bold text-slate-800">{selectedKpiDef.name}</h3>
+                            <div className="flex flex-wrap items-center gap-3">
+                              <Badge className="bg-slate-100 text-slate-500 font-bold border-none">担当: {selectedKpiDef.dept}</Badge>
+                              {selectedKpiDef.target && (
+                                <span className="text-xs text-slate-400 font-bold">目標: {selectedKpiDef.target.toLocaleString()}{selectedKpiDef.unit}</span>
+                              )}
+                              {achRate !== null && (
+                                <Badge className={cn(
+                                  "border-none font-black",
+                                  achRate >= 100 ? "bg-emerald-50 text-emerald-500" : "bg-rose-50 text-rose-500"
+                                )}>
+                                  達成率 {achRate}%
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="flex items-baseline gap-1.5 justify-end">
+                              <span className="text-5xl font-black text-slate-800 tabular-nums tracking-tighter">{selectedKpiDef.val.toLocaleString()}</span>
+                              <span className="text-lg font-bold text-slate-400">{selectedKpiDef.unit}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">6ヶ月推移</div>
+                          <div className="h-40 w-full">
+                            <DetailLineChart
+                              data={selectedKpiDef.prev || []}
+                              labels={["9月", "10月", "11月", "12月", "1月", "2月"]}
+                              color={(selectedKpiDef.prev && selectedKpiDef.prev[5] >= selectedKpiDef.prev[4]) ? "#10B981" : "#EF4444"}
+                            />
+                          </div>
+                        </div>
+
+                        {achRate !== null && (
+                          <div className="space-y-4 pt-4 border-t border-slate-50">
+                            <div className="flex justify-between items-center text-[11px] font-black uppercase tracking-widest">
+                              <span className="text-slate-400">目標進捗</span>
+                              <span className={achRate >= 100 ? "text-emerald-500" : "text-rose-500"}>{achRate}%</span>
+                            </div>
+                            <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                              <div
+                                className={cn(
+                                  "h-full rounded-full transition-all duration-1000",
+                                  achRate >= 100 ? "bg-emerald-400" : "bg-rose-400"
+                                )}
+                                style={{ width: `${Math.min(achRate, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    );
-                  })}
+
+                      {/* Voices Details */}
+                      <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-6">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">🗣️</span>
+                          <h4 className="text-base font-bold text-slate-800">{selectedKpiDef.dept}の匿名アンケート要約</h4>
+                          <Badge className="bg-slate-50 text-slate-400 border-none ml-2 tracking-tighter text-[10px] uppercase font-bold">{selectedKpiDef.name}に関する声</Badge>
+                        </div>
+                        <div className="space-y-3">
+                          {selectedKpiDef.voices?.length > 0 ? (
+                            selectedKpiDef.voices.map((v: any, i: number) => {
+                              const moodColor = v.mood === "sun" ? "bg-emerald-50/50 border-emerald-100" : v.mood === "rain" ? "bg-rose-50/50 border-rose-100" : "bg-amber-50/50 border-amber-100";
+                              return (
+                                <div key={i} className={`p-5 rounded-2xl border flex gap-4 transition-all hover:translate-x-1 ${moodColor}`}>
+                                  <span className="text-xl shrink-0">{v.mood === "sun" ? "☀️" : v.mood === "cloud" ? "☁️" : "☔️"}</span>
+                                  <p className="text-sm text-slate-700 leading-relaxed font-medium">{v.text}</p>
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <p className="text-center py-10 text-slate-400 text-sm italic">このKPIに関連するボイスはまだありません。</p>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </>
+              ) : (
+                <div className="bg-white rounded-3xl p-16 border border-slate-100 shadow-sm text-center space-y-4">
+                  <div className="text-4xl">📈</div>
+                  <h4 className="text-lg font-bold text-slate-800">KPIデータがありません</h4>
+                  <p className="text-slate-400 text-sm max-w-xs mx-auto">
+                    設定画面から部署の重要指標(KPI)を登録することで、進捗と体温の相関を分析できるようになります。
+                  </p>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
