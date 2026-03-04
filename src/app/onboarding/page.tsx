@@ -286,6 +286,10 @@ function OnboardingContent() {
             setSubmitting(true);
             setError(null);
 
+            // ユーザー情報を取得
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("ログインセッションが切れています。再度ログインしてください。");
+
             const payload: any = {
                 invitationToken: state.mode === "join" ? state.invitationToken : undefined,
                 selectedDeptId: state.mode === "join" ? state.selectedDeptId : undefined,
@@ -303,13 +307,26 @@ function OnboardingContent() {
                 body: JSON.stringify(payload),
             });
 
-            if (!res.ok) {
+            if (res.ok) {
+                const { companyId } = await res.json();
+
+                // DBへの反映（RLSの伝播など）に若干のタイムラグがある場合があるため、
+                // 実際にプロフィールに company_id がセットされたことを数回リトライして確認する
+                for (let i = 0; i < 5; i++) {
+                    const { data: profile } = await supabase.from('users').select('company_id').eq('id', user.id).single();
+                    if (profile?.company_id === companyId) break;
+                    await new Promise(r => setTimeout(r, 500)); // 0.5秒待機
+                }
+
+                setError(null);
+                // キャッシュをクリアして最新のセッション情報を取得させる
+                router.refresh();
+                router.push("/");
+            } else {
                 const { message, detail } = await res.json();
                 const fullError = detail ? `${message} (${detail})` : message;
                 throw new Error(fullError || "保存に失敗しました");
             }
-
-            router.push("/");
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : "エラーが発生しました";
             setError(message);
