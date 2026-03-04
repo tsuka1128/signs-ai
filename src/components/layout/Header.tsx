@@ -2,12 +2,48 @@
 
 import { Badge } from "@/components/ui/Badge";
 import Link from "next/link";
-import { useState } from "react";
-import { Settings } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Settings, LogOut } from "lucide-react";
+import { signOut } from "@/lib/auth";
+import { createClient } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 export function Header() {
+    const router = useRouter();
+    const supabase = createClient();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [companyName, setCompanyName] = useState("Loading...");
+    const [userInitial, setUserInitial] = useState("?");
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                setUserInitial(user.email?.[0].toUpperCase() || "U");
+                const { data: profile } = await supabase
+                    .from("users")
+                    .select("display_name, companies(name)")
+                    .eq("id", user.id)
+                    .single();
+
+                if (profile) {
+                    setCompanyName((profile as any).companies?.name || "Signs AI User");
+                }
+            }
+        };
+        fetchUserData();
+    }, []);
+
+    const handleSignOut = async () => {
+        try {
+            await signOut();
+            router.push("/login");
+            router.refresh();
+        } catch (error) {
+            console.error("Sign out error:", error);
+        }
+    };
 
     return (
         <header className="bg-gradient-to-br from-white via-slate-50 to-white px-5 py-6 border-b border-slate-200 relative z-[100]">
@@ -38,9 +74,9 @@ export function Header() {
                         <div className="relative">
                             <button
                                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                                className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold hover:ring-2 hover:ring-teal-300 transition-all ml-2 outline-none shadow-sm"
+                                className="w-8 h-8 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold hover:ring-2 hover:ring-teal-300 transition-all ml-2 outline-none shadow-sm"
                             >
-                                <span className="text-xs">SS</span>
+                                <span className="text-xs">{userInitial}</span>
                             </button>
 
                             {isProfileOpen && (
@@ -49,7 +85,7 @@ export function Header() {
                                     <div className="absolute top-full mt-3 right-0 w-60 bg-white border border-slate-200 rounded-xl shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-200 text-left">
                                         <div className="px-4 py-3 border-b border-slate-100 mb-2">
                                             <p className="text-xs text-slate-500 font-medium mb-1">Signed in as</p>
-                                            <p className="text-sm font-bold text-slate-800 truncate">株式会社サンプルSaaS</p>
+                                            <p className="text-sm font-bold text-slate-800 truncate">{companyName}</p>
                                         </div>
 
                                         <Link href="/kpi" onClick={() => setIsProfileOpen(false)} className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-teal transition-colors flex items-center gap-2">
@@ -62,8 +98,8 @@ export function Header() {
 
                                         <div className="h-px bg-slate-100 my-2"></div>
 
-                                        <button onClick={() => setIsProfileOpen(false)} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
-                                            Sign out
+                                        <button onClick={handleSignOut} className="w-full text-left px-4 py-2 text-sm text-rose-600 font-bold hover:bg-rose-50 transition-colors flex items-center gap-2">
+                                            <LogOut className="w-3.5 h-3.5" /> Sign out
                                         </button>
                                     </div>
                                 </>
