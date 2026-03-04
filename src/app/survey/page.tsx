@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Header } from "@/components/layout/Header";
 import { SurveyQuestionCard } from "@/components/dashboard/SurveyQuestionCard";
 import { DetailLineChart } from "@/components/dashboard/DetailLineChart";
@@ -8,6 +8,7 @@ import { TabBar } from "@/components/ui/TabBar";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase";
 
 const questions = [
     { id: 1, text: "今の仕事にワクワクしていますか？", hint: "月曜の朝、布団の中で思い浮かべてみてください。" },
@@ -23,49 +24,85 @@ const questions = [
     { id: 11, text: "KPI達成に向けて、準備周到に活動できていますか？", hint: "道筋が見えているだけで、体温は上がります。" },
 ];
 
-const surveyData: Record<string, { scores: number[]; aiComment: string; pulse: number; pulseHistory: number[] }> = {
-    all: {
-        scores: [4.2, 2.1, 3.8, 1.8, 3.5, 3.2, 4.0, 2.4, 4.1, 3.7, 3.9],
-        pulse: 3.2,
-        pulseHistory: [3.5, 3.4, 3.3, 3.2, 3.1, 3.2],
-        aiComment: "組織全体として「ワクワク感」と「顧客貢献感」は高い水準にありますが、「意思決定の待ち時間（Q2）」と「根回しコスト（Q4）」が明確なボトルネックとなっています。特にQ2の2.1は危険水域であり、スピード感の欠如が後続のQ8（業務量）への圧迫に繋がっている構造が見えます。仕組みによる解決が急務です。"
-    },
-    sales: {
-        scores: [4.5, 1.8, 4.0, 1.2, 2.5, 3.0, 4.2, 1.9, 4.6, 3.5, 3.8],
-        pulse: 2.1,
-        pulseHistory: [3.1, 2.9, 2.8, 2.5, 2.3, 2.1],
-        aiComment: "営業部は「顧客の役に立ちたい」という熱量が非常に高い（Q9: 4.6）一方で、社内調整（Q4: 1.2）と決定待ち（Q2: 1.8）でエネルギーが削がれています。言いたいことを飲み込む傾向（Q5: 2.5）もあり、数字を作るための『無理』が個人の体温低下として顕在化しつつあります。"
-    },
-    mktg: {
-        scores: [4.3, 3.5, 4.2, 3.8, 4.0, 4.1, 3.9, 3.8, 4.4, 4.0, 4.2],
-        pulse: 4.2,
-        pulseHistory: [3.8, 3.9, 4.0, 4.1, 4.1, 4.2],
-        aiComment: "マーケ部は全指標において安定した高スコアを維持しており、現在の「質の高いリード獲得」という方針が個人の納得感と直結しています。調整コストも低く、理想的な自律駆動型チームとなっています。他部署へのナレッジ展開のハブとなることを推奨します。"
-    },
-    dev: {
-        scores: [3.8, 2.5, 3.2, 3.0, 3.1, 2.8, 3.5, 2.0, 3.6, 4.2, 3.5],
-        pulse: 2.4,
-        pulseHistory: [3.4, 3.2, 3.0, 2.8, 2.5, 2.4],
-        aiComment: "開発部は「新しい技術への挑戦（Q10: 4.2）」にやりがいを感じていますが、恒常的な業務過多（Q8: 2.0）が深刻です。仕様決定の不透明さが『迷い』を生み、集中を削いでいます。クリエイティブな時間を確保するための優先順位の整理が不可欠です。"
-    },
-    cs: {
-        scores: [3.5, 2.2, 3.0, 2.4, 2.2, 3.0, 3.1, 2.5, 4.0, 3.2, 3.0],
-        pulse: 3.1,
-        pulseHistory: [3.6, 3.5, 3.4, 3.2, 3.1, 3.1],
-        aiComment: "CS部は顧客への貢献意欲は高いものの、他部署（特に開発）からの情報伝達や仕様変更の反映待ち（Q2）により、自信を持って顧客対応ができないジレンマ（Q5: 2.2）を抱えています。現場の声を製品に反映させるパイプの詰まりを解消する必要があります。"
-    },
-    hr: {
-        scores: [4.0, 4.0, 4.5, 4.2, 4.4, 4.1, 4.3, 4.0, 3.8, 4.1, 4.0],
-        pulse: 4.0,
-        pulseHistory: [3.9, 3.9, 3.8, 3.9, 4.0, 4.0],
-        aiComment: "人事部は情報の透明性が高く、非常にオープンな文化が形成されています。ただし、全社的な「調整コスト」が高まっている現状を認識し、制度設計を通じた組織のデトックスを主導すべき時期に来ています。"
-    }
-};
+// モックデータ定数を削除し、状態管理に移行
 
 export default function SurveyDashboard() {
+    const supabase = createClient();
     const [view, setView] = useState("all");
+    const [company, setCompany] = useState<any>(null);
+    const [depts, setDepts] = useState<any[]>([]);
+    const [axes, setAxes] = useState<any[]>([]);
+    const [allResponses, setAllResponses] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const currentData = surveyData[view];
+    useEffect(() => {
+        async function loadData() {
+            setLoading(true);
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const { data: userData } = await supabase.from('users').select('company_id').eq('id', user.id).single();
+            if (!userData) return;
+
+            const [compRes, deptRes, axisRes, respRes] = await Promise.all([
+                supabase.from('companies').select('*').eq('id', userData.company_id).single(),
+                supabase.from('departments').select('*').eq('company_id', userData.company_id),
+                supabase.from('kpi_axes').select('*').eq('company_id', userData.company_id),
+                supabase.from('survey_responses').select('*, survey_answers(*)').eq('company_id', userData.company_id)
+            ]);
+
+            setCompany(compRes.data);
+            setDepts(deptRes.data || []);
+            setAxes(axisRes.data || []);
+            setAllResponses(respRes.data || []);
+            setLoading(false);
+        }
+        loadData();
+    }, [supabase]);
+
+    const tabs = useMemo(() => {
+        const base = [{ id: "all", label: "🏢 全社" }];
+        const deptTabs = depts.map(d => ({ id: `dept_${d.id}`, label: `👥 ${d.name}` }));
+        const axisTabs = axes.map(a => ({ id: `axis_${a.id}`, label: `🏷️ ${a.name}` }));
+        return [...base, ...deptTabs, ...axisTabs];
+    }, [depts, axes]);
+
+    const currentData = useMemo(() => {
+        let filtered = allResponses;
+        if (view.startsWith("dept_")) {
+            const deptId = view.replace("dept_", "");
+            filtered = allResponses.filter(r => r.department_id === deptId);
+        } else if (view.startsWith("axis_")) {
+            const axisId = view.replace("axis_", "");
+            filtered = allResponses.filter(r => r.axis_id === axisId);
+        }
+
+        const qScores = questions.map(q => {
+            const answers = filtered.flatMap(r => r.survey_answers || []).filter(a => a.question_id === q.id);
+            if (answers.length === 0) return 0;
+            return answers.reduce((sum, a) => sum + a.score, 0) / answers.length;
+        });
+
+        const avgPulse = qScores.length > 0 ? qScores.reduce((a, b) => a + b, 0) / qScores.length : 0;
+
+        // 簡易AIコメント生成（スコアに基づいた動的生成）
+        let comment = "回答データがまだ蓄積されていません。現場の声を集めることから始めましょう。";
+        if (filtered.length > 0) {
+            const lowScoreQ = qScores.map((s, i) => ({ s, i })).filter(x => x.s < 3.0).sort((a, b) => a.s - b.s)[0];
+            if (lowScoreQ) {
+                comment = `${questions[lowScoreQ.i].text} のスコアが低迷しています。現場では心理的安全性やリソースの不足を感じている可能性があります。早急なヒアリングを推奨します。`;
+            } else {
+                comment = "全体的に良好な体温が維持されています。現在のポジティブなサイクルを維持しつつ、さらなる挑戦を促す環境を整えていきましょう。";
+            }
+        }
+
+        return {
+            scores: qScores,
+            pulse: avgPulse,
+            pulseHistory: [avgPulse * 0.9, avgPulse * 0.95, avgPulse * 1.05, avgPulse * 0.98, avgPulse * 1.02, avgPulse], // モック推移
+            aiComment: comment
+        };
+    }, [view, allResponses]);
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20 font-sans">
@@ -92,14 +129,7 @@ export default function SurveyDashboard() {
                         </div>
                     </div>
                     <TabBar
-                        tabs={[
-                            { id: "all", label: "🏢 全社" },
-                            { id: "sales", label: "💼 営業部" },
-                            { id: "mktg", label: "📢 マーケ部" },
-                            { id: "dev", label: "💻 開発部" },
-                            { id: "cs", label: "🎧 CS部" },
-                            { id: "hr", label: "🤝 人事部" },
-                        ]}
+                        tabs={tabs}
                         active={view}
                         onChange={setView}
                     />
@@ -156,7 +186,7 @@ export default function SurveyDashboard() {
                         </div>
                         <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold tracking-tighter uppercase">
                             <span className="w-1.5 h-1.5 rounded-full bg-teal animate-pulse" />
-                            Confidence: High (Data sufficiency: 94%)
+                            Data sufficiency: {allResponses.length > 0 ? "Satisfactory" : "Insufficient"}
                         </div>
                     </div>
                 </div>
