@@ -43,8 +43,14 @@ export function ScatterPlot({ data, isProduct = false, month, onMonthChange, onP
     const midX = PAD.l + pw / 2;
     const midY = PAD.t + ph / 2;
 
-    const cx = (h: number) => PAD.l + Math.max(0, Math.min(1, h / maxH)) * pw;
-    const cy = (val: number) => PAD.t + ph - Math.max(0, Math.min(1, val / maxY)) * ph;
+    // 円やラベルが外枠に被らないように、描画領域を内側 80% に縮小（上下左右に 10% のマージン）
+    const innerW = pw * 0.8;
+    const innerH = ph * 0.8;
+    const offsetX = pw * 0.1;
+    const offsetY = ph * 0.1;
+
+    const cx = (h: number) => PAD.l + offsetX + Math.max(0, Math.min(1, h / maxH)) * innerW;
+    const cy = (val: number) => PAD.t + ph - offsetY - Math.max(0, Math.min(1, val / maxY)) * innerH;
 
     const yLabelWord = "高生産性";
     const yLabelWordLow = "低生産性";
