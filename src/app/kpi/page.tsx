@@ -198,11 +198,12 @@ export default function KpiInputPage() {
 
         const months: { month: string, label: string }[] = [];
         const now = new Date();
+        // 常にその月の1日を基準にする
         for (let i = 0; i < 12; i++) {
             const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const yyyy = d.getFullYear();
             const mm = String(d.getMonth() + 1).padStart(2, '0');
-            const monthStr = `${yyyy}-${mm}`;
+            const monthStr = `${yyyy}-${mm}-01`; // 'YYYY-MM-01' 形式に変更
             months.push({
                 month: monthStr,
                 label: i === 0 ? "今月度" : `${yyyy} / ${mm}`
@@ -237,7 +238,8 @@ export default function KpiInputPage() {
 
         // 実績値取得
         const monthList = months.map(m => m.month);
-        const { data: recs } = await supabase.from('kpi_records').select('*').in('recorded_month', monthList).in('kpi_definition_id', formattedKpis.map(k => k.id));
+        const { data: recs, error: rErr } = await supabase.from('kpi_records').select('*').in('recorded_month', monthList);
+        if (rErr) console.error("Records fetch error:", rErr);
 
         const initialEditValues: Record<string, { value: string, target: string }> = {};
 
