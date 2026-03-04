@@ -52,9 +52,53 @@ export async function POST(request: NextRequest) {
 
     // A. 招待トークンがある場合の処理
     if (invitationToken) {
-        // ダミートークン「TAION」の処理
+        // ダミートークン「TAION」の場合はデモデータを作成
         if (invitationToken === "TAION") {
-            return NextResponse.json({ success: true, companyId: "demo-company-id" });
+            try {
+                // 1. Free プラン取得
+                const { data: freePlan } = await supabase.from("plans").select("id").eq("name", "Free").single();
+                if (!freePlan) throw new Error("Freeプランが見つかりません。シードデータを確認してください。");
+
+                // 2. デモ企業作成
+                const { data: company, error: cErr } = await supabase.from("companies").insert({
+                    name: "株式会社 TAION (デモ)",
+                    plan_id: freePlan.id,
+                    status: "active"
+                }).select("id").single();
+                if (cErr || !company) throw new Error("デモ企業の作成に失敗しました");
+
+                // 3. ユーザーと紐付け
+                await supabase.from("users").upsert({
+                    id: user.id,
+                    company_id: company.id,
+                    role: "admin",
+                    email: user.email ?? "",
+                    display_name: user.user_metadata?.full_name ?? user.email ?? ""
+                });
+
+                // 4. デモ部署作成
+                const depts = ["経営層", "経企・人事", "営業部", "カスタマーサクセス", "開発部"];
+                const { data: createdDepts } = await supabase.from("departments").insert(
+                    depts.map(name => ({ company_id: company.id, name, headcount: 10 }))
+                ).select("id, name");
+
+                // 5. デモKPI作成
+                const kpiNames = ["MRR", "リード数", "商談化率", "解約率", "従業員体温スコア"];
+                const units = ["万円", "件", "%", "%", "pt"];
+                await supabase.from("kpi_definitions").insert(
+                    kpiNames.map((name, i) => ({
+                        company_id: company.id,
+                        name,
+                        unit: units[i],
+                        sort_order: i,
+                        owner_dept_id: createdDepts ? createdDepts[i % createdDepts.length].id : null
+                    }))
+                );
+
+                return NextResponse.json({ success: true, companyId: company.id });
+            } catch (e: any) {
+                return NextResponse.json({ message: e.message }, { status: 500 });
+            }
         }
 
         try {
