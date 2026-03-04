@@ -77,6 +77,13 @@ export default function SurveyDashboard() {
         return dates;
     }, []);
 
+    // recorded_month の形式を YYYY-MM-DD に正規化（YYYY-MM 形式も受け入れる）
+    const normalizeMonth = (m: string): string => {
+        if (!m) return m;
+        if (/^\d{4}-\d{2}$/.test(m)) return `${m}-01`;
+        return m;
+    };
+
     const currentData = useMemo(() => {
         let filtered = allResponses;
         let viewName = "全社";
@@ -97,7 +104,7 @@ export default function SurveyDashboard() {
             // 当月（最後の一ヶ月）のスコアを表示
             const latestMonth = last6Months[last6Months.length - 1];
             const answers = filtered
-                .filter(r => r.recorded_month === latestMonth)
+                .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
                 .flatMap(r => r.survey_answers || [])
                 .filter(a => a.question_id === q.id);
             if (answers.length === 0) return 0;
@@ -108,7 +115,7 @@ export default function SurveyDashboard() {
 
         // 過去6ヶ月の推移を計算
         const pulseHistory = last6Months.map(month => {
-            const monthFiltered = filtered.filter(r => r.recorded_month === month);
+            const monthFiltered = filtered.filter(r => normalizeMonth(r.recorded_month) === month);
             if (monthFiltered.length === 0) return 0;
             const monthScores = questions.map(q => {
                 const answers = monthFiltered.flatMap(r => r.survey_answers || []).filter(a => a.question_id === q.id);

@@ -237,6 +237,14 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // recorded_month の形式を YYYY-MM-DD に統一する（YYYY-MM 形式も受け入れる）
+  const normalizeMonth = (m: string): string => {
+    if (!m) return m;
+    // YYYY-MM 形式を YYYY-MM-01 に変換
+    if (/^\d{4}-\d{2}$/.test(m)) return `${m}-01`;
+    return m;
+  };
+
   const last6Months = useMemo(() => {
     const dates = [];
     const now = new Date();
@@ -278,7 +286,7 @@ export default function DashboardPage() {
     const latestMonth = last6Months[5];
     const qScores = questions.map(q => {
       const answers = filtered
-        .filter(r => r.recorded_month === latestMonth)
+        .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
         .flatMap(r => r.survey_answers || [])
         .filter(a => a.question_id === q.id);
       if (answers.length === 0) return 0;
@@ -289,7 +297,7 @@ export default function DashboardPage() {
 
     const pulseHistory = last6Months.map(month => {
       const monthAnswers = filtered
-        .filter(r => r.recorded_month === month)
+        .filter(r => normalizeMonth(r.recorded_month) === month)
         .flatMap(r => r.survey_answers || []);
       if (monthAnswers.length === 0) return 0;
       const scores = questions.map(q => {
@@ -322,7 +330,7 @@ export default function DashboardPage() {
       const latestMonth = last6Months[5];
       const deptResponses = realResponses.filter(r => r.department_id === d.id);
       const latestAnswers = deptResponses
-        .filter(r => r.recorded_month === latestMonth)
+        .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
         .flatMap(r => r.survey_answers || []);
 
       const pulseScore = latestAnswers.length > 0
@@ -332,7 +340,7 @@ export default function DashboardPage() {
       // 過去6ヶ月の推移
       const pulseHistory = last6Months.map(month => {
         const monthAnswers = deptResponses
-          .filter(r => r.recorded_month === month)
+          .filter(r => normalizeMonth(r.recorded_month) === month)
           .flatMap(r => r.survey_answers || []);
         if (monthAnswers.length === 0) return 0; // データなければ 0
         return monthAnswers.reduce((sum, a) => sum + a.score, 0) / monthAnswers.length;
@@ -381,7 +389,7 @@ export default function DashboardPage() {
       const latestMonth = last6Months[5];
       const axisResponses = realResponses.filter(r => r.axis_id === axis.id);
       const latestAnswers = axisResponses
-        .filter(r => r.recorded_month === latestMonth)
+        .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
         .flatMap(r => r.survey_answers || []);
 
       const pulseScore = latestAnswers.length > 0
@@ -390,7 +398,7 @@ export default function DashboardPage() {
 
       const pulseHistory = last6Months.map(month => {
         const monthAnswers = axisResponses
-          .filter(r => r.recorded_month === month)
+          .filter(r => normalizeMonth(r.recorded_month) === month)
           .flatMap(r => r.survey_answers || []);
         if (monthAnswers.length === 0) return 0; // データなければ 0
         return monthAnswers.reduce((sum, a) => sum + a.score, 0) / monthAnswers.length;

@@ -14,18 +14,16 @@ export function DetailLineChart({ data, labels, color = "#10B981", height = 120 
     const chartWidth = width - padding.left - padding.right;
     const chartHeight = height - padding.top - padding.bottom;
 
-    // 有効なデータ（> 0）のインデックスと値のみを抽出
-    const validData = data.map((v, i) => ({ v, i })).filter(d => d.v > 0);
-
-    const min = validData.length > 0 ? Math.min(...validData.map(d => d.v)) : 0;
-    const max = validData.length > 0 ? Math.max(...validData.map(d => d.v)) : 5;
+    // 全データポイント（0も含む）を描画対象とする
+    const min = 0;
+    const max = Math.max(...data, 5); // 最低でも5を上限として見やすく
     const range = max - min || 1; // 0除算防止
 
-    const points = validData.map((d) => {
-        // X座標は元のインデックス (0~5) に基づいて配置（月がずれないようにする）
-        const x = padding.left + (data.length > 1 ? (d.i / (data.length - 1)) * chartWidth : 0.5 * chartWidth);
-        const y = padding.top + chartHeight - ((d.v - min) / range) * chartHeight;
-        return { x, y };
+    // 全月分の座標を計算（0値も底部に描画）
+    const points = data.map((v, i) => {
+        const x = padding.left + (data.length > 1 ? (i / (data.length - 1)) * chartWidth : 0.5 * chartWidth);
+        const y = padding.top + chartHeight - ((v - min) / range) * chartHeight;
+        return { x, y, v };
     });
 
     const pathData = points.length > 0 ? points.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(" ") : "";
@@ -35,7 +33,7 @@ export function DetailLineChart({ data, labels, color = "#10B981", height = 120 
 
     return (
         <div className="w-full">
-            <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto overflow-visible select-none">
+            <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto select-none">
                 <defs>
                     <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor={color} stopOpacity="0.1" />
@@ -56,15 +54,16 @@ export function DetailLineChart({ data, labels, color = "#10B981", height = 120 
                     strokeLinejoin="round"
                 />
 
-                {/* Last Point Marker */}
-                {points.length > 0 && (
+                {/* 各月のデータポイントを描画（0の月は小さく表示） */}
+                {points.map((p, i) => (
                     <circle
-                        cx={points[points.length - 1].x}
-                        cy={points[points.length - 1].y}
-                        r={3}
-                        fill={color}
+                        key={i}
+                        cx={p.x}
+                        cy={p.y}
+                        r={p.v > 0 ? 3 : 2}
+                        fill={p.v > 0 ? color : "#CBD5E1"}
                     />
-                )}
+                ))}
 
                 {/* X-Axis Labels */}
                 {labels.map((label, i) => {
