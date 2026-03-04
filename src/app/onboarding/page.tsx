@@ -304,8 +304,9 @@ function OnboardingContent() {
             });
 
             if (!res.ok) {
-                const { message } = await res.json();
-                throw new Error(message || "保存に失敗しました");
+                const { message, detail } = await res.json();
+                const fullError = detail ? `${message} (${detail})` : message;
+                throw new Error(fullError || "保存に失敗しました");
             }
 
             router.push("/");

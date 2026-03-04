@@ -99,7 +99,10 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ success: true, companyId: company.id });
             } catch (e: any) {
                 console.error("TAIONデモ作成エラー:", e.message);
-                return NextResponse.json({ message: e.message }, { status: 500 });
+                return NextResponse.json({
+                    message: "デモデータの作成に失敗しました",
+                    detail: e.message
+                }, { status: 500 });
             }
         }
 
