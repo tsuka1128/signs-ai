@@ -300,7 +300,7 @@ export default function DashboardPage() {
     });
 
     let comment = "回答データが蓄積されていません。";
-    if (filtered.length > 0) {
+    if (avgPulse > 0) {
       const lowScoreQ = qScores.map((s, i) => ({ s, i })).filter(x => x.s > 0 && x.s < 3.0).sort((a, b) => a.s - b.s)[0];
       if (lowScoreQ) {
         comment = `${questions[lowScoreQ.i].text} のスコアが低迷しています。環境改善の検討が必要です。`;
