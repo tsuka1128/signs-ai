@@ -176,7 +176,7 @@ export default function KpiInputPage() {
     const [kpiDefinitions, setKpiDefinitions] = useState<KpiDefinition[]>([]);
     const [allMonths, setAllMonths] = useState<{ month: string, label: string }[]>([]);
     const [editValues, setEditValues] = useState<Record<string, { value: string, target: string }>>({}); // key: month_kpiId_axisId
-    const [isLocked, setIsLocked] = useState(true);
+    const [isLocked, setIsLocked] = useState(false);
     const [secondaryAxisName, setSecondaryAxisName] = useState("第2軸");
     const [axes, setAxes] = useState<any[]>([]);
 
@@ -291,16 +291,18 @@ export default function KpiInputPage() {
             return;
         }
 
-        const { error } = await supabase.from('kpi_records').upsert(upsertData, { onConflict: 'kpi_definition_id, recorded_month, axis_id' });
+        const { error } = await supabase.from('kpi_records').upsert(upsertData, {
+            onConflict: 'kpi_definition_id, recorded_month, axis_id'
+        });
 
         if (error) {
             console.error("Save error:", error);
-            alert("保存に失敗しました。");
+            alert(`保存に失敗しました: ${error.message}`);
         } else {
             setIsSaved(true);
-            setIsLocked(true);
+            // 保存後も編集を続けられるようにする
             setTimeout(() => setIsSaved(false), 3000);
-            fetchInitialData();
+            await fetchInitialData();
         }
         setIsSaving(false);
     };
