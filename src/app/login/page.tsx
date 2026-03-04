@@ -11,6 +11,7 @@ import { useState } from "react";
 import { signInWithGoogle } from "@/lib/auth";
 
 export default function LoginPage() {
+    const [inviteCode, setInviteCode] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -18,7 +19,13 @@ export default function LoginPage() {
         try {
             setLoading(true);
             setError(null);
-            await signInWithGoogle();
+
+            // 招待コード（TAION等）がある場合は、コールバックURLに含める
+            const callbackUrl = inviteCode.trim()
+                ? `${window.location.origin}/auth/callback?token=${encodeURIComponent(inviteCode.trim())}`
+                : undefined;
+
+            await signInWithGoogle(callbackUrl);
         } catch {
             setError("ログインに失敗しました。もう一度お試しください。");
             setLoading(false);
@@ -60,6 +67,21 @@ export default function LoginPage() {
                         </div>
                     )}
 
+                    <div className="space-y-4 mb-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                                招待コード / デモコード（任意）
+                            </label>
+                            <input
+                                type="text"
+                                value={inviteCode}
+                                onChange={(e) => setInviteCode(e.target.value)}
+                                placeholder="例: TAION"
+                                className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50/50 text-slate-700 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/20 focus:bg-white transition-all text-center tracking-widest placeholder:text-slate-200"
+                            />
+                        </div>
+                    </div>
+
                     <button
                         id="google-login-btn"
                         onClick={handleGoogleLogin}
@@ -88,7 +110,7 @@ export default function LoginPage() {
                                 />
                             </svg>
                         )}
-                        <span>{loading ? "ログイン中..." : "Googleアカウントでログイン"}</span>
+                        <span>{loading ? "認証中..." : "Googleアカウントでログイン"}</span>
                     </button>
 
                     <p className="mt-6 text-center text-[11px] text-slate-400 font-medium leading-relaxed">

@@ -2,6 +2,7 @@
 -- シードデータ：プラン
 -- =====================================================
 INSERT INTO plans (id, name, description) VALUES
+  ('free', 'Free', '個人・デモ利用向け'),
   ('team', 'Team', '少人数のチーム向け'),
   ('standard', 'Standard', '標準的な企業向け'),
   ('pro', 'Pro', '多機能なプロフェッショナル版')

@@ -7,12 +7,12 @@
 import { createClient } from "./supabase";
 
 /** Google OAuth ログインを開始する */
-export async function signInWithGoogle() {
+export async function signInWithGoogle(redirectToOption?: string) {
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
+            redirectTo: redirectToOption || `${window.location.origin}/auth/callback`,
         },
     });
 

@@ -30,6 +30,8 @@ export async function GET(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser();
 
+    const token = searchParams.get("token");
+
     if (user) {
         const { data: profile } = await supabase
             .from("users")
@@ -39,7 +41,10 @@ export async function GET(request: NextRequest) {
 
         // 初回ログイン or company_id がなければオンボーディングへ
         if (!profile?.company_id) {
-            return NextResponse.redirect(`${origin}/onboarding`);
+            const onboardingUrl = token
+                ? `${origin}/onboarding?token=${encodeURIComponent(token)}`
+                : `${origin}/onboarding`;
+            return NextResponse.redirect(onboardingUrl);
         }
     }
 
