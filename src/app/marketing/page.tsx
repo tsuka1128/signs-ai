@@ -323,7 +323,7 @@ function HeroVisual() {
               </div>
               {/* セクションピルズ */}
               <div className="flex gap-1.5 overflow-hidden">
-                {["📊 マトリックス", "📈 KPI詳細", "🏢 部署・プロダクト", "🗣️ 組織の体温", "📌 アクション", "🧭 経営方針"].map((p, i) => (
+                {["📊 マトリックス", "📈 KPI詳細", "🏢 部署・プロダクト", "🗣️ 組織の体温", "📌 アクション", "🧭 組織方針"].map((p, i) => (
                   <span key={i} className={`shrink-0 px-2.5 md:px-3.5 py-1.5 rounded-full text-[7px] md:text-[9px] font-bold border ${i === 2 ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-500 border-slate-200"}`}>{p}</span>
                 ))}
               </div>
@@ -707,7 +707,7 @@ function HeroVisual() {
                 ))}
               </div>
               <div className="flex gap-1.5 overflow-hidden">
-                {["📊 マトリックス", "📈 KPI詳細", "🏢 部署・プロダクト", "🗣️ 組織の体温", "📌 アクション", "🧭 経営方針"].map((p, i) => (
+                {["📊 マトリックス", "📈 KPI詳細", "🏢 部署・プロダクト", "🗣️ 組織の体温", "📌 アクション", "🧭 組織方針"].map((p, i) => (
                   <span key={i} className={`shrink-0 px-2.5 md:px-3.5 py-1.5 rounded-full text-[7px] md:text-[9px] font-bold border ${i === 4 ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-500 border-slate-200"}`}>{p}</span>
                 ))}
               </div>
@@ -988,7 +988,7 @@ export default function MarketingPage() {
                 {
                   step: "01",
                   title: "経営の意思を反映したKPI設計",
-                  desc: "最大10個の任意KPIを自由に設計。経営方針や事業フェーズの文脈もAIに共有できるため、御社だけに最適化された分析が可能です。",
+                  desc: "最大10個の任意KPIを自由に設計。組織方針や事業フェーズの文脈もAIに共有できるため、御社だけに最適化された分析が可能です。",
                   color: "from-teal-50 to-teal-100",
                 },
                 {
@@ -1267,7 +1267,7 @@ export default function MarketingPage() {
                     "第2軸解放（プロダクト軸等）",
                     "Slack連携",
                     "4階層AI提案",
-                    "経営方針の反映",
+                    "組織方針の反映",
                     "チャットサポート",
                   ]}
                   cta="1ヶ月間トライアル"

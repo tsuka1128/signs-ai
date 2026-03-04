@@ -61,7 +61,7 @@ const logs: PolicyLog[] = [
 
 const VERSION_CONTENTS: Record<string, string> = {
     "v1.2": "", // Will be set by initialText
-    "v1.1": `# 経営方針 v1.1 (2026年1月15日〜)
+    "v1.1": `# 組織方針 v1.1 (2026年1月15日〜)
 
 ## 組織の現在地
 - フェーズ: 垂直立ち上げ（後期）
@@ -82,7 +82,7 @@ const VERSION_CONTENTS: Record<string, string> = {
 ## 組織の注意点
 - プロダクトBについて、3月末までに改善の兆候（チャーンレートの低下）が見られなければピボットを検討する。
 - 営業と開発の月次MTGを定例化し、フィードバックループを強化。`,
-    "v1.0": `# 経営方針 v1.0 (2026年1月1日〜)
+    "v1.0": `# 組織方針 v1.0 (2026年1月1日〜)
 
 ## 組織の現在地
 - フェーズ: 垂直立ち上げ
@@ -190,11 +190,11 @@ export function SemanticLayer({ initialText, onSave }: SemanticLayerProps) {
                     <div>
                         <div className="flex items-center gap-2 mb-2">
                             <span className="text-lg">🧬</span>
-                            <h4 className="text-sm font-bold text-slate-800">経営方針</h4>
+                            <h4 className="text-sm font-bold text-slate-800">組織方針</h4>
                             <Badge className="bg-teal/10 text-teal border-none text-[10px]">AIの判断基準</Badge>
                         </div>
                         <p className="text-[11px] text-slate-400 leading-relaxed font-medium">
-                            経営方針・KPIの解釈・組織のフェーズをMarkdownで記述。AIはこの文書を毎月の診断時に読み込み、数字の良し悪しを「あなたの会社の文脈」で判断します。
+                            組織方針・KPIの解釈・組織のフェーズをMarkdownで記述。AIはこの文書を毎月の診断時に読み込み、数字の良し悪しを「あなたの会社の文脈」で判断します。
                         </p>
                     </div>
                 </div>
@@ -271,7 +271,7 @@ export function SemanticLayer({ initialText, onSave }: SemanticLayerProps) {
                 <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-2">
                         <span className="text-base">✏️</span>
-                        <h5 className="text-sm font-bold text-slate-800">経営方針メモ <span className="text-slate-400 ml-1">{updateDate} 更新</span></h5>
+                        <h5 className="text-sm font-bold text-slate-800">組織方針メモ <span className="text-slate-400 ml-1">{updateDate} 更新</span></h5>
                         {!isLatest && <Badge className="bg-slate-100 text-slate-400 border-none text-[9px] font-bold">アーカイブ表示中（編集不可）</Badge>}
                     </div>
                     {isLatest && (

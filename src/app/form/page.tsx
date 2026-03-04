@@ -232,7 +232,7 @@ function SurveyFormContent() {
                         <h2 className="text-xl font-black text-slate-800 tracking-tighter">お疲れ様です。<br />あなたの声、確かに受け取りました。</h2>
                         <p className="text-sm text-slate-500 leading-relaxed font-medium">
                             いただいた回答は、誰が書いたか分からない形で集計され、<br className="hidden sm:block" />
-                            組織のより良い環境づくりや、経営方針の改善に活用されます。<br />
+                            組織のより良い環境づくりや、組織方針の改善に活用されます。<br />
                             ひと息ついて、今日も良い1日を！
                         </p>
                         <div className="pt-8 border-t border-slate-100/60 mt-8 relative z-10">

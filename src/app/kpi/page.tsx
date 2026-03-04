@@ -19,10 +19,154 @@ interface KpiDefinition {
 
 // KPI実績の型
 interface KpiRecord {
+    id?: string;
+    company_id?: string;
     kpi_definition_id: string;
+    axis_id: string | null;
     recorded_month: string;
     value: number;
     target_value: number | null;
+}
+
+// --- Components ---
+
+interface KpiTableProps {
+    title: string;
+    axisId: string | null;
+    isMain?: boolean;
+    kpiDefinitions: KpiDefinition[];
+    allMonths: { month: string, label: string }[];
+    editValues: Record<string, { value: string, target: string }>;
+    isLocked: boolean;
+    onInputChange: (month: string, kpiId: string, axisId: string | null, field: 'value' | 'target', val: string) => void;
+    onToggleLock: () => void;
+}
+
+function KpiTable({ title, axisId, isMain, kpiDefinitions, allMonths, editValues, isLocked, onInputChange, onToggleLock }: KpiTableProps) {
+    return (
+        <div className="bg-white shadow-[0_4px_24px_-8px_rgba(0,0,0,0.05)] border border-slate-200 overflow-hidden relative mx-auto w-full rounded-[16px] mb-12">
+            <div className={`px-5 py-4 ${isMain ? "bg-slate-800" : "bg-slate-100"} ${isMain ? "text-white" : "text-slate-800"} border-b border-slate-200 flex items-center justify-between`}>
+                <div className="flex items-center gap-2.5">
+                    <Building2 className={`w-4 h-4 ${isMain ? "text-teal-400" : "text-slate-500"}`} />
+                    <h2 className="text-sm font-black tracking-tight">{title}</h2>
+                    {isMain && <Badge className="bg-teal-500/20 text-teal-300 border-none text-[9px] px-2 py-0 uppercase tracking-tighter">Main</Badge>}
+                </div>
+
+                <button
+                    onClick={onToggleLock}
+                    className="text-[10px] font-bold flex items-center gap-1.5 uppercase tracking-widest hover:opacity-70 px-3 py-1.5 rounded-lg transition-colors group"
+                >
+                    {isLocked ? (
+                        <>
+                            <Lock className={`w-3.5 h-3.5 ${isMain ? "text-slate-400" : "text-slate-400"} transition-colors`} />
+                            <span className={isMain ? "text-slate-400" : "text-slate-400"}>今月度のみ入力可能</span>
+                        </>
+                    ) : (
+                        <>
+                            <Unlock className="w-3.5 h-3.5 text-teal-500 animate-pulse" />
+                            <span className="text-teal-600">過去実績の編集モード有効</span>
+                        </>
+                    )}
+                </button>
+            </div>
+
+            <div className="overflow-x-auto custom-scrollbar relative">
+                <table className="w-full text-left border-collapse table-layout-fixed" style={{ minWidth: "2500px" }}>
+                    <thead>
+                        <tr>
+                            <th className="sticky left-0 top-0 z-40 w-[220px] min-w-[220px] bg-white border-b border-r border-slate-200 p-3 shadow-[2px_0_12px_-4px_rgba(0,0,0,0.05)] text-center">
+                                <span className="text-[9px] font-black text-slate-400 tracking-widest uppercase">項目名 / 部署</span>
+                            </th>
+
+                            {allMonths.map((m, idx) => (
+                                <th key={m.month}
+                                    className={`sticky top-0 z-40 w-[200px] min-w-[200px] border-b border-r border-slate-200 p-2 text-center transition-colors ${idx === 0
+                                        ? "left-[220px] bg-[#F0FDF4] shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)] z-50 border-r-2 border-slate-200"
+                                        : "bg-slate-50"
+                                        }`}>
+                                    <div className="flex flex-col items-center gap-0.5">
+                                        <div className={`text-[12px] font-black tracking-tighter ${idx === 0 ? "text-teal-900" : "text-slate-500"}`}>{m.label}</div>
+                                        {idx === 0 && <span className="text-[8px] font-black text-teal-500 bg-teal/10 px-1.5 py-0.5 rounded leading-none">INPUT</span>}
+                                    </div>
+                                </th>
+                            ))}
+                            <th className="bg-slate-50 border-b border-slate-200 w-full min-w-[100px]"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {kpiDefinitions.map((kpi, index) => (
+                            <tr key={kpi.id} className="group border-b border-slate-200 bg-white">
+                                <td className="sticky left-0 z-30 bg-white group-hover:bg-slate-50 border-b border-r border-slate-200 p-0 shadow-[2px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors align-top w-[220px]">
+                                    <div className="flex flex-col h-full justify-between p-3 min-h-[90px]">
+                                        <div className="flex items-start gap-2 mb-2 ml-1">
+                                            <span className="text-[10px] font-black text-slate-300 mt-0.5">{index + 1}.</span>
+                                            <div className="flex flex-col">
+                                                <span className="text-[14px] font-bold text-slate-800 leading-none mb-1">{kpi.name}</span>
+                                                <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded w-fit">{kpi.owner_dept_name}</span>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-[10px] text-slate-400 font-bold pr-1.5">{kpi.unit}</span>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                {allMonths.map((m, idx) => {
+                                    const key = `${m.month}_${kpi.id}_${axisId || 'main'}`;
+                                    const editData = editValues[key] || { value: "", target: "" };
+                                    const canEdit = idx === 0 || !isLocked;
+
+                                    return (
+                                        <td key={m.month}
+                                            className={`p-0 border-r border-slate-200 align-top transition-colors w-[200px] min-w-[200px] ${idx === 0
+                                                ? "sticky left-[220px] z-30 bg-[#F0FDF4] group-hover:bg-[#E9FBF0] border-r-2 border-slate-200 shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)]"
+                                                : "bg-white group-hover:bg-slate-50"
+                                                }`}>
+                                            <div className="flex flex-col w-full h-full min-h-[90px]">
+                                                <div className={`h-[45px] flex items-center justify-between px-4 border-b ${idx === 0 ? "border-white" : "border-slate-100"}`}>
+                                                    <span className={`text-[9px] font-black shrink-0 ${idx === 0 ? "text-teal-700" : "text-slate-400"}`}>実績</span>
+                                                    {!canEdit ? (
+                                                        <span className={`text-[14px] font-black text-right w-full ${idx === 0 ? "text-teal-900" : "text-slate-700"}`}>
+                                                            {editData.value ? editData.value : "-"}
+                                                        </span>
+                                                    ) : (
+                                                        <input
+                                                            type="number"
+                                                            value={editData.value}
+                                                            onChange={(e) => onInputChange(m.month, kpi.id, axisId, 'value', e.target.value)}
+                                                            placeholder="---"
+                                                            className={`w-full text-right text-[14px] font-black outline-none bg-transparent placeholder-slate-200 ${idx === 0 ? "text-teal-900" : "text-slate-700"}`}
+                                                        />
+                                                    )}
+                                                </div>
+                                                <div className="h-[45px] flex items-center justify-between px-4">
+                                                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter shrink-0">目標</span>
+                                                    {!canEdit ? (
+                                                        <span className="text-[11px] font-bold text-slate-400 text-right w-full">
+                                                            {editData.target ? editData.target : "-"}
+                                                        </span>
+                                                    ) : (
+                                                        <input
+                                                            type="number"
+                                                            value={editData.target}
+                                                            onChange={(e) => onInputChange(m.month, kpi.id, axisId, 'target', e.target.value)}
+                                                            placeholder="---"
+                                                            className="w-full text-right text-[11px] font-bold outline-none bg-transparent placeholder-slate-200 text-slate-400"
+                                                        />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </td>
+                                    );
+                                })}
+                                <td className="bg-white group-hover:bg-slate-50 transition-colors border-r border-slate-200 w-full min-w-[100px]"></td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
 }
 
 export default function KpiInputPage() {
@@ -31,8 +175,10 @@ export default function KpiInputPage() {
     const [user, setUser] = useState<any>(null);
     const [kpiDefinitions, setKpiDefinitions] = useState<KpiDefinition[]>([]);
     const [allMonths, setAllMonths] = useState<{ month: string, label: string }[]>([]);
-    const [editValues, setEditValues] = useState<Record<string, { value: string, target: string }>>({}); // key: month_kpiId
+    const [editValues, setEditValues] = useState<Record<string, { value: string, target: string }>>({}); // key: month_kpiId_axisId
     const [isLocked, setIsLocked] = useState(true);
+    const [secondaryAxisName, setSecondaryAxisName] = useState("第2軸");
+    const [axes, setAxes] = useState<any[]>([]);
 
     const [isSaving, setIsSaving] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
@@ -50,7 +196,6 @@ export default function KpiInputPage() {
         }
         setUser(authUser);
 
-        // 1. 直近12ヶ月分（今月 + 過去11ヶ月）の月リストを生成
         const months: { month: string, label: string }[] = [];
         const now = new Date();
         for (let i = 0; i < 12; i++) {
@@ -65,21 +210,18 @@ export default function KpiInputPage() {
         }
         setAllMonths(months);
 
-        // 2. ユーザーの所属企業情報を取得してKPI定義を取得
-        const { data: userData } = await supabase
-            .from('users')
-            .select('company_id')
-            .eq('id', authUser.id)
-            .single();
-
+        const { data: userData } = await supabase.from('users').select('company_id').eq('id', authUser.id).single();
         if (userData?.company_id) {
-            // KPI定義取得（部署名付き）
-            const { data: kpis } = await supabase
-                .from('kpi_definitions')
-                .select('id, name, unit, owner_dept_id, departments(name)')
-                .eq('company_id', userData.company_id)
-                .order('sort_order', { ascending: true });
+            // 企業設定（第2軸名称）取得
+            const { data: companyData } = await supabase.from('companies').select('kpi_secondary_axis_name').eq('id', userData.company_id).single();
+            if (companyData) setSecondaryAxisName(companyData.kpi_secondary_axis_name || "第2軸");
 
+            // 第2軸項目取得
+            const { data: axisData } = await supabase.from('kpi_axes').select('*').eq('company_id', userData.company_id).order('sort_order', { ascending: true });
+            setAxes(axisData || []);
+
+            // KPI定義取得
+            const { data: kpis } = await supabase.from('kpi_definitions').select('id, name, unit, owner_dept_id, departments(name)').eq('company_id', userData.company_id).order('sort_order', { ascending: true });
             const formattedKpis = (kpis || []).map((k: any) => ({
                 id: k.id,
                 name: k.name,
@@ -89,31 +231,31 @@ export default function KpiInputPage() {
             }));
             setKpiDefinitions(formattedKpis);
 
-            // 直近7ヶ月分のレコード取得
+            // 実績値取得
             const monthList = months.map(m => m.month);
-            const { data: recs } = await supabase
-                .from('kpi_records')
-                .select('*')
-                .in('recorded_month', monthList)
-                .in('kpi_definition_id', formattedKpis.map(k => k.id));
+            const { data: recs } = await supabase.from('kpi_records').select('*').in('recorded_month', monthList).in('kpi_definition_id', formattedKpis.map(k => k.id));
 
             const initialEditValues: Record<string, { value: string, target: string }> = {};
 
-            // 全ての組み合わせを空文字で初期化
+            // 全ての組み合わせを初期化 (基本軸)
             formattedKpis.forEach(kpi => {
                 monthList.forEach(month => {
-                    initialEditValues[`${month}_${kpi.id}`] = { value: "", target: "" };
+                    initialEditValues[`${month}_${kpi.id}_main`] = { value: "", target: "" };
+                    // 第2軸分も初期化
+                    (axisData || []).forEach(axis => {
+                        initialEditValues[`${month}_${kpi.id}_${axis.id}`] = { value: "", target: "" };
+                    });
                 });
             });
 
             // 既存データで上書き
             recs?.forEach(r => {
-                initialEditValues[`${r.recorded_month}_${r.kpi_definition_id}`] = {
+                const axisKey = r.axis_id || 'main';
+                initialEditValues[`${r.recorded_month}_${r.kpi_definition_id}_${axisKey}`] = {
                     value: String(r.value),
                     target: r.target_value !== null ? String(r.target_value) : ""
                 };
             });
-
             setEditValues(initialEditValues);
         }
         setLoading(false);
@@ -125,11 +267,16 @@ export default function KpiInputPage() {
 
         const upsertData: any[] = [];
         Object.entries(editValues).forEach(([key, data]) => {
-            const [month, kpiId] = key.split('_');
+            const parts = key.split('_');
+            const month = parts[0];
+            const kpiId = parts[1];
+            const axisId = parts[2] === 'main' ? null : parts[2];
+
             if (data.value !== "" || data.target !== "") {
                 upsertData.push({
                     kpi_definition_id: kpiId,
                     recorded_month: month,
+                    axis_id: axisId,
                     value: Number(data.value || 0),
                     target_value: data.target !== "" ? Number(data.target) : null
                 });
@@ -141,27 +288,26 @@ export default function KpiInputPage() {
             return;
         }
 
-        const { error } = await supabase
-            .from('kpi_records')
-            .upsert(upsertData, { onConflict: 'kpi_definition_id, recorded_month' });
+        const { error } = await supabase.from('kpi_records').upsert(upsertData, { onConflict: 'kpi_definition_id, recorded_month, axis_id' });
 
         if (error) {
             console.error("Save error:", error);
             alert("保存に失敗しました。");
         } else {
             setIsSaved(true);
-            setIsLocked(true); // 保存後はロックする
+            setIsLocked(true);
             setTimeout(() => setIsSaved(false), 3000);
             fetchInitialData();
         }
         setIsSaving(false);
     };
 
-    const handleInputChange = (month: string, kpiId: string, field: 'value' | 'target', val: string) => {
+    const handleInputChange = (month: string, kpiId: string, axisId: string | null, field: 'value' | 'target', val: string) => {
+        const axisKey = axisId || 'main';
         setEditValues(prev => ({
             ...prev,
-            [`${month}_${kpiId}`]: {
-                ...prev[`${month}_${kpiId}`],
+            [`${month}_${kpiId}_${axisKey}`]: {
+                ...prev[`${month}_${kpiId}_${axisKey}`],
                 [field]: val
             }
         }));
@@ -201,7 +347,6 @@ export default function KpiInputPage() {
                     </div>
 
                     <div className="flex items-center gap-2 sm:gap-4 shrink-0 mt-4 sm:mt-0">
-                        {/* Sheets連携設定ボタン (デモ版準拠) */}
                         <button className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all shadow-sm">
                             <svg className="w-3.5 h-3.5 text-emerald-600" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-2h2v2zm0-4H7v-2h2v2zm0-4H7V7h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z" />
@@ -223,140 +368,49 @@ export default function KpiInputPage() {
                     </div>
                 </div>
 
-                <div className="bg-white shadow-[0_4px_24px_-8px_rgba(0,0,0,0.05)] border border-slate-800 overflow-hidden relative mx-auto w-full rounded-[16px]">
-                    <div className={`px-5 py-4 bg-slate-800 text-white border-b border-slate-700 flex items-center justify-between`}>
-                        <div className="flex items-center gap-2.5">
-                            <Building2 className="w-4 h-4 text-teal-400" />
-                            <h2 className="text-sm font-black tracking-tight">全社・部署（基本）</h2>
-                            <Badge className="bg-teal-500/20 text-teal-300 border-none text-[9px] px-2 py-0 uppercase tracking-tighter">Main</Badge>
+                {/* 基本軸テーブル */}
+                <KpiTable
+                    title="全社・部署（基本）"
+                    axisId={null}
+                    isMain={true}
+                    kpiDefinitions={kpiDefinitions}
+                    allMonths={allMonths}
+                    editValues={editValues}
+                    isLocked={isLocked}
+                    onInputChange={handleInputChange}
+                    onToggleLock={() => setIsLocked(!isLocked)}
+                />
+
+                {/* 第2軸（ブランド・エリア等）テーブル一覧 */}
+                {axes.length > 0 && (
+                    <div className="mt-16 mb-8 pt-8 border-t border-slate-200">
+                        <div className="mb-8">
+                            <h2 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                                {secondaryAxisName}別入力
+                                <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded uppercase tracking-widest">{axes.length} items</span>
+                            </h2>
+                            <p className="text-sm text-slate-500 mt-2 font-medium">企業設定で定義された「{secondaryAxisName}」ごとの数値を入力します。</p>
                         </div>
-
-                        {/* ロック状態切り替え（アイコンクリックで操作） */}
-                        <button
-                            onClick={() => setIsLocked(!isLocked)}
-                            className="text-[10px] font-bold flex items-center gap-1.5 uppercase tracking-widest hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors group"
-                        >
-                            {isLocked ? (
-                                <>
-                                    <Lock className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-300 transition-colors" />
-                                    <span className="text-slate-400 group-hover:text-slate-300">今月度のみ入力可能</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Unlock className="w-3.5 h-3.5 text-teal-400 animate-pulse" />
-                                    <span className="text-teal-400">過去実績の編集モード有効</span>
-                                </>
-                            )}
-                        </button>
+                        {axes.map(axis => (
+                            <KpiTable
+                                key={axis.id}
+                                title={axis.name}
+                                axisId={axis.id}
+                                kpiDefinitions={kpiDefinitions}
+                                allMonths={allMonths}
+                                editValues={editValues}
+                                isLocked={isLocked}
+                                onInputChange={handleInputChange}
+                                onToggleLock={() => setIsLocked(!isLocked)}
+                            />
+                        ))}
                     </div>
-
-                    <div className="overflow-x-auto custom-scrollbar relative">
-                        <table className="w-full text-left border-collapse table-layout-fixed" style={{ minWidth: "2500px" }}>
-                            <thead>
-                                <tr>
-                                    {/* 1. KPI Name (Sticky Left 0) - Width: 220px */}
-                                    <th className="sticky left-0 top-0 z-40 w-[220px] min-w-[220px] bg-white border-b border-r border-slate-200 p-3 shadow-[2px_0_12px_-4px_rgba(0,0,0,0.05)] text-center">
-                                        <span className="text-[9px] font-black text-slate-400 tracking-widest uppercase">項目名 / 部署</span>
-                                    </th>
-
-                                    {/* All Months as headers - PC 200px */}
-                                    {allMonths.map((m, idx) => (
-                                        <th key={m.month}
-                                            className={`sticky top-0 z-40 w-[200px] min-w-[200px] border-b border-r border-slate-200 p-2 text-center transition-colors ${idx === 0
-                                                ? "left-[220px] bg-[#F0FDF4] shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)] z-50 border-r-2 border-slate-200"
-                                                : "bg-slate-50"
-                                                }`}>
-                                            <div className="flex flex-col items-center gap-0.5">
-                                                <div className={`text-[12px] font-black tracking-tighter ${idx === 0 ? "text-teal-900" : "text-slate-500"}`}>{m.label}</div>
-                                                {idx === 0 && <span className="text-[8px] font-black text-teal-500 bg-teal/10 px-1.5 py-0.5 rounded leading-none">INPUT</span>}
-                                            </div>
-                                        </th>
-                                    ))}
-                                    <th className="bg-slate-50 border-b border-slate-200 w-full min-w-[100px]"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {kpiDefinitions.map((kpi, index) => (
-                                    <tr key={kpi.id} className="group border-b border-slate-200 bg-white">
-                                        {/* 1. KPI Name (Sticky Left 0) */}
-                                        <td className="sticky left-0 z-30 bg-white group-hover:bg-slate-50 border-b border-r border-slate-200 p-0 shadow-[2px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors align-top w-[220px]">
-                                            <div className="flex flex-col h-full justify-between p-3 min-h-[90px]">
-                                                <div className="flex items-start gap-2 mb-2 ml-1">
-                                                    <span className="text-[10px] font-black text-slate-300 mt-0.5">{index + 1}.</span>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[14px] font-bold text-slate-800 leading-none mb-1">{kpi.name}</span>
-                                                        <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded w-fit">{kpi.owner_dept_name}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <span className="text-[10px] text-slate-400 font-bold pr-1.5">{kpi.unit}</span>
-                                                </div>
-                                            </div>
-                                        </td>
-
-                                        {/* All Months data cells - PC 200px */}
-                                        {allMonths.map((m, idx) => {
-                                            const key = `${m.month}_${kpi.id}`;
-                                            const editData = editValues[key] || { value: "", target: "" };
-                                            const canEdit = idx === 0 || !isLocked;
-
-                                            return (
-                                                <td key={m.month}
-                                                    className={`p-0 border-r border-slate-200 align-top transition-colors w-[200px] min-w-[200px] ${idx === 0
-                                                        ? "sticky left-[220px] z-30 bg-[#F0FDF4] group-hover:bg-[#E9FBF0] border-r-2 border-slate-200 shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)]"
-                                                        : "bg-white group-hover:bg-slate-50"
-                                                        }`}>
-                                                    <div className="flex flex-col w-full h-full min-h-[90px]">
-                                                        {/* 実績部 (45px) */}
-                                                        <div className={`h-[45px] flex items-center justify-between px-4 border-b ${idx === 0 ? "border-white" : "border-slate-100"}`}>
-                                                            <span className={`text-[9px] font-black shrink-0 ${idx === 0 ? "text-teal-700" : "text-slate-400"}`}>実績</span>
-                                                            {!canEdit ? (
-                                                                <span className={`text-[14px] font-black text-right w-full ${idx === 0 ? "text-teal-900" : "text-slate-700"}`}>
-                                                                    {editData.value ? editData.value : "-"}
-                                                                </span>
-                                                            ) : (
-                                                                <input
-                                                                    type="number"
-                                                                    value={editData.value}
-                                                                    onChange={(e) => handleInputChange(m.month, kpi.id, 'value', e.target.value)}
-                                                                    placeholder="---"
-                                                                    className={`w-full text-right text-[14px] font-black outline-none bg-transparent placeholder-slate-200 ${idx === 0 ? "text-teal-900" : "text-slate-700"}`}
-                                                                />
-                                                            )}
-                                                        </div>
-                                                        {/* 目標部 (45px) */}
-                                                        <div className="h-[45px] flex items-center justify-between px-4">
-                                                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter shrink-0">目標</span>
-                                                            {!canEdit ? (
-                                                                <span className="text-[11px] font-bold text-slate-400 text-right w-full">
-                                                                    {editData.target ? editData.target : "-"}
-                                                                </span>
-                                                            ) : (
-                                                                <input
-                                                                    type="number"
-                                                                    value={editData.target}
-                                                                    onChange={(e) => handleInputChange(m.month, kpi.id, 'target', e.target.value)}
-                                                                    placeholder="---"
-                                                                    className="w-full text-right text-[11px] font-bold outline-none bg-transparent placeholder-slate-200 text-slate-400"
-                                                                />
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            );
-                                        })}
-                                        <td className="bg-white group-hover:bg-slate-50 transition-colors border-r border-slate-200 w-full min-w-[100px]"></td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                )}
 
                 <div className="mt-10 flex items-start gap-3 bg-white p-5 rounded-xl border border-slate-200 shadow-sm text-slate-600">
                     <Info className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
                     <p className="text-xs leading-relaxed font-medium">
-                        KPIの基礎項目定義は <Link href="/settings" className="text-teal hover:underline font-bold">組織情報設定</Link> から行ってください。
+                        KPIの基礎項目定義や、{secondaryAxisName}の項目管理は <Link href="/settings" className="text-teal hover:underline font-bold">組織情報設定</Link> から行ってください。
                     </p>
                 </div>
             </main>

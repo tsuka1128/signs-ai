@@ -14,10 +14,12 @@ export function Header() {
             <div className="max-w-3xl mx-auto flex items-center justify-between">
                 <div>
                     <div className="flex items-center gap-2.5 mb-0.5">
-                        <Link href="/" className="w-9 h-9 bg-teal-500 rounded-xl flex items-center justify-center shadow-md shadow-teal-200 hover:scale-105 transition-transform">
-                            <span className="text-white font-black text-lg italic">S</span>
+                        <Link href="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
+                            <div className="w-9 h-9 bg-teal-500 rounded-xl flex items-center justify-center shadow-md shadow-teal-200 hover:scale-105 transition-transform">
+                                <span className="text-white font-black text-lg italic">S</span>
+                            </div>
+                            <span className="text-xl font-extrabold text-slate-800 tracking-tighter">Signs AI</span>
                         </Link>
-                        <span className="text-xl font-extrabold text-slate-800 tracking-tighter">Signs AI</span>
                         <Badge className="bg-teal/10 text-teal border-none text-[10px]">MONTHLY</Badge>
                     </div>
                     <p className="text-[11px] font-black text-slate-400 tracking-widest mt-1 uppercase">組織に体温を</p>

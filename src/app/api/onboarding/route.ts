@@ -12,16 +12,20 @@ import { NextRequest, NextResponse } from "next/server";
 
 /** リクエストボディの型定義 */
 interface OnboardingPayload {
-    companyName: string;
-    departments: { name: string; headcount: number }[];
-    kpis: {
+    companyName?: string;
+    invitationToken?: string;
+    selectedDeptId?: string;
+    selectedKpiIds?: string[];
+    departments?: { name: string; headcount: number }[];
+    kpis?: {
         name: string;
         unit: string;
         target_default: string;
         owner_dept_index: number | null;
         sort_order: number;
     }[];
-    semanticContent: string;
+    semanticContent?: string;
+    websiteUrl?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -44,9 +48,55 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: "リクエストの形式が不正です" }, { status: 400 });
     }
 
-    const { companyName, departments, kpis, semanticContent } = payload;
+    const { companyName, departments, kpis, semanticContent, invitationToken, selectedDeptId, selectedKpiIds, websiteUrl } = payload;
 
-    // バリデーション
+    // A. 招待トークンがある場合の処理
+    if (invitationToken) {
+        // ダミートークン「TAION」の処理
+        if (invitationToken === "TAION") {
+            return NextResponse.json({ success: true, companyId: "demo-company-id" });
+        }
+
+        try {
+            // 招待状を確認
+            const { data: invite, error: inviteError } = await supabase
+                .from("invitations")
+                .select("*")
+                .eq("token", invitationToken)
+                .eq("status", "pending")
+                .gt("expires_at", new Date().toISOString())
+                .single();
+
+            if (inviteError || !invite) {
+                return NextResponse.json({ message: "無効または期限切れの招待リンクです" }, { status: 400 });
+            }
+
+            // ユーザーを招待元の会社とロールに紐付け
+            const { error: userUpdateError } = await supabase.from("users").upsert({
+                id: user.id,
+                company_id: invite.company_id,
+                department_id: selectedDeptId || null,
+                email: user.email ?? "",
+                display_name: user.user_metadata?.full_name ?? user.email ?? "",
+                role: invite.role,
+            });
+
+            if (userUpdateError) {
+                throw new Error(`ユーザーの登録に失敗しました: ${userUpdateError.message}`);
+            }
+
+            // 招待を「承諾済み」に更新
+            await supabase.from("invitations")
+                .update({ status: "accepted" })
+                .eq("id", invite.id);
+
+            return NextResponse.json({ success: true, companyId: invite.company_id });
+        } catch (e: any) {
+            return NextResponse.json({ message: e.message || "招待の処理中にエラーが発生しました" }, { status: 500 });
+        }
+    }
+
+    // B. 新規作成の場合のバリデーション
     if (!companyName?.trim()) {
         return NextResponse.json({ message: "企業名は必須です" }, { status: 400 });
     }
@@ -72,7 +122,12 @@ export async function POST(request: NextRequest) {
         // 2. 企業を作成
         const { data: company, error: companyError } = await supabase
             .from("companies")
-            .insert({ name: companyName.trim(), plan_id: freePlan.id, status: "trial" })
+            .insert({
+                name: companyName.trim(),
+                plan_id: freePlan.id,
+                status: "trial",
+                website_url: websiteUrl?.trim() || null
+            })
             .select("id")
             .single();
 
@@ -135,7 +190,7 @@ export async function POST(request: NextRequest) {
             });
 
             if (semError) {
-                throw new Error(`経営方針の保存に失敗しました: ${semError.message}`);
+                throw new Error(`組織方針の保存に失敗しました: ${semError.message}`);
             }
         }
 

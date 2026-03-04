@@ -12,18 +12,22 @@
  * 完了後は /dashboard へ遷移します。
  */
 
-import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase";
+import { Sun, Cloud, CloudRain, Check } from "lucide-react";
 
 /** 部署の入力フォーム */
 interface DeptInput {
+    id?: string; // 既存部署の場合
     name: string;
     headcount: number;
 }
 
 /** KPI の入力フォーム */
 interface KpiInput {
+    id?: string; // 既存KPIの場合
     name: string;
     unit: string;
     target_default: string;
@@ -33,34 +37,72 @@ interface KpiInput {
 
 /** フォーム全体の状態 */
 interface OnboardingState {
+    mode: "create" | "join";
     companyName: string;
+    invitationToken: string;
     departments: DeptInput[];
     kpis: KpiInput[];
     semanticContent: string;
+    invitedCompany?: {
+        name: string;
+        departments: any[];
+        kpis: any[];
+    };
+    selectedDeptId?: string;
+    selectedKpiIds: string[];
+    websiteUrl?: string;
 }
 
-/** ステップ定義 */
-const STEPS = [
-    { id: 1, label: "企業情報" },
-    { id: 2, label: "部署登録" },
-    { id: 3, label: "KPI設定" },
-    { id: 4, label: "経営方針" },
-];
-
 /** KPI 単位の候補 */
-const UNIT_OPTIONS = ["円", "%", "件", "名", "pt", "個", "回", "日", "時間", "その他"];
+const UNIT_OPTIONS = ["件", "万円", "円", "%", "名", "pt", "個", "回", "日", "時間", "その他"];
 
 export default function OnboardingPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const supabase = createClient();
+
+    const tokenParam = searchParams.get("token");
+
     const [step, setStep] = useState(1);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // 招待リンク経由かどうかの初期判定
+    const initialMode = tokenParam ? "join" : "create";
+
+    const [state, setState] = useState<OnboardingState>({
+        mode: initialMode,
+        companyName: "",
+        invitationToken: tokenParam || "",
+        departments: [{ name: "", headcount: 0 }],
+        kpis: [{ name: "", unit: "件", target_default: "", owner_dept_index: null, sort_order: 0 }],
+        semanticContent: "",
+        selectedKpiIds: [],
+        websiteUrl: "",
+    });
+
+    /** ステップ定義を動的に生成 */
+    const steps = useMemo(() => {
+        if (state.mode === "join") {
+            return [
+                { id: 1, label: "参加確認" },
+                { id: 2, label: "所属部署" },
+                { id: 3, label: "担当KPI" },
+            ];
+        }
+        return [
+            { id: 1, label: "企業情報" },
+            { id: 2, label: "部署登録" },
+            { id: 3, label: "KPI設定" },
+            { id: 4, label: "組織方針" },
+        ];
+    }, [state.mode]);
 
     // 自動スクロール用の参照
     const deptListEndRef = useRef<HTMLDivElement>(null);
     const kpiListEndRef = useRef<HTMLDivElement>(null);
 
-    // 経営方針ウィザード用の状態
+    // 組織方針ウィザード用の状態
     const [semanticMode, setSemanticMode] = useState<"wizard" | "manual">("wizard");
     const [wizardState, setWizardState] = useState<{
         vision: string;
@@ -76,17 +118,78 @@ export default function OnboardingPage() {
         triggerWords: "",
     });
 
-    const [state, setState] = useState<OnboardingState>({
-        companyName: "",
-        departments: [{ name: "", headcount: 0 }],
-        kpis: [{ name: "", unit: "万円", target_default: "", owner_dept_index: null, sort_order: 0 }],
-        semanticContent: "",
-    });
+    /* 招待情報のフェッチ */
+    useEffect(() => {
+        const fetchInviteInfo = async () => {
+            const token = state.invitationToken;
+            if (!token || token.length < 3) return;
+
+            // 特殊なダミートークン「TAION」の処理
+            if (token === "TAION") {
+                setState(prev => ({
+                    ...prev,
+                    invitedCompany: {
+                        name: "株式会社 TAION (デモ)",
+                        departments: [
+                            { id: "demo-dept-1", name: "営業部" },
+                            { id: "demo-dept-2", name: "マーケティング部" },
+                            { id: "demo-dept-3", name: "カスタマーサクセス部" },
+                            { id: "demo-dept-4", name: "開発部" },
+                            { id: "demo-dept-5", name: "人事総務部" }
+                        ],
+                        kpis: [
+                            { id: "demo-kpi-1", name: "月次売上", unit: "万円" },
+                            { id: "demo-kpi-2", name: "有効リード獲得数", unit: "件" },
+                            { id: "demo-kpi-3", name: "商談獲得数", unit: "件" },
+                            { id: "demo-kpi-4", name: "顧客解約率 (チャーンレート)", unit: "%" },
+                            { id: "demo-kpi-5", name: "新規契約件数", unit: "件" },
+                            { id: "demo-kpi-6", name: "平均客単価", unit: "万円" }
+                        ],
+                    }
+                }));
+                setError(null);
+                return;
+            }
+
+            try {
+                const { data: invite, error: inviteError } = await supabase
+                    .from("invitations")
+                    .select("*, companies(name, departments(id, name), kpi_definitions(id, name))")
+                    .eq("token", token)
+                    .single();
+
+                if (inviteError || !invite) {
+                    setError("無効または期限切れの招待リンクです。");
+                    return;
+                }
+
+                const company = invite.companies;
+                setState(prev => ({
+                    ...prev,
+                    invitedCompany: {
+                        name: company.name,
+                        departments: company.departments || [],
+                        kpis: company.kpi_definitions || [],
+                    }
+                }));
+                setError(null);
+            } catch (err) {
+                console.error("Invite fetch error:", err);
+            }
+        };
+
+        // 少し入力が落ち着いてからフェッチするように（簡易デバウンス処理的）
+        const timer = setTimeout(() => {
+            fetchInviteInfo();
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [state.invitationToken]);
 
     /* ウィザード入力からMarkdownを自動生成 */
     useEffect(() => {
         if (semanticMode === "wizard") {
-            let content = "# 経営方針\n\n";
+            let content = "# 組織方針\n\n";
             if (wizardState.vision) content += `## 目指す組織\n- ${wizardState.vision.split('\n').join('\n- ')}\n\n`;
             if (wizardState.phase) content += `## 組織の現在地\n- ${wizardState.phase.split('\n').join('\n- ')}\n\n`;
 
@@ -108,9 +211,7 @@ export default function OnboardingPage() {
             if (wizardState.issues) content += `## 組織の注意点\n- ${wizardState.issues.split('\n').join('\n- ')}\n\n`;
             if (wizardState.triggerWords) content += `## 気になるキーワード\n- ${wizardState.triggerWords.split(',').map(w => w.trim()).filter(Boolean).join('\n- ')}\n\n`;
 
-            // 何も入力されていない場合はプレースホルダーを入れる
-            if (content === "# 経営方針\n\n") content = "";
-
+            if (content === "# 組織方針\n\n") content = "";
             setState((s) => ({ ...s, semanticContent: content.trim() }));
         }
     }, [wizardState, semanticMode]);
@@ -130,9 +231,18 @@ export default function OnboardingPage() {
 
     /* バリデーション */
     const canProceed = () => {
-        if (step === 1) return state.companyName.trim().length > 0;
-        if (step === 2) return state.departments.every((d) => d.name.trim().length > 0);
-        if (step === 3) return state.kpis.every((k) => k.name.trim().length > 0);
+        if (step === 1) {
+            if (state.mode === "join") return state.invitationToken.trim().length > 0;
+            return state.companyName.trim().length > 0;
+        }
+
+        if (state.mode === "join") {
+            if (step === 2) return !!state.selectedDeptId;
+            if (step === 3) return true; // 何も選択しなくても次へ行ける（任意担当）
+        } else {
+            if (step === 2) return state.departments.every((d) => d.name.trim().length > 0);
+            if (step === 3) return state.kpis.every((k) => k.name.trim().length > 0);
+        }
         return true;
     };
 
@@ -156,7 +266,7 @@ export default function OnboardingPage() {
             ...s,
             kpis: [
                 ...s.kpis,
-                { name: "", unit: "円", target_default: "", owner_dept_index: null, sort_order: s.kpis.length },
+                { name: "", unit: "件", target_default: "", owner_dept_index: null, sort_order: s.kpis.length },
             ],
         }));
 
@@ -176,11 +286,15 @@ export default function OnboardingPage() {
             setSubmitting(true);
             setError(null);
 
-            const payload = {
-                companyName: state.companyName,
-                departments: state.departments,
-                kpis: state.kpis,
-                semanticContent: skip ? "" : state.semanticContent,
+            const payload: any = {
+                invitationToken: state.mode === "join" ? state.invitationToken : undefined,
+                selectedDeptId: state.mode === "join" ? state.selectedDeptId : undefined,
+                selectedKpiIds: state.mode === "join" ? state.selectedKpiIds : undefined,
+                companyName: state.mode === "create" ? state.companyName : undefined,
+                websiteUrl: state.mode === "create" ? state.websiteUrl : undefined,
+                departments: state.mode === "create" ? state.departments : undefined,
+                kpis: state.mode === "create" ? state.kpis : undefined,
+                semanticContent: state.mode === "create" ? (skip ? "" : state.semanticContent) : undefined,
             };
 
             const res = await fetch("/api/onboarding", {
@@ -217,7 +331,7 @@ export default function OnboardingPage() {
 
             {/* ステップバー */}
             <div className="flex items-center gap-2 mb-8">
-                {STEPS.map((s, i) => (
+                {steps.map((s, i) => (
                     <div key={s.id} className="flex items-center gap-2">
                         <div
                             className={cn(
@@ -239,7 +353,7 @@ export default function OnboardingPage() {
                         >
                             {s.label}
                         </span>
-                        {i < STEPS.length - 1 && (
+                        {i < steps.length - 1 && (
                             <div className={cn("w-8 h-px mx-1 transition-colors", step > s.id ? "bg-emerald-300" : "bg-slate-200")} />
                         )}
                     </div>
@@ -254,168 +368,246 @@ export default function OnboardingPage() {
                     </div>
                 )}
 
-                {/* Step 1: 企業名 */}
+                {/* Step 1: 企業名 / 招待 */}
                 {step === 1 && (
-                    <div className="space-y-4 animate-fadeIn">
-                        <h2 className="text-lg font-black text-slate-800">企業名を入力してください</h2>
-                        <p className="text-sm text-slate-400">ダッシュボードに表示される会社名です</p>
-                        <input
-                            id="company-name-input"
-                            type="text"
-                            placeholder="株式会社〇〇"
-                            value={state.companyName}
-                            onChange={(e) => setState((s) => ({ ...s, companyName: e.target.value }))}
-                            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"
-                        />
+                    <div className="space-y-6 animate-fadeIn">
+                        <div className="space-y-3">
+                            <h2 className="text-lg font-black text-slate-800">始め方を選択してください</h2>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    onClick={() => !tokenParam && setState(s => ({ ...s, mode: "create" }))}
+                                    disabled={!!tokenParam}
+                                    className={cn(
+                                        "p-4 rounded-2xl border-2 text-left transition-all",
+                                        state.mode === "create"
+                                            ? "border-teal-500 bg-teal-50/50"
+                                            : "border-slate-100 bg-white hover:border-slate-200",
+                                        tokenParam && "opacity-50 cursor-not-allowed grayscale"
+                                    )}
+                                >
+                                    <div className="text-xl mb-1">新規作成</div>
+                                    <div className="text-sm font-bold text-slate-700">新しい組織を作成</div>
+                                    <div className="text-[10px] text-slate-400 mt-1">会社を新しくセットアップします</div>
+                                </button>
+                                <button
+                                    onClick={() => setState(s => ({ ...s, mode: "join" }))}
+                                    className={cn(
+                                        "p-4 rounded-2xl border-2 text-left transition-all",
+                                        state.mode === "join"
+                                            ? "border-teal-500 bg-teal-50/50"
+                                            : "border-slate-100 bg-white hover:border-slate-200"
+                                    )}
+                                >
+                                    <div className="text-xl mb-1">参加</div>
+                                    <div className="text-sm font-bold text-slate-700">招待を受けて参加</div>
+                                    <div className="text-[10px] text-slate-400 mt-1">招待コード・リンクをお持ちの方</div>
+                                </button>
+                            </div>
+                        </div>
+
+                        {state.mode === "create" ? (
+                            <div className="space-y-4 pt-2">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-wider ml-1">企業名</label>
+                                    <input
+                                        id="company-name-input"
+                                        type="text"
+                                        placeholder="株式会社〇〇"
+                                        value={state.companyName}
+                                        onChange={(e) => setState((s) => ({ ...s, companyName: e.target.value }))}
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"
+                                    />
+                                    <p className="text-[10px] text-slate-400 ml-1">※後から設定画面で変更可能です</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-wider ml-1">会社Webサイト（任意）</label>
+                                    <input
+                                        type="url"
+                                        placeholder="https://example.com"
+                                        value={state.websiteUrl}
+                                        onChange={(e) => setState(s => ({ ...s, websiteUrl: e.target.value }))}
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all bg-white"
+                                    />
+                                    <p className="text-[10px] text-slate-400 ml-1">AIが事業内容を把握する参考にします</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-3 pt-2">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-wider ml-1">招待トークン / コード</label>
+                                <input
+                                    id="invitation-token-input"
+                                    type="text"
+                                    placeholder="招待コードを入力"
+                                    value={state.invitationToken}
+                                    onChange={(e) => setState((s) => ({ ...s, invitationToken: e.target.value }))}
+                                    readOnly={!!tokenParam}
+                                    className={cn(
+                                        "w-full px-4 py-3 rounded-xl border text-slate-800 font-medium text-sm focus:outline-none transition-all",
+                                        tokenParam ? "bg-slate-50 border-slate-100 text-slate-400" : "bg-white border-slate-200 focus:ring-2 focus:ring-teal-400 focus:border-transparent"
+                                    )}
+                                />
+                                {state.invitedCompany && (
+                                    <div className="mt-4 p-4 bg-teal-50 rounded-2xl border border-teal-100">
+                                        <div className="text-[10px] text-teal-600 font-black uppercase tracking-tighter mb-1">参加先組織</div>
+                                        <div className="text-sm font-black text-slate-800">{state.invitedCompany.name}</div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
 
-                {/* Step 2: 部署登録 */}
+                {/* Step 2: 部署登録 / 所属選択 */}
                 {step === 2 && (
                     <div className="space-y-4 animate-fadeIn">
-                        <div className="flex justify-between items-end">
-                            <div>
-                                <h2 className="text-lg font-black text-slate-800">部署を登録してください</h2>
-                                <p className="text-sm text-slate-400">組織の構成単位を入力します</p>
-                            </div>
-                            <span className="text-xs font-bold text-slate-400">全 {state.departments.length} 部署</span>
-                        </div>
-                        <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
-                            {state.departments.map((dept, i) => (
-                                <div key={i} className="flex items-center gap-2 group">
-                                    <div className="w-6 text-[10px] font-black text-slate-300 group-hover:text-teal-400 transition-colors">
-                                        {String(i + 1).padStart(2, '0')}
+                        {state.mode === "create" ? (
+                            <>
+                                <div className="flex justify-between items-end">
+                                    <div>
+                                        <h2 className="text-lg font-black text-slate-800">部署を登録してください</h2>
+                                        <p className="text-sm text-slate-400">組織の構成単位を入力します</p>
                                     </div>
-                                    <input
-                                        id={`dept-name-${i}`}
-                                        type="text"
-                                        placeholder={`部署名（例: 営業部）`}
-                                        value={dept.name}
-                                        onChange={(e) => updateDept(i, "name", e.target.value)}
-                                        className="flex-1 px-3 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent"
-                                    />
-                                    <input
-                                        id={`dept-headcount-${i}`}
-                                        type="number"
-                                        placeholder="人数"
-                                        min={0}
-                                        value={dept.headcount || ""}
-                                        onChange={(e) => updateDept(i, "headcount", parseInt(e.target.value) || 0)}
-                                        className="w-20 px-3 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-center focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent"
-                                    />
-                                    {state.departments.length > 1 && (
-                                        <button
-                                            onClick={() => removeDept(i)}
-                                            className="w-8 h-8 rounded-full bg-red-50 text-red-400 hover:bg-red-100 flex items-center justify-center text-sm transition-colors"
-                                        >
-                                            ×
-                                        </button>
-                                    )}
+                                    <span className="text-xs font-bold text-slate-400">全 {state.departments.length} 部署</span>
                                 </div>
-                            ))}
-                            <div ref={deptListEndRef} />
-                        </div>
-                        <button
-                            id="add-dept-btn"
-                            onClick={addDept}
-                            className="w-full py-2.5 rounded-xl border-2 border-dashed border-slate-200 text-sm font-bold text-slate-400 hover:border-teal-300 hover:text-teal-500 transition-all bg-slate-50/50 hover:bg-teal-50/30"
-                        >
-                            ＋ 部署を追加
-                        </button>
-                    </div>
-                )}
-
-                {/* Step 3: KPI定義 */}
-                {step === 3 && (
-                    <div className="space-y-4 animate-fadeIn">
-                        <div className="flex justify-between items-end">
-                            <div>
-                                <h2 className="text-lg font-black text-slate-800">KPIを設定してください</h2>
-                                <p className="text-sm text-slate-400">毎月追跡したい主要な数字（KPI）を定義します</p>
-                            </div>
-                            <span className="text-xs font-bold text-slate-400">{state.kpis.length} / 10 個</span>
-                        </div>
-                        <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2 -mr-2">
-                            {state.kpis.map((kpi, i) => (
-                                <div key={i} className="p-5 bg-white rounded-2xl space-y-4 border border-slate-100 shadow-sm shadow-slate-200/50 transition-all hover:border-teal-200 group relative">
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex-none w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center text-[11px] font-black text-slate-400 group-hover:bg-teal-500 group-hover:text-white transition-all shadow-inner">
-                                            {i + 1}
-                                        </div>
-                                        <input
-                                            id={`kpi-name-${i}`}
-                                            type="text"
-                                            placeholder="KPI名（例: MRR、商談数）"
-                                            value={kpi.name}
-                                            onChange={(e) => updateKpi(i, "name", e.target.value)}
-                                            className="flex-1 px-3 py-2 rounded-xl border border-transparent bg-slate-50/50 text-sm font-bold text-slate-700 placeholder:text-slate-300 focus:outline-none focus:bg-white focus:border-teal-400 focus:ring-4 focus:ring-teal-400/5 transition-all"
-                                        />
-                                        {state.kpis.length > 1 && (
+                                <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                                    {state.departments.map((dept, i) => (
+                                        <div key={i} className="flex items-center gap-2 group">
+                                            <div className="w-6 text-[10px] font-black text-slate-300 group-hover:text-teal-400 transition-colors">
+                                                {String(i + 1).padStart(2, '0')}
+                                            </div>
+                                            <input
+                                                id={`dept-name-${i}`}
+                                                type="text"
+                                                placeholder={`部署名（例: 営業部）`}
+                                                value={dept.name}
+                                                onChange={(e) => updateDept(i, "name", e.target.value)}
+                                                className="flex-1 px-3 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent"
+                                            />
                                             <button
-                                                onClick={() => removeKpi(i)}
-                                                className="flex-none w-8 h-8 rounded-xl bg-red-50 text-red-300 hover:bg-red-100 hover:text-red-500 flex items-center justify-center text-sm transition-all"
+                                                onClick={() => removeDept(i)}
+                                                className="w-8 h-8 rounded-full bg-red-50 text-red-400 hover:bg-red-100 flex items-center justify-center text-sm"
                                             >
                                                 ×
                                             </button>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-3 pl-9">
-                                        <div className="relative flex-none w-24">
-                                            <select
-                                                id={`kpi-unit-${i}`}
-                                                value={kpi.unit}
-                                                onChange={(e) => updateKpi(i, "unit", e.target.value)}
-                                                className="w-full pl-3 pr-8 py-2.5 rounded-xl border border-slate-100 bg-slate-50/50 text-xs font-bold text-slate-600 appearance-none focus:outline-none focus:bg-white focus:border-teal-400 transition-all cursor-pointer"
-                                            >
-                                                {UNIT_OPTIONS.map((u) => (
-                                                    <option key={u} value={u}>{u}</option>
-                                                ))}
-                                            </select>
-                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[10px] text-slate-400">
-                                                ▼
-                                            </div>
                                         </div>
-                                        <input
-                                            id={`kpi-target-${i}`}
-                                            type="number"
-                                            placeholder="毎月の目標値（任意）"
-                                            value={kpi.target_default}
-                                            onChange={(e) => updateKpi(i, "target_default", e.target.value)}
-                                            className="flex-1 px-3 py-2.5 rounded-xl border border-slate-100 bg-slate-50/50 text-xs font-bold text-slate-600 placeholder:text-slate-300 focus:outline-none focus:bg-white focus:border-teal-400 transition-all"
-                                        />
-                                    </div>
-                                    <div className="pl-9">
-                                        <div className="relative">
-                                            <select
-                                                id={`kpi-owner-${i}`}
-                                                value={kpi.owner_dept_index ?? ""}
-                                                onChange={(e) =>
-                                                    updateKpi(i, "owner_dept_index", e.target.value === "" ? null : parseInt(e.target.value))
-                                                }
-                                                className="w-full pl-3 pr-8 py-2.5 rounded-xl border border-slate-100 bg-slate-50/50 text-xs font-bold text-slate-600 appearance-none focus:outline-none focus:bg-white focus:border-teal-400 transition-all cursor-pointer"
-                                            >
-                                                <option value="">（未設定）主担当部署</option>
-                                                {state.departments.filter((d) => d.name).map((dept, di) => (
-                                                    <option key={di} value={di}>{dept.name}</option>
-                                                ))}
-                                            </select>
-                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[10px] text-slate-400">
-                                                ▼
-                                            </div>
-                                        </div>
-                                    </div>
+                                    ))}
+                                    <div ref={deptListEndRef} />
                                 </div>
-                            ))}
-                            <div ref={kpiListEndRef} />
-                        </div>
-                        {state.kpis.length < 10 && (
-                            <button
-                                id="add-kpi-btn"
-                                onClick={addKpi}
-                                className="w-full py-3 rounded-xl border-2 border-dashed border-slate-200 text-sm font-bold text-slate-400 hover:border-teal-300 hover:text-teal-500 transition-all bg-slate-50/50 hover:bg-teal-50/30"
-                            >
-                                ＋ 新しいKPIを追加
-                            </button>
+                                <button
+                                    onClick={addDept}
+                                    className="w-full py-2.5 rounded-xl border-2 border-dashed border-slate-200 text-sm font-bold text-slate-400 hover:border-teal-300 hover:text-teal-500 transition-all bg-slate-50/50 hover:bg-teal-50/30"
+                                >
+                                    ＋ 部署を追加
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <div>
+                                    <h2 className="text-lg font-black text-slate-800">所属部署を選択してください</h2>
+                                    <p className="text-sm text-slate-400">あなたのメインの所属先を選んでください</p>
+                                </div>
+                                <div className="grid grid-cols-1 gap-2 max-h-80 overflow-y-auto pr-1">
+                                    {state.invitedCompany?.departments.map((dept: any) => (
+                                        <button
+                                            key={dept.id}
+                                            onClick={() => setState(s => ({ ...s, selectedDeptId: dept.id }))}
+                                            className={cn(
+                                                "p-4 rounded-xl border-2 text-left transition-all font-bold text-sm",
+                                                state.selectedDeptId === dept.id
+                                                    ? "border-teal-500 bg-teal-50 text-teal-700"
+                                                    : "border-slate-100 hover:border-slate-200 text-slate-600 bg-white"
+                                            )}
+                                        >
+                                            {dept.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
+
+                {/* Step 3: KPI定義 / 担当設定 */}
+                {step === 3 && (
+                    <div className="space-y-4 animate-fadeIn">
+                        {state.mode === "create" ? (
+                            <>
+                                <div className="flex justify-between items-end">
+                                    <div>
+                                        <h2 className="text-lg font-black text-slate-800">KPIを設定してください</h2>
+                                        <p className="text-sm text-slate-400">追跡したい主要な数字（KPI）を定義します</p>
+                                    </div>
+                                    <span className="text-xs font-bold text-slate-400">{state.kpis.length} / 10 個</span>
+                                </div>
+                                <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2">
+                                    {state.kpis.map((kpi, i) => (
+                                        <div key={i} className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm space-y-3">
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="text"
+                                                    placeholder="KPI名（例: 商談数）"
+                                                    value={kpi.name}
+                                                    onChange={(e) => updateKpi(i, "name", e.target.value)}
+                                                    className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold"
+                                                />
+                                                <button onClick={() => removeKpi(i)} className="text-slate-300 hover:text-red-400">×</button>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <select
+                                                    value={kpi.unit}
+                                                    onChange={(e) => updateKpi(i, "unit", e.target.value)}
+                                                    className="w-24 px-2 py-2 rounded-xl border border-slate-200 text-xs font-bold"
+                                                >
+                                                    {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                                                </select>
+                                                <input
+                                                    type="number"
+                                                    placeholder="月次目標"
+                                                    value={kpi.target_default}
+                                                    onChange={(e) => updateKpi(i, "target_default", e.target.value)}
+                                                    className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold"
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <div ref={kpiListEndRef} />
+                                </div>
+                                <button
+                                    onClick={addKpi}
+                                    className="w-full py-3 rounded-xl border-2 border-dashed border-slate-200 text-sm font-bold text-slate-400 hover:border-teal-300"
+                                >
+                                    ＋ KPIを追加
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <div>
+                                    <h2 className="text-lg font-black text-slate-800">担当KPIを選択してください</h2>
+                                    <p className="text-sm text-slate-400">あなたが責任を持つ、または追跡するKPIを選びます（複数可）</p>
+                                </div>
+                                <div className="grid grid-cols-1 gap-2 max-h-80 overflow-y-auto pr-1">
+                                    {state.invitedCompany?.kpis.map((kpi: any) => (
+                                        <button
+                                            key={kpi.id}
+                                            onClick={() => setState(s => ({
+                                                ...s,
+                                                selectedKpiIds: s.selectedKpiIds.includes(kpi.id)
+                                                    ? s.selectedKpiIds.filter(id => id !== kpi.id)
+                                                    : [...s.selectedKpiIds, kpi.id]
+                                            }))}
+                                            className={cn(
+                                                "p-4 rounded-xl border-2 text-left transition-all font-bold text-sm flex justify-between items-center",
+                                                state.selectedKpiIds.includes(kpi.id)
+                                                    ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                                                    : "border-slate-100 hover:border-slate-200 text-slate-600"
+                                            )}
+                                        >
+                                            {kpi.name}
+                                            {state.selectedKpiIds.includes(kpi.id) && <span className="text-emerald-500">✓</span>}
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
                         )}
                     </div>
                 )}
@@ -426,7 +618,7 @@ export default function OnboardingPage() {
                         <div className="flex justify-between items-start sm:items-end mb-4 gap-4">
                             <div className="flex-1">
                                 <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                                    経営方針を入力してください
+                                    組織方針を入力してください
                                 </h2>
                                 <p className="text-sm text-slate-400 mt-1">
                                     AIがこの内容を参考に診断を行います（スキップ可能）
@@ -456,7 +648,7 @@ export default function OnboardingPage() {
                                         どんな組織を目指しているのか？
                                     </label>
                                     <textarea
-                                        placeholder="例: お客様に寄り添い、真の課題解決を提供する組織。"
+                                        placeholder="例: プロダクトの市場価値を最大化し、高収益な組織を目指す。"
                                         value={wizardState.vision}
                                         onChange={(e) => setWizardState(s => ({ ...s, vision: e.target.value }))}
                                         className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-400/5 transition-all resize-none h-20 bg-slate-50 hover:bg-white"
@@ -469,7 +661,7 @@ export default function OnboardingPage() {
                                     </label>
                                     <input
                                         type="text"
-                                        placeholder="例: ユニットエコノミクス改善期に入った。質重視。"
+                                        placeholder="例: 収益基盤の強化期。量より質の高い案件創出を優先。"
                                         value={wizardState.phase}
                                         onChange={(e) => setWizardState(s => ({ ...s, phase: e.target.value }))}
                                         className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-400/5 transition-all bg-slate-50 hover:bg-white"
@@ -491,7 +683,7 @@ export default function OnboardingPage() {
                                                     <span className="text-xs font-bold text-teal-700">{kpi.name}</span>
                                                     <input
                                                         type="text"
-                                                        placeholder="例: 商談数は減少してもOK。成約率20%を死守。"
+                                                        placeholder="例: 数値達成の背景にあるプロセスの質を重視して判断。"
                                                         value={wizardState.kpiGuide[i] || ""}
                                                         onChange={(e) => setWizardState(s => ({
                                                             ...s,
@@ -513,7 +705,7 @@ export default function OnboardingPage() {
                                         組織の注意点や課題は？
                                     </label>
                                     <textarea
-                                        placeholder="例: 特定メンバーへの属人化が課題。新人の育成が必要。"
+                                        placeholder="例: 属人化による機会損失。ナレッジ共有による効率化。"
                                         value={wizardState.issues}
                                         onChange={(e) => setWizardState(s => ({ ...s, issues: e.target.value }))}
                                         className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-400/5 transition-all resize-none h-20 bg-slate-50 hover:bg-white"
@@ -526,7 +718,7 @@ export default function OnboardingPage() {
                                     </label>
                                     <input
                                         type="text"
-                                        placeholder="例: 辞めたい, 新機能, 競合他社A, 生成AI"
+                                        placeholder="例: 粗利率, 競合, LTV, 営業利益, 解約率"
                                         value={wizardState.triggerWords}
                                         onChange={(e) => setWizardState(s => ({ ...s, triggerWords: e.target.value }))}
                                         className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-400/5 transition-all bg-slate-50 hover:bg-white"
@@ -539,7 +731,7 @@ export default function OnboardingPage() {
                                 id="semantic-content-input"
                                 value={state.semanticContent}
                                 onChange={(e) => setState((s) => ({ ...s, semanticContent: e.target.value }))}
-                                placeholder={`# 経営方針 v1.0\n\n## 目指す組織\n- お客様に真の価値を提供する\n\n## 今のフェーズ\n- フェーズ: 垂直立ち上げ\n\n## KPIの解釈\n- MRR: 月次20%成長がNorth Star\n\n## 気になるキーワード\n- 「辞めたい」「〇〇社」「新機能」`}
+                                placeholder={`# 組織方針 v1.0\n\n## 目指す組織\n- お客様に真の価値を提供する\n\n## 今のフェーズ\n- フェーズ: 垂直立ち上げ\n\n## KPIの解釈\n- MRR: 月次20%成長がNorth Star\n\n## 気になるキーワード\n- 「辞めたい」「〇〇社」「新機能」`}
                                 rows={12}
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent resize-none bg-slate-50/50"
                             />
@@ -572,17 +764,17 @@ export default function OnboardingPage() {
                         <button
                             id="onboarding-next-btn"
                             onClick={() => {
-                                if (step < 4) setStep((s) => s + 1);
+                                if (step < steps.length) setStep((s) => s + 1);
                                 else handleSubmit(false);
                             }}
                             disabled={!canProceed() || submitting}
                             className="px-8 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-600 active:bg-teal-700 text-white text-sm font-bold shadow-lg shadow-teal-200 hover:shadow-teal-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
                         >
                             {submitting
-                                ? "保存中..."
-                                : step < 4
+                                ? "処理中..."
+                                : step < steps.length
                                     ? "次へ →"
-                                    : "ダッシュボードへ"}
+                                    : "完了して開始"}
                         </button>
                     </div>
                 </div>

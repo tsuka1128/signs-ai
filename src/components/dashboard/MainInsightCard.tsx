@@ -3,6 +3,7 @@
 import { WeatherIcon } from "@/components/ui/WeatherIcon";
 import { Arrow } from "@/components/ui/Arrow";
 import { Badge } from "@/components/ui/Badge";
+import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MainInsightCardProps {
@@ -12,9 +13,16 @@ interface MainInsightCardProps {
     text: string;
     weather: "sun" | "cloud" | "rain";
     trend: "up" | "down" | "flat";
+    /** 深層分析レポートを開くコールバック（経営層向け等で表示） */
+    onOpenDeepReport?: () => void;
 }
 
-export function MainInsightCard({ icon, title, tone, text, weather, trend }: MainInsightCardProps) {
+/**
+ * メインインサイトカード
+ * ダッシュボード上部に表示される簡易AI分析サマリー
+ * onOpenDeepReport が渡された場合、「詳細レポートを見る」ボタンを表示する
+ */
+export function MainInsightCard({ icon, title, tone, text, weather, trend, onOpenDeepReport }: MainInsightCardProps) {
     return (
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 animate-glow">
             <div className="flex items-center gap-5">
@@ -42,6 +50,22 @@ export function MainInsightCard({ icon, title, tone, text, weather, trend }: Mai
                     </p>
                 </div>
             </div>
+
+            {/* 深層分析レポートへの導線 */}
+            {onOpenDeepReport && (
+                <button
+                    onClick={onOpenDeepReport}
+                    className="mt-4 w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-teal/30 hover:bg-teal/5 transition-all group"
+                >
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm">🧠</span>
+                        <span className="text-xs font-bold text-slate-600 group-hover:text-teal transition-colors">
+                            AI 組織診断レポート（詳細分析）
+                        </span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-teal group-hover:translate-x-0.5 transition-all" />
+                </button>
+            )}
         </div>
     );
 }

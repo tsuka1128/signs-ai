@@ -16,7 +16,9 @@ import { DetailLineChart } from "@/components/dashboard/DetailLineChart";
 import { ProductInsight } from "@/components/dashboard/ProductInsight";
 import { FeedbackItem } from "@/components/dashboard/FeedbackItem";
 import { SurveyQuestionCard } from "@/components/dashboard/SurveyQuestionCard";
+import { DeepReport } from "@/components/dashboard/DeepReport";
 import { cn } from "@/lib/utils";
+import { Target, Thermometer, Shield, Rocket, Lightbulb } from "lucide-react";
 
 const questions = [
   { id: 1, text: "今の仕事にワクワクしていますか？", hint: "月曜の朝、布団の中で思い浮かべてみてください。" },
@@ -68,50 +70,46 @@ const surveyData = {
 // --- Full Original Data --- 
 
 const products = [
-  { id: "a", name: "プロダクトA", head: 22, productivity: 129, pulse: 3.8, weather: "sun" as const, kpiAch: 105, prevHead: 20, prevProductivity: 120, prevPulse: 3.7, prevWeather: "sun", prevKpiAch: 100, kpiName: "MRR", mrr: 1800, prevMrr: 1600 },
-  { id: "b", name: "プロダクトB", head: 14, productivity: 86, pulse: 2.1, weather: "rain" as const, kpiAch: 82, prevHead: 12, prevProductivity: 110, prevPulse: 2.6, prevWeather: "cloud", prevKpiAch: 95, kpiName: "MRR", mrr: 520, prevMrr: 600 },
-  { id: "c", name: "プロダクトC", head: 9, productivity: 156, pulse: 4.3, weather: "sun" as const, kpiAch: 118, prevHead: 8, prevProductivity: 145, prevPulse: 4.1, prevWeather: "sun", prevKpiAch: 105, kpiName: "MRR", mrr: 460, prevMrr: 380 }
+  { id: "a", name: "SaaS プロダクト A", head: 22, productivity: 129, pulse: 3.8, weather: "sun" as const, kpiAch: 105, prevHead: 20, prevProductivity: 120, prevPulse: 3.7, prevWeather: "sun", prevKpiAch: 100, kpiName: "MRR", mrr: 1800, prevMrr: 1600 },
+  { id: "b", name: "新規事業プロジェクト B", head: 14, productivity: 86, pulse: 2.1, weather: "rain" as const, kpiAch: 82, prevHead: 12, prevProductivity: 110, prevPulse: 2.6, prevWeather: "cloud", prevKpiAch: 95, kpiName: "売上", mrr: 520, prevMrr: 600 },
+  { id: "c", name: "オプションサービス C", head: 9, productivity: 156, pulse: 4.3, weather: "sun" as const, kpiAch: 118, prevHead: 8, prevProductivity: 145, prevPulse: 4.1, prevWeather: "sun", prevKpiAch: 105, kpiName: "MRR", mrr: 460, prevMrr: 380 }
 ];
 
 const deptData = [
   {
-    id: "sales", name: "営業部", head: 15, productivity: 260, pulse: 2.1, pulseHistory: [3.1, 2.9, 2.8, 2.5, 2.3, 2.1], weather: "rain" as const, arrow: "down" as const, kpiAch: 108, prevHead: 14, prevProductivity: 250, prevPulse: 2.5, prevWeather: "cloud", prevKpiAch: 102, kpiName: "売上",
+    id: "sales", name: "営業部", head: 15, productivity: 260, pulse: 2.1, pulseHistory: [3.1, 2.9, 2.8, 2.5, 2.3, 2.1], weather: "rain" as const, arrow: "down" as const, kpiAch: 108, prevHead: 14, prevProductivity: 250, prevPulse: 2.5, prevWeather: "cloud", prevKpiAch: 102, kpiName: "受注金額",
     kpis: [
-      { name: "売上", val: "2,840万", ach: 108, type: "stack" },
-      { name: "契約件数", val: "12件", ach: 92, type: "stack" },
-      { name: "成約率", val: "22%", ach: 110, type: "rate" }
+      { name: "月次売上", val: "4,200万", ach: 108, type: "stack" },
+      { name: "新規契約件数", val: "15件", ach: 92, type: "stack" },
+      { name: "平均客単価", val: "280万", ach: 110, type: "rate" }
     ]
   },
   {
-    id: "mktg", name: "マーケ部", head: 4, productivity: 280, pulse: 4.2, pulseHistory: [3.8, 3.9, 4.0, 4.1, 4.1, 4.2], weather: "sun" as const, arrow: "up" as const, kpiAch: 90, prevHead: 4, prevProductivity: 260, prevPulse: 4.0, prevWeather: "sun", prevKpiAch: 105, kpiName: "有効リード",
+    id: "mktg", name: "マーケティング部", head: 4, productivity: 280, pulse: 4.2, pulseHistory: [3.8, 3.9, 4.0, 4.1, 4.1, 4.2], weather: "sun" as const, arrow: "up" as const, kpiAch: 90, prevHead: 4, prevProductivity: 260, prevPulse: 4.0, prevWeather: "sun", prevKpiAch: 105, kpiName: "有効リード数",
     kpis: [
-      { name: "商談獲得数", val: "384件", ach: 112, type: "stack" },
-      { name: "有効リード", val: "45件", ach: 90, type: "stack" }
+      { name: "有効リード獲得数", val: "128件", ach: 112, type: "stack" },
+      { name: "商談獲得数", val: "42件", ach: 90, type: "stack" }
     ]
   },
   {
-    id: "dev", name: "開発部", head: 22, productivity: 80, pulse: 2.4, pulseHistory: [3.4, 3.2, 3.0, 2.8, 2.5, 2.4], weather: "rain" as const, arrow: "down" as const, kpiAch: 80, prevHead: 20, prevProductivity: 85, prevPulse: 2.8, prevWeather: "cloud", prevKpiAch: 85, kpiName: "NPS",
+    id: "dev", name: "開発部", head: 22, productivity: 80, pulse: 2.4, pulseHistory: [3.4, 3.2, 3.0, 2.8, 2.5, 2.4], weather: "rain" as const, arrow: "down" as const, kpiAch: 80, prevHead: 20, prevProductivity: 85, prevPulse: 2.8, prevWeather: "cloud", prevKpiAch: 85, kpiName: "リリース頻度",
     kpis: [
-      { name: "NPS", val: "32pt", ach: 80, type: "rate" }
+      { name: "ベロシティ", val: "120pt", ach: 85, type: "stack" },
+      { name: "障害発生率", val: "0.2%", ach: 110, type: "inverse" }
     ]
   },
   {
-    id: "fin", name: "財務経理部", head: 10, productivity: 90, pulse: 3.9, pulseHistory: [3.8, 3.7, 3.8, 3.9, 3.9, 3.9], weather: "sun" as const, arrow: "flat" as const, kpiAch: 100, prevHead: 9, prevProductivity: 90, prevPulse: 3.8, prevWeather: "sun", prevKpiAch: 99, kpiName: "コスト",
+    id: "cs", name: "カスタマーサクセス部", head: 7, productivity: 110, pulse: 3.1, pulseHistory: [3.6, 3.5, 3.4, 3.2, 3.1, 3.1], weather: "cloud" as const, arrow: "flat" as const, kpiAch: 72, prevHead: 6, prevProductivity: 115, prevPulse: 3.4, prevWeather: "cloud", prevKpiAch: 80, kpiName: "解約率",
     kpis: [
-      { name: "コスト", val: "850万円", ach: 100, type: "inverse" }
+      { name: "顧客解約率", val: "1.8%", ach: 115, type: "inverse" },
+      { name: "アップセル成約額", val: "450万", ach: 90, type: "stack" }
     ]
   },
   {
-    id: "cs", name: "CS部", head: 7, productivity: 110, pulse: 3.1, pulseHistory: [3.6, 3.5, 3.4, 3.2, 3.1, 3.1], weather: "cloud" as const, arrow: "flat" as const, kpiAch: 72, prevHead: 6, prevProductivity: 115, prevPulse: 3.4, prevWeather: "cloud", prevKpiAch: 80, kpiName: "解約率",
+    id: "hr", name: "人事総務部", head: 3, productivity: 190, pulse: 4.0, pulseHistory: [3.9, 3.9, 3.8, 3.9, 4.0, 4.0], weather: "sun" as const, arrow: "up" as const, kpiAch: 105, prevHead: 3, prevProductivity: 180, prevPulse: 3.8, prevWeather: "sun", prevKpiAch: 95, kpiName: "採用進捗",
     kpis: [
-      { name: "解約率", val: "4.2%", ach: 72, type: "inverse" }
-    ]
-  },
-  {
-    id: "hr", name: "人事部", head: 3, productivity: 190, pulse: 4.0, pulseHistory: [3.9, 3.9, 3.8, 3.9, 4.0, 4.0], weather: "sun" as const, arrow: "up" as const, kpiAch: 105, prevHead: 3, prevProductivity: 180, prevPulse: 3.8, prevWeather: "sun", prevKpiAch: 95, kpiName: "採用人数",
-    kpis: [
-      { name: "採用応募数", val: "18名", ach: 120, type: "stack" },
-      { name: "退職人数", val: "3名", ach: 76, type: "inverse" }
+      { name: "採用充足率", val: "85%", ach: 105, type: "rate" },
+      { name: "離職率", val: "4.2%", ach: 120, type: "inverse" }
     ]
   }
 ];
@@ -145,113 +143,88 @@ const prodKpis = [
 
 const kpiDefs = [
   {
-    id: "mrr", name: "売上", unit: "万円", val: 2840, target: 2630, prev: [2100, 2250, 2380, 2490, 2630, 2840], dept: "営業部", voices: [
-      { text: "目標超過だが、トップ営業1人に依存。属人リスクが顕在化しつつある", mood: "rain" },
-      { text: "大型案件2件は値引き幅が大きく、利益率は悪化傾向", mood: "rain" },
-      { text: "新規偏重で既存フォローが後手に回っている実感がある", mood: "cloud" }
+    id: "mrr", name: "月次売上", unit: "万円", val: 4200, target: 4000, prev: [3200, 3450, 3680, 3890, 4000, 4200], dept: "営業部", voices: [
+      { text: "目標超過だが、トップ営業への依存度が依然として高い", mood: "cloud" },
+      { text: "大型案件による見かけの数字。利益率の精査が必要", mood: "cloud" },
+      { text: "新規顧客の獲得コストが想定より上がっている", mood: "rain" }
     ]
   },
   {
-    id: "mktg_leads", name: "商談獲得数", unit: "件", val: 384, target: 343, prev: [280, 295, 310, 328, 343, 384], dept: "マーケ部", voices: [
-      { text: "ターゲティング精度向上が奏功", mood: "sun" },
-      { text: "アポの質に関する営業部からのフィードバックが役立っている", mood: "sun" }
+    id: "leads", name: "有効リード獲得数", unit: "件", val: 128, target: 120, prev: [95, 102, 110, 115, 120, 128], dept: "マーケティング部", voices: [
+      { text: "コンテンツマーケティング経由の質が高いリードが増加", mood: "sun" },
+      { text: "広告費に対する獲得単価(CPA)が改善傾向にある", mood: "sun" }
     ]
   },
   {
-    id: "deals", name: "有効リード", unit: "件", val: 45, target: 50, prev: [38, 42, 48, 51, 47, 45], dept: "マーケ部", voices: [
-      { text: "リード質は改善したが、総数が伸び悩んでいる", mood: "cloud" },
-      { text: "LPのCVR改善施策を急ぐ必要がある", mood: "rain" }
+    id: "mktg_opps", name: "商談獲得数", unit: "件", val: 42, target: 50, prev: [38, 42, 48, 51, 47, 42], dept: "マーケティング部", voices: [
+      { text: "リード数は増えたが、商談化率が伸び悩んでいる", mood: "cloud" },
+      { text: "インサイドセールのリソース不足が露呈し始めている", mood: "rain" }
     ]
   },
   {
-    id: "contracts", name: "契約件数", unit: "件", val: 12, target: 8, prev: [5, 8, 10, 6, 9, 12], dept: "営業部", voices: [
-      { text: "先月獲得した大口顧客からの契約が増加している", mood: "sun" },
-      { text: "小規模案件の契約手続きに手間取っている", mood: "cloud" }
+    id: "contracts", name: "新規契約件数", unit: "件", val: 15, target: 12, prev: [8, 10, 12, 11, 13, 15], dept: "営業部", voices: [
+      { text: "中小規模案件のクロージングが効率化できている", mood: "sun" },
+      { text: "契約管理プロセスの工数が増えており、現場の心理的負荷が高い", mood: "cloud" }
     ]
   },
   {
-    id: "close", name: "成約率", unit: "%", val: 22, target: 20, prev: [18, 17, 19, 21, 20, 22], dept: "営業部", voices: [
-      { text: "提案パターンが確立できた手応えがある", mood: "sun" },
-      { text: "値引きで成約率を上げている面もあり、真の成約力か疑問", mood: "cloud" },
-      { text: "業界特化の事例が増えたことが刺さっている", mood: "sun" }
+    id: "churn", name: "顧客解約率", unit: "%", val: 1.8, target: 2.0, prev: [2.5, 2.3, 2.2, 2.0, 1.9, 1.8], dept: "カスタマーサクセス部", voices: [
+      { text: "ハイタッチ対応の強化により、主要顧客の継続意向が向上", mood: "sun" },
+      { text: "オンボーディングの自動化が一部の顧客には不評", mood: "cloud" }
     ]
   },
   {
-    id: "cost", name: "コスト", unit: "万円", val: 850, target: 850, prev: [820, 830, 840, 850, 840, 850], dept: "財務経理部", voices: [
-      { text: "インフラコストの最適化が課題になっている", mood: "cloud" },
-      { text: "予算内には収まっているがSaaSツールの見直しが必要", mood: "cloud" }
+    id: "velocity", name: "ベロシティ", unit: "pt", val: 120, target: 140, prev: [100, 110, 115, 125, 130, 120], dept: "開発部", voices: [
+      { text: "技術的負債の返済に工数を割いたため、新機能開発が停滞", mood: "cloud" },
+      { text: "レビュープロセスのボトルネック化により、リリース速度が低下", mood: "rain" }
     ]
   },
   {
-    id: "churn", name: "解約率", unit: "%", val: 4.2, target: 3.0, prev: [2.8, 3.1, 3.0, 3.2, 3.5, 4.2], dept: "CS部", voices: [
-      { text: "プロダクトBの解約が突出。機能不足が主因と顧客から聞いている", mood: "rain" },
-      { text: "オンボーディング完了前の離脱が先月から急増", mood: "rain" }
-    ]
-  },
-  {
-    id: "nps", name: "NPS", unit: "pt", val: 32, target: 40, prev: [28, 30, 31, 33, 34, 32], dept: "開発部", voices: [
-      { text: "UIリニューアル後の評価は向上したがパフォーマンス改善の要望が根強い", mood: "cloud" },
-      { text: "新機能リリースがユーザーの評価に直結している実感がある", mood: "sun" }
-    ]
-  },
-  {
-    id: "recruit", name: "採用応募数", unit: "名", val: 18, target: 15, prev: [10, 12, 15, 8, 10, 18], dept: "人事部", voices: [
-      { text: "イベントの効果が応募数に直結している", mood: "sun" },
-      { text: "数は取れているが、スクリーニングの工数が逼迫している", mood: "cloud" }
-    ]
-  },
-  {
-    id: "resign", name: "退職人数", unit: "名", val: 3, target: 4, prev: [2, 3, 2, 4, 1, 3], dept: "人事部", voices: [
-      { text: "前月に比べ若手の離職が目立つのが気がかり", mood: "rain" },
-      { text: "個別面談でのフォローアップの効果が少しずつ出ている", mood: "sun" }
+    id: "recruit", name: "採用充足率", unit: "%", val: 85, target: 100, prev: [70, 75, 80, 82, 85, 85], dept: "人事総務部", voices: [
+      { text: "エージェント経由の応募は多いが、カルチャーマッチが課題", mood: "cloud" },
+      { text: "面接官のリソース確保が難しく、先行プロセスが滞留気味", mood: "cloud" }
     ]
   }
 ];
 
 const insights = {
-  exec: { icon: "👔", title: "経営層", tone: "戦略的分析", text: "MRRは目標超過だが、営業部の体温スコア2.1は過去最低値。数字の裏側でトップ営業への依存が深刻化している可能性が高い。仮にこの状態が継続すれば、来月以降のパイプラインに影響が出ることが想定される。リソース配分の見直しを検討すべき局面。" },
-  admin: { icon: "📋", title: "経企・人事", tone: "構造分析", text: "営業部と開発部の間で仕様変更プロセスの摩擦が発生しており、双方の体温を押し下げている構造が見られる。また、解約率4.2%はCS部の属人対応の限界を示唆。承認フローの短縮と業務標準化を並行で進めることを推奨。" },
-  mgr: { icon: "🎯", title: "マネージャー", tone: "現場支援", text: "チームから『承認フロー遅延』と『仕様変更の突発性』が主要ボトルネックとして挙がっています。メンバーの疲弊は手法ではなく仕組みに起因する可能性が高い。" },
-  player: { icon: "💪", title: "現場", tone: "前向きな共有", text: "『仕様決定のスピード』が今月のボトルネック上位に挙がっており、組織として改善の優先度が上がっています。改善プロセスが動き始めています。" }
+  exec: { icon: "👔", title: "経営層", tone: "戦略的分析", text: "月次売上は目標を超過していますが、営業部の「体温」2.1は組織的な歪みを示唆しています。ボイスチェックでは特定個人への業務集中と、開発部門との連携摩擦が主要な懸念事項として挙がっています。持続可能な成長のためには、プロセスの標準化が急務です。" },
+  admin: { icon: "📋", title: "経企・人事", tone: "構造分析", text: "開発部のベロシティ低下と、CS部の解約率改善が相関しています。品質重視へのシフトは成果を上げていますが、開発現場では承認フローの停滞が心理的負荷となっています。採用充足率の維持と並行し、意思決定の迅速化が求められます。" },
+  mgr: { icon: "🎯", title: "マネージャー", tone: "現場支援", text: "現場メンバーから『突発的な仕様変更』と『リード質の乖離』が主要ボトルネックとして挙がっています。期待値調整の仕組み化により、現場の心理的安全性を確保することが生産性回復の鍵となります。" },
+  player: { icon: "💪", title: "現場", tone: "前向きな共有", text: "LP改修後のリード質向上について、営業現場からポジティブな反応が出ています。事務作業などの『非本質的な時間』を削減し、顧客に向き合う時間を最大化する流れができつつあります。" }
 };
 
 const actions = [
-  { pri: "🔴 緊急", title: "営業部のトップ営業依存を解消する", desc: "属人化が進行しており、仮にキーパーソンが離脱した場合のインパクトが大きい。プロセスの標準化に着手することを推奨。", dept: "営業部", owner: "営業部長" },
-  { pri: "🔴 緊急", title: "承認フローの2段階への短縮を検討する", desc: "全部署横断でボトルネック1位。意思決定スピードの両方に影響しており、組織全体の体温を押し下げている構造的要因と考えられる。", dept: "全社", owner: "CEO" },
-  { pri: "🟡 今月中", title: "開発↔営業の仕様変更プロセスを整備する", desc: "仕様変更の事前通知ルール（最低3営業日前）の設定が有効と考えられる。双方の体温改善に寄与する可能性が高い。", dept: "開発×営業", owner: "PdM" },
-  { pri: "🟡 今月中", title: "解約率4.2%の原因を構造的に分析する", desc: "直近解約5社のヒアリングを実施し、プロダクト起因か対応起因かを切り分けることを推奨。", dept: "CS部", owner: "CS部長" },
-  { pri: "🟢 継続", title: "マーケ部の成功パターンを営業と共有する", desc: "リード品質改善の要因を営業部と共有し、商談化率改善につなげる。好循環を組織的に再現する仕組みづくりを。", dept: "マーケ→営業", owner: "マーケ部長" }
+  { pri: "🔴 緊急", title: "営業部の属人化を解消するためのプロセス標準化", desc: "トップ営業への依存が限界に達しており、メンバーの疲弊が顕著。商談フェーズの定義とナレッジ共有を2月中に完了させる。", dept: "営業部", owner: "営業部長" },
+  { pri: "🔴 緊急", title: "社内承認フローの簡素化（2段階への圧縮）", desc: "全部署で『決定待ち』による体温低下が発生。CEO直轄プロジェクトとして承認プロセスの見直しを断行する。", dept: "全社", owner: "CEO" },
+  { pri: "🟡 今月中", title: "開発・マーケ間のリード品質基準の再定義", desc: "獲得数は目標達成しているが、営業現場の期待値と乖離がある。スコアリング条件を実態に合わせてアップデートする。", dept: "マーケ×営業", owner: "マーケ部長" },
+  { pri: "🟡 今月中", title: "離職リスクが懸念されるメンバーへの重点フォロー", desc: "体温低下が著しい入社1年目メンバーを中心に、メンターによる1on1の頻度を週1回に増やす。", dept: "人事総務部", owner: "人事責任者" },
+  { pri: "🟢 継続", title: "CS部のアップセル成功事例をセールスイネーブルメントに活用", desc: "好調な既存顧客フォローのノウハウを新規営業にも転用し、全体の客単価向上を図るサイクルを構築する。", dept: "CS→営業", owner: "CS部長" }
 ];
 
-const semTextDefault = `# 経営方針 v1.2 (2026年2月〜)
+const semTextDefault = `# 組織方針 v1.5 (2026年3月〜)
 
 ## 組織の現在地
 - フェーズ: ユニットエコノミクス改善期
-- 前フェーズ（〜1月）: 垂直立ち上げ → 量重視
-- 現フェーズ（2月〜）: 質重視へ転換。筋肉質な黒字化が最優先
-- 現場に求める空気感: 1件1件の質にこだわる執着心
+- 現在の優先順位: 収益の質向上 ＞ 獲得件数の最大化
+- 組織の目標: 「自律駆動型組織」への転換。現場が主役となる意思決定構造の構築
 
 ## KPIの解釈ガイド
-- MRR: 月次15%成長を維持しつつ、値引き率を抑制方向へ
-- 商談数: 量より質へ転換中。数の減少は想定内。成約率で判断
-- 成約率: 最重要指標。20%以上を死守
-- リード数: コンテンツマーケ経由の質の高いリードを重視
-- 解約率: 3%以下が健全ライン。4%超は即座にアラート
-- 解約金額: 大口解約は事前察知が必須。CS部に月次ヒアリングを義務化
-- NPS: 40pt到達が年度目標。中間層の引き上げに注力
-- 機能利用率: 差別化機能の利用率向上がNPS改善の鍵
-- 採用数: エンジニア採用が最優先。給与テーブルの見直しを検討中
+- 月次売上: 目標達成は通過点。特定個人への依存はボトルネックとみなす
+- 有効リード獲得数: 営業現場の声を反映した「商談の質」を最重視する
+- 顧客解約率: 2.0%以下を健全ラインとする。予兆を早期検知し、能動的(Proactive)に動く
+- 採用充足率: 現場の過負荷を解消し、挑戦できる余白を創出するための投資
 
 ## 数字と体温の関係
-- ☀️なのに☔️（オーバーヒート）: 前フェーズでは許容していたが、現フェーズでは即座に介入。持続不能な成果は評価しない
-- ☔️なのに☀️: プロダクトBが該当。3月末までに改善が見られなければピボット検討
+- ☀️なのに☔️ (生産性の歪み): 成果は出ているが現場に無理が生じている。仕組み（フロー・ツール）の見直しが必要
+- ☔️なのに☀️ (期待先行型): 体温は高いが成果に結びついていない。戦略の方向性またはリソース配分の修正が必要
 
 ## 組織の注意点
-- 営業部トップ営業への依存が深刻化。属人化解消を2月の最優先アジェンダに
-- 開発↔営業の仕様変更摩擦が体温を下げている。承認フロー短縮で構造的に解決
+- 部門間の「サイロ化」を放置しない。SignsAIのボイスチェックを共通言語として活用
+- 承認フローなどの事務工数は極力排除し、本来のクリエイティブな仕事に集中する
 
-## 地雷ワード（AIが検知したら最優先で報告）
-- 「辞めたい」「転職」「意味がない」「誰も聞いてくれない」「もう限界」`;
+## 地雷ワード (AIが検知したら最優先でアラート)
+- 「自分には関係ない」「誰も聞いてくれない」「上から言われただけ」「今のままでいい」`;
 
 export default function DashboardPage() {
   const [tab, setTab] = useState<keyof typeof insights>("exec");
@@ -260,6 +233,7 @@ export default function DashboardPage() {
   const [selKpi, setSelKpi] = useState("mrr");
   const [orgView, setOrgView] = useState("dept");
   const [month, setMonth] = useState("default");
+  const [showDeepReport, setShowDeepReport] = useState(false);
 
   const [realDepts, setRealDepts] = useState<any[]>([]);
   const [realKpis, setRealKpis] = useState<any[]>([]);
@@ -298,9 +272,8 @@ export default function DashboardPage() {
     if (deptName.includes("営業")) return 0; // sales
     if (deptName.includes("マーケ")) return 1; // mktg
     if (deptName.includes("開発") || deptName.includes("エンジニア")) return 2; // dev
-    if (deptName.includes("財務") || deptName.includes("経理")) return 3; // fin
-    if (deptName.includes("CS") || deptName.includes("カスタマー")) return 4; // cs
-    if (deptName.includes("人事") || deptName.includes("HR")) return 5; // hr
+    if (deptName.includes("CS") || deptName.includes("カスタマー")) return 3; // cs
+    if (deptName.includes("人事") || deptName.includes("HR")) return 4; // hr
     return -1;
   };
 
@@ -440,6 +413,7 @@ export default function DashboardPage() {
             text={ins.text}
             weather="cloud"
             trend="down"
+            onOpenDeepReport={tab === "exec" ? () => setShowDeepReport(true) : undefined}
           />
           <TabBar
             tabs={[
@@ -461,7 +435,7 @@ export default function DashboardPage() {
             { id: "org", label: "🏢 部署・プロダクト" },
             { id: "survey", label: "🗣️ 組織の体温" },
             { id: "action", label: "📌 アクション" },
-            { id: "semantic", label: "🧬 経営方針" }
+            { id: "semantic", label: "🧬 組織方針" }
           ]}
           active={sec}
           onChange={setSec}
@@ -778,7 +752,7 @@ export default function DashboardPage() {
                       name="プロダクトB"
                       tag="Dog"
                       type="dog"
-                      text="解約率8.1%は危険水域。14名のリソースに対してMRR520万は効率が悪い。教育体制の不備か、ターゲットとのミスマッチが疑われる。経営方針では「3月末まで改善なければピボット検討」と記載あり。期限まで残り1ヶ月。"
+                      text="解約率8.1%は危険水域。14名のリソースに対してMRR520万は効率が悪い。教育体制の不備か、ターゲットとのミスマッチが疑われる。組織方針では「3月末まで改善なければピボット検討」と記載あり。期限まで残り1ヶ月。"
                     />
                     <ProductInsight
                       name="プロダクトC"
@@ -928,25 +902,36 @@ export default function DashboardPage() {
           )}
 
           {sec === "semantic" && (
-            <SemanticLayer
-              initialText={displaySem}
-              onSave={async (txt: string) => {
-                const supabase = createClient();
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) return;
-                const { data: comp } = await supabase.from('users').select('company_id').eq('id', user.id).single();
-                if (!comp?.company_id) return;
+            <div className="space-y-6 animate-fadeIn">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🧬</span>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-800">組織方針</h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">AIの判断基準</p>
+                </div>
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed font-medium">
+                組織方針・KPIの解釈・組織のフェーズをMarkdownで記述。AIはこの文書を毎月の診断時に読み込み、数字の良し悪しを「あなたの会社の文脈」で判断します。
+              </p>
+              <SemanticLayer
+                initialText={displaySem}
+                onSave={async (txt: string) => {
+                  const supabase = createClient();
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (!user) return;
+                  const { data: comp } = await supabase.from('users').select('company_id').eq('id', user.id).single();
+                  if (!comp?.company_id) return;
 
-                await supabase.from('semantic_layers').insert({
-                  company_id: comp.company_id,
-                  content: txt,
-                  valid_from: new Date().toISOString()
-                });
-                setRealSem(txt);
-              }}
-            />
+                  await supabase.from('semantic_layers').insert({
+                    company_id: comp.company_id,
+                    content: txt,
+                    valid_from: new Date().toISOString()
+                  });
+                  setRealSem(txt);
+                }}
+              />
+            </div>
           )}
-
         </div>
       </main>
 
@@ -961,6 +946,62 @@ export default function DashboardPage() {
         <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">組織に体温を</p>
         <p className="text-[9px] text-slate-300 font-bold uppercase">by 株式会社 Taion</p>
       </footer>
+
+      {/* Deep Report Modal */}
+      <DeepReport
+        isOpen={showDeepReport}
+        onClose={() => setShowDeepReport(false)}
+        generatedAt="2026年3月度"
+        sections={[
+          {
+            id: "executive-summary",
+            icon: <Target className="w-5 h-5 text-teal" />,
+            title: "総評：組織の健全性と戦略進捗",
+            subtitle: "Executive Summary",
+            highlights: [
+              { label: "全社体温", value: "3.2", trend: "down", color: "text-amber-500" },
+              { label: "月次売上達成率", value: "108%", trend: "up", color: "text-emerald-500" },
+              { label: "重点アラート", value: "3件", color: "text-rose-500" },
+              { label: "改善傾向KPI", value: "2", trend: "up", color: "text-teal" }
+            ],
+            content: "今月の組織全体は「売上は達成しているが、現場が身を粋っている」状態です。\n\nKPI上は月次売上108%、有効リード112%と好調に見えますが、その裏側で営業部の体温は2.1、開発部は2.4と危険水域にあります。特に営業部は「トップ営業。1人に全体の42%の売上が集中」という構造的な脆弱性を抱えており、この人物の離職・休職が発生した場合のインパクトは売上の40%減という極めて高いリスクです。\n\n一方、マーケティング部は体温4.2と全社で最も健全な状態を維持しており、「自律駆動型チーム」の理想的なモデルとなっています。この成功パターンの全社展開が、今後の組織改善の鍵となります。"
+          },
+          {
+            id: "correlation",
+            icon: <Thermometer className="w-5 h-5 text-teal" />,
+            title: "組織力とKPIの相関解析",
+            subtitle: "Organizational Health × KPI Correlation",
+            highlights: [
+              { label: "体温↓×KPI↑", value: "営業部", color: "text-rose-500" },
+              { label: "体温↑×KPI↑", value: "マーケ", color: "text-emerald-500" },
+              { label: "体温↓×KPI↓", value: "開発部", color: "text-amber-500" },
+              { label: "体温→×KPI→", value: "CS部", color: "text-slate-500" }
+            ],
+            content: "組織体温とKPI達成率の相関を分析した結果、以下の構造が見えてきます。\n\n■ 営業部（体温2.1 / KPI達成108%）\n「数字は出ているが、現場が悲鸣を上げている」典型的なパターンです。ボイスチェックでは「社内調整の多さ」「言いたいことが言えない」という声が突出しており、これは属人化された業務フローが「特定個人の芝耐」で回っていることを示しています。この状態が続くと、2〜3ヶ月以内にKPIの急落が発生する確率が高いと予測されます。\n\n■ 開発部（体温2.4 / KPI達成85%）\n体温とKPIが共に低迷する「消耗スパイラル」に陥っています。「扏け決定待ち」が最大のボトルネックであり、承認フローの簡素化が生産性と体温の両方を改善するレバレッジポイントです。\n\n■ マーケティング部（体温4.2 / KPI達成112%）\n体温とKPIが共に高い「好循環」の状態です。「自律的に動ける」「挑戦できる」というボイスが多く、これは少人数体制での権限委譲の成功と、明確な目標設定が生み出した結果です。"
+          },
+          {
+            id: "strategic-alignment",
+            icon: <Shield className="w-5 h-5 text-teal" />,
+            title: "組織方針との整合性チェック",
+            subtitle: "Strategic Alignment Analysis",
+            content: "現在の組織方針（v1.5）では「ユニットエコノミクス改善期」として「収益の質向上」を最優先としています。この方針と現場の現実を照らし合わせます。\n\n✅ 整合している点\n・マーケティング部の「量より質」への転換は、方針通りに機能しており、有効リードの質向上が営業現場でも好評価を得ています。\n・CS部の解約率改善（2.8%→3.2%）は、「能動的に動く」という方針が徐々に浸透しつつある兆候です。\n\n⚠️ 乖離が見られる点\n・営業部の属人化状態は、「自律駆動型組織への転換」という組織目標と正反対の状態です。特定一人への依存が、他メンバーの成長機会を奪っています。\n・開発部の「承認フロー3段階」は、方針に記載の「事務工数の排除」と矛盾しており、組織方針が現場に届いていないことが伺えます。\n\n📝 方針への提言\n次回の組織方針更新では、「営業プロセスの標準化」を明記し、属人化解消を組織全体の方針として位置づけることを推奨します。"
+          },
+          {
+            id: "risks-opportunities",
+            icon: <Rocket className="w-5 h-5 text-teal" />,
+            title: "中長期リスクと成長機会",
+            subtitle: "Mid-term Risks & Growth Opportunities",
+            content: "■ リスク（放置した場合の予測）\n\n🚨 営業部の崩壊リスク：高\nトップ営業の体温が継続的に低下しており、このまま3ヶ月以内に离職リスクが約45%あります。その場合、月次売上の約40%（約1,680万円）のまかなう手段が失われます。\n\n⚠️ 開発部の生産性低下：中\n業務過多が改善されない場合、ベロシティはさらに10〜15%低下する可能性があります。リリース遅延が顧客体験に直結し、解約率を押し上げる可能性があります。\n\n■ 成長機会（テコ入れした場合の上振れ）\n\n🚀 マーケティングの成功パターン全社展開\nマーケティング部の「少人数×自律駆動×明確目標」という成功パターンを、営業部に展開できれば、全社の生産性を1.3倍に引き上げるポテンシャルがあります。\n\n💰 CS部のアップセルノウハウ活用\nCS部の既存顧客フォローノウハウをセールスイネーブルメントに変換できれば、平均客単価を現在の1.2倍に引き上げる可能性があります。"
+          },
+          {
+            id: "actionable-insights",
+            icon: <Lightbulb className="w-5 h-5 text-teal" />,
+            title: "具体的提言：経営層が打つべき「次の一手」",
+            subtitle: "Actionable Insights for Leadership",
+            content: "① 【即日】営業部の属人化解消プロジェクトの発足\nトップ営業のナレッジを「商談フェーズ定義」「テンプレート化」「同行訓練」の3ステップで標準化する。期限3週間。これのみで離職リスクを大幅に低減できます。\n\n② 【1週間以内】承認フローの2段階への圧縮\nCEO直轄で、現在の3段階承認フローを2段階に圧縮。ボイスチェックで最も多くの部署から挙げられている「意思決定待ち」を解消し、開発部の体温回復に直結させます。\n\n③ 【今月中】マーケ×営業のリード品質基準の再定義\n現在の「有効リード」の定義を、営業現場の期待値と整合させる。BANTなどのスコアリング条件を実態に合わせてアップデートすることで、営業部の不満と無駄な工数を同時に削減できます。\n\n④ 【継続】部署間フィードバックループの制度化\n毎月のボイスチェック結果を、部署間で「読み合う」場を作る。現在の「他部署の状況が見えない」というサイロ化の解消が、中長期的な組織力の底上げに繋がります。"
+          }
+        ]}
+      />
     </div>
   );
 }
