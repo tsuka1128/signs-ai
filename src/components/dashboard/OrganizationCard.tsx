@@ -22,8 +22,9 @@ interface OrganizationCardProps {
 }
 
 export function OrganizationCard({ name, head, pulse, weather, arrow, kpis }: OrganizationCardProps) {
-    const risk = pulse < 2.5 ? "overheat" : pulse >= 3.5 ? "stable" : "caution";
-    const pulseColorClass = pulse >= 3.5 ? "text-emerald-500" : pulse >= 2.5 ? "text-amber-500" : "text-rose-500";
+    const isNone = pulse === 0;
+    const risk = isNone ? "none" : pulse < 2.5 ? "overheat" : pulse >= 3.5 ? "stable" : "caution";
+    const pulseColorClass = isNone ? "text-slate-300" : pulse >= 3.5 ? "text-emerald-500" : pulse >= 2.5 ? "text-amber-500" : "text-rose-500";
 
     return (
         <div className={cn(
@@ -33,10 +34,10 @@ export function OrganizationCard({ name, head, pulse, weather, arrow, kpis }: Or
             {/* Header section */}
             <div className={cn("flex items-center gap-4 px-5 py-4 border-b", risk === "overheat" ? "border-rose-50" : "border-slate-50")}>
                 <div className="flex items-center gap-3 min-w-[100px]">
-                    <WeatherIcon type={weather} size={32} />
+                    <WeatherIcon type={isNone ? "cloud" : weather} size={32} className={isNone ? "opacity-20 grayscale" : ""} />
                     <div>
                         <div className={cn("text-2xl font-extrabold tabular-nums leading-none", pulseColorClass)}>
-                            {pulse.toFixed(1)}
+                            {isNone ? "-" : pulse.toFixed(1)}
                         </div>
                         <div className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter mt-1">/5.0 体温</div>
                     </div>
@@ -55,9 +56,12 @@ export function OrganizationCard({ name, head, pulse, weather, arrow, kpis }: Or
                 <Badge className={cn(
                     "border-none text-[10px] font-bold px-3 py-1",
                     risk === "overheat" ? "bg-rose-100 text-rose-500" :
-                        risk === "stable" ? "bg-emerald-100 text-emerald-500" : "bg-amber-100 text-amber-500"
+                        risk === "stable" ? "bg-emerald-100 text-emerald-500" :
+                            risk === "none" ? "bg-slate-100 text-slate-400" : "bg-amber-100 text-amber-500"
                 )}>
-                    {risk === "overheat" ? "🔥 オーバーヒート" : risk === "stable" ? "✅ 適温" : "⚠️ 要注意"}
+                    {risk === "overheat" ? "🔥 オーバーヒート" :
+                        risk === "stable" ? "✅ 適温" :
+                            risk === "none" ? "😶 未計測" : "⚠️ 要注意"}
                 </Badge>
             </div>
 

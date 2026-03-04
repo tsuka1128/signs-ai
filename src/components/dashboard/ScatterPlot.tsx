@@ -80,7 +80,7 @@ export function ScatterPlot({ data, isProduct = false, month, onMonthChange, onP
             <line x1={PAD.l} y1={midY} x2={PAD.l + pw} y2={midY} stroke={colors.gray} strokeWidth={1} strokeDasharray="4,4" opacity={0.3} />
 
             {/* Data Points */}
-            {[...data].sort((a, b) => (a.id === hoveredId ? 1 : b.id === hoveredId ? -1 : 0)).map((d, i) => {
+            {[...data].filter(d => d.pulse > 0).sort((a, b) => (a.id === hoveredId ? 1 : b.id === hoveredId ? -1 : 0)).map((d, i) => {
                 const x = cx(d.head);
                 const y = cy(d.productivity);
 

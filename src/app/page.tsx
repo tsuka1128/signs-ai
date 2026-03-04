@@ -416,7 +416,7 @@ export default function DashboardPage() {
   const selectedKpiDef = displayKpis.find(k => k.id === selKpi) || displayKpis[0];
   const achRate = selectedKpiDef.target ? Math.round((selectedKpiDef.val / selectedKpiDef.target) * 100) : null;
 
-  const currentMatData = (matView === "product" ? products : displayDepts).map(d => {
+  const currentMatData = (matView === "product" ? displayAxes : displayDepts).map(d => {
     let head = d.head;
     let productivity = d.productivity;
     let pulse = d.pulse;
@@ -431,19 +431,19 @@ export default function DashboardPage() {
       if (month === "1m") { head = 14; productivity = 85; pulse = 2.8; kpiAch = 92; }
       else if (month === "3m") { head = 13; productivity = 120; pulse = 3.5; kpiAch = 105; }
       else if (month === "6m") { head = 10; productivity = 160; pulse = 4.1; kpiAch = 130; }
-      else { head = 15; productivity = 70; pulse = 2.1; kpiAch = 85; } // current: OVERWEIGHT
+      else if (month !== "default") { head = 15; productivity = 70; pulse = 2.1; kpiAch = 85; } // current: OVERWEIGHT
     }
     else if (d.id === "dev") {
       if (month === "1m") { head = 21; productivity = 75; pulse = 2.6; kpiAch = 88; }
       else if (month === "3m") { head = 20; productivity = 95; pulse = 3.2; kpiAch = 100; }
       else if (month === "6m") { head = 18; productivity = 120; pulse = 3.8; kpiAch = 110; }
-      else { head = 22; productivity = 65; pulse = 2.4; kpiAch = 80; } // current: OVERWEIGHT
+      else if (month !== "default") { head = 22; productivity = 65; pulse = 2.4; kpiAch = 80; } // current: OVERWEIGHT
     }
     else if (d.id === "mktg") {
       if (month === "1m") { head = 4; productivity = 230; pulse = 3.8; kpiAch = 105; }
       else if (month === "3m") { head = 4; productivity = 180; pulse = 3.4; kpiAch = 95; }
       else if (month === "6m") { head = 3; productivity = 130; pulse = 3.1; kpiAch = 85; }
-      else { head = 4; productivity = 270; pulse = 4.0; kpiAch = 120; } // current: PIONEER V字回復
+      else if (month !== "default") { head = 4; productivity = 270; pulse = 4.0; kpiAch = 120; } // current: PIONEER V字回復
     }
     // --- プロダクト別のタイムラプスストーリー ---
     // Prod B: 6m前(順調) -> Now(拡大で崩壊, 低体温・低生産性)
@@ -453,19 +453,19 @@ export default function DashboardPage() {
       if (month === "1m") { head = 13; productivity = 80; pulse = 2.6; mrr = 850; kpiAch = 85; }
       else if (month === "3m") { head = 12; productivity = 110; pulse = 2.9; mrr = 950; kpiAch = 95; }
       else if (month === "6m") { head = 10; productivity = 140; pulse = 3.8; mrr = 1100; kpiAch = 105; }
-      else { head = 14; productivity = 60; pulse = 2.1; mrr = 720; kpiAch = 75; } // current: OVERWEIGHT
+      else if (month !== "default") { head = 14; productivity = 60; pulse = 2.1; mrr = 720; kpiAch = 75; } // current: OVERWEIGHT
     }
     else if (d.id === "prod_c" || d.id === "c") {
       if (month === "1m") { head = 9; productivity = 145; pulse = 4.1; mrr = 420; kpiAch = 112; }
       else if (month === "3m") { head = 8; productivity = 130; pulse = 3.8; mrr = 380; kpiAch = 105; }
       else if (month === "6m") { head = 7; productivity = 115; pulse = 3.2; mrr = 280; kpiAch = 95; }
-      else { head = 9; productivity = 156; pulse = 4.3; mrr = 460; kpiAch = 118; } // current: PIONEER
+      else if (month !== "default") { head = 9; productivity = 156; pulse = 4.3; mrr = 460; kpiAch = 118; } // current: PIONEER
     }
     else if (d.id === "prod_a" || d.id === "a") {
       if (month === "1m") { head = 20; productivity = 120; pulse = 3.7; mrr = 1600; kpiAch = 100; }
       else if (month === "3m") { head = 18; productivity = 115; pulse = 3.5; mrr = 1400; kpiAch = 95; }
       else if (month === "6m") { head = 15; productivity = 110; pulse = 3.4; mrr = 1100; kpiAch = 90; }
-      else { head = 22; productivity = 129; pulse = 3.8; mrr = 1800; kpiAch = 105; } // current: SCALE
+      else if (month !== "default") { head = 22; productivity = 129; pulse = 3.8; mrr = 1800; kpiAch = 105; } // current: SCALE
     }
     // その他の部署・プロダクトは適度に変動
     else {
@@ -915,9 +915,9 @@ export default function DashboardPage() {
                           <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">当月平均</span>
                           <span className={cn(
                             "text-4xl font-black tabular-nums tracking-tighter",
-                            data.pulse >= 3.5 ? "text-emerald-500" : data.pulse >= 2.5 ? "text-amber-500" : "text-rose-500"
+                            data.pulse === 0 ? "text-slate-300" : data.pulse >= 3.5 ? "text-emerald-500" : data.pulse >= 2.5 ? "text-amber-500" : "text-rose-500"
                           )}>
-                            {data.pulse.toFixed(1)}
+                            {data.pulse === 0 ? "-" : data.pulse.toFixed(1)}
                           </span>
                         </div>
                       </div>
