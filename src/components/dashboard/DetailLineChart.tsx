@@ -14,12 +14,12 @@ export function DetailLineChart({ data, labels, color = "#10B981", height = 120 
     const chartWidth = width - padding.left - padding.right;
     const chartHeight = height - padding.top - padding.bottom;
 
-    const min = Math.min(...data) * 0.95;
-    const max = Math.max(...data) * 1.05;
-    const range = max - min;
+    const min = data.length > 0 ? Math.min(...data) : 0;
+    const max = data.length > 0 ? Math.max(...data) : 5;
+    const range = max - min || 1; // 0除算防止
 
     const points = data.map((v, i) => {
-        const x = padding.left + (i / (data.length - 1)) * chartWidth;
+        const x = padding.left + (data.length > 1 ? (i / (data.length - 1)) * chartWidth : 0.5 * chartWidth);
         const y = padding.top + chartHeight - ((v - min) / range) * chartHeight;
         return { x, y };
     });
