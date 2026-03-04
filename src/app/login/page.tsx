@@ -9,6 +9,7 @@
 
 import { useState } from "react";
 import { signInWithGoogle } from "@/lib/auth";
+import { getBaseURL } from "@/lib/utils/url";
 
 export default function LoginPage() {
     const [inviteCode, setInviteCode] = useState("");
@@ -22,7 +23,7 @@ export default function LoginPage() {
 
             // 招待コード（TAION等）がある場合は、コールバックURLに含める
             const callbackUrl = inviteCode.trim()
-                ? `${window.location.origin}/auth/callback?token=${encodeURIComponent(inviteCode.trim())}`
+                ? `${getBaseURL()}/auth/callback?token=${encodeURIComponent(inviteCode.trim())}`
                 : undefined;
 
             await signInWithGoogle(callbackUrl);

@@ -5,6 +5,7 @@
  */
 
 import { createClient } from "./supabase";
+import { getBaseURL } from "./utils/url";
 
 /** Google OAuth ログインを開始する */
 export async function signInWithGoogle(redirectToOption?: string) {
@@ -12,7 +13,7 @@ export async function signInWithGoogle(redirectToOption?: string) {
     const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-            redirectTo: redirectToOption || `${window.location.origin}/auth/callback`,
+            redirectTo: redirectToOption || `${getBaseURL()}/auth/callback`,
         },
     });
 
