@@ -93,7 +93,8 @@ export async function POST(request: NextRequest) {
                         name,
                         unit: units[i],
                         sort_order: i,
-                        owner_dept_id: createdDepts ? createdDepts[i % createdDepts.length].id : null
+                        owner_dept_id: createdDepts ? createdDepts[i % createdDepts.length].id : null,
+                        is_main: i < createdDepts.length // 各部署の最初の1つを代表にする
                     }))
                 );
                 if (kErr) throw new Error(`デモKPIの作成に失敗しました: ${kErr.message}`);
