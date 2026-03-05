@@ -23,6 +23,39 @@ export async function signInWithGoogle(redirectToOption?: string) {
     }
 }
 
+/** メールアドレスとパスワードでサインアップする */
+export async function signUpWithEmail(email: string, password: string, redirectToOption?: string) {
+    const supabase = createClient();
+    const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+            emailRedirectTo: redirectToOption || `${getBaseURL()}/auth/callback`,
+        },
+    });
+
+    if (error) {
+        console.error("サインアップエラー:", error.message);
+        throw error;
+    }
+    return data;
+}
+
+/** メールアドレスとパスワードでサインインする */
+export async function signInWithEmail(email: string, password: string) {
+    const supabase = createClient();
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+    });
+
+    if (error) {
+        console.error("サインインエラー:", error.message);
+        throw error;
+    }
+    return data;
+}
+
 /** ログアウトする */
 export async function signOut() {
     const supabase = createClient();
