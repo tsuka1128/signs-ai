@@ -64,7 +64,8 @@ export async function POST(request: NextRequest) {
                 const { data: company, error: cErr } = await supabase.from("companies").insert({
                     name: "株式会社 TAION (デモ)",
                     plan_id: freePlan.id,
-                    status: "active"
+                    status: "active",
+                    kpi_secondary_axis_name: "ブランド / エリア"
                 }).select("id").single();
                 if (cErr || !company) throw new Error("デモ企業の作成に失敗しました");
 
@@ -98,7 +99,16 @@ export async function POST(request: NextRequest) {
                         is_main: i < createdDepts.length // 各部署の最初の1つを代表にする
                     }))
                 );
-                if (kErr) throw new Error(`デモKPIの作成に失敗しました: ${kErr.message}`);
+                // 6. デモ第2軸作成
+                const axisNames = ["東京本店", "大阪支店", "名古屋支店", "福岡支店", "ECサイト"];
+                const { data: createdAxes, error: aErr } = await supabase.from("kpi_axes").insert(
+                    axisNames.map(name => ({ company_id: company.id, name }))
+                ).select("id, name");
+                if (aErr || !createdAxes) throw new Error(`デモ第2軸の作成に失敗しました: ${aErr?.message}`);
+
+                // 7. ユーザーの初期 axis_id 設定 (選択されていた場合、あるいは1つ目)
+                const targetAxisId = selectedAxisId || createdAxes[0].id;
+                await supabase.from("users").update({ axis_id: targetAxisId }).eq("id", user.id);
 
                 return NextResponse.json({ success: true, companyId: company.id });
             } catch (e: any) {

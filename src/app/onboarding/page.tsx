@@ -162,6 +162,7 @@ function OnboardingContent() {
                         ]
                     }
                 }));
+                console.log("TAION demo mode active - UI will sync with DB on completion");
                 setError(null);
                 return;
             }
