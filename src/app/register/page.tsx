@@ -5,12 +5,15 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signUpWithEmail } from "@/lib/auth";
 import { getBaseURL } from "@/lib/utils/url";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function RegisterPage() {
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
@@ -39,7 +42,7 @@ export default function RegisterPage() {
             // 数秒後にログイン画面へ誘導、または自動リダイレクト
             setTimeout(() => {
                 router.push("/login?registered=true");
-            }, 3000);
+            }, 5000);
         } catch (err: any) {
             setError(err.message || "登録に失敗しました。もう一度お試しください。");
             setLoading(false);
@@ -76,17 +79,29 @@ export default function RegisterPage() {
                 {/* 登録カード */}
                 <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 p-8">
                     {success ? (
-                        <div className="text-center py-6 space-y-4">
-                            <div className="w-16 h-16 bg-teal-50 text-teal-500 rounded-full flex items-center justify-center mx-auto text-2xl">
+                        <div className="text-center py-6 space-y-5">
+                            <div className="w-16 h-16 bg-teal-50 text-teal-500 rounded-full flex items-center justify-center mx-auto text-2xl shadow-inner animate-bounce">
                                 ✓
                             </div>
-                            <h2 className="text-xl font-bold text-slate-800">登録ありがとうございます！</h2>
-                            <p className="text-sm text-slate-500">
-                                登録したメールアドレスでログインできるようになります。
-                                <br />
-                                もし確認メールが届いた場合は、リンクをクリックしてください。
-                            </p>
-                            <p className="text-xs text-slate-400">ログイン画面へ移動しています...</p>
+                            <div className="space-y-2">
+                                <h2 className="text-xl font-bold text-slate-800">仮登録が完了しました！</h2>
+                                <p className="text-sm text-slate-500 font-medium leading-relaxed px-4">
+                                    ご入力いただいたメールアドレスに確認メールを送信しました。
+                                </p>
+                            </div>
+                            <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 text-left">
+                                <p className="text-xs text-amber-700 font-bold mb-1 flex items-center gap-1.5">
+                                    <span className="text-sm">⚠️</span> 重要
+                                </p>
+                                <p className="text-[11px] text-amber-600 leading-relaxed font-medium">
+                                    メール内のリンクをクリックして確認を完了するまで、ログインすることはできません。
+                                </p>
+                            </div>
+                            <div className="pt-2">
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest animate-pulse">
+                                    ログイン画面へ移動しています...
+                                </p>
+                            </div>
                         </div>
                     ) : (
                         <form onSubmit={handleRegister} className="space-y-5">
@@ -115,28 +130,46 @@ export default function RegisterPage() {
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
                                         パスワード
                                     </label>
-                                    <input
-                                        type="password"
-                                        required
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        placeholder="••••••••"
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50/50 text-slate-700 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/20 focus:bg-white transition-all placeholder:text-slate-300"
-                                    />
+                                    <div className="relative group">
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            required
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            placeholder="••••••••"
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50/50 text-slate-700 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/20 focus:bg-white transition-all placeholder:text-slate-300 pr-12"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-all"
+                                        >
+                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
                                         パスワード（確認）
                                     </label>
-                                    <input
-                                        type="password"
-                                        required
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        placeholder="••••••••"
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50/50 text-slate-700 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/20 focus:bg-white transition-all placeholder:text-slate-300"
-                                    />
+                                    <div className="relative group">
+                                        <input
+                                            type={showConfirmPassword ? "text" : "password"}
+                                            required
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            placeholder="••••••••"
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50/50 text-slate-700 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/20 focus:bg-white transition-all placeholder:text-slate-300 pr-12"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-all"
+                                        >
+                                            {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 

@@ -13,11 +13,14 @@ import Link from "next/link";
 import { signInWithGoogle, signInWithEmail } from "@/lib/auth";
 import { getBaseURL } from "@/lib/utils/url";
 
+import { Eye, EyeOff } from "lucide-react";
+
 function LoginForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [inviteCode, setInviteCode] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -57,7 +60,11 @@ function LoginForm() {
             // ログイン成功 -> /dashboard へ（ミドルウェアが処理）
             router.push("/");
         } catch (err: any) {
-            setError(err.message || "ログインに失敗しました。");
+            let message = err.message || "ログインに失敗しました。";
+            if (message === "Email not confirmed") {
+                message = "メールアドレスの確認が完了していません。\n届いたメール内のリンクをクリックして確認を完了してください。";
+            }
+            setError(message);
             setLoading(false);
         }
     };
@@ -71,7 +78,7 @@ function LoginForm() {
             )}
 
             {error && (
-                <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 font-medium">
+                <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 font-medium whitespace-pre-wrap leading-relaxed">
                     {error}
                 </div>
             )}
@@ -95,14 +102,24 @@ function LoginForm() {
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
                         パスワード
                     </label>
-                    <input
-                        type="password"
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                        className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50/50 text-slate-700 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/20 focus:bg-white transition-all placeholder:text-slate-200"
-                    />
+                    <div className="relative group">
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="••••••••"
+                            className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50/50 text-slate-700 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/20 focus:bg-white transition-all placeholder:text-slate-200 pr-12"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-all"
+                            title={showPassword ? "パスワードを隠す" : "パスワードを表示する"}
+                        >
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                    </div>
                 </div>
                 <button
                     type="submit"
