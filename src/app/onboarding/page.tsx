@@ -65,7 +65,28 @@ function OnboardingContent() {
     const supabase = createClient();
 
     useEffect(() => {
-        console.log("Onboarding Page Loaded - New Logic Active");
+        const fetchUserProfile = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const { data: profile } = await supabase
+                .from("users")
+                .select("department_id, axis_id")
+                .eq("id", user.id)
+                .single();
+
+            if (profile) {
+                console.log("Existing user profile found:", profile);
+                setState(prev => ({
+                    ...prev,
+                    selectedDeptId: profile.department_id || prev.selectedDeptId,
+                    selectedAxisId: profile.axis_id || prev.selectedAxisId,
+                }));
+            }
+        };
+
+        fetchUserProfile();
+        console.log("Onboarding Page Loaded - Refinement: Sync with existing profile");
     }, []);
 
     const tokenParam = searchParams.get("token");
