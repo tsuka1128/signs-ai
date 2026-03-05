@@ -9,7 +9,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 /** 認証不要のパス（パブリックルート） */
-const PUBLIC_ROUTES = ["/", "/login", "/marketing", "/survey", "/auth/callback"];
+const PUBLIC_ROUTES = ["/", "/login", "/register", "/marketing", "/survey", "/auth/callback"];
 
 /**
  * パスがパブリックルートかどうかを判定する

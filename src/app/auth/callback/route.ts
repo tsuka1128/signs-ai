@@ -10,8 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getBaseURL } from "@/lib/utils/url";
 
 export async function GET(request: NextRequest) {
-    const { searchParams } = new URL(request.url);
-    const origin = getBaseURL();
+    const { searchParams, origin } = request.nextUrl;
     const code = searchParams.get("code");
     const next = searchParams.get("next") ?? "/";
 
