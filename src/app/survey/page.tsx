@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { SurveyQuestionCard } from "@/components/dashboard/SurveyQuestionCard";
 import { DetailLineChart } from "@/components/dashboard/DetailLineChart";
@@ -27,6 +28,7 @@ const questions = [
 // モックデータ定数を削除し、状態管理に移行
 
 export default function SurveyDashboard() {
+    const router = useRouter();
     const supabase = createClient();
     const [view, setView] = useState("all");
     const [company, setCompany] = useState<any>(null);
@@ -42,7 +44,10 @@ export default function SurveyDashboard() {
             if (!user) return;
 
             const { data: userData } = await supabase.from('users').select('company_id').eq('id', user.id).single();
-            if (!userData) return;
+            if (!userData?.company_id) {
+                router.push("/onboarding");
+                return;
+            }
 
             const [compRes, deptRes, axisRes, respRes] = await Promise.all([
                 supabase.from('companies').select('*').eq('id', userData.company_id).single(),

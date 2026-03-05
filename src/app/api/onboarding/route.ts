@@ -16,6 +16,7 @@ interface OnboardingPayload {
     invitationToken?: string;
     selectedDeptId?: string;
     selectedKpiIds?: string[];
+    selectedAxisId?: string;
     departments?: { name: string; headcount: number }[];
     kpis?: {
         name: string;
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: "リクエストの形式が不正です" }, { status: 400 });
     }
 
-    const { companyName, departments, kpis, semanticContent, invitationToken, selectedDeptId, selectedKpiIds, websiteUrl } = payload;
+    const { companyName, departments, kpis, semanticContent, invitationToken, selectedDeptId, selectedKpiIds, selectedAxisId, websiteUrl } = payload;
 
     // A. 招待トークンがある場合の処理
     if (invitationToken) {
@@ -128,6 +129,7 @@ export async function POST(request: NextRequest) {
                 id: user.id,
                 company_id: invite.company_id,
                 department_id: selectedDeptId || null,
+                axis_id: selectedAxisId || null,
                 email: user.email ?? "",
                 display_name: user.user_metadata?.full_name ?? user.email ?? "",
                 role: invite.role,

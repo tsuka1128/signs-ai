@@ -47,9 +47,12 @@ interface OnboardingState {
         name: string;
         departments: any[];
         kpis: any[];
+        secondaryAxisName: string;
+        axes: any[];
     };
     selectedDeptId?: string;
     selectedKpiIds: string[];
+    selectedAxisId?: string;
     websiteUrl?: string;
 }
 
@@ -60,6 +63,10 @@ function OnboardingContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const supabase = createClient();
+
+    useEffect(() => {
+        console.log("Onboarding Page Loaded - New Logic Active");
+    }, []);
 
     const tokenParam = searchParams.get("token");
 
@@ -87,7 +94,7 @@ function OnboardingContent() {
             return [
                 { id: 1, label: "参加確認" },
                 { id: 2, label: "所属部署" },
-                { id: 3, label: "担当KPI" },
+                { id: 3, label: state.invitedCompany?.secondaryAxisName || "担当項目" },
             ];
         }
         return [
@@ -145,6 +152,14 @@ function OnboardingContent() {
                             { id: "demo-kpi-5", name: "新規契約件数", unit: "件" },
                             { id: "demo-kpi-6", name: "平均客単価", unit: "万円" }
                         ],
+                        secondaryAxisName: "ブランド / エリア",
+                        axes: [
+                            { id: "demo-axis-1", name: "東京本店" },
+                            { id: "demo-axis-2", name: "大阪支店" },
+                            { id: "demo-axis-3", name: "名古屋支店" },
+                            { id: "demo-axis-4", name: "福岡支店" },
+                            { id: "demo-axis-5", name: "ECサイト" }
+                        ]
                     }
                 }));
                 setError(null);
@@ -154,7 +169,7 @@ function OnboardingContent() {
             try {
                 const { data: invite, error: inviteError } = await supabase
                     .from("invitations")
-                    .select("*, companies(name, departments(id, name), kpi_definitions(id, name))")
+                    .select("*, companies(name, kpi_secondary_axis_name, departments(id, name), kpi_definitions(id, name), kpi_axes(id, name))")
                     .eq("token", token)
                     .single();
 
@@ -170,6 +185,8 @@ function OnboardingContent() {
                         name: company.name,
                         departments: company.departments || [],
                         kpis: company.kpi_definitions || [],
+                        secondaryAxisName: company.kpi_secondary_axis_name || "担当項目",
+                        axes: company.kpi_axes || [],
                     }
                 }));
                 setError(null);
@@ -238,7 +255,7 @@ function OnboardingContent() {
 
         if (state.mode === "join") {
             if (step === 2) return !!state.selectedDeptId;
-            if (step === 3) return true; // 何も選択しなくても次へ行ける（任意担当）
+            if (step === 3) return state.invitedCompany && state.invitedCompany.axes.length > 0 ? !!state.selectedAxisId : true;
         } else {
             if (step === 2) return state.departments.every((d) => d.name.trim().length > 0);
             if (step === 3) return state.kpis.every((k) => k.name.trim().length > 0);
@@ -294,6 +311,7 @@ function OnboardingContent() {
                 invitationToken: state.mode === "join" ? state.invitationToken : undefined,
                 selectedDeptId: state.mode === "join" ? state.selectedDeptId : undefined,
                 selectedKpiIds: state.mode === "join" ? state.selectedKpiIds : undefined,
+                selectedAxisId: state.mode === "join" ? state.selectedAxisId : undefined,
                 companyName: state.mode === "create" ? state.companyName : undefined,
                 websiteUrl: state.mode === "create" ? state.websiteUrl : undefined,
                 departments: state.mode === "create" ? state.departments : undefined,
@@ -341,7 +359,7 @@ function OnboardingContent() {
             <div className="text-center mb-8">
                 <div className="inline-flex items-center gap-2 mb-2">
                     <span className="text-xl">🌡️</span>
-                    <span className="text-lg font-black text-slate-800 tracking-tight">Signs AI</span>
+                    <span className="text-lg font-black text-slate-800 tracking-tight">Signs AI <span className="text-teal-500 text-[10px] ml-1">v1.1</span></span>
                 </div>
                 <h1 className="text-2xl font-black text-slate-800 tracking-tighter">初期設定</h1>
                 <p className="text-sm text-slate-400 font-medium mt-1">あなたの組織に体温を設定します</p>
@@ -600,30 +618,33 @@ function OnboardingContent() {
                         ) : (
                             <>
                                 <div>
-                                    <h2 className="text-lg font-black text-slate-800">担当KPIを選択してください</h2>
-                                    <p className="text-sm text-slate-400">あなたが責任を持つ、または追跡するKPIを選びます（複数可）</p>
+                                    <h2 className="text-lg font-black text-slate-800">
+                                        担当の{state.invitedCompany?.secondaryAxisName || "項目"}を選択してください
+                                    </h2>
+                                    <p className="text-sm text-slate-400">あなたが所属する、または担当する単位を選んでください</p>
                                 </div>
                                 <div className="grid grid-cols-1 gap-2 max-h-80 overflow-y-auto pr-1">
-                                    {state.invitedCompany?.kpis.map((kpi: any) => (
-                                        <button
-                                            key={kpi.id}
-                                            onClick={() => setState(s => ({
-                                                ...s,
-                                                selectedKpiIds: s.selectedKpiIds.includes(kpi.id)
-                                                    ? s.selectedKpiIds.filter(id => id !== kpi.id)
-                                                    : [...s.selectedKpiIds, kpi.id]
-                                            }))}
-                                            className={cn(
-                                                "p-4 rounded-xl border-2 text-left transition-all font-bold text-sm flex justify-between items-center",
-                                                state.selectedKpiIds.includes(kpi.id)
-                                                    ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                                                    : "border-slate-100 hover:border-slate-200 text-slate-600"
-                                            )}
-                                        >
-                                            {kpi.name}
-                                            {state.selectedKpiIds.includes(kpi.id) && <span className="text-emerald-500">✓</span>}
-                                        </button>
-                                    ))}
+                                    {state.invitedCompany?.axes && state.invitedCompany.axes.length > 0 ? (
+                                        state.invitedCompany.axes.map((axis: any) => (
+                                            <button
+                                                key={axis.id}
+                                                onClick={() => setState(s => ({ ...s, selectedAxisId: axis.id }))}
+                                                className={cn(
+                                                    "p-4 rounded-xl border-2 text-left transition-all font-bold text-sm flex justify-between items-center",
+                                                    state.selectedAxisId === axis.id
+                                                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                                                        : "border-slate-100 hover:border-slate-200 text-slate-600 bg-white"
+                                                )}
+                                            >
+                                                {axis.name}
+                                                {state.selectedAxisId === axis.id && <span className="text-emerald-500">✓</span>}
+                                            </button>
+                                        ))
+                                    ) : (
+                                        <div className="p-8 text-center border-2 border-dashed border-slate-100 rounded-2xl text-slate-400 text-sm">
+                                            選択可能な項目がありません。<br />そのまま完了して進んでください。
+                                        </div>
+                                    )}
                                 </div>
                             </>
                         )}

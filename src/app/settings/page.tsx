@@ -3,6 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { Header } from "@/components/layout/Header";
 import { TabBar } from "@/components/ui/TabBar";
@@ -11,6 +12,7 @@ import { Save, Plus, Trash2, Star, UserPlus, Mail, Shield, Copy, Check, Settings
 import { cn } from "@/lib/utils";
 
 export default function SettingsPage() {
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState("company");
     const [loading, setLoading] = useState(true);
 
@@ -46,9 +48,7 @@ export default function SettingsPage() {
 
         const { data: compRef, error: uErr } = await supabase.from('users').select('company_id').eq('id', user.id).single();
         if (uErr || !compRef?.company_id) {
-            console.error("User or Company not found:", uErr);
-            setCompany({ error: "ユーザー情報または所属企業が見つかりませんでした。再度オンボーディングを行ってください。" });
-            setLoading(false);
+            router.push("/onboarding");
             return;
         }
 

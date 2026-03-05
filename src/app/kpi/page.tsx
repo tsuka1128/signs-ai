@@ -3,6 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { Info, Save, ArrowLeft, Building2, Lock, Unlock } from "lucide-react";
@@ -170,6 +171,7 @@ function KpiTable({ title, axisId, isMain, kpiDefinitions, allMonths, editValues
 }
 
 export default function KpiInputPage() {
+    const router = useRouter();
     const supabase = createClient();
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<any>(null);
@@ -213,8 +215,7 @@ export default function KpiInputPage() {
 
         const { data: userData, error: uErr } = await supabase.from('users').select('company_id').eq('id', authUser.id).single();
         if (uErr || !userData?.company_id) {
-            console.error("User company not found:", uErr);
-            setLoading(false);
+            router.push("/onboarding");
             return;
         }
         // 企業設定（第2軸名称）取得

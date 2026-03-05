@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { Header } from "@/components/layout/Header";
 import { MainInsightCard } from "@/components/dashboard/MainInsightCard";
@@ -78,6 +79,7 @@ const semTextDefault = `# 組織方針 v1.5 (2026年3月〜)
 - 「自分には関係ない」「誰も聞いてくれない」「上から言われただけ」「今のままでいい」`;
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [tab, setTab] = useState<keyof typeof insights>("exec");
   const [sec, setSec] = useState("matrix");
   const [matView, setMatView] = useState("dept");
@@ -99,7 +101,10 @@ export default function DashboardPage() {
       if (!user) return;
 
       const { data: comp } = await supabase.from('users').select('company_id').eq('id', user.id).single();
-      if (!comp?.company_id) return;
+      if (!comp?.company_id) {
+        router.push("/onboarding");
+        return;
+      }
 
       const [d, k, s, r, a] = await Promise.all([
         supabase.from('departments').select('*').eq('company_id', comp.company_id).order('created_at', { ascending: true }),

@@ -55,9 +55,24 @@ function LoginForm() {
             setLoading(true);
             setError(null);
 
-            await signInWithEmail(email, password);
+            const authData = await signInWithEmail(email, password);
 
-            // ログイン成功 -> /dashboard へ（ミドルウェアが処理）
+            if (authData?.user) {
+                const { createClient } = await import("@/lib/supabase");
+                const supabase = createClient();
+                const { data: profile } = await supabase
+                    .from("users")
+                    .select("company_id")
+                    .eq("id", authData.user.id)
+                    .single();
+
+                if (!profile?.company_id) {
+                    router.push("/onboarding");
+                    return;
+                }
+            }
+
+            // ログイン成功 & セットアップ済み -> /dashboard へ
             router.push("/");
         } catch (err: any) {
             let message = err.message || "ログインに失敗しました。";
