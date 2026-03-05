@@ -179,6 +179,8 @@ function OnboardingContent() {
                 }
 
                 const company = invite.companies;
+                console.log("Fetched company info for onboarding:", company);
+
                 setState(prev => ({
                     ...prev,
                     invitedCompany: {
@@ -628,21 +630,26 @@ function OnboardingContent() {
                                         state.invitedCompany.axes.map((axis: any) => (
                                             <button
                                                 key={axis.id}
+                                                id={`axis-select-${axis.id}`}
                                                 onClick={() => setState(s => ({ ...s, selectedAxisId: axis.id }))}
                                                 className={cn(
-                                                    "p-4 rounded-xl border-2 text-left transition-all font-bold text-sm flex justify-between items-center",
+                                                    "p-4 rounded-xl border-2 text-left transition-all font-bold text-sm flex justify-between items-center group",
                                                     state.selectedAxisId === axis.id
                                                         ? "border-emerald-500 bg-emerald-50 text-emerald-700"
                                                         : "border-slate-100 hover:border-slate-200 text-slate-600 bg-white"
                                                 )}
                                             >
-                                                {axis.name}
-                                                {state.selectedAxisId === axis.id && <span className="text-emerald-500">✓</span>}
+                                                <span>{axis.name}</span>
+                                                {state.selectedAxisId === axis.id ? (
+                                                    <span className="text-emerald-500">✓</span>
+                                                ) : (
+                                                    <span className="text-slate-200 group-hover:text-slate-300 transition-colors">→</span>
+                                                )}
                                             </button>
                                         ))
                                     ) : (
                                         <div className="p-8 text-center border-2 border-dashed border-slate-100 rounded-2xl text-slate-400 text-sm">
-                                            選択可能な項目がありません。<br />そのまま完了して進んでください。
+                                            選択可能な {state.invitedCompany?.secondaryAxisName || "項目"} がありません。<br />そのまま完了して進んでください。
                                         </div>
                                     )}
                                 </div>
