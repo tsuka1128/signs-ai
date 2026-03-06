@@ -251,7 +251,7 @@ export default function DashboardPage() {
           .map((k: any) => ({
             name: k.name,
             val: `${k.val ?? k.target_default ?? '-'}${k.unit ?? ''}`,
-            ach: k.ach ?? 100,
+            ach: k.ach ?? 0,
             type: "stack"
           })).slice(0, 3),
         kpiName: realKpis.find(k => k.owner_dept_id === d.id && k.is_main)?.name ||
