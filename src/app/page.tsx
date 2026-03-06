@@ -644,6 +644,7 @@ export default function DashboardPage() {
                               targetData={selectedKpiDef.targetHistory || []}
                               labels={monthLabels}
                               fullLabels={fullMonthLabels}
+                              unit={selectedKpiDef.unit}
                               color={(selectedKpiDef.prev && selectedKpiDef.prev.length >= 12 && selectedKpiDef.prev[11] >= (selectedKpiDef.prev[10] ?? 0)) ? "#10B981" : "#EF4444"}
                             />
                           </div>

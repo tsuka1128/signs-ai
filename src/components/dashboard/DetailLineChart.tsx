@@ -7,6 +7,7 @@ interface DetailLineChartProps {
     targetData?: number[];
     labels: string[];
     fullLabels?: string[];
+    unit?: string;
     color?: string;
     height?: number;
 }
@@ -16,6 +17,7 @@ export function DetailLineChart({
     targetData = [],
     labels,
     fullLabels = [],
+    unit = "",
     color = "#10B981",
     height = 140
 }: DetailLineChartProps) {
@@ -73,6 +75,9 @@ export function DetailLineChart({
             setHoveredIndex(null);
         }
     };
+
+    // ツールチップの表示位置（右端の場合は左側に寄せる）
+    const isRightSide = hoveredIndex !== null && hoveredIndex > data.length * 0.7;
 
     return (
         <div
@@ -156,29 +161,34 @@ export function DetailLineChart({
             {/* Tooltip */}
             {hoveredIndex !== null && (
                 <div
-                    className="absolute z-50 bg-white border border-slate-100 shadow-xl rounded-xl p-3 pointer-events-none transform -translate-x-1/2 -translate-y-full mb-4"
+                    className={`absolute z-50 bg-white border border-slate-100 shadow-xl rounded-xl p-3 pointer-events-none transform mb-4 min-w-[120px] transition-all duration-150
+                        ${isRightSide ? "-translate-x-[105%] -translate-y-full" : "-translate-x-1/2 -translate-y-full"}`}
                     style={{
                         left: `${(points[hoveredIndex].x / width) * 100}%`,
                         top: `${(points[hoveredIndex].y / height) * 100}%`
                     }}
                 >
-                    <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">
+                    <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1.5 border-b border-slate-50 pb-1">
                         {fullLabels[hoveredIndex] || labels[hoveredIndex]}
                     </div>
-                    <div className="space-y-1">
-                        <div className="flex justify-between gap-4 text-xs font-bold">
-                            <span className="text-slate-500">実績</span>
-                            <span className="text-slate-800">{data[hoveredIndex].toLocaleString()}</span>
+                    <div className="space-y-1.5">
+                        <div className="flex justify-between items-center gap-3">
+                            <span className="text-[10px] text-slate-500 font-bold">実績</span>
+                            <span className="text-xs font-black text-slate-800">
+                                {data[hoveredIndex].toLocaleString()}<span className="text-[10px] ml-0.5 font-bold text-slate-400">{unit}</span>
+                            </span>
                         </div>
                         {targetData[hoveredIndex] !== undefined && (
                             <>
-                                <div className="flex justify-between gap-4 text-xs font-bold">
-                                    <span className="text-slate-500">目標</span>
-                                    <span className="text-slate-800">{targetData[hoveredIndex].toLocaleString()}</span>
+                                <div className="flex justify-between items-center gap-3">
+                                    <span className="text-[10px] text-slate-500 font-bold">目標</span>
+                                    <span className="text-xs font-black text-slate-800">
+                                        {targetData[hoveredIndex].toLocaleString()}<span className="text-[10px] ml-0.5 font-bold text-slate-400">{unit}</span>
+                                    </span>
                                 </div>
-                                <div className="flex justify-between gap-4 text-xs font-black pt-1 border-t border-slate-50">
-                                    <span className="text-slate-500">達成率</span>
-                                    <span className={data[hoveredIndex] >= targetData[hoveredIndex] ? "text-emerald-500" : "text-rose-500"}>
+                                <div className="flex justify-between items-center gap-3 pt-1 border-t border-slate-50">
+                                    <span className="text-[10px] text-slate-500 font-bold">達成率</span>
+                                    <span className={`text-xs font-black ${data[hoveredIndex] >= targetData[hoveredIndex] ? "text-emerald-500" : "text-rose-500"}`}>
                                         {targetData[hoveredIndex] > 0 ? Math.round((data[hoveredIndex] / targetData[hoveredIndex]) * 100) : 0}%
                                     </span>
                                 </div>
