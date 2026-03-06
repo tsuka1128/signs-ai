@@ -110,209 +110,98 @@ export default function SettingsPage() {
         else alert(`保存に失敗しました: ${error.message}`);
     }
 
-    async function handleSaveDept(dept: any) {
-        if (dept.id.startsWith("new_")) {
-            const { error } = await supabase.from('departments').insert({
-                company_id: company.id,
-                name: dept.name,
-                headcount: dept.headcount
-            });
-            if (!error) loadData();
-            else alert(`追加に失敗しました: ${error.message}`);
-        } else {
-            const { error } = await supabase.from('departments').update({
-                name: dept.name,
-                headcount: dept.headcount
-            }).eq('id', dept.id);
-            if (!error) alert("部署情報を更新しました");
-            else alert(`更新に失敗しました: ${error.message}`);
-        }
-    }
+    // --- 一括保存ロジック集 ---
 
-    async function handleDeleteDept(id: string) {
-        if (id.startsWith("new_")) {
-            setDepts(depts.filter(d => d.id !== id));
-            return;
-        }
-        if (confirm("本当に削除しますか？")) {
-            await supabase.from('departments').delete().eq('id', id);
-            loadData();
-        }
-    }
-
-    function handleAddDept() {
-        setDepts([...depts, { id: `new_${Date.now()}`, name: "", headcount: 0, company_id: company?.id }]);
-    }
-
-    async function handleInvite() {
-        if (!inviteEmail.trim()) return;
-        setLastToken(null);
-
-        const res = await fetch("/api/invitations", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
-        });
-
-        if (res.ok) {
-            const { token } = await res.json();
-            setLastToken(token);
-            setInviteEmail("");
-            loadData();
-        } else {
-            alert("招待の送信に失敗しました");
-        }
-    }
-
-    const copyToken = (token: string) => {
-        const url = `${window.location.origin}/onboarding?token=${token}`;
-        navigator.clipboard.writeText(url);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
-    async function handleSaveKpi(kpi: any) {
-        if (kpi.id.startsWith("new_")) {
-            const { error } = await supabase.from('kpi_definitions').insert({
-                company_id: company.id,
-                name: kpi.name,
-                unit: kpi.unit || "",
-                target_default: kpi.target_default || null,
-                owner_dept_id: kpi.owner_dept_id || null,
-                is_main: kpi.is_main || false
-            });
-            if (!error) loadData();
-            else alert(`追加に失敗しました: ${error.message}`);
-        } else {
-            const { error } = await supabase.from('kpi_definitions').update({
-                name: kpi.name,
-                unit: kpi.unit || "",
-                target_default: kpi.target_default || null,
-                owner_dept_id: kpi.owner_dept_id || null,
-                is_main: kpi.is_main || false
-            }).eq('id', kpi.id);
-            if (!error) {
-                // 代表KPIとして保存された場合、同一部署の他のKPIは代表から外す
-                if (kpi.is_main && kpi.owner_dept_id) {
-                    await supabase.from('kpi_definitions')
-                        .update({ is_main: false })
-                        .eq('company_id', company.id)
-                        .eq('owner_dept_id', kpi.owner_dept_id)
-                        .neq('id', kpi.id);
+    async function handleSaveAllDepts() {
+        setLoading(true);
+        try {
+            for (const dept of depts) {
+                if (dept.id.startsWith("new_")) {
+                    await supabase.from('departments').insert({
+                        company_id: company.id,
+                        name: dept.name,
+                        headcount: dept.headcount
+                    });
+                } else {
+                    await supabase.from('departments').update({
+                        name: dept.name,
+                        headcount: dept.headcount
+                    }).eq('id', dept.id);
                 }
-                alert("KPI設定を更新しました");
-                loadData(); // 状態を再同期
             }
-            else alert(`更新に失敗しました: ${error.message}`);
+            alert("部署情報を一括保存しました");
+            await loadData();
+        } catch (err: any) {
+            alert(`保存に失敗しました: ${err.message}`);
+        } finally {
+            setLoading(false);
         }
     }
 
-    async function handleDeleteKpi(id: string) {
-        if (id.startsWith("new_")) {
-            setKpis(kpis.filter(k => k.id !== id));
-            return;
+    async function handleSaveAllKpis() {
+        setLoading(true);
+        try {
+            for (const kpi of kpis) {
+                const payload = {
+                    company_id: company.id,
+                    name: kpi.name,
+                    unit: kpi.unit || "",
+                    target_default: kpi.target_default || null,
+                    owner_dept_id: kpi.owner_dept_id || null,
+                    is_main: kpi.is_main || false
+                };
+
+                if (kpi.id.startsWith("new_")) {
+                    await supabase.from('kpi_definitions').insert(payload);
+                } else {
+                    await supabase.from('kpi_definitions').update(payload).eq('id', kpi.id);
+                }
+            }
+            alert("KPI設定を一括保存しました");
+            await loadData();
+        } catch (err: any) {
+            alert(`保存に失敗しました: ${err.message}`);
+        } finally {
+            setLoading(false);
         }
-        if (confirm("本当に削除しますか？実データも削除される可能性があります。")) {
-            await supabase.from('kpi_definitions').delete().eq('id', id);
-            loadData();
+    }
+
+    async function handleSaveAllAxes() {
+        setLoading(true);
+        try {
+            // 第2軸名の保存
+            await supabase.from('companies').update({
+                kpi_secondary_axis_name: secondaryAxisName
+            }).eq('id', company.id);
+
+            // 各項目の保存
+            for (const axis of axes) {
+                if (axis.id.startsWith("new_")) {
+                    await supabase.from('kpi_axes').insert({
+                        company_id: company.id,
+                        name: axis.name,
+                        sort_order: axes.indexOf(axis)
+                    });
+                } else {
+                    await supabase.from('kpi_axes').update({
+                        name: axis.name,
+                        sort_order: axes.indexOf(axis)
+                    }).eq('id', axis.id);
+                }
+            }
+            alert(`${secondaryAxisName}設定を一括保存しました`);
+            await loadData();
+        } catch (err: any) {
+            alert(`保存に失敗しました: ${err.message}`);
+        } finally {
+            setLoading(false);
         }
-    }
-
-    function handleAddKpi() {
-        const newKpi = {
-            id: `new_${Date.now()}`,
-            name: "",
-            unit: "",
-            target_default: null,
-            owner_dept_id: null,
-            is_main: false,
-            company_id: company?.id
-        };
-        // その部署（未指定含む）にKPIが1つもなければ、代表にする
-        const hasKpisInGroup = kpis.some(k => k.owner_dept_id === null);
-        if (!hasKpisInGroup) newKpi.is_main = true;
-
-        setKpis([...kpis, newKpi]);
-    }
-
-    function handleToggleMainKpi(targetKpi: any) {
-        // 既に代表であるものをオフにすることは「1部署1代表」の原則から禁止
-        if (targetKpi.is_main) return;
-
-        setKpis(kpis.map(k => {
-            // 同じ部署の他のKPIを強制的に解除
-            if (k.owner_dept_id === targetKpi.owner_dept_id && k.id !== targetKpi.id) {
-                return { ...k, is_main: false };
-            }
-            // ターゲットを代表に設定
-            if (k.id === targetKpi.id) {
-                return { ...k, is_main: true };
-            }
-            return k;
-        }));
-    }
-
-    function handleDeptChange(targetKpi: any, newDeptId: string | null) {
-        const oldDeptId = targetKpi.owner_dept_id;
-        const targetId = targetKpi.id;
-
-        setKpis(prev => {
-            // 1. 部署を更新
-            let next = prev.map(k => k.id === targetId ? { ...k, owner_dept_id: newDeptId } : k);
-
-            // 2. 移動先 (newDeptId) の整合性をとる
-            // 移動先グループを取得
-            const inNewDept = next.filter(k => k.owner_dept_id === newDeptId);
-            const mainsInNew = inNewDept.filter(k => k.is_main);
-
-            if (mainsInNew.length > 1) {
-                // 重複が発生した場合。
-                // もともと移動先で代表だったものを優先し、移動してきた自分を解除する
-                next = next.map(k => (k.id === targetId && k.is_main) ? { ...k, is_main: false } : k);
-            } else if (inNewDept.length > 0 && mainsInNew.length === 0) {
-                // 移動先で代表が不在になった場合（新規作成直後の部署など）
-                next = next.map(k => k.id === inNewDept[0].id ? { ...k, is_main: true } : k);
-            }
-
-            // 3. 移動元 (oldDeptId) の整合性をとる
-            const inOldDept = next.filter(k => k.owner_dept_id === oldDeptId);
-            const mainsInOld = inOldDept.filter(k => k.is_main);
-
-            if (inOldDept.length > 0 && mainsInOld.length === 0) {
-                // 移動元で代表がいなくなったので、残った最初のKPIを代表にする
-                next = next.map(k => k.id === inOldDept[0].id ? { ...k, is_main: true } : k);
-            }
-
-            return next;
-        });
     }
 
     // 第2軸（Axis）操作用
     async function handleSaveAxis(axis: any) {
-        // 名称も一律保存（利便性のため）
-        await supabase.from('companies').update({
-            kpi_secondary_axis_name: secondaryAxisName
-        }).eq('id', company.id);
-
-        if (axis.id.startsWith("new_")) {
-            const { error } = await supabase.from('kpi_axes').insert({
-                company_id: company.id,
-                name: axis.name,
-                sort_order: axes.length
-            });
-            if (!error) loadData();
-            else alert(`追加に失敗しました: ${error.message}`);
-        } else {
-            const { error } = await supabase.from('kpi_axes').update({
-                name: axis.name
-            }).eq('id', axis.id);
-            if (!error) {
-                // 保存成功時にデータを再読み込みして最新状態にする
-                loadData();
-                alert(`${secondaryAxisName}を保存しました`);
-            }
-            else alert(`更新に失敗しました: ${error.message}`);
-        }
+        // 個別保存は一括保存に統合するため削除予定またはラッパー
+        handleSaveAllAxes();
     }
 
     async function handleDeleteAxis(id: string) {
@@ -436,12 +325,6 @@ export default function SettingsPage() {
                                             </div>
                                             <div className="flex items-center gap-2 w-full sm:w-auto justify-end sm:justify-start">
                                                 <button
-                                                    onClick={() => handleSaveDept(dept)}
-                                                    className="px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-teal hover:bg-teal/5 text-xs font-bold shadow-sm transition-all flex items-center gap-1.5"
-                                                >
-                                                    <Save className="w-3.5 h-3.5" /> 保存
-                                                </button>
-                                                <button
                                                     onClick={() => handleDeleteDept(dept.id)}
                                                     className="p-2.5 rounded-xl bg-white border border-rose-100 text-rose-400 hover:text-rose-600 hover:bg-rose-50 transition-colors shadow-sm"
                                                 >
@@ -451,12 +334,23 @@ export default function SettingsPage() {
                                         </div>
                                     ))}
                                 </div>
-                                <button
-                                    onClick={handleAddDept}
-                                    className="w-full py-4 border-2 border-dashed border-slate-200 text-slate-400 font-bold rounded-2xl hover:border-teal hover:text-teal hover:bg-teal/5 transition-all outline-none flex items-center justify-center gap-2 text-sm"
-                                >
-                                    <Plus className="w-4 h-4" /> 新しい部署を追加
-                                </button>
+                                <div className="space-y-3">
+                                    <button
+                                        onClick={handleAddDept}
+                                        className="w-full py-4 border-2 border-dashed border-slate-200 text-slate-400 font-bold rounded-2xl hover:border-teal hover:text-teal hover:bg-teal/5 transition-all outline-none flex items-center justify-center gap-2 text-sm"
+                                    >
+                                        <Plus className="w-4 h-4" /> 新しい部署を追加
+                                    </button>
+
+                                    {depts.length > 0 && (
+                                        <button
+                                            onClick={handleSaveAllDepts}
+                                            className="w-full py-4 bg-slate-800 text-white font-bold rounded-2xl hover:bg-slate-700 transition-all flex items-center justify-center gap-2 text-sm shadow-lg shadow-slate-200"
+                                        >
+                                            <Save className="w-4 h-4" /> 部署の設定をすべて保存
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         )}
 
@@ -539,12 +433,6 @@ export default function SettingsPage() {
                                                 </div>
                                                 <div className="sm:col-span-3 flex items-center justify-end gap-2">
                                                     <button
-                                                        onClick={() => handleSaveKpi(kpi)}
-                                                        className="px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-teal hover:bg-teal/5 text-xs font-bold shadow-sm transition-all flex items-center gap-1.5"
-                                                    >
-                                                        <Save className="w-3.5 h-3.5" /> 保存
-                                                    </button>
-                                                    <button
                                                         onClick={() => handleDeleteKpi(kpi.id)}
                                                         className="p-2.5 rounded-xl bg-white border border-rose-100 text-rose-400 hover:text-rose-600 hover:bg-rose-50 transition-colors shadow-sm"
                                                     >
@@ -555,12 +443,23 @@ export default function SettingsPage() {
                                         </div>
                                     ))}
                                 </div>
-                                <button
-                                    onClick={handleAddKpi}
-                                    className="w-full py-4 mt-2 border-2 border-dashed border-slate-200 text-slate-400 font-bold rounded-2xl hover:border-teal hover:text-teal hover:bg-teal/5 transition-all outline-none flex items-center justify-center gap-2 text-sm"
-                                >
-                                    <Plus className="w-4 h-4" /> 新しいKPIを追加
-                                </button>
+                                <div className="space-y-3">
+                                    <button
+                                        onClick={handleAddKpi}
+                                        className="w-full py-4 mt-2 border-2 border-dashed border-slate-200 text-slate-400 font-bold rounded-2xl hover:border-teal hover:text-teal hover:bg-teal/5 transition-all outline-none flex items-center justify-center gap-2 text-sm"
+                                    >
+                                        <Plus className="w-4 h-4" /> 新しいKPIを追加
+                                    </button>
+
+                                    {kpis.length > 0 && (
+                                        <button
+                                            onClick={handleSaveAllKpis}
+                                            className="w-full py-4 bg-slate-800 text-white font-bold rounded-2xl hover:bg-slate-700 transition-all flex items-center justify-center gap-2 text-sm shadow-lg shadow-slate-200"
+                                        >
+                                            <Save className="w-4 h-4" /> KPI設定をすべて保存
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         )}
 
@@ -612,12 +511,6 @@ export default function SettingsPage() {
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <button
-                                                    onClick={() => handleSaveAxis(axis)}
-                                                    className="px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-teal hover:bg-teal/5 text-xs font-bold shadow-sm transition-all flex items-center gap-1.5"
-                                                >
-                                                    <Save className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button
                                                     onClick={() => handleDeleteAxis(axis.id)}
                                                     className="p-2.5 rounded-xl bg-white border border-rose-100 text-rose-400 hover:text-rose-600 hover:bg-rose-50 transition-colors shadow-sm"
                                                 >
@@ -627,12 +520,23 @@ export default function SettingsPage() {
                                         </div>
                                     ))}
                                 </div>
-                                <button
-                                    onClick={handleAddAxis}
-                                    className="w-full py-4 border-2 border-dashed border-slate-200 text-slate-400 font-bold rounded-2xl hover:border-teal hover:text-teal hover:bg-teal/5 transition-all outline-none flex items-center justify-center gap-2 text-sm"
-                                >
-                                    <Plus className="w-4 h-4" /> 新しい{secondaryAxisName}を追加
-                                </button>
+                                <div className="space-y-3">
+                                    <button
+                                        onClick={handleAddAxis}
+                                        className="w-full py-4 border-2 border-dashed border-slate-200 text-slate-400 font-bold rounded-2xl hover:border-teal hover:text-teal hover:bg-teal/5 transition-all outline-none flex items-center justify-center gap-2 text-sm"
+                                    >
+                                        <Plus className="w-4 h-4" /> 新しい{secondaryAxisName}を追加
+                                    </button>
+
+                                    {(axes.length > 0 || secondaryAxisName !== company?.kpi_secondary_axis_name) && (
+                                        <button
+                                            onClick={handleSaveAllAxes}
+                                            className="w-full py-4 bg-slate-800 text-white font-bold rounded-2xl hover:bg-slate-700 transition-all flex items-center justify-center gap-2 text-sm shadow-lg shadow-slate-200"
+                                        >
+                                            <Save className="w-4 h-4" /> {secondaryAxisName}設定をすべて保存
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         )}
 
