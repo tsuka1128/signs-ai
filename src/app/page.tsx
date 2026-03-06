@@ -593,7 +593,7 @@ export default function DashboardPage() {
               {displayKpis.length > 0 ? (
                 <>
                   {/* KPI Summary Row */}
-                  <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                  <div className="flex gap-2 overflow-x-auto pt-2 pb-2 mt-[-8px] scrollbar-hide">
                     {displayKpis.map(k => (
                       <KpiSummaryCard
                         key={k.id}
