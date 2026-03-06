@@ -130,11 +130,18 @@ export default function DashboardPage() {
             return r ? r.value : 0;
           });
 
+          // 過去12ヶ月の目標値履歴
+          const targetHistory = last12Months.map(m => {
+            const r = records.find(rec => normalizeMonth(rec.recorded_month) === m);
+            return r ? r.target_value : (def.target_default ?? 0);
+          });
+
           return {
             ...def,
             val: latest ? latest.value : (def.val ?? 0),
             target_value: latest ? latest.target_value : (def.target_default ?? 0),
-            prev: history
+            prev: history,
+            targetHistory // 追加
           };
         });
         setRealKpis(mergedKpis);
@@ -295,7 +302,8 @@ export default function DashboardPage() {
       val: k.val || 0,
       dept: realDepts.find(d => d.id === k.owner_department_id)?.name || "",
       voices: [],
-      prev: k.prev || [] // historyデータを保持
+      prev: k.prev || [], // historyデータを保持
+      targetHistory: k.targetHistory || [] // 追加
     };
   }) : [];
 
@@ -622,10 +630,11 @@ export default function DashboardPage() {
                         </div>
 
                         <div className="space-y-3">
-                          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">12ヶ月推移</div>
+                          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">1年推移</div>
                           <div className="h-40 w-full">
                             <DetailLineChart
                               data={selectedKpiDef.prev || []}
+                              targetData={selectedKpiDef.targetHistory || []}
                               labels={monthLabels}
                               color={(selectedKpiDef.prev && selectedKpiDef.prev.length >= 12 && selectedKpiDef.prev[11] >= (selectedKpiDef.prev[10] ?? 0)) ? "#10B981" : "#EF4444"}
                             />

@@ -1,15 +1,20 @@
 "use client";
 
+import { useState, useRef } from "react";
+
 interface DetailLineChartProps {
     data: number[];
+    targetData?: number[];
     labels: string[];
     color?: string;
     height?: number;
 }
 
-export function DetailLineChart({ data, labels, color = "#10B981", height = 140 }: DetailLineChartProps) {
+export function DetailLineChart({ data, targetData = [], labels, color = "#10B981", height = 140 }: DetailLineChartProps) {
     const width = 600;
     const padding = { top: 20, right: 30, bottom: 35, left: 30 };
+    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const chartWidth = width - padding.left - padding.right;
     const chartHeight = height - padding.top - padding.bottom;
@@ -17,7 +22,8 @@ export function DetailLineChart({ data, labels, color = "#10B981", height = 140 
     // 全データポイント（0も含む）を描画対象とする
     const min = 0;
     const dataMax = data.length > 0 ? Math.max(...data) : 0;
-    const max = Math.max(dataMax, 5); // 最低でも5を上限として見やすく
+    const targetMax = targetData.length > 0 ? Math.max(...targetData) : 0;
+    const max = Math.max(dataMax, targetMax, 5); // 最低でも5を上限として見やすく
     const range = max - min || 1; // 0除算防止
 
     // 全月分の座標を計算
@@ -32,11 +38,41 @@ export function DetailLineChart({ data, labels, color = "#10B981", height = 140 
         ? `${pathData} L ${points[points.length - 1].x} ${padding.top + chartHeight} L ${points[0].x} ${padding.top + chartHeight} Z`
         : "";
 
-    // ラベルが多すぎる場合に間引く（12ヶ月などの場合、1つおきに表示）
+    // ラベルが多すぎる場合に間引く
     const shouldSkipLabel = labels.length > 8;
 
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        const mouseX = ((e.clientX - rect.left) / rect.width) * width;
+
+        // 最も近いデータポイントのインデックスを特定
+        let closestIndex = 0;
+        let minDistance = Infinity;
+
+        points.forEach((p, i) => {
+            const distance = Math.abs(p.x - mouseX);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestIndex = i;
+            }
+        });
+
+        // 一定距離内であればホバー状態にする
+        if (minDistance < (chartWidth / data.length)) {
+            setHoveredIndex(closestIndex);
+        } else {
+            setHoveredIndex(null);
+        }
+    };
+
     return (
-        <div className="w-full">
+        <div
+            ref={containerRef}
+            className="w-full relative group"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={() => setHoveredIndex(null)}
+        >
             <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto select-none overflow-visible">
                 <defs>
                     <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
@@ -47,6 +83,19 @@ export function DetailLineChart({ data, labels, color = "#10B981", height = 140 
 
                 {/* Grid Lines */}
                 <line x1={padding.left} y1={padding.top + chartHeight} x2={padding.left + chartWidth} y2={padding.top + chartHeight} stroke="#F1F5F9" strokeWidth={1} />
+
+                {/* Hover Vertical Line */}
+                {hoveredIndex !== null && (
+                    <line
+                        x1={points[hoveredIndex].x}
+                        y1={padding.top}
+                        x2={points[hoveredIndex].x}
+                        y2={padding.top + chartHeight}
+                        stroke="#E2E8F0"
+                        strokeWidth={1}
+                        strokeDasharray="4 4"
+                    />
+                )}
 
                 {/* Area */}
                 <path d={areaData} fill="url(#chartGradient)" />
@@ -67,19 +116,18 @@ export function DetailLineChart({ data, labels, color = "#10B981", height = 140 
                         key={i}
                         cx={p.x}
                         cy={p.y}
-                        r={p.v > 0 ? 4 : 2}
-                        fill={p.v > 0 ? color : "#CBD5E1"}
-                        className="transition-all duration-300"
+                        r={hoveredIndex === i ? 6 : (p.v > 0 ? 4 : 2)}
+                        fill={hoveredIndex === i ? color : (p.v > 0 ? color : "#CBD5E1")}
+                        stroke="white"
+                        strokeWidth={hoveredIndex === i ? 2 : 0}
+                        className="transition-all duration-200"
                     />
                 ))}
 
-                {/* X-Axis Labels - 重なりを防ぐための間引きロジック */}
+                {/* X-Axis Labels */}
                 {labels.map((label, i) => {
-                    // 12ヶ月表示の場合、3ヶ月おき（1, 4, 7, 10, 12番目など）に表示して重なりを完全に防ぐ
-                    // ただし最後（最新月）は必ず表示したい
                     const isLast = i === labels.length - 1;
                     const isEveryThird = i % 3 === 0;
-
                     if (shouldSkipLabel && !isEveryThird && !isLast) return null;
 
                     const xPos = padding.left + (data.length > 1 ? (i / (data.length - 1)) * chartWidth : 0.5 * chartWidth);
@@ -96,6 +144,41 @@ export function DetailLineChart({ data, labels, color = "#10B981", height = 140 
                     );
                 })}
             </svg>
+
+            {/* Tooltip */}
+            {hoveredIndex !== null && (
+                <div
+                    className="absolute z-50 bg-white border border-slate-100 shadow-xl rounded-xl p-3 pointer-events-none transform -translate-x-1/2 -translate-y-full mb-4"
+                    style={{
+                        left: `${(points[hoveredIndex].x / width) * 100}%`,
+                        top: `${(points[hoveredIndex].y / height) * 100}%`
+                    }}
+                >
+                    <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">
+                        {labels[hoveredIndex]}
+                    </div>
+                    <div className="space-y-1">
+                        <div className="flex justify-between gap-4 text-xs font-bold">
+                            <span className="text-slate-500">実績</span>
+                            <span className="text-slate-800">{data[hoveredIndex].toLocaleString()}</span>
+                        </div>
+                        {targetData[hoveredIndex] !== undefined && (
+                            <>
+                                <div className="flex justify-between gap-4 text-xs font-bold">
+                                    <span className="text-slate-500">目標</span>
+                                    <span className="text-slate-800">{targetData[hoveredIndex].toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between gap-4 text-xs font-black pt-1 border-t border-slate-50">
+                                    <span className="text-slate-500">達成率</span>
+                                    <span className={data[hoveredIndex] >= targetData[hoveredIndex] ? "text-emerald-500" : "text-rose-500"}>
+                                        {targetData[hoveredIndex] > 0 ? Math.round((data[hoveredIndex] / targetData[hoveredIndex]) * 100) : 0}%
+                                    </span>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
