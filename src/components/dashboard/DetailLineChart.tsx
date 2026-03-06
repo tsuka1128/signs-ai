@@ -16,7 +16,8 @@ export function DetailLineChart({ data, labels, color = "#10B981", height = 140 
 
     // 全データポイント（0も含む）を描画対象とする
     const min = 0;
-    const max = Math.max(...data, 5); // 最低でも5を上限として見やすく
+    const dataMax = data.length > 0 ? Math.max(...data) : 0;
+    const max = Math.max(dataMax, 5); // 最低でも5を上限として見やすく
     const range = max - min || 1; // 0除算防止
 
     // 全月分の座標を計算
@@ -74,8 +75,12 @@ export function DetailLineChart({ data, labels, color = "#10B981", height = 140 
 
                 {/* X-Axis Labels - 重なりを防ぐための間引きロジック */}
                 {labels.map((label, i) => {
-                    // ラベル数が多い場合、偶数番目のみ表示、あるいは最初と最後を考慮して間引く
-                    if (shouldSkipLabel && i % 2 !== 0 && i !== labels.length - 1) return null;
+                    // 12ヶ月表示の場合、3ヶ月おき（1, 4, 7, 10, 12番目など）に表示して重なりを完全に防ぐ
+                    // ただし最後（最新月）は必ず表示したい
+                    const isLast = i === labels.length - 1;
+                    const isEveryThird = i % 3 === 0;
+
+                    if (shouldSkipLabel && !isEveryThird && !isLast) return null;
 
                     const xPos = padding.left + (data.length > 1 ? (i / (data.length - 1)) * chartWidth : 0.5 * chartWidth);
                     return (
@@ -84,7 +89,7 @@ export function DetailLineChart({ data, labels, color = "#10B981", height = 140 
                             x={xPos}
                             y={height - 8}
                             textAnchor="middle"
-                            className="text-[11px] fill-slate-400 font-bold select-none"
+                            className="text-[10px] fill-slate-400 font-bold select-none"
                         >
                             {label}
                         </text>

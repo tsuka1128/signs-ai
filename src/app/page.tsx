@@ -295,7 +295,7 @@ export default function DashboardPage() {
       val: k.val || 0,
       dept: realDepts.find(d => d.id === k.owner_department_id)?.name || "",
       voices: [],
-      prev: []
+      prev: k.prev || [] // historyデータを保持
     };
   }) : [];
 
@@ -627,7 +627,7 @@ export default function DashboardPage() {
                             <DetailLineChart
                               data={selectedKpiDef.prev || []}
                               labels={monthLabels}
-                              color={(selectedKpiDef.prev && selectedKpiDef.prev[11] >= (selectedKpiDef.prev[10] ?? 0)) ? "#10B981" : "#EF4444"}
+                              color={(selectedKpiDef.prev && selectedKpiDef.prev.length >= 12 && selectedKpiDef.prev[11] >= (selectedKpiDef.prev[10] ?? 0)) ? "#10B981" : "#EF4444"}
                             />
                           </div>
                         </div>
