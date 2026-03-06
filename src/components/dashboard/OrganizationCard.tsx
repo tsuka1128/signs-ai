@@ -14,7 +14,7 @@ interface KpiItem {
 
 interface OrganizationCardProps {
     name: string;
-    head: number;
+    head: string;
     pulse: number;
     weather: "sun" | "cloud" | "rain";
     arrow: "up" | "down" | "flat";

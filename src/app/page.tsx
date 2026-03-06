@@ -273,14 +273,17 @@ export default function DashboardPage() {
         return monthAnswers.reduce((sum, a) => sum + a.score, 0) / monthAnswers.length;
       });
 
+      const pulseWeather = pulseScore >= 4.0 ? "sun" : pulseScore >= 3.0 ? "cloud" : "rain";
+      const activeHead = deptResponses.filter(r => normalizeMonth(r.recorded_month) === latestMonth).length;
+
       return {
         id: d.id,
         name: d.name,
-        head: d.headcount || 0,
-        productivity: 150, // マトリックス用の中立値
+        head: `${activeHead} / ${d.headcount || 0}`,
+        productivity: 150,
         pulse: Number(pulseScore.toFixed(1)),
         pulseHistory,
-        weather: pulseScore >= 4.0 ? "sun" : pulseScore >= 3.0 ? "cloud" : "rain",
+        weather: pulseWeather,
         arrow: "flat",
         kpiAch: 100, // マトリックス用の中立値
         // kpis は DB から取得した実データのみ（ダミーは連結しない）
@@ -334,11 +337,13 @@ export default function DashboardPage() {
         return monthAnswers.reduce((sum, a) => sum + a.score, 0) / monthAnswers.length;
       });
 
+      const activeHead = axisResponses.filter(r => normalizeMonth(r.recorded_month) === latestMonth).length;
+
       return {
         ...(axis as any),
         id: axis.id,
         name: axis.name,
-        head: 0,
+        head: `${activeHead}`,
         productivity: 150, // マトリックス描画に必須
         kpiAch: 100, // 円のサイズ計算に必須
         mrr: 0,
