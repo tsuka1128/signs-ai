@@ -15,16 +15,16 @@ export function KpiSummaryCard({ name, value, unit, isActive, onClick }: KpiSumm
         <button
             onClick={onClick}
             className={cn(
-                "flex flex-col items-start p-3 bg-white rounded-xl border transition-all duration-200 min-w-[100px] text-left shrink-0",
+                "flex flex-col items-start p-4 bg-white rounded-2xl border transition-all duration-300 min-w-[124px] text-left shrink-0 shadow-sm",
                 isActive
-                    ? "border-teal bg-teal/5 ring-1 ring-teal/20"
-                    : "border-slate-200 hover:border-slate-300"
+                    ? "border-teal bg-teal/5 ring-2 ring-teal/10 translate-y-[-2px]"
+                    : "border-slate-100 hover:border-slate-300 hover:bg-slate-50/50"
             )}
         >
-            <span className="text-[10px] text-slate-400 font-bold mb-1">{name}</span>
-            <div className="flex items-baseline gap-0.5">
-                <span className="text-base font-extrabold text-slate-800">{value}</span>
-                <span className="text-[9px] text-slate-400 font-medium">{unit}</span>
+            <span className="text-[10px] text-slate-400 font-black mb-1.5 uppercase tracking-wider">{name}</span>
+            <div className="flex items-baseline gap-1">
+                <span className="text-xl font-black text-slate-800 tabular-nums leading-none">{value}</span>
+                <span className="text-[10px] text-slate-400 font-bold leading-none">{unit}</span>
             </div>
         </button>
     );

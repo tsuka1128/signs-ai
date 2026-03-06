@@ -106,16 +106,40 @@ export default function DashboardPage() {
         return;
       }
 
-      const [d, k, s, r, a] = await Promise.all([
+      const [d, k, s, r, a, recs] = await Promise.all([
         supabase.from('departments').select('*').eq('company_id', comp.company_id).order('created_at', { ascending: true }),
         supabase.from('kpi_definitions').select('*').eq('company_id', comp.company_id).order('sort_order', { ascending: true }),
         supabase.from('semantic_layers').select('content').eq('company_id', comp.company_id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('survey_responses').select('*, survey_answers(*)').eq('company_id', comp.company_id),
-        supabase.from('kpi_axes').select('*').eq('company_id', comp.company_id).order('sort_order', { ascending: true })
+        supabase.from('kpi_axes').select('*').eq('company_id', comp.company_id).order('sort_order', { ascending: true }),
+        supabase.from('kpi_records').select('*').in('recorded_month', last6Months)
       ]);
 
       if (d.data && d.data.length > 0) setRealDepts(d.data);
-      if (k.data && k.data.length > 0) setRealKpis(k.data);
+
+      // KPI定義に最新の実績・目標と推移をマージ
+      if (k.data && k.data.length > 0) {
+        const latestMonth = last6Months[5];
+        const mergedKpis = k.data.map(def => {
+          const records = (recs.data || []).filter(rec => rec.kpi_definition_id === def.id && rec.axis_id === null);
+          const latest = records.find(rec => normalizeMonth(rec.recorded_month) === latestMonth);
+
+          // 過去6ヶ月の推移配列を作成
+          const history = last6Months.map(m => {
+            const r = records.find(rec => normalizeMonth(rec.recorded_month) === m);
+            return r ? r.value : 0;
+          });
+
+          return {
+            ...def,
+            val: latest ? latest.value : (def.val ?? 0),
+            target_value: latest ? latest.target_value : (def.target_default ?? 0),
+            prev: history
+          };
+        });
+        setRealKpis(mergedKpis);
+      }
+
       if (s.data?.content) setRealSem(s.data.content);
       if (r.data) setRealResponses(r.data);
       if (a.data) setRealAxes(a.data);
@@ -250,8 +274,8 @@ export default function DashboardPage() {
           .sort((a, b) => (b.is_main ? 1 : 0) - (a.is_main ? 1 : 0))
           .map((k: any) => ({
             name: k.name,
-            val: `${k.val ?? k.target_default ?? '-'}${k.unit ?? ''}`,
-            ach: k.ach ?? 0,
+            val: `${k.val ?? 0}${k.unit ?? ''}`,
+            ach: (k.target_value && k.target_value > 0) ? Math.round((k.val / k.target_value) * 100) : 0,
             type: "stack"
           })).slice(0, 3),
         kpiName: realKpis.find(k => k.owner_dept_id === d.id && k.is_main)?.name ||
