@@ -180,6 +180,13 @@ export default function DashboardPage() {
     });
   }, [last12Months]);
 
+  const fullMonthLabels = useMemo(() => {
+    return last12Months.map(m => {
+      const parts = m.split("-");
+      return `${parts[0]}年${parseInt(parts[1])}月`;
+    });
+  }, [last12Months]);
+
   const getSimulatedIndex = (deptName: string) => {
     if (deptName.includes("営業")) return 0; // sales
     if (deptName.includes("マーケ")) return 1; // mktg
@@ -636,6 +643,7 @@ export default function DashboardPage() {
                               data={selectedKpiDef.prev || []}
                               targetData={selectedKpiDef.targetHistory || []}
                               labels={monthLabels}
+                              fullLabels={fullMonthLabels}
                               color={(selectedKpiDef.prev && selectedKpiDef.prev.length >= 12 && selectedKpiDef.prev[11] >= (selectedKpiDef.prev[10] ?? 0)) ? "#10B981" : "#EF4444"}
                             />
                           </div>

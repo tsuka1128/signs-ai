@@ -6,11 +6,19 @@ interface DetailLineChartProps {
     data: number[];
     targetData?: number[];
     labels: string[];
+    fullLabels?: string[];
     color?: string;
     height?: number;
 }
 
-export function DetailLineChart({ data, targetData = [], labels, color = "#10B981", height = 140 }: DetailLineChartProps) {
+export function DetailLineChart({
+    data,
+    targetData = [],
+    labels,
+    fullLabels = [],
+    color = "#10B981",
+    height = 140
+}: DetailLineChartProps) {
     const width = 600;
     const padding = { top: 20, right: 30, bottom: 35, left: 30 };
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -155,7 +163,7 @@ export function DetailLineChart({ data, targetData = [], labels, color = "#10B98
                     }}
                 >
                     <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">
-                        {labels[hoveredIndex]}
+                        {fullLabels[hoveredIndex] || labels[hoveredIndex]}
                     </div>
                     <div className="space-y-1">
                         <div className="flex justify-between gap-4 text-xs font-bold">
