@@ -10,6 +10,7 @@ import { TabBar } from "@/components/ui/TabBar";
 import { Badge } from "@/components/ui/Badge";
 import { Save, Plus, Trash2, Star, UserPlus, Mail, Shield, Copy, Check, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { KPI_UNIT_OPTIONS } from "@/lib/constants";
 
 export default function SettingsPage() {
     const router = useRouter();
@@ -204,6 +205,117 @@ export default function SettingsPage() {
         handleSaveAllAxes();
     }
 
+    // --- 削除・追加・ユーティリティ関数（復元） ---
+
+    async function handleDeleteDept(id: string) {
+        if (id.startsWith("new_")) {
+            setDepts(depts.filter(d => d.id !== id));
+            return;
+        }
+        if (confirm("本当に削除しますか？")) {
+            await supabase.from('departments').delete().eq('id', id);
+            loadData();
+        }
+    }
+
+    function handleAddDept() {
+        setDepts([...depts, { id: `new_${Date.now()}`, name: "", headcount: 0, company_id: company?.id }]);
+    }
+
+    async function handleInvite() {
+        if (!inviteEmail.trim()) return;
+        setLastToken(null);
+
+        const res = await fetch("/api/invitations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
+        });
+
+        if (res.ok) {
+            const { token } = await res.json();
+            setLastToken(token);
+            setInviteEmail("");
+            loadData();
+        } else {
+            alert("招待の送信に失敗しました");
+        }
+    }
+
+    const copyToken = (token: string) => {
+        if (typeof window === "undefined") return;
+        const url = `${window.location.origin}/onboarding?token=${token}`;
+        navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    async function handleDeleteKpi(id: string) {
+        if (id.startsWith("new_")) {
+            setKpis(kpis.filter(k => k.id !== id));
+            return;
+        }
+        if (confirm("本当に削除しますか？実データも削除される可能性があります。")) {
+            await supabase.from('kpi_definitions').delete().eq('id', id);
+            loadData();
+        }
+    }
+
+    function handleAddKpi() {
+        const newKpi = {
+            id: `new_${Date.now()}`,
+            name: "",
+            unit: KPI_UNIT_OPTIONS[0],
+            target_default: null,
+            owner_dept_id: null,
+            is_main: false,
+            company_id: company?.id
+        };
+        // その部署（未指定含む）にKPIが1つもなければ、代表にする
+        const hasKpisInGroup = kpis.some(k => k.owner_dept_id === null);
+        if (!hasKpisInGroup) newKpi.is_main = true;
+
+        setKpis([...kpis, newKpi]);
+    }
+
+    function handleToggleMainKpi(targetKpi: any) {
+        if (targetKpi.is_main) return;
+        setKpis(kpis.map(k => {
+            if (k.owner_dept_id === targetKpi.owner_dept_id && k.id !== targetKpi.id) {
+                return { ...k, is_main: false };
+            }
+            if (k.id === targetKpi.id) {
+                return { ...k, is_main: true };
+            }
+            return k;
+        }));
+    }
+
+    function handleDeptChange(targetKpi: any, newDeptId: string | null) {
+        const oldDeptId = targetKpi.owner_dept_id;
+        const targetId = targetKpi.id;
+
+        setKpis(prev => {
+            let next = prev.map(k => k.id === targetId ? { ...k, owner_dept_id: newDeptId } : k);
+            const inNewDept = next.filter(k => k.owner_dept_id === newDeptId);
+            const mainsInNew = inNewDept.filter(k => k.is_main);
+
+            if (mainsInNew.length > 1) {
+                next = next.map(k => (k.id === targetId && k.is_main) ? { ...k, is_main: false } : k);
+            } else if (inNewDept.length > 0 && mainsInNew.length === 0) {
+                next = next.map(k => k.id === inNewDept[0].id ? { ...k, is_main: true } : k);
+            }
+
+            const inOldDept = next.filter(k => k.owner_dept_id === oldDeptId);
+            const mainsInOld = inOldDept.filter(k => k.is_main);
+
+            if (inOldDept.length > 0 && mainsInOld.length === 0) {
+                next = next.map(k => k.id === inOldDept[0].id ? { ...k, is_main: true } : k);
+            }
+            return next;
+        });
+    }
+
     async function handleDeleteAxis(id: string) {
         if (id.startsWith("new_")) {
             setAxes(axes.filter(a => a.id !== id));
@@ -393,12 +505,7 @@ export default function SettingsPage() {
                                                         className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-800 focus:border-teal outline-none appearance-none"
                                                     >
                                                         <option value="">単位を選択</option>
-                                                        <option value="円">円</option>
-                                                        <option value="件">件</option>
-                                                        <option value="%">%</option>
-                                                        <option value="pt">pt</option>
-                                                        <option value="名">名</option>
-                                                        <option value="時間">時間</option>
+                                                        {KPI_UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
                                                     </select>
                                                 </div>
                                             </div>

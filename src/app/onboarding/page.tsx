@@ -17,6 +17,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase";
 import { Sun, Cloud, CloudRain, Check } from "lucide-react";
+import { KPI_UNIT_OPTIONS } from "@/lib/constants";
 
 /** 部署の入力フォーム */
 interface DeptInput {
@@ -57,7 +58,6 @@ interface OnboardingState {
 }
 
 /** KPI 単位の候補 */
-const UNIT_OPTIONS = ["件", "万円", "円", "%", "名", "pt", "個", "回", "日", "時間", "その他"];
 
 function OnboardingContent() {
     const router = useRouter();
@@ -618,7 +618,7 @@ function OnboardingContent() {
                                                     onChange={(e) => updateKpi(i, "unit", e.target.value)}
                                                     className="w-24 px-2 py-2 rounded-xl border border-slate-200 text-xs font-bold"
                                                 >
-                                                    {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                                                    {KPI_UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
                                                 </select>
                                                 <input
                                                     type="number"
