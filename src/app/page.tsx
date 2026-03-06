@@ -112,20 +112,20 @@ export default function DashboardPage() {
         supabase.from('semantic_layers').select('content').eq('company_id', comp.company_id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('survey_responses').select('*, survey_answers(*)').eq('company_id', comp.company_id),
         supabase.from('kpi_axes').select('*').eq('company_id', comp.company_id).order('sort_order', { ascending: true }),
-        supabase.from('kpi_records').select('*').in('recorded_month', last6Months)
+        supabase.from('kpi_records').select('*').in('recorded_month', last12Months)
       ]);
 
       if (d.data && d.data.length > 0) setRealDepts(d.data);
 
       // KPI定義に最新の実績・目標と推移をマージ
       if (k.data && k.data.length > 0) {
-        const latestMonth = last6Months[5];
+        const latestMonth = last12Months[11];
         const mergedKpis = k.data.map(def => {
           const records = (recs.data || []).filter(rec => rec.kpi_definition_id === def.id && rec.axis_id === null);
           const latest = records.find(rec => normalizeMonth(rec.recorded_month) === latestMonth);
 
-          // 過去6ヶ月の推移配列を作成
-          const history = last6Months.map(m => {
+          // 過去12ヶ月の推移配列を作成
+          const history = last12Months.map(m => {
             const r = records.find(rec => normalizeMonth(rec.recorded_month) === m);
             return r ? r.value : 0;
           });
@@ -156,10 +156,10 @@ export default function DashboardPage() {
     return m;
   };
 
-  const last6Months = useMemo(() => {
+  const last12Months = useMemo(() => {
     const dates = [];
     const now = new Date();
-    for (let i = 5; i >= 0; i--) {
+    for (let i = 11; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       dates.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`);
     }
@@ -167,11 +167,11 @@ export default function DashboardPage() {
   }, []);
 
   const monthLabels = useMemo(() => {
-    return last6Months.map(m => {
+    return last12Months.map(m => {
       const mm = m.split("-")[1];
       return `${parseInt(mm)}月`;
     });
-  }, [last6Months]);
+  }, [last12Months]);
 
   const getSimulatedIndex = (deptName: string) => {
     if (deptName.includes("営業")) return 0; // sales
@@ -194,7 +194,7 @@ export default function DashboardPage() {
       filtered = realResponses.filter(r => r.department_id === surveyViewId);
     }
 
-    const latestMonth = last6Months[5];
+    const latestMonth = last12Months[11];
     const latestAnswers = filtered
       .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
       .flatMap(r => r.survey_answers || []);
@@ -216,7 +216,7 @@ export default function DashboardPage() {
       ? latestAnswers.reduce((sum: number, a: any) => sum + a.score, 0) / latestAnswers.length
       : 0;
 
-    const pulseHistory = last6Months.map(month => {
+    const pulseHistory = last12Months.map(month => {
       const monthAnswers = filtered
         .filter(r => normalizeMonth(r.recorded_month) === month)
         .flatMap(r => r.survey_answers || []);
@@ -235,12 +235,12 @@ export default function DashboardPage() {
     }
 
     return { viewName, scores: qScores, pulse: avgPulse, pulseHistory, aiComment: comment };
-  }, [orgView, realResponses, realDepts, last6Months]);
+  }, [orgView, realResponses, realDepts, last12Months]);
 
   const displayDepts = useMemo(() => {
     return realDepts.map((d, i) => {
       // 実データから体温を集計 (最新月)
-      const latestMonth = last6Months[5];
+      const latestMonth = last12Months[11];
       const deptResponses = realResponses.filter(r => r.department_id === d.id);
       const latestAnswers = deptResponses
         .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
@@ -250,8 +250,8 @@ export default function DashboardPage() {
         ? latestAnswers.reduce((sum, a) => sum + a.score, 0) / latestAnswers.length
         : 0; // データがなければ 0 (モックを排除)
 
-      // 過去6ヶ月の推移
-      const pulseHistory = last6Months.map(month => {
+      // 過去12ヶ月の推移
+      const pulseHistory = last12Months.map(month => {
         const monthAnswers = deptResponses
           .filter(r => normalizeMonth(r.recorded_month) === month)
           .flatMap(r => r.survey_answers || []);
@@ -283,7 +283,7 @@ export default function DashboardPage() {
           ""
       };
     });
-  }, [realDepts, realResponses, last6Months, realKpis]);
+  }, [realDepts, realResponses, last12Months, realKpis]);
 
   const displayKpis = realKpis.length > 0 ? realKpis.map((k, i) => {
     return {
@@ -301,7 +301,7 @@ export default function DashboardPage() {
 
   const displayAxes = useMemo(() => {
     return realAxes.map((axis, i) => {
-      const latestMonth = last6Months[5];
+      const latestMonth = last12Months[11];
       const axisResponses = realResponses.filter(r => r.axis_id === axis.id);
       const latestAnswers = axisResponses
         .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
@@ -311,7 +311,7 @@ export default function DashboardPage() {
         ? latestAnswers.reduce((sum, a) => sum + a.score, 0) / latestAnswers.length
         : 0;
 
-      const pulseHistory = last6Months.map(month => {
+      const pulseHistory = last12Months.map(month => {
         const monthAnswers = axisResponses
           .filter(r => normalizeMonth(r.recorded_month) === month)
           .flatMap(r => r.survey_answers || []);
@@ -334,7 +334,7 @@ export default function DashboardPage() {
         kpis: [] // 軸別のKPIはまだDBにないため空にする
       };
     });
-  }, [realAxes, realResponses, last6Months]);
+  }, [realAxes, realResponses, last12Months]);
 
   const displaySem = realSem || semTextDefault;
 
@@ -622,12 +622,12 @@ export default function DashboardPage() {
                         </div>
 
                         <div className="space-y-3">
-                          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">6ヶ月推移</div>
+                          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">12ヶ月推移</div>
                           <div className="h-40 w-full">
                             <DetailLineChart
                               data={selectedKpiDef.prev || []}
-                              labels={["9月", "10月", "11月", "12月", "1月", "2月"]}
-                              color={(selectedKpiDef.prev && selectedKpiDef.prev[5] >= selectedKpiDef.prev[4]) ? "#10B981" : "#EF4444"}
+                              labels={monthLabels}
+                              color={(selectedKpiDef.prev && selectedKpiDef.prev[11] >= (selectedKpiDef.prev[10] ?? 0)) ? "#10B981" : "#EF4444"}
                             />
                           </div>
                         </div>

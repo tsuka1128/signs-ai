@@ -31,6 +31,9 @@ export function DetailLineChart({ data, labels, color = "#10B981", height = 140 
         ? `${pathData} L ${points[points.length - 1].x} ${padding.top + chartHeight} L ${points[0].x} ${padding.top + chartHeight} Z`
         : "";
 
+    // ラベルが多すぎる場合に間引く（12ヶ月などの場合、1つおきに表示）
+    const shouldSkipLabel = labels.length > 8;
+
     return (
         <div className="w-full">
             <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto select-none overflow-visible">
@@ -41,7 +44,7 @@ export function DetailLineChart({ data, labels, color = "#10B981", height = 140 
                     </linearGradient>
                 </defs>
 
-                {/* Grid Lines (Optional but helpful for visibility) */}
+                {/* Grid Lines */}
                 <line x1={padding.left} y1={padding.top + chartHeight} x2={padding.left + chartWidth} y2={padding.top + chartHeight} stroke="#F1F5F9" strokeWidth={1} />
 
                 {/* Area */}
@@ -69,8 +72,11 @@ export function DetailLineChart({ data, labels, color = "#10B981", height = 140 
                     />
                 ))}
 
-                {/* X-Axis Labels - 改行や重なりを防ぐために位置調整 */}
+                {/* X-Axis Labels - 重なりを防ぐための間引きロジック */}
                 {labels.map((label, i) => {
+                    // ラベル数が多い場合、偶数番目のみ表示、あるいは最初と最後を考慮して間引く
+                    if (shouldSkipLabel && i % 2 !== 0 && i !== labels.length - 1) return null;
+
                     const xPos = padding.left + (data.length > 1 ? (i / (data.length - 1)) * chartWidth : 0.5 * chartWidth);
                     return (
                         <text
@@ -78,7 +84,7 @@ export function DetailLineChart({ data, labels, color = "#10B981", height = 140 
                             x={xPos}
                             y={height - 8}
                             textAnchor="middle"
-                            className="text-[12px] fill-slate-400 font-bold select-none"
+                            className="text-[11px] fill-slate-400 font-bold select-none"
                         >
                             {label}
                         </text>
