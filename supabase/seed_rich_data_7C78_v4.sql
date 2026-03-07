@@ -23,11 +23,14 @@ DECLARE
   target NUMERIC;
   base_headcount INT;
 BEGIN
-  -- 1. 企業特定
+-- 1. 企業特定
   SELECT id, name INTO comp_id, comp_name FROM companies WHERE short_id = 'F-260305-7C78';
   IF comp_id IS NULL THEN 
     RAISE EXCEPTION '対象企業が見つかりませんでした。short_id: F-260305-7C78'; 
   END IF;
+
+  -- 【重要】制約の修正: 第2軸のみの回答を許容するため NOT NULL 制約を解除
+  ALTER TABLE survey_responses ALTER COLUMN department_id DROP NOT NULL;
 
   RAISE NOTICE '🚀 Starting final data generation (v4) for % (%)', comp_name, comp_id;
 
