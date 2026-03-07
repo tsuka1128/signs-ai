@@ -309,10 +309,29 @@ export default function DashboardPage() {
           })).slice(0, 3),
         kpiName: realKpis.find(k => k.owner_dept_id === d.id && k.is_main)?.name ||
           realKpis.find(k => k.owner_dept_id === d.id)?.name ||
-          ""
+          "",
+        // 動的な生産性計算（達成率 × 体温係数）
+        productivityHistory: last13Months.map(month => {
+          const mKpis = realKpis.filter(k => k.owner_dept_id === d.id);
+          const mRecs = realKpiRecords.filter(r => r.recorded_month === month);
+
+          let totalAch = 0;
+          let count = 0;
+          mKpis.forEach(def => {
+            const rec = mRecs.find(r => r.kpi_definition_id === def.id && r.axis_id === null);
+            if (rec && rec.target_value > 0) {
+              totalAch += (rec.value / rec.target_value) * 100;
+              count++;
+            }
+          });
+          const avgAch = count > 0 ? totalAch / count : 100;
+          const monthPulse = pulseHistory[last13Months.indexOf(month)] || 0;
+          const pulseFactor = monthPulse > 0 ? (monthPulse / 3.0) : 1.0;
+          return Math.round(avgAch * pulseFactor);
+        })
       };
     });
-  }, [realDepts, realResponses, last13Months, realKpis]);
+  }, [realDepts, realResponses, last13Months, realKpis, realKpiRecords]);
 
   const displayKpis = realKpis.length > 0 ? realKpis.map((k, i) => {
     return {
@@ -386,7 +405,22 @@ export default function DashboardPage() {
         pulseHistory,
         weather: pulseScore >= 4.0 ? "sun" : pulseScore >= 3.0 ? "cloud" : "rain",
         arrow: "flat",
-        kpis: []
+        kpis: [],
+        productivityHistory: last13Months.map(month => {
+          const mRecs = realKpiRecords.filter(r => r.recorded_month === month && r.axis_id === axis.id);
+          let totalAch = 0;
+          let count = 0;
+          mRecs.forEach(rec => {
+            if (rec.target_value > 0) {
+              totalAch += (rec.value / rec.target_value) * 100;
+              count++;
+            }
+          });
+          const avgAch = count > 0 ? totalAch / count : 100;
+          const monthPulse = pulseHistory[last13Months.indexOf(month)] || 0;
+          const pulseFactor = monthPulse > 0 ? (monthPulse / 3.0) : 1.0;
+          return Math.round(avgAch * pulseFactor);
+        })
       };
     });
   }, [realAxes, realResponses, last13Months, company, realKpiRecords]);
@@ -414,10 +448,17 @@ export default function DashboardPage() {
       // 履歴は 13ヶ月分 (0=12ヶ月前, 12=最新)
       const pulseAtMonth = d.pulseHistory?.[targetIdx] || 0;
       const headAtMonth = d.headHistory?.[targetIdx] || 0;
+      const prodAtMonth = d.productivityHistory?.[targetIdx] || 100;
       const sizeAtMonth = (matView === "product" && d.sizeHistory) ? d.sizeHistory[targetIdx] : 100;
 
       let head = matView === "product" ? (d.xAxisHead || 0) : headAtMonth;
-      let productivity = d.productivity;
+      // 部署別表示でヘッドカウント履歴が0（未回答月など）の場合は、定義マスタの人数を使用
+      if (matView === "dept" && head === 0) {
+        const deptDef = realDepts.find(rd => rd.id === d.id);
+        head = deptDef?.headcount || 0;
+      }
+
+      let productivity = prodAtMonth;
       let pulse = pulseAtMonth || d.pulse;
       let kpiAch = matView === "dept" ? 100 : d.kpiAch;
       let mrr = sizeAtMonth;
