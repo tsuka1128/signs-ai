@@ -31,7 +31,9 @@ export function Header() {
                 if (profile) {
                     const comp = (profile as any).companies;
                     setCompanyName(comp?.name || "Signs AI User");
-                    setPlanName(comp?.plans?.name || "Trial");
+                    let pName = comp?.plans?.name || "Trial";
+                    if (pName === "Free") pName = "Freetrial";
+                    setPlanName(pName);
                 }
             }
         };
@@ -60,7 +62,7 @@ export function Header() {
                             <span className="text-xl font-extrabold text-slate-800 tracking-tighter">Signs AI</span>
                         </Link>
                         {planName && (
-                            <Badge className="bg-teal/10 text-teal border-none text-[10px] uppercase">{planName}</Badge>
+                            <Badge className="bg-teal/10 text-teal border-none text-[10px]">{planName}</Badge>
                         )}
                     </div>
                     <p className="text-[11px] font-black text-slate-400 tracking-widest mt-1 uppercase">組織に体温を</p>
