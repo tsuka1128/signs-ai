@@ -279,7 +279,7 @@ export default function SettingsPage() {
                     <div>
                         <h1 className="text-2xl font-black text-slate-800 tracking-tighter flex items-center gap-3">
                             <Settings2 className="w-8 h-8 text-teal" />
-                            設定 <span className="text-[10px] bg-teal/10 text-teal px-2 py-0.5 rounded-full font-bold ml-2 tracking-normal">v2.1 Sync</span>
+                            設定
                         </h1>
                         <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-widest">組織構成と指標のカスタマイズ</p>
                     </div>

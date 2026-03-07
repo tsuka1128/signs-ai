@@ -14,6 +14,7 @@ export function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [companyName, setCompanyName] = useState("Loading...");
+    const [planName, setPlanName] = useState("");
     const [userInitial, setUserInitial] = useState("?");
 
     useEffect(() => {
@@ -23,12 +24,14 @@ export function Header() {
                 setUserInitial(user.email?.[0].toUpperCase() || "U");
                 const { data: profile } = await supabase
                     .from("users")
-                    .select("display_name, companies(name)")
+                    .select("display_name, companies(name, plans(name))")
                     .eq("id", user.id)
                     .single();
 
                 if (profile) {
-                    setCompanyName((profile as any).companies?.name || "Signs AI User");
+                    const comp = (profile as any).companies;
+                    setCompanyName(comp?.name || "Signs AI User");
+                    setPlanName(comp?.plans?.name || "Trial");
                 }
             }
         };
@@ -56,7 +59,9 @@ export function Header() {
                             </div>
                             <span className="text-xl font-extrabold text-slate-800 tracking-tighter">Signs AI</span>
                         </Link>
-                        <Badge className="bg-teal/10 text-teal border-none text-[10px]">MONTHLY</Badge>
+                        {planName && (
+                            <Badge className="bg-teal/10 text-teal border-none text-[10px] uppercase">{planName}</Badge>
+                        )}
                     </div>
                     <p className="text-[11px] font-black text-slate-400 tracking-widest mt-1 uppercase">組織に体温を</p>
                 </div>
