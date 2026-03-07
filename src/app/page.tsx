@@ -397,6 +397,8 @@ export default function DashboardPage() {
   const selectedKpiDef = displayKpis.find(k => k.id === selKpi) || displayKpis[0];
   const achRate = (selectedKpiDef && selectedKpiDef.target) ? Math.round((selectedKpiDef.val / selectedKpiDef.target) * 100) : null;
 
+  const secondaryAxisName = company?.secondary_axis_name || "プロダクト";
+
   const currentMatData = useMemo(() => {
     const monthsMap: Record<string, number> = {
       "default": 12,
@@ -473,7 +475,7 @@ export default function DashboardPage() {
           items={[
             { id: "matrix", label: "📊 マトリックス" },
             { id: "kpi", label: "📈 KPI詳細" },
-            { id: "org", label: "🏢 部署・プロダクト" },
+            { id: "org", label: `🏢 部署・${secondaryAxisName}` },
             { id: "survey", label: "🗣️ 組織の体温" },
             { id: "action", label: "📌 アクション" },
             { id: "semantic", label: "🧬 組織方針" }
@@ -490,7 +492,7 @@ export default function DashboardPage() {
                 <div className="flex flex-col gap-4 mb-6">
                   <div className="flex justify-between items-start md:items-center flex-col md:flex-row gap-2">
                     <div>
-                      <h3 className="text-sm font-bold text-slate-800 tracking-tight">部署 / プロダクト マトリックス</h3>
+                      <h3 className="text-sm font-bold text-slate-800 tracking-tight">部署 / {secondaryAxisName} マトリックス</h3>
                       <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-tight">
                         <div className="flex items-center gap-1">
                           <span>縦軸: 一人当たり生産性</span>
@@ -502,7 +504,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex items-center gap-3 flex-wrap">
                     <TabBar
-                      tabs={[{ id: "dept", label: "部署別" }, { id: "product", label: "プロダクト別" }]}
+                      tabs={[{ id: "dept", label: "部署別" }, { id: "product", label: `${secondaryAxisName}別` }]}
                       active={matView}
                       onChange={setMatView}
                       className="w-auto"
@@ -786,7 +788,7 @@ export default function DashboardPage() {
           {sec === "org" && (
             <div className="space-y-6">
               <TabBar
-                tabs={[{ id: "dept", label: "🏢 部署別" }, { id: "product", label: "📦 プロダクト別" }]}
+                tabs={[{ id: "dept", label: "🏢 部署別" }, { id: "product", label: `📦 ${secondaryAxisName}別` }]}
                 active={orgView}
                 onChange={setOrgView}
               />
@@ -809,7 +811,7 @@ export default function DashboardPage() {
                 <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-6 animate-fadeIn">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">🔗</span>
-                    <h3 className="text-sm font-bold text-slate-800">プロダクト間の比較分析（AI）</h3>
+                    <h3 className="text-sm font-bold text-slate-800">{secondaryAxisName}間の比較分析（AI）</h3>
                   </div>
                   <div className="space-y-3">
                     <ProductInsight
