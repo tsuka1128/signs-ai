@@ -445,7 +445,7 @@ export default function SettingsPage() {
                                                 {/* Right Column: Main Setting & Note */}
                                                 <div className="md:col-span-12 lg:col-span-5 h-full flex flex-col justify-between pt-2">
                                                     <div className="space-y-4">
-                                                        <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">部署代表設定 / Dept Priority</label>
+                                                        <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">部署代表KPI設定 / Dept Priority</label>
                                                         <button
                                                             onClick={() => {
                                                                 const isCurrentlyMain = k.is_main;
@@ -472,7 +472,7 @@ export default function SettingsPage() {
                                                                     "w-2.5 h-2.5 rounded-full border-2",
                                                                     k.is_main ? "bg-white border-white animate-pulse" : "bg-transparent border-slate-200 group-hover:border-teal"
                                                                 )} />
-                                                                <span className="text-xs font-black uppercase tracking-widest">部署の代表指標に設定</span>
+                                                                <span className="text-xs font-black uppercase tracking-widest">部署の代表KPIに設定</span>
                                                             </div>
                                                             {k.is_main && (
                                                                 <div className="bg-white/20 px-2 py-0.5 rounded-lg text-[9px] font-bold backdrop-blur-sm">ACTIVE</div>
