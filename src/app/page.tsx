@@ -362,7 +362,14 @@ export default function DashboardPage() {
       dept: realDepts.find(d => d.id === k.owner_department_id)?.name || "",
       voices: [],
       prev: k.prev || [], // historyデータを保持
-      targetHistory: k.targetHistory || [] // 追加
+      targetHistory: k.targetHistory || [], // 追加
+      yoy: (() => {
+        const history = k.prev || [];
+        if (history.length >= 13 && history[0] > 0) {
+          return Math.round((history[12] / history[0]) * 100);
+        }
+        return null;
+      })()
     };
   }) : [];
 
@@ -799,6 +806,11 @@ export default function DashboardPage() {
                                 )}>
                                   達成率 {achRate}%
                                 </Badge>
+                              )}
+                              {selectedKpiDef.yoy !== null && (
+                                <span className="text-[10px] text-slate-400 font-bold ml-1">
+                                  昨年同月対比 <span className={cn(selectedKpiDef.yoy >= 100 ? "text-emerald-500" : "text-rose-400")}>{selectedKpiDef.yoy}%</span>
+                                </span>
                               )}
                             </div>
                           </div>
