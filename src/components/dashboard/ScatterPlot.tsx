@@ -14,17 +14,19 @@ interface ScatterData {
     prevHead?: number;
     prevProductivity?: number;
     mrr?: number;
+    sizeValue?: number; // 追加
 }
 
 interface ScatterPlotProps {
     data: ScatterData[];
     isProduct?: boolean;
+    sizeKpiName?: string; // 追加
     month?: string;
     onMonthChange?: (val: string) => void;
     onProductToggle?: (isProduct: boolean) => void;
 }
 
-export function ScatterPlot({ data, isProduct = false, month, onMonthChange, onProductToggle }: ScatterPlotProps) {
+export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成率", month, onMonthChange, onProductToggle }: ScatterPlotProps) {
     const [hoveredId, setHoveredId] = useState<string | null>(null);
     const W = 680;
     const H = 680; // 正方形に固定
@@ -93,9 +95,18 @@ export function ScatterPlot({ data, isProduct = false, month, onMonthChange, onP
                 const y = cy(d.productivity);
 
                 // 円の半径を計算
-                const r = isProduct
-                    ? Math.max(12, Math.min(48, ((d.mrr || 500) / 1000) * 20))
-                    : Math.max(12, Math.min(48, (d.kpiAch / 100) * 20));
+                let r = Math.max(12, Math.min(48, (d.kpiAch / 100) * 20));
+
+                if (isProduct) {
+                    // sizeValue があれば優先使用。なければ mrr や kpiAch
+                    const valForSize = d.sizeValue !== undefined ? d.sizeValue : (d.mrr || d.kpiAch || 100);
+                    r = Math.max(12, Math.min(48, (valForSize / 100) * 20));
+
+                    // 特例: 全くデータがない（初期値100）の場合のみ、所属人数の規模に応じて少し大きくする
+                    if (valForSize === 100 && d.kpiAch === 100 && d.head > 0) {
+                        r = Math.max(16, Math.min(50, (d.head / 10) * 5));
+                    }
+                }
 
                 const col = d.weather === "sun" ? colors.sun : d.weather === "rain" ? colors.rain : colors.cloud;
 
@@ -219,7 +230,7 @@ export function ScatterPlot({ data, isProduct = false, month, onMonthChange, onP
                                                 </div>
                                             </div>
                                         </div>
-                                        <span>｜ 横軸: リソース量 ｜ 円サイズ: {isProduct ? "MRRの大きさ" : "KPI達成率"}</span>
+                                        <span>｜ 横軸: {isProduct ? "所属人数" : "リソース量"} ｜ 円サイズ: {sizeKpiName}</span>
                                     </div>
                                 </div>
                                 <button
@@ -243,7 +254,7 @@ export function ScatterPlot({ data, isProduct = false, month, onMonthChange, onP
                                         <div className="flex flex-col md:flex-row md:items-center gap-2">
                                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest hidden md:inline ml-2">Time Lapse</span>
                                             <div className="flex bg-slate-100 p-1 rounded-full text-xs font-bold cursor-pointer">
-                                                {[{ id: "default", label: "現在" }, { id: "1m", label: "1ヶ月前" }, { id: "3m", label: "3ヶ月前" }, { id: "6m", label: "6ヶ月前" }].map((t) => (
+                                                {[{ id: "default", label: "現在" }, { id: "1m", label: "1ヶ月前" }, { id: "3m", label: "3ヶ月前" }, { id: "6m", label: "6ヶ月前" }, { id: "12m", label: "1年前" }].map((t) => (
                                                     <button key={t.id} onClick={() => onMonthChange(t.id)} className={`px-3 py-1.5 rounded-full transition-colors ${(month || "default") === t.id ? "bg-white text-slate-800 shadow-sm" : "text-slate-400"}`}>{t.label}</button>
                                                 ))}
                                             </div>
