@@ -54,8 +54,8 @@ BEGIN
 
     -- C. 全ての KPI 実績 & 目標
     FOR kpi_rec IN SELECT id, target_default, name FROM kpi_definitions WHERE company_id = comp_id LOOP
-      target := COALESCE(kpi_rec.target_default, 100) * (0.9 + random() * 0.2);
-      val := target * (0.8 + random() * 0.35); -- 達成率 80%~115%
+      target := ROUND(COALESCE(kpi_rec.target_default, 100) * (0.9 + random() * 0.2));
+      val := ROUND(target * (0.8 + random() * 0.35)); -- 達成率 80%~115%
 
       -- メイン（全社・部署平均）
       INSERT INTO kpi_records (kpi_definition_id, recorded_month, value, target_value)
@@ -64,7 +64,7 @@ BEGIN
       -- 第2軸（拠点等）
       FOR axis_rec IN SELECT id FROM kpi_axes WHERE company_id = comp_id LOOP
         INSERT INTO kpi_records (kpi_definition_id, recorded_month, value, target_value, axis_id)
-        VALUES (kpi_rec.id, target_month_str::DATE, (val / 3) * (0.7 + random() * 0.6), target / 3, axis_rec.id);
+        VALUES (kpi_rec.id, target_month_str::DATE, ROUND((val / 3.0) * (0.7 + random() * 0.6)), ROUND(target / 3.0), axis_rec.id);
       END LOOP;
     END LOOP;
 
