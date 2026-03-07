@@ -22,6 +22,8 @@ import {
     Check
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Reorder, useDragControls } from "framer-motion";
+import { GripVertical } from "lucide-react";
 import { KPI_UNIT_OPTIONS } from "@/lib/constants";
 
 export default function SettingsPage() {
@@ -377,41 +379,52 @@ export default function SettingsPage() {
                                 <p className="text-xs text-slate-500 mb-6">組織内の各部署を登録してください。バブルチャートの比較に使用されます。</p>
 
                                 <div className="space-y-4">
-                                    {depts.map(d => (
-                                        <div key={d.id} className="flex flex-col sm:flex-row gap-4 items-center p-5 bg-slate-50 border border-slate-100 rounded-2xl">
-                                            <div className="flex-1 w-full">
-                                                <label className="block text-[9px] font-bold text-slate-400 mb-1 ml-1">部署名</label>
-                                                <input
-                                                    type="text"
-                                                    value={d.name}
-                                                    onChange={(e) => setDepts(depts.map(x => x.id === d.id ? { ...x, name: e.target.value } : x))}
-                                                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-teal"
-                                                />
-                                            </div>
-                                            <div className="w-full sm:w-32">
-                                                <label className="block text-[9px] font-bold text-slate-400 mb-1 ml-1">所属人数</label>
-                                                <div className="relative">
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        value={d.headcount === 0 ? "" : d.headcount}
-                                                        onChange={(e) => {
-                                                            const val = e.target.value === "" ? 0 : parseInt(e.target.value);
-                                                            setDepts(depts.map(x => x.id === d.id ? { ...x, headcount: val } : x));
-                                                        }}
-                                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-teal pr-8"
-                                                    />
-                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">名</span>
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={() => handleDeleteDept(d.id)}
-                                                className="p-3 rounded-xl bg-white border border-rose-100 text-rose-400 hover:text-rose-600 hover:bg-rose-50 transition-all self-end"
+                                    <Reorder.Group axis="y" values={depts} onReorder={setDepts} className="space-y-4">
+                                        {depts.map(d => (
+                                            <Reorder.Item
+                                                key={d.id}
+                                                value={d}
+                                                className="flex flex-col sm:flex-row gap-4 items-center p-5 bg-slate-50 border border-slate-100 rounded-2xl cursor-default"
                                             >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    ))}
+                                                <div className="p-2 cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-400">
+                                                    <GripVertical className="w-5 h-5" />
+                                                </div>
+                                                <div className="flex-1 w-full">
+                                                    <label className="block text-[9px] font-bold text-slate-400 mb-1 ml-1">部署名</label>
+                                                    <input
+                                                        type="text"
+                                                        value={d.name}
+                                                        onChange={(e) => setDepts(depts.map(x => x.id === d.id ? { ...x, name: e.target.value } : x))}
+                                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-teal"
+                                                    />
+                                                </div>
+                                                <div className="w-full sm:w-32">
+                                                    <label className="block text-[9px] font-bold text-slate-400 mb-1 ml-1">所属人数</label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={d.headcount === 0 ? "" : d.headcount}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value === "" ? 0 : parseInt(e.target.value);
+                                                                setDepts(depts.map(x => x.id === d.id ? { ...x, headcount: val } : x));
+                                                            }}
+                                                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-teal pr-8"
+                                                        />
+                                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">名</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex justify-end pt-2 sm:pt-0">
+                                                    <button
+                                                        onClick={() => handleDeleteDept(d.id)}
+                                                        className="p-3 bg-white border border-rose-100 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all shadow-sm"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </Reorder.Item>
+                                        ))}
+                                    </Reorder.Group>
 
                                     <div className="flex flex-col gap-3 mt-6">
                                         <button onClick={handleAddDept} className="w-full py-4 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-bold hover:border-teal hover:text-teal hover:bg-teal/5 transition-all text-sm flex items-center justify-center gap-2">
@@ -590,41 +603,52 @@ export default function SettingsPage() {
 
                                 <div className="space-y-4">
                                     <h3 className="text-sm font-bold text-slate-700 ml-1">{secondaryAxisName}の項目一覧</h3>
-                                    {axes.map(a => (
-                                        <div key={a.id} className="flex flex-col sm:flex-row gap-4 items-center p-5 bg-slate-50 border border-slate-100 rounded-2xl">
-                                            <div className="flex-1 w-full">
-                                                <label className="block text-[9px] font-bold text-slate-400 mb-1 ml-1">{secondaryAxisName}名</label>
-                                                <input
-                                                    type="text"
-                                                    value={a.name}
-                                                    onChange={(e) => setAxes(axes.map(x => x.id === a.id ? { ...x, name: e.target.value } : x))}
-                                                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-teal"
-                                                />
-                                            </div>
-                                            <div className="w-full sm:w-32">
-                                                <label className="block text-[9px] font-bold text-slate-400 mb-1 ml-1">所属人数</label>
-                                                <div className="relative">
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        value={a.headcount === 0 ? "" : a.headcount}
-                                                        onChange={(e) => {
-                                                            const val = e.target.value === "" ? 0 : parseInt(e.target.value);
-                                                            setAxes(axes.map(x => x.id === a.id ? { ...x, headcount: val } : x));
-                                                        }}
-                                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-teal pr-8"
-                                                    />
-                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">名</span>
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={() => handleDeleteAxis(a.id)}
-                                                className="p-3 rounded-xl bg-white border border-rose-100 text-rose-400 hover:text-rose-600 hover:bg-rose-50 transition-all self-end"
+                                    <Reorder.Group axis="y" values={axes} onReorder={setAxes} className="space-y-4">
+                                        {axes.map(a => (
+                                            <Reorder.Item
+                                                key={a.id}
+                                                value={a}
+                                                className="flex flex-col sm:flex-row gap-4 items-center p-5 bg-slate-50 border border-slate-100 rounded-2xl cursor-default"
                                             >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    ))}
+                                                <div className="p-2 cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-400">
+                                                    <GripVertical className="w-5 h-5" />
+                                                </div>
+                                                <div className="flex-1 w-full">
+                                                    <label className="block text-[9px] font-bold text-slate-400 mb-1 ml-1">{secondaryAxisName}名</label>
+                                                    <input
+                                                        type="text"
+                                                        value={a.name}
+                                                        onChange={(e) => setAxes(axes.map(x => x.id === a.id ? { ...x, name: e.target.value } : x))}
+                                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-teal"
+                                                    />
+                                                </div>
+                                                <div className="w-full sm:w-32">
+                                                    <label className="block text-[9px] font-bold text-slate-400 mb-1 ml-1">所属人数</label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={a.headcount === 0 ? "" : a.headcount}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value === "" ? 0 : parseInt(e.target.value);
+                                                                setAxes(axes.map(x => x.id === a.id ? { ...x, headcount: val } : x));
+                                                            }}
+                                                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-teal pr-8"
+                                                        />
+                                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">名</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex justify-end pt-2 sm:pt-0">
+                                                    <button
+                                                        onClick={() => handleDeleteAxis(a.id)}
+                                                        className="p-3 bg-white border border-rose-100 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all shadow-sm"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </Reorder.Item>
+                                        ))}
+                                    </Reorder.Group>
 
                                     <div className="flex flex-col gap-3 mt-6">
                                         <button onClick={handleAddAxis} className="w-full py-4 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-bold hover:border-teal hover:text-teal hover:bg-teal/5 transition-all text-sm flex items-center justify-center gap-2">

@@ -110,7 +110,7 @@ export default function DashboardPage() {
       }
 
       const [d, k, s, r, a, recs, resources] = await Promise.all([
-        supabase.from('departments').select('*').eq('company_id', comp.company_id).order('created_at', { ascending: true }),
+        supabase.from('departments').select('*').eq('company_id', comp.company_id).order('sort_order', { ascending: true }),
         supabase.from('kpi_definitions').select('*').eq('company_id', comp.company_id).order('sort_order', { ascending: true }),
         supabase.from('semantic_layers').select('content').eq('company_id', comp.company_id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('survey_responses').select('*, survey_answers(*)').eq('company_id', comp.company_id),
