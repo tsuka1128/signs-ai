@@ -31,10 +31,10 @@ export function DetailLineChart({
 
     // 全データポイント（0も含む）を描画対象とする
     const min = 0;
-    const dataMax = data.length > 0 ? Math.max(...data) : 0;
-    const targetMax = targetData.length > 0 ? Math.max(...targetData) : 0;
-    const max = Math.max(dataMax, targetMax, 5); // 最低でも5を上限として見やすく
-    const range = max - min || 1; // 0除算防止
+    const dataMax = data.length > 0 ? Math.max(...data.map(v => v || 0)) : 0;
+    const targetMax = targetData.length > 0 ? Math.max(...targetData.map(v => v || 0)) : 0;
+    const max = Math.max(dataMax, targetMax, 5);
+    const range = max - min || 1;
 
     // 全月分の座標を計算
     const points = data.map((v, i) => {
@@ -175,21 +175,21 @@ export function DetailLineChart({
                         <div className="flex justify-between items-center gap-3">
                             <span className="text-[10px] text-slate-500 font-bold">実績</span>
                             <span className="text-xs font-black text-slate-800">
-                                {data[hoveredIndex].toLocaleString()}<span className="text-[10px] ml-0.5 font-bold text-slate-400">{unit}</span>
+                                {(data[hoveredIndex] || 0).toLocaleString()}<span className="text-[10px] ml-0.5 font-bold text-slate-400">{unit}</span>
                             </span>
                         </div>
-                        {targetData[hoveredIndex] !== undefined && (
+                        {targetData[hoveredIndex] != null && (
                             <>
                                 <div className="flex justify-between items-center gap-3">
                                     <span className="text-[10px] text-slate-500 font-bold">目標</span>
                                     <span className="text-xs font-black text-slate-800">
-                                        {targetData[hoveredIndex].toLocaleString()}<span className="text-[10px] ml-0.5 font-bold text-slate-400">{unit}</span>
+                                        {(targetData[hoveredIndex] || 0).toLocaleString()}<span className="text-[10px] ml-0.5 font-bold text-slate-400">{unit}</span>
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center gap-3 pt-1 border-t border-slate-50">
                                     <span className="text-[10px] text-slate-500 font-bold">達成率</span>
-                                    <span className={`text-xs font-black ${data[hoveredIndex] >= targetData[hoveredIndex] ? "text-emerald-500" : "text-rose-500"}`}>
-                                        {targetData[hoveredIndex] > 0 ? Math.round((data[hoveredIndex] / targetData[hoveredIndex]) * 100) : 0}%
+                                    <span className={`text-xs font-black ${(data[hoveredIndex] || 0) >= (targetData[hoveredIndex] || 0) ? "text-emerald-500" : "text-rose-500"}`}>
+                                        {(targetData[hoveredIndex] || 0) > 0 ? Math.round(((data[hoveredIndex] || 0) / (targetData[hoveredIndex] || 0)) * 100) : 0}%
                                     </span>
                                 </div>
                             </>

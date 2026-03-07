@@ -365,8 +365,10 @@ export default function DashboardPage() {
       targetHistory: k.targetHistory || [], // 追加
       yoy: (() => {
         const history = k.prev || [];
-        if (history.length >= 13 && history[0] > 0) {
-          return Math.round((history[12] / history[0]) * 100);
+        const currentVal = Number(history[12]);
+        const prevVal = Number(history[0]);
+        if (history.length >= 13 && !isNaN(currentVal) && !isNaN(prevVal) && prevVal > 0) {
+          return Math.round((currentVal / prevVal) * 100);
         }
         return null;
       })()
@@ -475,7 +477,13 @@ export default function DashboardPage() {
 
   const ins = insights[tab];
   const selectedKpiDef = displayKpis.find(k => k.id === selKpi) || displayKpis[0];
-  const achRate = (selectedKpiDef && selectedKpiDef.target) ? Math.round((selectedKpiDef.val / selectedKpiDef.target) * 100) : null;
+  const achRate = (() => {
+    if (!selectedKpiDef || !selectedKpiDef.target) return null;
+    const v = Number(selectedKpiDef.val);
+    const t = Number(selectedKpiDef.target);
+    if (isNaN(v) || isNaN(t) || t <= 0) return 0;
+    return Math.round((v / t) * 100);
+  })();
 
   const secondaryAxisName = company?.secondary_axis_name || "プロダクト";
 
@@ -779,7 +787,7 @@ export default function DashboardPage() {
                       <KpiSummaryCard
                         key={k.id}
                         name={k.name}
-                        value={(k.val || 0).toLocaleString()}
+                        value={Number(k.val || 0).toLocaleString()}
                         unit={k.unit}
                         isActive={selKpi === k.id}
                         onClick={() => setSelKpi(k.id)}
@@ -797,7 +805,7 @@ export default function DashboardPage() {
                             <div className="flex flex-wrap items-center gap-3">
                               <Badge className="bg-slate-100 text-slate-500 font-bold border-none">担当: {selectedKpiDef.dept}</Badge>
                               {selectedKpiDef.target && (
-                                <span className="text-xs text-slate-400 font-bold">目標: {selectedKpiDef.target.toLocaleString()}{selectedKpiDef.unit}</span>
+                                <span className="text-xs text-slate-400 font-bold">目標: {Number(selectedKpiDef.target || 0).toLocaleString()}{selectedKpiDef.unit}</span>
                               )}
                               {achRate !== null && (
                                 <Badge className={cn(
@@ -816,7 +824,7 @@ export default function DashboardPage() {
                           </div>
                           <div className="text-right">
                             <div className="flex items-baseline gap-1.5 justify-end">
-                              <span className="text-5xl font-black text-slate-800 tabular-nums tracking-tighter">{(selectedKpiDef?.val || 0).toLocaleString()}</span>
+                              <span className="text-5xl font-black text-slate-800 tabular-nums tracking-tighter">{Number(selectedKpiDef?.val || 0).toLocaleString()}</span>
                               <span className="text-lg font-bold text-slate-400">{selectedKpiDef?.unit}</span>
                             </div>
                           </div>
