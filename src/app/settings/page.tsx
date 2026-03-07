@@ -13,6 +13,7 @@ import {
     Save,
     Plus,
     Trash2,
+    Star,
     Mail,
     UserPlus,
     ShieldCheck,
@@ -130,7 +131,7 @@ export default function SettingsPage() {
     };
 
     const handleAddKpi = () => {
-        setKpis([...kpis, { id: `new_${Date.now()}`, name: "", unit: "", is_main: false, is_new: true }]);
+        setKpis([...kpis, { id: `new_${Date.now()}`, name: "", unit: "", target_default: 0, is_main: false, is_new: true }]);
     };
 
     const handleSaveAllKpis = async () => {
@@ -143,8 +144,18 @@ export default function SettingsPage() {
             });
 
             const results = await Promise.all([
-                ...toUpdate.map(k => supabase.from('kpi_definitions').update({ name: k.name, unit: k.unit, is_main: k.is_main, owner_dept_id: k.owner_dept_id, sort_order: k.sort_order }).eq('id', k.id)),
-                toCreate.length > 0 ? supabase.from('kpi_definitions').insert(toCreate) : Promise.resolve({ error: null })
+                ...toUpdate.map(k => supabase.from('kpi_definitions').update({
+                    name: k.name,
+                    unit: k.unit,
+                    target_default: k.target_default,
+                    is_main: k.is_main,
+                    owner_dept_id: k.owner_dept_id,
+                    sort_order: k.sort_order
+                }).eq('id', k.id)),
+                toCreate.length > 0 ? supabase.from('kpi_definitions').insert(toCreate.map(k => ({
+                    ...k,
+                    target_default: k.target_default ?? 0
+                }))) : Promise.resolve({ error: null })
             ]);
 
             const firstError = results.find(r => r.error)?.error;
@@ -159,6 +170,45 @@ export default function SettingsPage() {
         } catch (err: any) {
             console.error("KPIs save failed:", err);
             alert(`KPI設定の保存に失敗しました: ${err.message || "詳細不明"}`);
+        }
+    };
+
+    const handleSaveSingleKpi = async (k: any) => {
+        const supabase = createClient();
+        try {
+            const dataToSave = {
+                name: k.name,
+                unit: k.unit,
+                target_default: k.target_default,
+                is_main: k.is_main,
+                owner_dept_id: k.owner_dept_id || null,
+                company_id: company.id
+            };
+
+            let error;
+            if (k.is_new) {
+                // Determine sort order
+                const sortOrder = kpis.length - 1;
+                const { id, is_new, ...insertData } = k;
+                const { data, error: err } = await supabase.from('kpi_definitions').insert({
+                    ...insertData,
+                    company_id: company.id,
+                    sort_order: sortOrder
+                }).select().single();
+                error = err;
+                if (data) {
+                    setKpis(kpis.map(x => x.id === k.id ? { ...data, is_new: false } : x));
+                }
+            } else {
+                const { error: err } = await supabase.from('kpi_definitions').update(dataToSave).eq('id', k.id);
+                error = err;
+            }
+
+            if (error) throw error;
+            alert(`${k.name || "KPI"}を保存しました`);
+        } catch (err: any) {
+            console.error("KPI save failed:", err);
+            alert(`保存に失敗しました: ${err.message}`);
         }
     };
 
@@ -383,107 +433,112 @@ export default function SettingsPage() {
 
                                 <div className="space-y-4">
                                     {kpis.map(k => (
-                                        <div key={k.id} className="p-8 bg-slate-50/50 border border-slate-100 rounded-[2rem] space-y-6 relative group transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-200/50">
-                                            {/* Header Layer: Identifying & Delete */}
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div className="flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-slate-100 shadow-sm">
-                                                    <Target className="w-3.5 h-3.5 text-teal" />
-                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">KPI Definition</span>
+                                        <div key={k.id} className="p-7 bg-slate-50/50 border border-slate-100 rounded-[2.5rem] space-y-6 group transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-200/40">
+                                            {/* Row 1: KPI Name, Target, Unit */}
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">指標名</label>
+                                                    <input
+                                                        type="text"
+                                                        value={k.name}
+                                                        placeholder="指標名を入力"
+                                                        onChange={(e) => setKpis(kpis.map(x => x.id === k.id ? { ...x, name: e.target.value } : x))}
+                                                        className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-800 outline-none focus:border-teal transition-all"
+                                                    />
                                                 </div>
-                                                <button
-                                                    onClick={() => handleDeleteKpi(k.id)}
-                                                    className="p-2.5 rounded-xl bg-white border border-rose-100 text-rose-400 hover:text-rose-600 hover:bg-rose-50 transition-all opacity-0 group-hover:opacity-100 shadow-sm"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-                                                {/* Left Column: Name & Dept */}
-                                                <div className="md:col-span-12 lg:col-span-7 space-y-6">
-                                                    <div className="grid grid-cols-1 md:grid-cols-10 gap-4">
-                                                        <div className="md:col-span-7">
-                                                            <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">指標名 / KPI Name</label>
-                                                            <input
-                                                                type="text"
-                                                                value={k.name}
-                                                                placeholder="例: 有効商談数"
-                                                                onChange={(e) => setKpis(kpis.map(x => x.id === k.id ? { ...x, name: e.target.value } : x))}
-                                                                className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-800 outline-none focus:border-teal focus:ring-4 focus:ring-teal/5 transition-all"
-                                                            />
-                                                        </div>
-                                                        <div className="md:col-span-3">
-                                                            <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">単位 / Unit</label>
-                                                            <select
-                                                                value={k.unit}
-                                                                onChange={(e) => setKpis(kpis.map(x => x.id === k.id ? { ...x, unit: e.target.value } : x))}
-                                                                className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-800 outline-none focus:border-teal appearance-none transition-all"
-                                                            >
-                                                                <option value="">選択</option>
-                                                                {KPI_UNIT_OPTIONS.map(opt => (
-                                                                    <option key={opt} value={opt}>{opt}</option>
-                                                                ))}
-                                                            </select>
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">目標値</label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={k.target_default ?? 0}
+                                                        placeholder="目標額/数"
+                                                        onChange={(e) => {
+                                                            const val = e.target.value === "" ? "" : Number(e.target.value);
+                                                            setKpis(kpis.map(x => x.id === k.id ? { ...x, target_default: val } : x));
+                                                        }}
+                                                        className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-800 outline-none focus:border-teal transition-all"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">単位</label>
+                                                    <div className="relative">
+                                                        <select
+                                                            value={k.unit}
+                                                            onChange={(e) => setKpis(kpis.map(x => x.id === k.id ? { ...x, unit: e.target.value } : x))}
+                                                            className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-800 outline-none focus:border-teal appearance-none transition-all"
+                                                        >
+                                                            <option value="">単位を選択</option>
+                                                            {KPI_UNIT_OPTIONS.map(opt => (
+                                                                <option key={opt} value={opt}>{opt}</option>
+                                                            ))}
+                                                        </select>
+                                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                                            <ArrowRight className="w-3.5 h-3.5 rotate-90" />
                                                         </div>
                                                     </div>
+                                                </div>
+                                            </div>
 
-                                                    <div>
-                                                        <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">担当部署 / Responsible Dept</label>
+                                            {/* Row 2: Dept, Main Toggle, Save, Delete */}
+                                            <div className="grid grid-cols-1 md:grid-cols-10 gap-5 items-end">
+                                                <div className="md:col-span-4">
+                                                    <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">主担当部署（任意）</label>
+                                                    <div className="relative">
                                                         <select
                                                             value={k.owner_dept_id || ""}
                                                             onChange={(e) => setKpis(kpis.map(x => x.id === k.id ? { ...x, owner_dept_id: e.target.value } : x))}
-                                                            className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-800 outline-none focus:border-teal transition-all"
+                                                            className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-800 outline-none focus:border-teal appearance-none transition-all"
                                                         >
                                                             <option value="">設定なし</option>
                                                             {depts.map(d => (
                                                                 <option key={d.id} value={d.id}>{d.name}</option>
                                                             ))}
                                                         </select>
+                                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                                            <ArrowRight className="w-3.5 h-3.5 rotate-90" />
+                                                        </div>
                                                     </div>
                                                 </div>
 
-                                                {/* Right Column: Main Setting & Note */}
-                                                <div className="md:col-span-12 lg:col-span-5 h-full flex flex-col justify-between pt-2">
-                                                    <div className="space-y-4">
-                                                        <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">部署代表KPI設定 / Dept Priority</label>
-                                                        <button
-                                                            onClick={() => {
-                                                                const isCurrentlyMain = k.is_main;
-                                                                const deptId = k.owner_dept_id;
-                                                                setKpis(kpis.map(x => {
-                                                                    if (deptId && x.owner_dept_id === deptId && x.id !== k.id) {
-                                                                        return { ...x, is_main: false };
-                                                                    }
-                                                                    if (x.id === k.id) {
-                                                                        return { ...x, is_main: !isCurrentlyMain };
-                                                                    }
-                                                                    return x;
-                                                                }));
-                                                            }}
-                                                            className={cn(
-                                                                "w-full flex items-center justify-between pl-5 pr-4 py-3.5 rounded-2xl border-2 transition-all group",
-                                                                k.is_main
-                                                                    ? "bg-teal text-white border-teal shadow-lg shadow-teal/20"
-                                                                    : "bg-white border-slate-200 text-slate-400 hover:border-teal/30 hover:text-teal"
-                                                            )}
-                                                        >
-                                                            <div className="flex items-center gap-3">
-                                                                <div className={cn(
-                                                                    "w-2.5 h-2.5 rounded-full border-2",
-                                                                    k.is_main ? "bg-white border-white animate-pulse" : "bg-transparent border-slate-200 group-hover:border-teal"
-                                                                )} />
-                                                                <span className="text-xs font-black uppercase tracking-widest">部署の代表KPIに設定</span>
-                                                            </div>
-                                                            {k.is_main && (
-                                                                <div className="bg-white/20 px-2 py-0.5 rounded-lg text-[9px] font-bold backdrop-blur-sm">ACTIVE</div>
-                                                            )}
-                                                        </button>
-                                                        <div className="p-4 bg-white/50 border border-slate-100 rounded-2xl">
-                                                            <p className="text-[10px] text-slate-400 leading-relaxed font-bold">
-                                                                ※ 部署ごとに1つ定義可能です。マトリックス図でのラベルや、ダッシュボードのメインカードとして優先的に表示されます。
-                                                            </p>
-                                                        </div>
-                                                    </div>
+                                                <div className="md:col-span-3">
+                                                    <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">部署代表KPI設定</label>
+                                                    <button
+                                                        onClick={() => {
+                                                            const isCurrentlyMain = k.is_main;
+                                                            const deptId = k.owner_dept_id;
+                                                            setKpis(kpis.map(x => {
+                                                                if (deptId && x.owner_dept_id === deptId && x.id !== k.id) return { ...x, is_main: false };
+                                                                if (x.id === k.id) return { ...x, is_main: !isCurrentlyMain };
+                                                                return x;
+                                                            }));
+                                                        }}
+                                                        className={cn(
+                                                            "w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl border-2 transition-all font-bold text-sm",
+                                                            k.is_main
+                                                                ? "bg-teal/5 border-teal text-teal"
+                                                                : "bg-white border-slate-100 text-slate-400 hover:border-slate-200"
+                                                        )}
+                                                    >
+                                                        <Star className={cn("w-4 h-4", k.is_main ? "fill-teal" : "text-slate-300")} />
+                                                        <span>{k.is_main ? "設定済み" : "設定する"}</span>
+                                                    </button>
+                                                </div>
+
+                                                <div className="md:col-span-3 flex gap-2">
+                                                    <button
+                                                        onClick={() => handleSaveSingleKpi(k)}
+                                                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 bg-slate-800 text-white rounded-2xl font-bold text-sm hover:bg-slate-700 transition-all shadow-lg shadow-slate-200"
+                                                    >
+                                                        <Save className="w-4 h-4" />
+                                                        <span>保存</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteKpi(k.id)}
+                                                        className="p-3.5 rounded-2xl bg-white border border-rose-100 text-rose-400 hover:text-rose-600 hover:bg-rose-50 transition-all"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
