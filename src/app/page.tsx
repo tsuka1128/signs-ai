@@ -726,7 +726,7 @@ export default function DashboardPage() {
                       <KpiSummaryCard
                         key={k.id}
                         name={k.name}
-                        value={k.val.toLocaleString()}
+                        value={(k.val || 0).toLocaleString()}
                         unit={k.unit}
                         isActive={selKpi === k.id}
                         onClick={() => setSelKpi(k.id)}
@@ -758,8 +758,8 @@ export default function DashboardPage() {
                           </div>
                           <div className="text-right">
                             <div className="flex items-baseline gap-1.5 justify-end">
-                              <span className="text-5xl font-black text-slate-800 tabular-nums tracking-tighter">{selectedKpiDef.val.toLocaleString()}</span>
-                              <span className="text-lg font-bold text-slate-400">{selectedKpiDef.unit}</span>
+                              <span className="text-5xl font-black text-slate-800 tabular-nums tracking-tighter">{(selectedKpiDef?.val || 0).toLocaleString()}</span>
+                              <span className="text-lg font-bold text-slate-400">{selectedKpiDef?.unit}</span>
                             </div>
                           </div>
                         </div>

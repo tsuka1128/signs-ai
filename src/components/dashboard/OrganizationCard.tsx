@@ -71,8 +71,9 @@ export function OrganizationCard({ name, head, pulse, weather, arrow, kpis }: Or
                 kpis.length === 1 ? "grid-cols-1" : "grid-cols-1 md:grid-cols-3"
             )}>
                 {kpis.map((k, i) => {
-                    const achColor = k.ach === null ? "text-slate-400" : k.ach >= 100 ? "text-emerald-500" : k.ach >= 80 ? "text-amber-500" : "text-rose-500";
-                    const achBg = k.ach === null ? "bg-slate-100" : k.ach >= 100 ? "bg-emerald-400" : k.ach >= 80 ? "bg-amber-400" : "bg-rose-400";
+                    const achValue = k.ach !== null ? k.ach : 0;
+                    const achColor = k.ach === null ? "text-slate-400" : achValue >= 100 ? "text-emerald-500" : achValue >= 80 ? "text-amber-500" : "text-rose-500";
+                    const achBg = k.ach === null ? "bg-slate-100" : achValue >= 100 ? "bg-emerald-400" : achValue >= 80 ? "bg-amber-400" : "bg-rose-400";
 
                     return (
                         <div key={i} className="p-4 space-y-2">
@@ -92,7 +93,7 @@ export function OrganizationCard({ name, head, pulse, weather, arrow, kpis }: Or
                                     <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
                                         <div
                                             className={cn("h-full rounded-full transition-all duration-1000", achBg)}
-                                            style={{ width: `${Math.min(k.ach, 120) / 1.2}%` }}
+                                            style={{ width: `${Math.min(achValue, 120) / 1.2}%` }}
                                         />
                                     </div>
                                 </div>
