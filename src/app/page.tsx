@@ -209,12 +209,13 @@ export default function DashboardPage() {
     let filtered = realResponses;
     let viewName = "全社";
 
-    const surveyViewId = (orgView === "product" || orgView === "dept") ? "all" : orgView;
+    const surveyViewId = (orgView === "product" || orgView === "dept" || orgView === "all") ? "all" : orgView;
 
     if (surveyViewId !== "all") {
       const dept = realDepts.find(d => d.id === surveyViewId);
-      viewName = dept ? dept.name : "不明な部署";
-      filtered = realResponses.filter(r => r.department_id === surveyViewId);
+      const axis = realAxes.find(a => a.id === surveyViewId);
+      viewName = dept ? dept.name : (axis ? axis.name : "不明なターゲット");
+      filtered = realResponses.filter(r => r.department_id === surveyViewId || r.axis_id === surveyViewId);
     }
 
     const latestMonth = last13Months[12];
@@ -957,14 +958,24 @@ export default function DashboardPage() {
                     <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-[0.1em]">11の問いから紐解く現場の真実</p>
                   </div>
                 </div>
-                <TabBar
-                  tabs={[
-                    { id: "all", label: "🏢 全社" },
-                    ...realDepts.map(d => ({ id: d.id, label: d.name }))
-                  ]}
-                  active={orgView === "product" ? "all" : orgView} // Reuse orgView state or fix it
-                  onChange={(id) => setOrgView(id as any)}
-                />
+                <div className="flex flex-col gap-4">
+                  <TabBar
+                    tabs={[{ id: "dept", label: "🏢 部署別" }, { id: "product", label: `📦 ${secondaryAxisName}別` }]}
+                    active={matView} // reusing matView to decide which list to show
+                    onChange={setMatView}
+                    className="w-fit"
+                  />
+                  <TabBar
+                    tabs={[
+                      { id: "all", label: "🏢 全社" },
+                      ...(matView === "dept"
+                        ? realDepts.map(d => ({ id: d.id, label: d.name }))
+                        : realAxes.map(a => ({ id: a.id, label: a.name })))
+                    ]}
+                    active={orgView === "product" || orgView === "dept" ? "all" : orgView}
+                    onChange={(id) => setOrgView(id as any)}
+                  />
+                </div>
               </div>
 
               {(() => {
@@ -978,7 +989,7 @@ export default function DashboardPage() {
                         <div>
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-xl">🌡️</span>
-                            <h3 className="text-lg font-black text-slate-800 tracking-tight">組織体温の推移（直近6ヶ月）</h3>
+                            <h3 className="text-lg font-black text-slate-800 tracking-tight">組織体温の推移</h3>
                           </div>
                           <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest pl-8">
                             継続的なストレスや熱量の変化をモニタリング
