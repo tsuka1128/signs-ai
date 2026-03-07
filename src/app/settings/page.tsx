@@ -53,7 +53,7 @@ export default function SettingsPage() {
             // Load data in parallel
             const [comp, d, k, a, u, i] = await Promise.all([
                 supabase.from('companies').select('*').eq('id', userData.company_id).single(),
-                supabase.from('departments').select('*').eq('company_id', userData.company_id).order('created_at', { ascending: true }),
+                supabase.from('departments').select('*').eq('company_id', userData.company_id).order('sort_order', { ascending: true }),
                 supabase.from('kpi_definitions').select('*').eq('company_id', userData.company_id).order('sort_order', { ascending: true }),
                 supabase.from('kpi_axes').select('*').eq('company_id', userData.company_id).order('sort_order', { ascending: true }),
                 supabase.from('users').select('*').eq('company_id', userData.company_id),
@@ -94,11 +94,14 @@ export default function SettingsPage() {
     const handleSaveAllDepts = async () => {
         const supabase = createClient();
         try {
-            const toUpdate = depts.filter(d => !d.is_new);
-            const toCreate = depts.filter(d => d.is_new).map(({ id, is_new, ...rest }) => ({ ...rest, company_id: company.id }));
+            const toUpdate = depts.filter(d => !d.is_new).map((d, index) => ({ ...d, sort_order: index }));
+            const toCreate = depts.filter(d => d.is_new).map(({ id, is_new, ...rest }, index) => {
+                const totalExisting = depts.filter(d => !d.is_new).length;
+                return { ...rest, company_id: company.id, sort_order: totalExisting + index };
+            });
 
             const results = await Promise.all([
-                ...toUpdate.map(d => supabase.from('departments').update({ name: d.name, headcount: d.headcount }).eq('id', d.id)),
+                ...toUpdate.map(d => supabase.from('departments').update({ name: d.name, headcount: d.headcount, sort_order: d.sort_order }).eq('id', d.id)),
                 toCreate.length > 0 ? supabase.from('departments').insert(toCreate) : Promise.resolve({ error: null })
             ]);
 
@@ -109,7 +112,7 @@ export default function SettingsPage() {
             }
 
             alert("部署情報を一括保存しました");
-            const { data } = await supabase.from('departments').select('*').eq('company_id', company.id).order('created_at', { ascending: true });
+            const { data } = await supabase.from('departments').select('*').eq('company_id', company.id).order('sort_order', { ascending: true });
             if (data) setDepts(data);
         } catch (err: any) {
             console.error("Depts save failed:", err);
@@ -133,11 +136,14 @@ export default function SettingsPage() {
     const handleSaveAllKpis = async () => {
         const supabase = createClient();
         try {
-            const toUpdate = kpis.filter(k => !k.is_new);
-            const toCreate = kpis.filter(k => k.is_new).map(({ id, is_new, ...rest }) => ({ ...rest, company_id: company.id }));
+            const toUpdate = kpis.filter(k => !k.is_new).map((k, index) => ({ ...k, sort_order: index }));
+            const toCreate = kpis.filter(k => k.is_new).map(({ id, is_new, ...rest }, index) => {
+                const totalExisting = kpis.filter(k => !k.is_new).length;
+                return { ...rest, company_id: company.id, sort_order: totalExisting + index };
+            });
 
             const results = await Promise.all([
-                ...toUpdate.map(k => supabase.from('kpi_definitions').update({ name: k.name, unit: k.unit, is_main: k.is_main, owner_dept_id: k.owner_dept_id }).eq('id', k.id)),
+                ...toUpdate.map(k => supabase.from('kpi_definitions').update({ name: k.name, unit: k.unit, is_main: k.is_main, owner_dept_id: k.owner_dept_id, sort_order: k.sort_order }).eq('id', k.id)),
                 toCreate.length > 0 ? supabase.from('kpi_definitions').insert(toCreate) : Promise.resolve({ error: null })
             ]);
 
@@ -185,11 +191,14 @@ export default function SettingsPage() {
             }
 
             // 2. 軸項目の保存
-            const toUpdate = axes.filter(a => !a.is_new);
-            const toCreate = axes.filter(a => a.is_new).map(({ id, is_new, ...rest }) => ({ ...rest, company_id: (company as any).id }));
+            const toUpdate = axes.filter(a => !a.is_new).map((a, index) => ({ ...a, sort_order: index }));
+            const toCreate = axes.filter(a => a.is_new).map(({ id, is_new, ...rest }, index) => {
+                const totalExisting = axes.filter(a => !a.is_new).length;
+                return { ...rest, company_id: (company as any).id, sort_order: totalExisting + index };
+            });
 
             const results = await Promise.all([
-                ...toUpdate.map(a => supabase.from('kpi_axes').update({ name: a.name, headcount: a.headcount }).eq('id', a.id)),
+                ...toUpdate.map(a => supabase.from('kpi_axes').update({ name: a.name, headcount: a.headcount, sort_order: a.sort_order }).eq('id', a.id)),
                 toCreate.length > 0 ? supabase.from('kpi_axes').insert(toCreate) : Promise.resolve({ error: null })
             ]);
 
