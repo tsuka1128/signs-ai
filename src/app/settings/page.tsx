@@ -53,7 +53,7 @@ export default function SettingsPage() {
 
             // Load data in parallel
             const [comp, d, k, a, u, i] = await Promise.all([
-                supabase.from('companies').select('*').eq('id', userData.company_id).single(),
+                supabase.from('companies').select('*, plans(name)').eq('id', userData.company_id).single(),
                 supabase.from('departments').select('*').eq('company_id', userData.company_id).order('sort_order', { ascending: true }),
                 supabase.from('kpi_definitions').select('*').eq('company_id', userData.company_id).order('sort_order', { ascending: true }),
                 supabase.from('kpi_axes').select('*').eq('company_id', userData.company_id).order('sort_order', { ascending: true }),
@@ -74,6 +74,16 @@ export default function SettingsPage() {
         }
         loadSettings();
     }, [router]);
+
+    // Helper: Generate Short SignsAI ID
+    const getShortId = (c: any) => {
+        if (!c || !c.plans) return "";
+        const planChar = c.plans.name?.[0]?.toUpperCase() || "U";
+        const date = new Date(c.created_at);
+        const yymmdd = date.toISOString().slice(2, 10).replace(/-/g, "");
+        const suffix = c.id.split("-")[0].toUpperCase().slice(0, 4);
+        return `${planChar}-${yymmdd}-${suffix}`;
+    };
 
     // Handlers
     const handleSaveCompany = async () => {
@@ -327,7 +337,7 @@ export default function SettingsPage() {
                                         />
                                     </div>
                                     <div className="pt-2 ml-1">
-                                        <p className="text-[9px] text-slate-400 font-medium">SignsAI ID: {company?.id}</p>
+                                        <p className="text-[9px] text-slate-400 font-medium">SignsAI ID: {getShortId(company)}</p>
                                     </div>
                                     <button
                                         onClick={handleSaveCompany}
