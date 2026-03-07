@@ -410,7 +410,16 @@ export default function DashboardPage() {
         pulseHistory,
         weather: pulseScore >= 4.0 ? "sun" : pulseScore >= 3.0 ? "cloud" : "rain",
         arrow: "flat",
-        kpis: [],
+        kpis: realKpis.map(def => {
+          const rec = realKpiRecords.find(r => r.kpi_definition_id === def.id && r.axis_id === axis.id && normalizeMonth(r.recorded_month) === latestMonth);
+          if (!rec) return null;
+          return {
+            name: def.name,
+            val: `${(rec.value || 0).toLocaleString()}${def.unit || ''}`,
+            ach: (rec.target_value && rec.target_value > 0) ? Math.round((rec.value / rec.target_value) * 100) : 0,
+            type: "stack"
+          };
+        }).filter(Boolean).slice(0, 3) as any[],
         productivityHistory: last13Months.map(month => {
           const mRecs = realKpiRecords.filter(r => r.recorded_month === month && r.axis_id === axis.id);
           let totalAch = 0;
