@@ -95,6 +95,7 @@ export default function DashboardPage() {
   const [realAxes, setRealAxes] = useState<any[]>([]);
   const [company, setCompany] = useState<any>(null);
   const [realKpiRecords, setRealKpiRecords] = useState<any[]>([]);
+  const [realResources, setRealResources] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadData() {
@@ -108,17 +109,19 @@ export default function DashboardPage() {
         return;
       }
 
-      const [d, k, s, r, a, recs] = await Promise.all([
+      const [d, k, s, r, a, recs, resources] = await Promise.all([
         supabase.from('departments').select('*').eq('company_id', comp.company_id).order('created_at', { ascending: true }),
         supabase.from('kpi_definitions').select('*').eq('company_id', comp.company_id).order('sort_order', { ascending: true }),
         supabase.from('semantic_layers').select('content').eq('company_id', comp.company_id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('survey_responses').select('*, survey_answers(*)').eq('company_id', comp.company_id),
         supabase.from('kpi_axes').select('*').eq('company_id', comp.company_id).order('sort_order', { ascending: true }),
-        supabase.from('kpi_records').select('*').in('recorded_month', last13Months)
+        supabase.from('kpi_records').select('*').in('recorded_month', last13Months),
+        supabase.from('resource_records').select('*').in('recorded_month', last13Months)
       ]);
 
       if (d.data && d.data.length > 0) setRealDepts(d.data);
       if (recs.data) setRealKpiRecords(recs.data);
+      if (resources.data) setRealResources(resources.data);
 
       // KPI定義に最新の実績・目標と推移をマージ
       if (k.data && k.data.length > 0) {
@@ -280,12 +283,13 @@ export default function DashboardPage() {
       });
 
       const pulseWeather = pulseScore >= 4.0 ? "sun" : pulseScore >= 3.0 ? "cloud" : "rain";
-      const activeHead = deptResponses.filter(r => normalizeMonth(r.recorded_month) === latestMonth).length;
-
-      // 各月の回答者数履歴
+      // 正式な人数推移 (resource_records)
       const headHistory = last13Months.map(month => {
-        return deptResponses.filter(r => normalizeMonth(r.recorded_month) === month).length;
+        const res = realResources.find(rr => rr.department_id === d.id && normalizeMonth(rr.recorded_month) === month);
+        return res ? res.head_count : 0;
       });
+
+      const activeHead = headHistory[12];
 
       return {
         id: d.id,
@@ -381,9 +385,10 @@ export default function DashboardPage() {
         return sizeRec ? sizeRec.value : 0;
       });
 
-      // 各月の回答者数履歴
+      // 各月の人数履歴 (resource_records)
       const headHistory = last13Months.map(month => {
-        return axisResponses.filter(r => normalizeMonth(r.recorded_month) === month).length;
+        const res = realResources.find(rr => rr.axis_id === axis.id && normalizeMonth(rr.recorded_month) === month);
+        return res ? res.head_count : 0;
       });
 
       // 最新のsizeValue
@@ -451,11 +456,15 @@ export default function DashboardPage() {
       const prodAtMonth = d.productivityHistory?.[targetIdx] || 100;
       const sizeAtMonth = (matView === "product" && d.sizeHistory) ? d.sizeHistory[targetIdx] : 100;
 
-      let head = matView === "product" ? (d.xAxisHead || 0) : headAtMonth;
-      // 部署別表示でヘッドカウント履歴が0（未回答月など）の場合は、定義マスタの人数を使用
-      if (matView === "dept" && head === 0) {
-        const deptDef = realDepts.find(rd => rd.id === d.id);
-        head = deptDef?.headcount || 0;
+      let head = headAtMonth;
+      // ヘッドカウント履歴が0（未回答月など）の場合は、定義マスタの人数を使用
+      if (head === 0) {
+        if (matView === "dept") {
+          const deptDef = realDepts.find(rd => rd.id === d.id);
+          head = deptDef?.headcount || 0;
+        } else {
+          head = d.xAxisHead || 0;
+        }
       }
 
       let productivity = prodAtMonth;
