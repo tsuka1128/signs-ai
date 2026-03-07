@@ -425,19 +425,50 @@ export default function SettingsPage() {
                                                     </select>
                                                 </div>
                                                 <div className="flex items-center gap-4 pt-4 md:pt-0">
-                                                    <div className="flex items-center gap-2">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={k.is_main}
-                                                            onChange={(e) => setKpis(kpis.map(x => x.id === k.id ? { ...x, is_main: e.target.checked } : x))}
-                                                            id={`main_${k.id}`}
-                                                            className="w-4 h-4 accent-teal"
-                                                        />
-                                                        <label htmlFor={`main_${k.id}`} className="text-xs font-bold text-slate-600">メイン指標（一番大きく表示）</label>
+                                                    <div className="flex-1">
+                                                        <button
+                                                            onClick={() => {
+                                                                const isCurrentlyMain = k.is_main;
+                                                                const deptId = k.owner_dept_id;
+                                                                setKpis(kpis.map(x => {
+                                                                    // 同じ部署の他のKPIのチェックを外す（排他制御）
+                                                                    if (deptId && x.owner_dept_id === deptId && x.id !== k.id) {
+                                                                        return { ...x, is_main: false };
+                                                                    }
+                                                                    // クリックしたKPIのトグル
+                                                                    if (x.id === k.id) {
+                                                                        return { ...x, is_main: !isCurrentlyMain };
+                                                                    }
+                                                                    return x;
+                                                                }));
+                                                            }}
+                                                            className={cn(
+                                                                "w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all group",
+                                                                k.is_main
+                                                                    ? "bg-teal/5 border-teal text-teal shadow-sm shadow-teal/10"
+                                                                    : "bg-white border-slate-100 text-slate-400 hover:border-slate-200"
+                                                            )}
+                                                        >
+                                                            <div className="flex items-center gap-2">
+                                                                <div className={cn(
+                                                                    "w-2 h-2 rounded-full",
+                                                                    k.is_main ? "bg-teal animate-pulse" : "bg-slate-200"
+                                                                )} />
+                                                                <span className="text-xs font-black uppercase tracking-wider">代表指標設定</span>
+                                                            </div>
+                                                            {k.is_main ? (
+                                                                <span className="text-[10px] bg-teal text-white px-2 py-0.5 rounded-full font-bold">SELECTED</span>
+                                                            ) : (
+                                                                <span className="text-[10px] text-slate-300 font-bold group-hover:text-slate-400 transition-colors">SET AS MAIN</span>
+                                                            )}
+                                                        </button>
+                                                        <p className="text-[9px] text-slate-400 mt-2 ml-1 leading-relaxed">
+                                                            ※ 部署ごとに1つ設定可能。ダッシュボードやバブル図で優先表示されます。
+                                                        </p>
                                                     </div>
                                                     <button
                                                         onClick={() => handleDeleteKpi(k.id)}
-                                                        className="ml-auto p-2.5 rounded-xl bg-white border border-rose-100 text-rose-400 hover:text-rose-600 hover:bg-rose-50 transition-all"
+                                                        className="p-3 rounded-xl bg-white border border-rose-100 text-rose-400 hover:text-rose-600 hover:bg-rose-50 transition-all self-start mt-1"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
