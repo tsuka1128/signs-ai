@@ -184,13 +184,20 @@ export async function POST(request: NextRequest) {
         }
 
         // 2. 企業を作成
+        // Generate Short ID (P-YYMMDD-XXXX)
+        const planRes = await supabase.from('plans').select('name').eq('id', freePlan.id).single();
+        const planChar = planRes.data?.name?.[0]?.toUpperCase() || 'U';
+        const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
+        const tempId = Math.random().toString(36).substring(2, 6).toUpperCase();
+
         const { data: company, error: companyError } = await supabase
             .from("companies")
             .insert({
                 name: companyName.trim(),
                 plan_id: freePlan.id,
                 status: "trial",
-                website_url: websiteUrl?.trim() || null
+                website_url: websiteUrl?.trim() || null,
+                short_id: `${planChar}-${dateStr}-${tempId}` // Temporary suffix
             })
             .select("id")
             .single();
@@ -198,6 +205,10 @@ export async function POST(request: NextRequest) {
         if (companyError || !company) {
             throw new Error(`企業の作成に失敗しました: ${companyError?.message || "データが取得できません"}`);
         }
+
+        // Update with actual UUID prefix
+        const finalShortId = `${planChar}-${dateStr}-${company.id.split('-')[0].toUpperCase().slice(0, 4)}`;
+        await supabase.from('companies').update({ short_id: finalShortId }).eq('id', company.id);
 
         // 2. ユーザープロフィールの更新
         const { error: userError } = await supabase.from("users").upsert({

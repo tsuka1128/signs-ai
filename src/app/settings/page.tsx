@@ -75,16 +75,6 @@ export default function SettingsPage() {
         loadSettings();
     }, [router]);
 
-    // Helper: Generate Short SignsAI ID
-    const getShortId = (c: any) => {
-        if (!c || !c.plans) return "";
-        const planChar = c.plans.name?.[0]?.toUpperCase() || "U";
-        const date = new Date(c.created_at);
-        const yymmdd = date.toISOString().slice(2, 10).replace(/-/g, "");
-        const suffix = c.id.split("-")[0].toUpperCase().slice(0, 4);
-        return `${planChar}-${yymmdd}-${suffix}`;
-    };
-
     // Handlers
     const handleSaveCompany = async () => {
         const supabase = createClient();
@@ -337,7 +327,7 @@ export default function SettingsPage() {
                                         />
                                     </div>
                                     <div className="pt-2 ml-1">
-                                        <p className="text-[9px] text-slate-400 font-medium">SignsAI ID: {getShortId(company)}</p>
+                                        <p className="text-[9px] text-slate-400 font-medium">SignsAI ID: {company?.short_id}</p>
                                     </div>
                                     <button
                                         onClick={handleSaveCompany}
