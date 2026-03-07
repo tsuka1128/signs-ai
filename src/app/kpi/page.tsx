@@ -133,6 +133,7 @@ function KpiTable({ title, axisId, isMain, kpiDefinitions, allMonths, editValues
                                                     ) : (
                                                         <input
                                                             type="number"
+                                                            min="0"
                                                             value={editData.value}
                                                             onChange={(e) => onInputChange(m.month, kpi.id, axisId, 'value', e.target.value)}
                                                             placeholder="---"
@@ -149,6 +150,7 @@ function KpiTable({ title, axisId, isMain, kpiDefinitions, allMonths, editValues
                                                     ) : (
                                                         <input
                                                             type="number"
+                                                            min="0"
                                                             value={editData.target}
                                                             onChange={(e) => onInputChange(m.month, kpi.id, axisId, 'target', e.target.value)}
                                                             placeholder="---"

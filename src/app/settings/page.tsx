@@ -340,8 +340,12 @@ export default function SettingsPage() {
                                                 <div className="relative">
                                                     <input
                                                         type="number"
-                                                        value={d.headcount || 0}
-                                                        onChange={(e) => setDepts(depts.map(x => x.id === d.id ? { ...x, headcount: parseInt(e.target.value) || 0 } : x))}
+                                                        min="0"
+                                                        value={d.headcount === 0 ? "" : d.headcount}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value === "" ? 0 : parseInt(e.target.value);
+                                                            setDepts(depts.map(x => x.id === d.id ? { ...x, headcount: val } : x));
+                                                        }}
                                                         className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-teal pr-8"
                                                     />
                                                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">名</span>
@@ -508,8 +512,12 @@ export default function SettingsPage() {
                                                 <div className="relative">
                                                     <input
                                                         type="number"
-                                                        value={a.headcount || 0}
-                                                        onChange={(e) => setAxes(axes.map(x => x.id === a.id ? { ...x, headcount: parseInt(e.target.value) || 0 } : x))}
+                                                        min="0"
+                                                        value={a.headcount === 0 ? "" : a.headcount}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value === "" ? 0 : parseInt(e.target.value);
+                                                            setAxes(axes.map(x => x.id === a.id ? { ...x, headcount: val } : x));
+                                                        }}
                                                         className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-teal pr-8"
                                                     />
                                                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">名</span>

@@ -622,6 +622,7 @@ function OnboardingContent() {
                                                 </select>
                                                 <input
                                                     type="number"
+                                                    min="0"
                                                     placeholder="月次目標"
                                                     value={kpi.target_default}
                                                     onChange={(e) => updateKpi(i, "target_default", e.target.value)}
