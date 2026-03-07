@@ -131,11 +131,9 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
                         />
                         {isAchieved && (
                             <circle
-                                cx={0} cy={0} r={r + 8}
-                                fill="none"
-                                stroke={col}
-                                strokeWidth={2}
-                                className="animate-[ping_2s_infinite] opacity-40"
+                                cx={0} cy={0} r={4}
+                                fill={col}
+                                className="animate-ping opacity-75"
                                 style={{ transformOrigin: "0px 0px" }}
                             />
                         )}
