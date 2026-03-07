@@ -17,7 +17,9 @@ import {
     Mail,
     UserPlus,
     ShieldCheck,
-    ArrowRight
+    ArrowRight,
+    Copy,
+    Check
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { KPI_UNIT_OPTIONS } from "@/lib/constants";
@@ -36,6 +38,14 @@ export default function SettingsPage() {
     const [users, setUsers] = useState<any[]>([]);
     const [invitations, setInvitations] = useState<any[]>([]);
     const [inviteEmail, setInviteEmail] = useState("");
+    const [copied, setCopied] = useState(false);
+
+    const handleCopyId = () => {
+        if (!company?.short_id) return;
+        navigator.clipboard.writeText(company.short_id);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
 
     useEffect(() => {
         async function loadSettings() {
@@ -326,8 +336,26 @@ export default function SettingsPage() {
                                             className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 focus:border-teal outline-none transition-all"
                                         />
                                     </div>
-                                    <div className="pt-2 ml-1">
-                                        <p className="text-[9px] text-slate-400 font-medium">SignsAI ID: {company?.short_id}</p>
+                                    <div className="pt-2 ml-1 flex items-center gap-3 group">
+                                        <div className="space-y-1">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">SignsAI ID</p>
+                                            <div
+                                                onClick={handleCopyId}
+                                                className="flex items-center gap-2 cursor-pointer hover:opacity-70 transition-all bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-lg w-fit"
+                                            >
+                                                <span className="text-xs font-bold text-slate-600 tracking-tight">
+                                                    {company?.short_id}
+                                                </span>
+                                                {copied ? (
+                                                    <Check className="w-3 h-3 text-teal" />
+                                                ) : (
+                                                    <Copy className="w-3 h-3 text-slate-400" />
+                                                )}
+                                            </div>
+                                        </div>
+                                        {copied && (
+                                            <span className="text-[10px] font-bold text-teal animate-in fade-in slide-in-from-left-1">Copied!</span>
+                                        )}
                                     </div>
                                     <button
                                         onClick={handleSaveCompany}
