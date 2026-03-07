@@ -80,6 +80,7 @@ export default function SettingsPage() {
         const supabase = createClient();
         const { error } = await supabase.from('companies').update({
             name: company.name,
+            website_url: company.website_url,
             secondary_axis_name: secondaryAxisName,
             secondary_axis_size_kpi_id: company.secondary_axis_size_kpi_id
         }).eq('id', company.id);
@@ -312,6 +313,16 @@ export default function SettingsPage() {
                                             type="text"
                                             value={company?.name || ""}
                                             onChange={(e) => setCompany({ ...company, name: e.target.value })}
+                                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 focus:border-teal outline-none transition-all"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-400 mb-1.5 ml-1 uppercase">WebサイトURL</label>
+                                        <input
+                                            type="url"
+                                            placeholder="https://example.com"
+                                            value={company?.website_url || ""}
+                                            onChange={(e) => setCompany({ ...company, website_url: e.target.value })}
                                             className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 focus:border-teal outline-none transition-all"
                                         />
                                     </div>
