@@ -502,7 +502,7 @@ export default function DashboardPage() {
 
       let productivity = prodAtMonth;
       let pulse = pulseAtMonth || d.pulse;
-      let kpiAch = matView === "dept" ? 100 : d.kpiAch;
+      let kpiAch = d.kpiAch;
       let mrr = sizeAtMonth;
 
       return {
@@ -579,7 +579,19 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-tight">
                         <div className="flex items-center gap-1">
                           <span>縦軸: 一人当たり生産性</span>
-                          {/* ... (Question mark button) ... */}
+                          <div className="relative group/calc text-left">
+                            <button className="w-3.5 h-3.5 rounded-full bg-slate-200 text-slate-500 hover:bg-slate-300 hover:text-slate-600 flex items-center justify-center text-[9px] font-black cursor-help transition-colors select-none">?</button>
+                            <div className="absolute top-full left-0 mt-2 w-56 bg-slate-800 text-white p-3.5 rounded-xl shadow-xl text-[10px] leading-relaxed break-normal whitespace-normal hidden group-hover/calc:block z-[150] normal-case tracking-normal animate-in fade-in zoom-in-95 font-medium">
+                              <div className="font-bold text-white mb-2 flex items-center gap-1.5"><span className="text-sm">📉</span>生産性スコアの計算式</div>
+                              <div className="bg-slate-900/80 p-2 rounded-lg font-mono text-[9px] text-emerald-400 mb-2.5 border border-slate-700">
+                                主担当KPIの達成率 × 体温係数
+                              </div>
+                              <div className="text-slate-200">
+                                ※ 各部署のKPIが異なるため、<span className="font-bold text-white">「目標の達成率」</span>で標準化、。<br />
+                                そこに<span className="font-bold text-white">組織体温（無理をしていないか）</span>を掛け合わせることで、部署を同列の軸で評価します。
+                              </div>
+                            </div>
+                          </div>
                         </div>
                         <span>｜ 横軸: {matView === "product" ? "所属人数" : "リソース量"} ｜ 円サイズ: {sizeKpiName}</span>
                       </div>
