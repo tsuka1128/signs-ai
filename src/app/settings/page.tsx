@@ -173,45 +173,6 @@ export default function SettingsPage() {
         }
     };
 
-    const handleSaveSingleKpi = async (k: any) => {
-        const supabase = createClient();
-        try {
-            const dataToSave = {
-                name: k.name,
-                unit: k.unit,
-                target_default: k.target_default,
-                is_main: k.is_main,
-                owner_dept_id: k.owner_dept_id || null,
-                company_id: company.id
-            };
-
-            let error;
-            if (k.is_new) {
-                // Determine sort order
-                const sortOrder = kpis.length - 1;
-                const { id, is_new, ...insertData } = k;
-                const { data, error: err } = await supabase.from('kpi_definitions').insert({
-                    ...insertData,
-                    company_id: company.id,
-                    sort_order: sortOrder
-                }).select().single();
-                error = err;
-                if (data) {
-                    setKpis(kpis.map(x => x.id === k.id ? { ...data, is_new: false } : x));
-                }
-            } else {
-                const { error: err } = await supabase.from('kpi_definitions').update(dataToSave).eq('id', k.id);
-                error = err;
-            }
-
-            if (error) throw error;
-            alert(`${k.name || "KPI"}を保存しました`);
-        } catch (err: any) {
-            console.error("KPI save failed:", err);
-            alert(`保存に失敗しました: ${err.message}`);
-        }
-    };
-
     const handleDeleteKpi = async (id: string) => {
         if (!confirm("このKPIを削除しますか？")) return;
         if (!id.startsWith("new_")) {
@@ -482,7 +443,7 @@ export default function SettingsPage() {
 
                                             {/* Row 2: Dept, Main Toggle, Save, Delete */}
                                             <div className="grid grid-cols-1 md:grid-cols-10 gap-5 items-end">
-                                                <div className="md:col-span-4">
+                                                <div className="md:col-span-5">
                                                     <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">主担当部署（任意）</label>
                                                     <div className="relative">
                                                         <select
@@ -501,7 +462,7 @@ export default function SettingsPage() {
                                                     </div>
                                                 </div>
 
-                                                <div className="md:col-span-3">
+                                                <div className="md:col-span-4">
                                                     <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">部署代表KPI設定</label>
                                                     <button
                                                         onClick={() => {
@@ -525,17 +486,10 @@ export default function SettingsPage() {
                                                     </button>
                                                 </div>
 
-                                                <div className="md:col-span-3 flex gap-2">
-                                                    <button
-                                                        onClick={() => handleSaveSingleKpi(k)}
-                                                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 bg-slate-800 text-white rounded-2xl font-bold text-sm hover:bg-slate-700 transition-all shadow-lg shadow-slate-200"
-                                                    >
-                                                        <Save className="w-4 h-4" />
-                                                        <span>保存</span>
-                                                    </button>
+                                                <div className="md:col-span-1 flex justify-end">
                                                     <button
                                                         onClick={() => handleDeleteKpi(k.id)}
-                                                        className="p-3.5 rounded-2xl bg-white border border-rose-100 text-rose-400 hover:text-rose-600 hover:bg-rose-50 transition-all"
+                                                        className="p-3.5 rounded-2xl bg-white border border-rose-100 text-rose-400 hover:text-rose-600 hover:bg-rose-50 transition-all shadow-sm"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
