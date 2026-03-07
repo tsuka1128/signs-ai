@@ -558,8 +558,8 @@ export default function DashboardPage() {
         <Pills
           items={[
             { id: "matrix", label: "📊 マトリックス" },
-            { id: "kpi", label: "📈 KPI詳細" },
-            { id: "org", label: `🏢 部署・${secondaryAxisName}` },
+            { id: "kpi", label: "📈 KPI推移" },
+            { id: "org", label: "🏢 組織のKPI" },
             { id: "survey", label: "🗣️ 組織の体温" },
             { id: "action", label: "📌 アクション" },
             { id: "semantic", label: "🧬 組織方針" }
