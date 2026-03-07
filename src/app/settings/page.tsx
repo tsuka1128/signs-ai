@@ -326,6 +326,9 @@ export default function SettingsPage() {
                                             className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 focus:border-teal outline-none transition-all"
                                         />
                                     </div>
+                                    <div className="pt-2 ml-1">
+                                        <p className="text-[9px] text-slate-400 font-medium">SignsAI ID: {company?.id}</p>
+                                    </div>
                                     <button
                                         onClick={handleSaveCompany}
                                         className="inline-flex items-center gap-2 bg-slate-800 text-white px-8 py-4 rounded-2xl font-bold hover:bg-slate-700 transition-all shadow-lg shadow-slate-200"
