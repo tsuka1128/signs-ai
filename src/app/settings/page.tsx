@@ -93,21 +93,27 @@ export default function SettingsPage() {
 
     const handleSaveAllDepts = async () => {
         const supabase = createClient();
-        const toUpdate = depts.filter(d => !d.is_new);
-        const toCreate = depts.filter(d => d.is_new).map(({ id, is_new, ...rest }) => ({ ...rest, company_id: company.id }));
+        try {
+            const toUpdate = depts.filter(d => !d.is_new);
+            const toCreate = depts.filter(d => d.is_new).map(({ id, is_new, ...rest }) => ({ ...rest, company_id: company.id }));
 
-        const results = await Promise.all([
-            ...toUpdate.map(d => supabase.from('departments').update({ name: d.name, headcount: d.headcount }).eq('id', d.id)),
-            toCreate.length > 0 ? supabase.from('departments').insert(toCreate) : Promise.resolve({ error: null })
-        ]);
+            const results = await Promise.all([
+                ...toUpdate.map(d => supabase.from('departments').update({ name: d.name, headcount: d.headcount }).eq('id', d.id)),
+                toCreate.length > 0 ? supabase.from('departments').insert(toCreate) : Promise.resolve({ error: null })
+            ]);
 
-        const hasError = results.some(r => r.error);
-        if (!hasError) {
+            const firstError = results.find(r => r.error)?.error;
+            if (firstError) {
+                console.error("Depts save error:", firstError);
+                throw new Error(firstError.message);
+            }
+
             alert("部署情報を一括保存しました");
             const { data } = await supabase.from('departments').select('*').eq('company_id', company.id).order('created_at', { ascending: true });
             if (data) setDepts(data);
-        } else {
-            alert("一部の保存に失敗しました");
+        } catch (err: any) {
+            console.error("Depts save failed:", err);
+            alert(`部署情報の保存に失敗しました: ${err.message || "詳細不明"}`);
         }
     };
 
@@ -126,20 +132,27 @@ export default function SettingsPage() {
 
     const handleSaveAllKpis = async () => {
         const supabase = createClient();
-        const toUpdate = kpis.filter(k => !k.is_new);
-        const toCreate = kpis.filter(k => k.is_new).map(({ id, is_new, ...rest }) => ({ ...rest, company_id: company.id }));
+        try {
+            const toUpdate = kpis.filter(k => !k.is_new);
+            const toCreate = kpis.filter(k => k.is_new).map(({ id, is_new, ...rest }) => ({ ...rest, company_id: company.id }));
 
-        const results = await Promise.all([
-            ...toUpdate.map(k => supabase.from('kpi_definitions').update({ name: k.name, unit: k.unit, is_main: k.is_main, owner_dept_id: k.owner_dept_id }).eq('id', k.id)),
-            toCreate.length > 0 ? supabase.from('kpi_definitions').insert(toCreate) : Promise.resolve({ error: null })
-        ]);
+            const results = await Promise.all([
+                ...toUpdate.map(k => supabase.from('kpi_definitions').update({ name: k.name, unit: k.unit, is_main: k.is_main, owner_dept_id: k.owner_dept_id }).eq('id', k.id)),
+                toCreate.length > 0 ? supabase.from('kpi_definitions').insert(toCreate) : Promise.resolve({ error: null })
+            ]);
 
-        if (!results.some(r => r.error)) {
+            const firstError = results.find(r => r.error)?.error;
+            if (firstError) {
+                console.error("KPIs save error:", firstError);
+                throw new Error(firstError.message);
+            }
+
             alert("KPI設定を一括保存しました");
             const { data } = await supabase.from('kpi_definitions').select('*').eq('company_id', company.id).order('sort_order', { ascending: true });
             if (data) setKpis(data);
-        } else {
-            alert("保存に失敗しました");
+        } catch (err: any) {
+            console.error("KPIs save failed:", err);
+            alert(`KPI設定の保存に失敗しました: ${err.message || "詳細不明"}`);
         }
     };
 
@@ -159,27 +172,39 @@ export default function SettingsPage() {
     const handleSaveAllAxes = async () => {
         const supabase = createClient();
 
-        // 1. 公司設定の保存 (バブルサイズKPI含む)
-        await supabase.from('companies').update({
-            secondary_axis_name: secondaryAxisName,
-            secondary_axis_size_kpi_id: company.secondary_axis_size_kpi_id
-        }).eq('id', company.id);
+        try {
+            // 1. 公司設定の保存 (バブルサイズKPI含む)
+            const { error: companyError } = await supabase.from('companies').update({
+                secondary_axis_name: secondaryAxisName,
+                secondary_axis_size_kpi_id: (company as any).secondary_axis_size_kpi_id
+            }).eq('id', (company as any).id);
 
-        // 2. 軸項目の保存
-        const toUpdate = axes.filter(a => !a.is_new);
-        const toCreate = axes.filter(a => a.is_new).map(({ id, is_new, ...rest }) => ({ ...rest, company_id: company.id }));
+            if (companyError) {
+                console.error("Company save error:", companyError);
+                throw new Error(`会社設定の保存に失敗: ${companyError.message}`);
+            }
 
-        const results = await Promise.all([
-            ...toUpdate.map(a => supabase.from('kpi_axes').update({ name: a.name, headcount: a.headcount }).eq('id', a.id)),
-            toCreate.length > 0 ? supabase.from('kpi_axes').insert(toCreate) : Promise.resolve({ error: null })
-        ]);
+            // 2. 軸項目の保存
+            const toUpdate = axes.filter(a => !a.is_new);
+            const toCreate = axes.filter(a => a.is_new).map(({ id, is_new, ...rest }) => ({ ...rest, company_id: (company as any).id }));
 
-        if (!results.some(r => r.error)) {
+            const results = await Promise.all([
+                ...toUpdate.map(a => supabase.from('kpi_axes').update({ name: a.name, headcount: a.headcount }).eq('id', a.id)),
+                toCreate.length > 0 ? supabase.from('kpi_axes').insert(toCreate) : Promise.resolve({ error: null })
+            ]);
+
+            const firstError = results.find(r => r.error)?.error;
+            if (firstError) {
+                console.error("Axes save error:", firstError);
+                throw new Error(`${secondaryAxisName}の保存に失敗: ${firstError.message}`);
+            }
+
             alert(`${secondaryAxisName}設定を一括保存しました`);
-            const { data } = await supabase.from('kpi_axes').select('*').eq('company_id', company.id).order('sort_order', { ascending: true });
+            const { data } = await supabase.from('kpi_axes').select('*').eq('company_id', (company as any).id).order('sort_order', { ascending: true });
             if (data) setAxes(data);
-        } else {
-            alert("保存に失敗しました");
+        } catch (err: any) {
+            console.error("Save failed:", err);
+            alert(`保存に失敗しました: ${err.message || "詳細不明のエラー"}`);
         }
     };
 
