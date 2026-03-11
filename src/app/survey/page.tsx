@@ -10,60 +10,42 @@ import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
+import { DEFAULT_SURVEY_QUESTIONS } from "@/lib/constants";
+import { normalizeMonth, getLastNMonths, getMonthLabels } from "@/lib/utils/date";
+import { useCompany } from "@/hooks/useCompany";
 
-const questions = [
-    { id: 1, text: "今の仕事にワクワクしていますか？", hint: "月曜の朝、布団の中で思い浮かべてみてください。" },
-    { id: 2, text: "何かが決まるのを「待つ時間」は少なかったですか？", hint: "待っている間、あなたの熱量は少しずつ冷めていきます。" },
-    { id: 3, text: "必要な情報が自分まで届いていましたか？", hint: "知らなかったことで、損をしていませんでしたか。" },
-    { id: 4, text: "「調整」や「根回し」に時間を取られすぎていませんか？", hint: "本来、何に使いたかった時間ですか。" },
-    { id: 5, text: "言いづらいことを飲み込まずに伝えられましたか？", hint: "飲み込んだ言葉は、どこかで体温を下げます。" },
-    { id: 6, text: "「何を成すべきか」に迷わず集中できましたか？", hint: "迷いは、あなたのせいではないかもしれません。" },
-    { id: 7, text: "上司や仲間から反応（賞賛や指摘）がありましたか？", hint: "無反応は、じわじわと人を蝕みます。" },
-    { id: 8, text: "業務量は、質を維持できる範囲でしたか？", hint: "「頑張ればできる」は、長くは続きません。" },
-    { id: 9, text: "「顧客のプラスになること」に時間を使えましたか？", hint: "社内都合に時間を奪われた日、悔しくなかったですか。" },
-    { id: 10, text: "新しい工夫や挑戦ができましたか？", hint: "同じことの繰り返しは、安全に見えて危険です。" },
-    { id: 11, text: "KPI達成に向けて、準備周到に活動できていますか？", hint: "道筋が見えているだけで、体温は上がります。" },
-];
+const questions = DEFAULT_SURVEY_QUESTIONS;
 
 // モックデータ定数を削除し、状態管理に移行
 
 export default function SurveyDashboard() {
     const router = useRouter();
-    const supabase = createClient();
     const [view, setView] = useState("all");
-    const [company, setCompany] = useState<any>(null);
     const [depts, setDepts] = useState<any[]>([]);
     const [axes, setAxes] = useState<any[]>([]);
     const [allResponses, setAllResponses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const { company, loading: authLoading, supabase } = useCompany();
+
     useEffect(() => {
         async function loadData() {
+            if (!company) return;
             setLoading(true);
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
 
-            const { data: userData } = await supabase.from('users').select('company_id').eq('id', user.id).single();
-            if (!userData?.company_id) {
-                router.push("/onboarding");
-                return;
-            }
-
-            const [compRes, deptRes, axisRes, respRes] = await Promise.all([
-                supabase.from('companies').select('*').eq('id', userData.company_id).single(),
-                supabase.from('departments').select('*').eq('company_id', userData.company_id),
-                supabase.from('kpi_axes').select('*').eq('company_id', userData.company_id),
-                supabase.from('survey_responses').select('*, survey_answers(*)').eq('company_id', userData.company_id)
+            const [deptRes, axisRes, respRes] = await Promise.all([
+                supabase.from('departments').select('*').eq('company_id', company.id),
+                supabase.from('kpi_axes').select('*').eq('company_id', company.id),
+                supabase.from('survey_responses').select('*, survey_answers(*)').eq('company_id', company.id)
             ]);
 
-            setCompany(compRes.data);
             setDepts(deptRes.data || []);
             setAxes(axisRes.data || []);
             setAllResponses(respRes.data || []);
             setLoading(false);
         }
         loadData();
-    }, [supabase]);
+    }, [company, supabase]);
 
     const tabs = useMemo(() => {
         const base = [{ id: "all", label: "🏢 全社" }];
@@ -72,22 +54,8 @@ export default function SurveyDashboard() {
         return [...base, ...deptTabs, ...axisTabs];
     }, [depts, axes]);
 
-    const last6Months = useMemo(() => {
-        const dates = [];
-        const now = new Date();
-        for (let i = 5; i >= 0; i--) {
-            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            dates.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`);
-        }
-        return dates;
-    }, []);
-
-    // recorded_month の形式を YYYY-MM-DD に正規化（YYYY-MM 形式も受け入れる）
-    const normalizeMonth = (m: string): string => {
-        if (!m) return m;
-        if (/^\d{4}-\d{2}$/.test(m)) return `${m}-01`;
-        return m;
-    };
+    const last6Months = useMemo(() => getLastNMonths(6), []);
+    const monthLabels = useMemo(() => getMonthLabels(last6Months), [last6Months]);
 
     const currentData = useMemo(() => {
         let filtered = allResponses;
@@ -171,12 +139,7 @@ export default function SurveyDashboard() {
         };
     }, [view, allResponses, last6Months, depts, axes]);
 
-    const monthLabels = useMemo(() => {
-        return last6Months.map(m => {
-            const mm = m.split("-")[1];
-            return `${parseInt(mm)}月`;
-        });
-    }, [last6Months]);
+    const monthLabelsValue = monthLabels;
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20 font-sans">
