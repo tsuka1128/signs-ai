@@ -162,20 +162,52 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete }: S
                 </div>
             </div>
 
-            {/* AI Interpretation (Placeholder until AI implemented) */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-100 border-l-4 border-slate-200 shadow-sm opacity-60">
-                <div className="flex items-center gap-2 mb-4">
-                    <span className="text-base grayscale">🧠</span>
-                    <h5 className="text-sm font-bold text-slate-400 uppercase tracking-tight">AI分析シミュレーション</h5>
+            {/* AI Policy Interpretation (Preview/Notification) */}
+            <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-teal/5 to-transparent rounded-bl-full pointer-events-none" />
+                <div className="flex items-center gap-2 mb-5">
+                    <span className="text-base">🤖</span>
+                    <h5 className="text-sm font-bold text-slate-800">各部署へのAI方針翻訳（最新の通知）</h5>
+                    <Badge className="bg-blue-50 text-blue-600 border-none text-[10px] ml-2">Beta Preview</Badge>
                 </div>
-                <div className="space-y-4">
-                    <div className="p-4 bg-slate-50 border border-dashed border-slate-200 rounded-xl">
-                        <p className="text-xs text-slate-400 text-center italic">
-                            AIエンジン未接続です。フェーズ7の実装完了後、この方針テキストに基づいた自動的な課題抽出と、各部署への個別トーンでの方針伝達が可能になります。
-                        </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex gap-4 transition-all hover:bg-white hover:shadow-md hover:border-slate-200">
+                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-lg shadow-sm border border-slate-100 shrink-0">
+                            💼
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2 mb-1.5">
+                                <h6 className="text-xs font-bold text-slate-700">営業部</h6>
+                                <span className="text-[9px] text-slate-400 font-bold px-2 py-0.5 bg-slate-200/50 rounded-full">トーン: 前向き・行動喚起</span>
+                            </div>
+                            <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                                現在の方針「顧客満足度の向上 ＞ 拡大スピード」を受け、皆様には「目先の成約」よりも「長期的なLTV」を意識した提案をお願いします。顧客の本当の課題解決に寄り添うスタンスへのシフトが求められています。
+                            </p>
+                        </div>
+                    </div>
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex gap-4 transition-all hover:bg-white hover:shadow-md hover:border-slate-200">
+                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-lg shadow-sm border border-slate-100 shrink-0">
+                            💻
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2 mb-1.5">
+                                <h6 className="text-xs font-bold text-slate-700">開発部</h6>
+                                <span className="text-[9px] text-slate-400 font-bold px-2 py-0.5 bg-slate-200/50 rounded-full">トーン: 冷静・品質重視</span>
+                            </div>
+                            <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                                「顧客価値の最大化」という方針に基づき、新規機能のリリーススピードよりも「既存機能の安定性」と「使い勝手の改善」を最優先事項として再設定します。技術的負債の解消にリソースを充ててください。
+                            </p>
+                        </div>
                     </div>
                 </div>
+                <div className="mt-4 p-3 bg-teal/5 border border-teal/10 rounded-xl flex items-start gap-3">
+                    <div className="text-teal pt-0.5">💡</div>
+                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                        フェーズ7のAI実装完了後、ここでは登録された「組織方針」と直近の「アンケート内容（体温）」を掛け合わせ、部署ごとの状況に寄り添った個別の翻訳テキストが毎月自動生成されるようになります。
+                    </p>
+                </div>
             </div>
+
 
             {/* Policy Change Log */}
             <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
