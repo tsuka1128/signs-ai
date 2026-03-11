@@ -89,6 +89,13 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete }: S
         }
     };
 
+    const handleCancelEdit = () => {
+        if (window.confirm("本当に編集内容を破棄しますか？")) {
+            setCurrentText(initialText);
+            setIsEditing(false);
+        }
+    };
+
     const handleConfirmSend = () => {
         setIsSending(true);
         // 保存のみ実行
@@ -259,12 +266,20 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete }: S
                     {isLatest && (
                         <div className="flex gap-2">
                             {isEditing ? (
-                                <button
-                                    onClick={handleSaveClick}
-                                    className="px-5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm bg-gradient-to-r from-teal to-mint text-dark"
-                                >
-                                    保存する
-                                </button>
+                                <>
+                                    <button
+                                        onClick={handleCancelEdit}
+                                        className="px-5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm bg-white border border-slate-200 text-slate-500 hover:bg-slate-50"
+                                    >
+                                        編集を破棄
+                                    </button>
+                                    <button
+                                        onClick={handleSaveClick}
+                                        className="px-5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm bg-gradient-to-r from-teal to-mint text-dark"
+                                    >
+                                        保存する
+                                    </button>
+                                </>
                             ) : (
                                 <>
                                     <button
