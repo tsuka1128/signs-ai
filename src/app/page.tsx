@@ -1102,6 +1102,15 @@ export default function DashboardPage() {
                     setRealSemHistory(prev => [newSem, ...prev]);
                   }
                 }}
+                onDelete={async (id: string) => {
+                  const supabase = createClient();
+                  const { error } = await supabase.from('semantic_layers').delete().eq('id', id);
+                  if (!error) {
+                    setRealSemHistory(prev => prev.filter(h => h.id !== id));
+                  } else {
+                    alert("削除に失敗しました。時間をおいて再度お試しください。");
+                  }
+                }}
               />
             </div>
           )}

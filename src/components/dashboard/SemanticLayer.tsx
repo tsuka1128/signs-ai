@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
-import { Bot, Send, CheckCircle2, X } from "lucide-react";
+import { Bot, Send, CheckCircle2, X, Trash2 } from "lucide-react";
 
 interface SemanticLayerProps {
     initialText: string;
     history?: any[];
     onSave: (text: string) => void;
+    onDelete?: (id: string) => Promise<void>;
 }
 
 const VERSION_CONTENTS: Record<string, string> = {
@@ -57,11 +58,12 @@ const VERSION_CONTENTS: Record<string, string> = {
 - 全員が全プロダクトの売上に責任を持つ。`
 };
 
-export function SemanticLayer({ initialText, history = [], onSave }: SemanticLayerProps) {
+export function SemanticLayer({ initialText, history = [], onSave, onDelete }: SemanticLayerProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [currentText, setCurrentText] = useState(initialText);
     const [viewingId, setViewingId] = useState<string | null>(null);
     const [showAllLogs, setShowAllLogs] = useState(false);
+    const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
     // モーダルと送信のステート
     const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -102,6 +104,19 @@ export function SemanticLayer({ initialText, history = [], onSave }: SemanticLay
                 setIsEditing(false);
             }, 2000);
         }, 1000);
+    };
+
+    const handleDeleteClick = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        if (!onDelete) return;
+
+        const ok = window.confirm("この方針履歴を削除してもよろしいですか？\n※この操作によりデータベースからも完全に削除されます。");
+        if (ok) {
+            setIsDeleting(id);
+            await onDelete(id);
+            setIsDeleting(null);
+            if (viewingId === id) setViewingId(null);
+        }
     };
 
     return (
@@ -168,43 +183,58 @@ export function SemanticLayer({ initialText, history = [], onSave }: SemanticLay
                             setIsEditing(false);
                         }}
                         className={cn(
-                            "w-full text-left flex gap-4 p-3 rounded-xl items-start transition-all border",
-                            !viewingId ? "bg-teal/5 border-teal/20" : "bg-slate-50 border-transparent hover:border-slate-200"
+                            "w-full text-left flex gap-4 p-4 rounded-2xl items-start transition-all border-2",
+                            !viewingId
+                                ? "bg-teal/5 border-teal/30 shadow-sm shadow-teal/5 ring-1 ring-teal/10"
+                                : "bg-slate-50 border-transparent hover:border-slate-200"
                         )}
                     >
-                        <div className="min-w-[48px]">
-                            <div className={cn("text-xs font-bold", !viewingId ? "text-teal" : "text-slate-400")}>Latest</div>
-                            <div className="text-[9px] text-slate-400">現在有効</div>
+                        <div className="min-w-[56px]">
+                            <div className={cn("text-[10px] font-black uppercase tracking-widest", !viewingId ? "text-teal" : "text-slate-400")}>Latest</div>
+                            <div className="text-[10px] text-slate-400 font-bold mt-0.5">現在有効</div>
                         </div>
                         <div className="flex-1">
-                            <div className="text-xs font-bold text-slate-800">最新の組織方針</div>
-                            <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">AI分析の基準として使用されているアクティブなバージョン</p>
+                            <div className="text-sm font-black text-slate-800">最新の組織方針</div>
+                            <p className="text-[11px] text-slate-500 mt-1 leading-relaxed font-medium">AI分析の基準として使用されているアクティブなバージョン</p>
                         </div>
                     </button>
 
                     {(showAllLogs ? history.slice(1) : history.slice(1, 5)).map((log, i) => (
-                        <button
-                            key={log.id}
-                            onClick={() => {
-                                setViewingId(log.id);
-                                setIsEditing(false);
-                            }}
-                            className={cn(
-                                "w-full text-left flex gap-4 p-3 rounded-xl items-start transition-all border",
-                                viewingId === log.id ? "bg-teal/5 border-teal/20" : "bg-slate-50 border-transparent hover:border-slate-200"
-                            )}
-                        >
-                            <div className="min-w-[48px]">
-                                <div className={cn("text-xs font-bold", viewingId === log.id ? "text-teal" : "text-slate-400")}>v.prev</div>
-                                <div className="text-[9px] text-slate-400">{new Date(log.created_at).toLocaleDateString()}</div>
-                            </div>
-                            <div className="flex-1">
-                                <div className="text-xs font-bold text-slate-800">過去の方針メモ</div>
-                                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-                                    {log.content.substring(0, 50)}...
-                                </p>
-                            </div>
-                        </button>
+                        <div key={log.id} className="relative group">
+                            <button
+                                onClick={() => {
+                                    setViewingId(log.id);
+                                    setIsEditing(false);
+                                }}
+                                className={cn(
+                                    "w-full text-left flex gap-4 p-3 rounded-xl items-start transition-all border",
+                                    viewingId === log.id ? "bg-teal/5 border-teal/20" : "bg-slate-50/50 border-transparent hover:border-slate-200"
+                                )}
+                            >
+                                <div className="min-w-[48px]">
+                                    <div className={cn("text-[10px] font-bold", viewingId === log.id ? "text-teal" : "text-slate-400")}>v.prev</div>
+                                    <div className="text-[9px] text-slate-400 font-bold">{new Date(log.created_at).toLocaleDateString()}</div>
+                                </div>
+                                <div className="flex-1 pr-8">
+                                    <div className="text-xs font-bold text-slate-700">過去の方針メモ</div>
+                                    <p className="text-[11px] text-slate-400 mt-1 leading-relaxed line-clamp-1">
+                                        {log.content.replace(/[#\-\*]/g, '').substring(0, 60)}
+                                    </p>
+                                </div>
+                            </button>
+                            <button
+                                onClick={(e) => handleDeleteClick(e, log.id)}
+                                disabled={isDeleting === log.id}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg text-slate-300 hover:text-red-400 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-30"
+                                title="履歴を削除"
+                            >
+                                {isDeleting === log.id ? (
+                                    <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                    <Trash2 className="w-4 h-4" />
+                                )}
+                            </button>
+                        </div>
                     ))}
 
                     {history.length > 5 && !showAllLogs && (
