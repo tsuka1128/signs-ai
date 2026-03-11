@@ -2,6 +2,8 @@
 
 import { TabBar } from "@/components/ui/TabBar";
 import { ScatterPlot } from "@/components/dashboard/ScatterPlot";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { AreaChart } from "lucide-react";
 
 interface MatrixSectionProps {
     secondaryAxisName: string;
@@ -70,14 +72,24 @@ export function MatrixSection({
                     </div>
                 </div>
                 <div className="px-4">
-                    <ScatterPlot
-                        data={currentMatData}
-                        isProduct={matView === "product"}
-                        sizeKpiName={sizeKpiName}
-                        month={month}
-                        onMonthChange={setMonth}
-                        onProductToggle={(isProd) => setMatView(isProd ? "product" : "dept")}
-                    />
+                    {currentMatData.length > 0 ? (
+                        <ScatterPlot
+                            data={currentMatData}
+                            isProduct={matView === "product"}
+                            sizeKpiName={sizeKpiName}
+                            month={month}
+                            onMonthChange={setMonth}
+                            onProductToggle={(isProd) => setMatView(isProd ? "product" : "dept")}
+                        />
+                    ) : (
+                        <EmptyState
+                            title="分析データが十分にありません"
+                            description="マトリックス分析を表示するには、複数の部署のデータとKPI実績が必要です。アンケート回答やKPI入力が進むと、ここに組織のコンディションがプロットされます。"
+                            actionLabel="数値を入力する"
+                            actionHref="/kpi"
+                            icon={<AreaChart className="w-12 h-12 text-slate-200" />}
+                        />
+                    )}
                 </div>
 
                 {/* ヘルプテキスト */}

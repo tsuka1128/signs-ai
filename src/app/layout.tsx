@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
+import { ImpersonationBanner, ImpersonationSpacer } from "@/components/layout/ImpersonationBanner";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -26,6 +27,8 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className={`${inter.variable} ${notoNSansJP.variable}`}>
+        <ImpersonationBanner />
+        <ImpersonationSpacer />
         {children}
       </body>
     </html>

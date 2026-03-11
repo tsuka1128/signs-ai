@@ -1,0 +1,235 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useAdmin } from "@/hooks/useAdmin";
+import { Badge } from "@/components/ui/Badge";
+import { Loading } from "@/components/ui/Loading";
+import {
+    ArrowLeft,
+    Building2,
+    Users,
+    Layers,
+    BarChart3,
+    Settings,
+    ExternalLink,
+    ShieldAlert,
+    Calendar,
+    Mail,
+    ChevronRight,
+    Search
+} from "lucide-react";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
+
+export default function AdminCompanyDetailPage() {
+    const params = useParams();
+    const router = useRouter();
+    const companyId = params.id as string;
+    const { supabase, loading: authLoading, impersonate } = useAdmin();
+
+    const [company, setCompany] = useState<any>(null);
+    const [departments, setDepartments] = useState<any[]>([]);
+    const [kpis, setKpis] = useState<any[]>([]);
+    const [stats, setStats] = useState({ users: 0, responses: 0 });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchCompanyDetails() {
+            if (authLoading || !companyId) return;
+            try {
+                // 1. 企業基本情報
+                const { data: comp, error: compErr } = await supabase
+                    .from('companies')
+                    .select('*, plans(*)')
+                    .eq('id', companyId)
+                    .single();
+                if (compErr) throw compErr;
+                setCompany(comp);
+
+                // 2. 部署一覧
+                const { data: depts } = await supabase
+                    .from('departments')
+                    .select('*')
+                    .eq('company_id', companyId)
+                    .order('name');
+                setDepartments(depts || []);
+
+                // 3. KPI定義一覧
+                const { data: kpiData } = await supabase
+                    .from('kpi_definitions')
+                    .select('*')
+                    .eq('company_id', companyId)
+                    .order('sort_order');
+                setKpis(kpiData || []);
+
+                // 4. 統計 (ユーザー数、回答数)
+                const { count: userCount } = await supabase
+                    .from('users')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('company_id', companyId);
+
+                const { count: respCount } = await supabase
+                    .from('survey_responses')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('company_id', companyId);
+
+                setStats({ users: userCount || 0, responses: respCount || 0 });
+
+            } catch (error) {
+                console.error("Error fetching company details:", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchCompanyDetails();
+    }, [supabase, authLoading, companyId]);
+
+    if (loading || authLoading) {
+        return <Loading fullScreen message="企業情報を読み込んでいます..." />;
+    }
+
+    if (!company) {
+        return (
+            <div className="p-8 text-center space-y-4">
+                <p className="text-slate-500">企業が見つかりませんでした。</p>
+                <Link href="/admin/companies" className="text-teal font-bold hover:underline">一覧に戻る</Link>
+            </div>
+        );
+    }
+
+    return (
+        <main className="p-8 space-y-8 animate-fadeIn">
+            <header className="flex flex-col gap-6">
+                <Link
+                    href="/admin/companies"
+                    className="flex items-center gap-2 text-slate-400 hover:text-slate-600 transition-colors text-sm font-bold group"
+                >
+                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                    企業一覧に戻る
+                </Link>
+
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="flex items-center gap-5">
+                        <div className="w-16 h-16 rounded-[24px] bg-white border border-slate-100 shadow-sm flex items-center justify-center text-2xl font-black text-slate-300 italic">
+                            {company.name.substring(0, 1)}
+                        </div>
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-3">
+                                <h1 className="text-3xl font-black text-slate-800 tracking-tighter">{company.name}</h1>
+                                <Badge className={cn(
+                                    "border-none font-bold text-[10px] px-2.5 py-0.5 rounded-full uppercase",
+                                    company.status === 'active' ? "bg-emerald-50 text-emerald-600" :
+                                        company.status === 'trial' ? "bg-amber-50 text-amber-600" :
+                                            "bg-slate-100 text-slate-500"
+                                )}>
+                                    {company.status}
+                                </Badge>
+                            </div>
+                            <div className="flex items-center gap-4 text-xs font-bold text-slate-400">
+                                <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> 2026/03/01 契約開始</span>
+                                <span className="flex items-center gap-1.5 uppercase tracking-widest"><ShieldAlert className="w-3.5 h-3.5" /> ID: {company.id}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => impersonate(company.id)}
+                            className="px-6 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2 group"
+                        >
+                            <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-teal transition-colors" />
+                            代理ログイン
+                        </button>
+                        <button className="px-6 py-3 bg-slate-800 text-white rounded-2xl text-sm font-bold hover:bg-slate-700 transition-all shadow-lg shadow-slate-200">
+                            企業設定を編集
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                {[
+                    { label: "契約プラン", value: company.plans?.name || "---", icon: Building2, color: "text-blue-500", bg: "bg-blue-50" },
+                    { label: "登録ユーザー", value: stats.users, unit: "名", icon: Users, color: "text-purple-500", bg: "bg-purple-50" },
+                    { label: "分析部署数", value: departments.length, unit: "拠点", icon: Layers, color: "text-amber-500", bg: "bg-amber-50" },
+                    { label: "累計回答数", value: stats.responses, unit: "件", icon: BarChart3, color: "text-teal", bg: "bg-teal/5" },
+                ].map((stat, i) => (
+                    <div key={i} className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+                        <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center mb-4", stat.bg, stat.color)}>
+                            <stat.icon className="w-5 h-5" />
+                        </div>
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-2xl font-black text-slate-800 tabular-nums">{stat.value}</span>
+                            {stat.unit && <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{stat.unit}</span>}
+                        </div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">{stat.label}</p>
+                    </div>
+                ))}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Departments List */}
+                <section className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+                    <header className="p-8 border-b border-slate-50 flex items-center justify-between">
+                        <div>
+                            <h2 className="text-lg font-black text-slate-800 tracking-tight">部署・拠点構成</h2>
+                            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Departments ({departments.length})</p>
+                        </div>
+                        <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
+                            <Settings className="w-5 h-5" />
+                        </button>
+                    </header>
+                    <div className="flex-1 overflow-y-auto max-h-[400px] divide-y divide-slate-50">
+                        {departments.map((dept) => (
+                            <div key={dept.id} className="p-6 flex items-center justify-between hover:bg-slate-50/50 transition-all group">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-300 font-bold italic">
+                                        {dept.name.substring(0, 1)}
+                                    </div>
+                                    <span className="text-sm font-bold text-slate-700">{dept.name}</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 rounded-full text-[10px] font-black text-slate-400">
+                                        <Users className="w-3 h-3" />
+                                        {dept.headcount}
+                                    </div>
+                                    <ChevronRight className="w-4 h-4 text-slate-300 group-hover:translate-x-0.5 transition-transform" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+
+                {/* KPI Definitions */}
+                <section className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+                    <header className="p-8 border-b border-slate-50 flex items-center justify-between">
+                        <div>
+                            <h2 className="text-lg font-black text-slate-800 tracking-tight">KPI定義</h2>
+                            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">KPI Definitions ({kpis.length})</p>
+                        </div>
+                        <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
+                            <Settings className="w-5 h-5" />
+                        </button>
+                    </header>
+                    <div className="flex-1 overflow-y-auto max-h-[400px] divide-y divide-slate-50">
+                        {kpis.map((kpi) => (
+                            <div key={kpi.id} className="p-6 flex items-center justify-between hover:bg-slate-50/50 transition-all group">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-8 h-8 rounded-lg bg-teal/5 flex items-center justify-center text-teal font-black text-[10px]">
+                                        {kpi.unit || 'pt'}
+                                    </div>
+                                    <span className="text-sm font-bold text-slate-700">{kpi.name}</span>
+                                </div>
+                                <Badge className="bg-slate-50 text-slate-400 border-none font-black text-[10px] tracking-widest px-2 py-0.5 rounded-full uppercase">
+                                    # {kpi.sort_order}
+                                </Badge>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            </div>
+        </main>
+    );
+}

@@ -19,6 +19,8 @@ import { Target, Thermometer, Shield, Rocket, Lightbulb } from "lucide-react";
 import { DEFAULT_SURVEY_QUESTIONS, DEPT_ICONS, DEFAULT_SEMANTIC_POLICY } from "@/lib/constants";
 import { normalizeMonth, getLastNMonths, getMonthLabels, getFullMonthLabels } from "@/lib/utils/date";
 import { useCompany } from "@/hooks/useCompany";
+import { Loading, LoadingCard } from "@/components/ui/Loading";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 const questions = DEFAULT_SURVEY_QUESTIONS;
 const actions: any[] = [];
@@ -534,8 +536,16 @@ export default function DashboardPage() {
     return kpiDef ? kpiDef.name : "MRRの大きさ"; // フォールバック
   }, [matView, company, realKpis]);
 
+  if (authLoading) {
+    return <Loading fullScreen message="データを準備しています..." />;
+  }
+
+  if (!company) {
+    return null; // useCompany側でリダイレクトされる
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
+    <div className="min-h-screen bg-slate-50/50">
       <Header />
 
       <main className="max-w-3xl mx-auto px-5 py-6 space-y-8">

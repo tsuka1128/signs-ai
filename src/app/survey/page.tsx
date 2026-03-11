@@ -13,6 +13,9 @@ import { createClient } from "@/lib/supabase";
 import { DEFAULT_SURVEY_QUESTIONS } from "@/lib/constants";
 import { normalizeMonth, getLastNMonths, getMonthLabels } from "@/lib/utils/date";
 import { useCompany } from "@/hooks/useCompany";
+import { Loading } from "@/components/ui/Loading";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { FileQuestion } from "lucide-react";
 
 const questions = DEFAULT_SURVEY_QUESTIONS;
 
@@ -129,17 +132,28 @@ export default function SurveyDashboard() {
             }
         }
 
+        const totalResponses = filtered.filter(r => normalizeMonth(r.recorded_month) === latestMonth).length;
+
         return {
             viewName,
             scores: qScores,
             prevScores: prevQScores,
             pulse: avgPulse,
             pulseHistory: pulseHistory,
-            aiComment: comment
+            aiComment: comment,
+            totalResponses
         };
-    }, [view, allResponses, last6Months, depts, axes]);
+    }, [view, allResponses, depts, axes, last6Months]);
 
-    const monthLabelsValue = monthLabels;
+    if (authLoading || loading) {
+        return <Loading fullScreen message="データを集計しています..." />;
+    }
+
+    if (!company) {
+        return null; // useCompany側でリダイレクトされる
+    }
+
+    const monthPulseData = currentData.pulseHistory;
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20 font-sans">
@@ -173,86 +187,84 @@ export default function SurveyDashboard() {
                 </div>
 
                 {/* Pulse History Chart */}
-                <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm transition-all hover:shadow-md space-y-4">
-                    <div className="flex items-start justify-between">
+                {/* Main Content Card */}
+                <div className="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-xl shadow-slate-200/40 p-8 sm:p-10 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-teal-50/30 rounded-full -mr-32 -mt-32 blur-3xl pointer-events-none" />
+
+                    <div className="flex items-center justify-between mb-8">
                         <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="text-xl">🌡️</span>
-                                <h3 className="text-lg font-black text-slate-800 tracking-tight">組織体温の推移（直近6ヶ月）</h3>
-                            </div>
-                            <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest pl-8">
-                                継続的なストレスや熱量の変化をモニタリング
-                            </p>
+                            <Badge className="bg-teal-500 text-white border-none mb-3 px-3 py-1 text-[10px]">
+                                Monthly Insight
+                            </Badge>
+                            <h1 className="text-3xl font-black text-slate-800 tracking-tighter">
+                                {currentData.viewName}
+                            </h1>
+                            <p className="text-sm text-slate-400 font-medium mt-1">熱量と組織コンディションの分析</p>
                         </div>
-                        <div className="text-right">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">当月平均</span>
-                            <span className={cn(
-                                "text-4xl font-black tabular-nums tracking-tighter",
-                                currentData.pulse >= 3.5 ? "text-emerald-500" : currentData.pulse >= 2.5 ? "text-amber-500" : "text-rose-500"
-                            )}>
-                                {currentData.pulse.toFixed(1)}
+                        <div className="w-20 h-20 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100 shadow-inner">
+                            <div className="text-center">
+                                <p className="text-[10px] font-black text-slate-300 uppercase leading-none mb-1">Pulse</p>
+                                <p className="text-3xl font-black text-slate-800 leading-none">{currentData.pulse.toFixed(1)}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+                        <div className="lg:col-span-3 p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                            <div className="flex items-start gap-4">
+                                <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center shrink-0">
+                                    <span className="text-xl">💡</span>
+                                </div>
+                                <div>
+                                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">AI要約・示唆</h4>
+                                    <p className="text-sm text-slate-700 font-bold leading-relaxed italic">
+                                        &ldquo;{currentData.aiComment}&rdquo;
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-xl font-bold text-slate-800">
+                            {currentData.viewName} の熱量
+                            <span className="ml-2 text-sm font-medium text-slate-400">
+                                (回答数: {currentData.totalResponses}件)
                             </span>
-                        </div>
+                        </h2>
                     </div>
 
-                    <div className="h-40 w-full pt-4">
-                        <DetailLineChart
-                            data={currentData.pulseHistory}
-                            labels={monthLabels}
-                            color={currentData.pulse >= 3.5 ? "#10B981" : currentData.pulse >= 2.5 ? "#F59E0B" : "#EF4444"}
-                            height={140}
+                    {currentData.totalResponses === 0 ? (
+                        <EmptyState
+                            title="回答データがまだありません"
+                            description="今月のアンケート回答がまだ登録されていないか、選択した条件に一致するデータがありません。"
+                            actionLabel="アンケートに回答する"
+                            actionHref="/form"
+                            icon={<FileQuestion className="w-12 h-12 text-slate-200" />}
                         />
-                    </div>
-                </div>
+                    ) : (
+                        <div className="space-y-6">
+                            <div className="mb-2">
+                                <h3 className="text-sm font-bold text-slate-800">組織の熱量推移 (Pulse)</h3>
+                            </div>
+                            <DetailLineChart
+                                data={monthPulseData}
+                                labels={monthLabels}
+                            />
 
-                {/* AI Analysis Card */}
-                <div className="relative overflow-hidden bg-white rounded-3xl p-8 border border-slate-100 shadow-sm transition-all hover:shadow-md">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-teal/5 rounded-full -mr-16 -mt-16 blur-3xl" />
-                    <div className="relative space-y-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-2xl bg-teal/10 flex items-center justify-center text-xl shadow-inner shadow-teal/5">🧠</div>
-                            <div>
-                                <h3 className="text-sm font-bold text-slate-800">AI組織分析レポート</h3>
-                                <p className="text-[10px] text-teal font-black uppercase tracking-widest">{currentData.viewName}</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {questions.map((q, i) => (
+                                    <SurveyQuestionCard
+                                        key={q.id}
+                                        question={q.text}
+                                        score={currentData.scores[i]}
+                                        prevScore={currentData.prevScores[i]}
+                                        hint={q.hint || ""}
+                                    />
+                                ))}
                             </div>
                         </div>
-                        <div className="bg-slate-50/50 rounded-2xl p-5 border border-slate-50">
-                            <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                                {currentData.aiComment}
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold tracking-tighter uppercase">
-                            <span className="w-1.5 h-1.5 rounded-full bg-teal animate-pulse" />
-                            Data sufficiency: {allResponses.length > 0 ? "Satisfactory" : "Insufficient"}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Question Grid */}
-                <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">設問別スコア詳細</h3>
-                        <div className="flex items-center gap-4 text-[10px] font-bold text-slate-300">
-                            <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400" />Good</div>
-                            <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" />Warning</div>
-                            <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-400" />Critical</div>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {questions.map((q, i) => {
-                            const prevScore = currentData.prevScores[i];
-                            return (
-                                <SurveyQuestionCard
-                                    key={q.id}
-                                    question={q.text}
-                                    hint={q.hint}
-                                    score={currentData.scores[i]}
-                                    prevScore={prevScore}
-                                />
-                            );
-                        })}
-                    </div>
+                    )}
                 </div>
 
                 {/* Footer info */}

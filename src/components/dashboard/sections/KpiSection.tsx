@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/Badge";
 import { KpiSummaryCard } from "@/components/dashboard/KpiSummaryCard";
 import { DetailLineChart } from "@/components/dashboard/DetailLineChart";
 import { KpiDisplayData } from "@/types/dashboard";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { BarChart3 } from "lucide-react";
 
 interface KpiSectionProps {
     displayKpis: KpiDisplayData[];
@@ -138,13 +140,13 @@ export function KpiSection({
                     )}
                 </>
             ) : (
-                <div className="bg-white rounded-3xl p-16 border border-slate-100 shadow-sm text-center space-y-4">
-                    <div className="text-4xl">📈</div>
-                    <h4 className="text-lg font-bold text-slate-800">KPIデータがありません</h4>
-                    <p className="text-slate-400 text-sm max-w-xs mx-auto">
-                        設定画面から部署の重要指標(KPI)を登録することで、進捗と体温の相関を分析できるようになります。
-                    </p>
-                </div>
+                <EmptyState
+                    title="KPIデータが登録されていません"
+                    description="重要指標(KPI)を登録することで、組織の熱量データと売上等のパフォーマンスの相関を分析できるようになります。"
+                    actionLabel="KPIを設定する"
+                    actionHref="/onboarding"
+                    icon={<BarChart3 className="w-12 h-12 text-slate-200" />}
+                />
             )}
         </div>
     );

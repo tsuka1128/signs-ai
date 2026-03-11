@@ -28,21 +28,34 @@ export function useCompany() {
                 }
                 setUser(authUser);
 
+                // ロールを確認（代理ログインの可否判定用）
                 const { data: userData } = await supabase
                     .from('users')
-                    .select('company_id')
+                    .select('company_id, role')
                     .eq('id', authUser.id)
                     .single();
 
-                if (!userData?.company_id) {
-                    router.push("/onboarding");
+                let effectiveCompanyId = userData?.company_id;
+                let isImpersonatingFlag = false;
+
+                // super_admin の場合のみ、代理ログイン ID を確認
+                if (userData?.role === 'super_admin') {
+                    const impersonatedId = localStorage.getItem("impersonated_company_id");
+                    if (impersonatedId) {
+                        effectiveCompanyId = impersonatedId;
+                        isImpersonatingFlag = true;
+                    }
+                }
+
+                if (!effectiveCompanyId) {
+                    if (!isImpersonatingFlag) router.push("/onboarding");
                     return;
                 }
 
                 const { data: compInfo } = await supabase
                     .from('companies')
                     .select('*')
-                    .eq('id', userData.company_id)
+                    .eq('id', effectiveCompanyId)
                     .single();
 
                 if (compInfo) {
@@ -58,5 +71,5 @@ export function useCompany() {
         loadCompany();
     }, [supabase, router]);
 
-    return { company, loading, user, supabase };
+    return { company, loading, user, supabase, isImpersonating: !!localStorage.getItem("impersonated_company_id") };
 }

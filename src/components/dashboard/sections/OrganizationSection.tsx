@@ -4,6 +4,8 @@ import { TabBar } from "@/components/ui/TabBar";
 import { OrganizationCard } from "@/components/dashboard/OrganizationCard";
 import { ProductInsight } from "@/components/dashboard/ProductInsight";
 import { FeedbackItem } from "@/components/dashboard/FeedbackItem";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Users, Package } from "lucide-react";
 
 interface OrganizationSectionProps {
     secondaryAxisName: string;
@@ -28,17 +30,29 @@ export function OrganizationSection({
                 onChange={setOrgView}
             />
             <div className="space-y-4 pt-2">
-                {(orgView === "dept" ? displayDepts : displayAxes).map((d: any, i: number) => (
-                    <OrganizationCard
-                        key={i}
-                        name={d.name}
-                        head={d.head}
-                        pulse={d.pulse}
-                        weather={d.weather}
-                        arrow={d.arrow || "flat"}
-                        kpis={d.kpis}
+                {(orgView === "dept" ? displayDepts : displayAxes).length > 0 ? (
+                    (orgView === "dept" ? displayDepts : displayAxes).map((d: any, i: number) => (
+                        <OrganizationCard
+                            key={i}
+                            name={d.name}
+                            head={d.head}
+                            pulse={d.pulse}
+                            weather={d.weather}
+                            arrow={d.arrow || "flat"}
+                            kpis={d.kpis}
+                        />
+                    ))
+                ) : (
+                    <EmptyState
+                        title={orgView === "dept" ? "部署が登録されていません" : `${secondaryAxisName}が登録されていません`}
+                        description={orgView === "dept"
+                            ? "部署を登録することで、組織ごとの熱量やKPIを可視化できます。"
+                            : `${secondaryAxisName}ごとの分析を行うには、設定から項目を追加してください。`}
+                        actionLabel="設定を開く"
+                        actionHref="/onboarding" // または /settings
+                        icon={orgView === "dept" ? <Users className="w-12 h-12 text-slate-200" /> : <Package className="w-12 h-12 text-slate-200" />}
                     />
-                ))}
+                )}
             </div>
 
             {/* AI Analysis / Feedback Bottom Section */}

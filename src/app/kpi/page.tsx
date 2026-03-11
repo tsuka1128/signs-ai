@@ -8,6 +8,9 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { Info, Save, ArrowLeft, Building2, Lock, Unlock } from "lucide-react";
 import { createClient } from "@/lib/supabase";
+import { Loading } from "@/components/ui/Loading";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { BarChart3 } from "lucide-react";
 
 // KPI定義の型
 interface KpiDefinition {
@@ -324,11 +327,7 @@ export default function KpiInputPage() {
     };
 
     if (loading) {
-        return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal"></div>
-            </div>
-        );
+        return <Loading fullScreen message="KPIデータを読み込んでいます..." />;
     }
 
     if (!user) {
@@ -379,42 +378,54 @@ export default function KpiInputPage() {
                 </div>
 
                 {/* 基本軸テーブル */}
-                <KpiTable
-                    title="全社・部署（基本）"
-                    axisId={null}
-                    isMain={true}
-                    kpiDefinitions={kpiDefinitions}
-                    allMonths={allMonths}
-                    editValues={editValues}
-                    isLocked={isLocked}
-                    onInputChange={handleInputChange}
-                    onToggleLock={() => setIsLocked(!isLocked)}
-                />
+                {kpiDefinitions.length > 0 ? (
+                    <>
+                        <KpiTable
+                            title="全社・部署（基本）"
+                            axisId={null}
+                            isMain={true}
+                            kpiDefinitions={kpiDefinitions}
+                            allMonths={allMonths}
+                            editValues={editValues}
+                            isLocked={isLocked}
+                            onInputChange={handleInputChange}
+                            onToggleLock={() => setIsLocked(!isLocked)}
+                        />
 
-                {/* 第2軸（ブランド・エリア等）テーブル一覧 */}
-                {axes.length > 0 && (
-                    <div className="mt-16 mb-8 pt-8 border-t border-slate-200">
-                        <div className="mb-8">
-                            <h2 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-                                {secondaryAxisName}別入力
-                                <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded uppercase tracking-widest">{axes.length} items</span>
-                            </h2>
-                            <p className="text-sm text-slate-500 mt-2 font-medium">企業設定で定義された「{secondaryAxisName}」ごとの数値を入力します。</p>
-                        </div>
-                        {axes.map(axis => (
-                            <KpiTable
-                                key={axis.id}
-                                title={axis.name}
-                                axisId={axis.id}
-                                kpiDefinitions={kpiDefinitions}
-                                allMonths={allMonths}
-                                editValues={editValues}
-                                isLocked={isLocked}
-                                onInputChange={handleInputChange}
-                                onToggleLock={() => setIsLocked(!isLocked)}
-                            />
-                        ))}
-                    </div>
+                        {/* 第2軸（ブランド・エリア等）テーブル一覧 */}
+                        {axes.length > 0 && (
+                            <div className="mt-16 mb-8 pt-8 border-t border-slate-200">
+                                <div className="mb-8">
+                                    <h2 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                                        {secondaryAxisName}別入力
+                                        <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded uppercase tracking-widest">{axes.length} items</span>
+                                    </h2>
+                                    <p className="text-sm text-slate-500 mt-2 font-medium">企業設定で定義された「{secondaryAxisName}」ごとの数値を入力します。</p>
+                                </div>
+                                {axes.map(axis => (
+                                    <KpiTable
+                                        key={axis.id}
+                                        title={axis.name}
+                                        axisId={axis.id}
+                                        kpiDefinitions={kpiDefinitions}
+                                        allMonths={allMonths}
+                                        editValues={editValues}
+                                        isLocked={isLocked}
+                                        onInputChange={handleInputChange}
+                                        onToggleLock={() => setIsLocked(!isLocked)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </>
+                ) : (
+                    <EmptyState
+                        title="KPI項目が定義されていません"
+                        description="まずは組織設定から、追跡したい重要指標(KPI)の名称や単位を定義してください。"
+                        actionLabel="KPIを定義する"
+                        actionHref="/settings"
+                        icon={<BarChart3 className="w-12 h-12 text-slate-200" />}
+                    />
                 )}
 
                 <div className="mt-10 flex items-start gap-3 bg-white p-5 rounded-xl border border-slate-200 shadow-sm text-slate-600">
