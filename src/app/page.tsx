@@ -1129,33 +1129,33 @@ export default function DashboardPage() {
                   }
                 }}
                 onDelete={async (id: string) => {
-                  const supabase = createClient();
-                  console.log('[SemanticLayer] 削除開始: id =', id);
-                  const { error } = await supabase
-                    .from('semantic_layers')
-                    .delete()
-                    .eq('id', id);
-                  console.log('[SemanticLayer] 削除結果:', { error });
+                  // 楽観的更新: 即座にUIから除去
+                  const backup = [...realSemHistory];
+                  setRealSemHistory(prev => prev.filter(h => h.id !== id));
 
-                  if (error) {
-                    console.error('[SemanticLayer] 削除エラー:', error);
-                    alert(`削除に失敗しました: ${error.message}`);
-                    return;
-                  }
+                  try {
+                    const res = await fetch(`/api/semantic-layers?id=${id}`, {
+                      method: 'DELETE',
+                    });
+                    const result = await res.json();
 
-                  // DBから再取得して確実に同期
-                  const { data: { user } } = await supabase.auth.getUser();
-                  if (!user) return;
-                  const { data: comp } = await supabase.from('users').select('company_id').eq('id', user.id).single();
-                  if (!comp?.company_id) return;
-                  const { data: freshHistory } = await supabase
-                    .from('semantic_layers')
-                    .select('*')
-                    .eq('company_id', comp.company_id)
-                    .order('created_at', { ascending: false });
-                  if (freshHistory) {
-                    console.log('[SemanticLayer] 再取得した履歴件数:', freshHistory.length);
-                    setRealSemHistory(freshHistory);
+                    if (!res.ok) {
+                      console.error('[SemanticLayer] 削除失敗:', result);
+                      alert(`削除に失敗しました: ${result.error || '不明なエラー'}`);
+                      // 失敗時はバックアップから復元
+                      setRealSemHistory(backup);
+                      return;
+                    }
+
+                    // 成功: APIから返された最新履歴でステートを上書き
+                    if (result.history) {
+                      setRealSemHistory(result.history);
+                    }
+                    console.log('[SemanticLayer] 削除成功:', result.deletedId);
+                  } catch (err) {
+                    console.error('[SemanticLayer] 削除例外:', err);
+                    alert('削除中にエラーが発生しました');
+                    setRealSemHistory(backup);
                   }
                 }}
               />
