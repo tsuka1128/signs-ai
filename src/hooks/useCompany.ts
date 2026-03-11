@@ -17,8 +17,14 @@ export function useCompany() {
     const [company, setCompany] = useState<Company | null>(null);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<any>(null);
+    const [isImpersonating, setIsImpersonating] = useState(false);
 
     useEffect(() => {
+        // Set impersonating flag safely on client
+        if (typeof window !== "undefined") {
+            setIsImpersonating(!!localStorage.getItem("impersonated_company_id"));
+        }
+
         async function loadCompany() {
             try {
                 const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -36,19 +42,19 @@ export function useCompany() {
                     .single();
 
                 let effectiveCompanyId = userData?.company_id;
-                let isImpersonatingFlag = false;
+                let usedImpersonation = false;
 
                 // super_admin の場合のみ、代理ログイン ID を確認
-                if (userData?.role === 'super_admin') {
+                if (userData?.role === 'super_admin' && typeof window !== "undefined") {
                     const impersonatedId = localStorage.getItem("impersonated_company_id");
                     if (impersonatedId) {
                         effectiveCompanyId = impersonatedId;
-                        isImpersonatingFlag = true;
+                        usedImpersonation = true;
                     }
                 }
 
                 if (!effectiveCompanyId) {
-                    if (!isImpersonatingFlag) router.push("/onboarding");
+                    if (!usedImpersonation) router.push("/onboarding");
                     return;
                 }
 
@@ -71,5 +77,5 @@ export function useCompany() {
         loadCompany();
     }, [supabase, router]);
 
-    return { company, loading, user, supabase, isImpersonating: !!localStorage.getItem("impersonated_company_id") };
+    return { company, loading, user, supabase, isImpersonating };
 }
