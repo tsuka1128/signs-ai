@@ -61,6 +61,7 @@ export function SemanticLayer({ initialText, history = [], onSave }: SemanticLay
     const [isEditing, setIsEditing] = useState(false);
     const [currentText, setCurrentText] = useState(initialText);
     const [viewingId, setViewingId] = useState<string | null>(null);
+    const [showAllLogs, setShowAllLogs] = useState(false);
 
     // モーダルと送信のステート
     const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -181,7 +182,7 @@ export function SemanticLayer({ initialText, history = [], onSave }: SemanticLay
                         </div>
                     </button>
 
-                    {history.slice(1).map((log, i) => (
+                    {(showAllLogs ? history.slice(1) : history.slice(1, 5)).map((log, i) => (
                         <button
                             key={log.id}
                             onClick={() => {
@@ -205,6 +206,15 @@ export function SemanticLayer({ initialText, history = [], onSave }: SemanticLay
                             </div>
                         </button>
                     ))}
+
+                    {history.length > 5 && !showAllLogs && (
+                        <button
+                            onClick={() => setShowAllLogs(true)}
+                            className="w-full py-2 text-[10px] font-black text-slate-400 hover:text-teal transition-colors border-2 border-dashed border-slate-100 rounded-xl uppercase tracking-widest"
+                        >
+                            ＋ さらに {history.length - 5} 件の方針履歴を表示
+                        </button>
+                    )}
                 </div>
             </div>
 
