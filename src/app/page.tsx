@@ -60,6 +60,7 @@ export default function DashboardPage() {
   const [realDepts, setRealDepts] = useState<any[]>([]);
   const [realKpis, setRealKpis] = useState<any[]>([]);
   const [realSem, setRealSem] = useState<string>("");
+  const [realSemHistory, setRealSemHistory] = useState<any[]>([]);
   const [realResponses, setRealResponses] = useState<any[]>([]);
   const [realAxes, setRealAxes] = useState<any[]>([]);
   const [company, setCompany] = useState<any>(null);
@@ -81,7 +82,7 @@ export default function DashboardPage() {
       const [d, k, s, r, a, recs, resources] = await Promise.all([
         supabase.from('departments').select('*').eq('company_id', comp.company_id).order('sort_order', { ascending: true }),
         supabase.from('kpi_definitions').select('*').eq('company_id', comp.company_id).order('sort_order', { ascending: true }),
-        supabase.from('semantic_layers').select('content').eq('company_id', comp.company_id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('semantic_layers').select('*').eq('company_id', comp.company_id).order('created_at', { ascending: false }),
         supabase.from('survey_responses').select('*, survey_answers(*)').eq('company_id', comp.company_id),
         supabase.from('kpi_axes').select('*').eq('company_id', comp.company_id).order('sort_order', { ascending: true }),
         supabase.from('kpi_records').select('*').in('recorded_month', last13Months),
@@ -122,7 +123,10 @@ export default function DashboardPage() {
         setRealKpis(mergedKpis);
       }
 
-      if (s.data?.content) setRealSem(s.data.content);
+      if (s.data && s.data.length > 0) {
+        setRealSem(s.data[0].content);
+        setRealSemHistory(s.data);
+      }
       if (r.data) setRealResponses(r.data);
       if (a.data) setRealAxes(a.data);
 
@@ -1079,6 +1083,7 @@ export default function DashboardPage() {
               </p>
               <SemanticLayer
                 initialText={displaySem}
+                history={realSemHistory}
                 onSave={async (txt: string) => {
                   const supabase = createClient();
                   const { data: { user } } = await supabase.auth.getUser();
@@ -1086,12 +1091,16 @@ export default function DashboardPage() {
                   const { data: comp } = await supabase.from('users').select('company_id').eq('id', user.id).single();
                   if (!comp?.company_id) return;
 
-                  await supabase.from('semantic_layers').insert({
+                  const { data: newSem, error: semErr } = await supabase.from('semantic_layers').insert({
                     company_id: comp.company_id,
                     content: txt,
                     valid_from: new Date().toISOString()
-                  });
-                  setRealSem(txt);
+                  }).select('*').single();
+
+                  if (!semErr && newSem) {
+                    setRealSem(txt);
+                    setRealSemHistory(prev => [newSem, ...prev]);
+                  }
                 }}
               />
             </div>
