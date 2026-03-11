@@ -106,6 +106,7 @@ export default function SurveyDashboard() {
         }
 
         const latestMonth = last6Months[last6Months.length - 1];
+        const prevMonth = last6Months[last6Months.length - 2];
         const latestAnswers = filtered
             .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
             .flatMap(r => r.survey_answers || []);
@@ -113,10 +114,21 @@ export default function SurveyDashboard() {
         // 設問ごとのスコアを order 順で取得（UUIDベースの question_id での絞り込みを廃止）
         // 1回答あたり11設問分の answers が並んでいる前提で、インデックス別に集計
         const qScores = questions.map((_, qi) => {
-            // 各回答レコードから qi 番目のスコアを取得（sort_order順に保存されている想定）
             const scoresForQ: number[] = [];
             filtered
                 .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
+                .forEach(r => {
+                    const ans = r.survey_answers || [];
+                    if (ans[qi]) scoresForQ.push(ans[qi].score);
+                });
+            if (scoresForQ.length === 0) return 0;
+            return scoresForQ.reduce((sum: number, s: number) => sum + s, 0) / scoresForQ.length;
+        });
+
+        const prevQScores = questions.map((_, qi) => {
+            const scoresForQ: number[] = [];
+            filtered
+                .filter(r => normalizeMonth(r.recorded_month) === prevMonth)
                 .forEach(r => {
                     const ans = r.survey_answers || [];
                     if (ans[qi]) scoresForQ.push(ans[qi].score);
@@ -152,6 +164,7 @@ export default function SurveyDashboard() {
         return {
             viewName,
             scores: qScores,
+            prevScores: prevQScores,
             pulse: avgPulse,
             pulseHistory: pulseHistory,
             aiComment: comment
@@ -265,7 +278,7 @@ export default function SurveyDashboard() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {questions.map((q, i) => {
-                            const prevScore = currentData.scores[i] * 0.95; // Math.randomを排除して固定の係数（モック）に
+                            const prevScore = currentData.prevScores[i];
                             return (
                                 <SurveyQuestionCard
                                     key={q.id}

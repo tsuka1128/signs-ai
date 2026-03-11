@@ -20,6 +20,7 @@ import { SurveyQuestionCard } from "@/components/dashboard/SurveyQuestionCard";
 import { DeepReport } from "@/components/dashboard/DeepReport";
 import { cn } from "@/lib/utils";
 import { Target, Thermometer, Shield, Rocket, Lightbulb } from "lucide-react";
+import { DEFAULT_SEMANTIC_POLICY } from "@/lib/constants";
 
 const questions = [
   { id: 1, text: "今の仕事にワクワクしていますか？", hint: "月曜の朝、布団の中で思い浮かべてみてください。" },
@@ -37,14 +38,6 @@ const questions = [
 
 // モックデータを削除。DBから集計。
 
-// --- Full Original Data --- 
-
-const products = [
-  { id: "a", name: "SaaS プロダクト A", head: 22, productivity: 129, pulse: 3.8, weather: "sun" as const, kpiAch: 105, prevHead: 20, prevProductivity: 120, prevPulse: 3.7, prevWeather: "sun", prevKpiAch: 100, kpiName: "MRR", mrr: 1800, prevMrr: 1600 },
-  { id: "b", name: "新規事業プロジェクト B", head: 14, productivity: 86, pulse: 2.1, weather: "rain" as const, kpiAch: 82, prevHead: 12, prevProductivity: 110, prevPulse: 2.6, prevWeather: "cloud", prevKpiAch: 95, kpiName: "売上", mrr: 520, prevMrr: 600 },
-  { id: "c", name: "オプションサービス C", head: 9, productivity: 156, pulse: 4.3, weather: "sun" as const, kpiAch: 118, prevHead: 8, prevProductivity: 145, prevPulse: 4.1, prevWeather: "sun", prevKpiAch: 105, kpiName: "MRR", mrr: 460, prevMrr: 380 }
-];
-
 const insights = {
   exec: { icon: "👔", title: "経営層", tone: "戦略的分析", text: "組織方針に基づき、各部署の体温スコアとKPI達成状況を俯瞰的に分析します。現在、実データの蓄積を開始した段階です。" },
   admin: { icon: "📋", title: "経企・人事", tone: "構造分析", text: "全部署のコンディションを横断的にモニタリングします。データ不足箇所は早急なアクションが必要です。" },
@@ -53,30 +46,6 @@ const insights = {
 };
 
 const actions: any[] = [];
-
-const semTextDefault = `# 組織方針 v1.5 (2026年3月〜)
-
-## 組織の現在地
-- フェーズ: ユニットエコノミクス改善期
-- 現在の優先順位: 収益の質向上 ＞ 獲得件数の最大化
-- 組織の目標: 「自律駆動型組織」への転換。現場が主役となる意思決定構造の構築
-
-## KPIの解釈ガイド
-- 月次売上: 目標達成は通過点。特定個人への依存はボトルネックとみなす
-- 有効リード獲得数: 営業現場の声を反映した「商談の質」を最重視する
-- 顧客解約率: 2.0%以下を健全ラインとする。予兆を早期検知し、能動的(Proactive)に動く
-- 採用充足率: 現場の過負荷を解消し、挑戦できる余白を創出するための投資
-
-## 数字と体温の関係
-- ☀️なのに☔️ (生産性の歪み): 成果は出ているが現場に無理が生じている。仕組み（フロー・ツール）の見直しが必要
-- ☔️なのに☀️ (期待先行型): 体温は高いが成果に結びついていない。戦略の方向性またはリソース配分の修正が必要
-
-## 組織の注意点
-- 部門間の「サイロ化」を放置しない。SignsAIのボイスチェックを共通言語として活用
-- 承認フローなどの事務工数は極力排除し、本来のクリエイティブな仕事に集中する
-
-## 地雷ワード (AIが検知したら最優先でアラート)
-- 「自分には関係ない」「誰も聞いてくれない」「上から言われただけ」「今のままでいい」`;
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -473,7 +442,7 @@ export default function DashboardPage() {
     });
   }, [realAxes, realResponses, last13Months, company, realKpiRecords]);
 
-  const displaySem = realSem || semTextDefault;
+  const displaySem = realSem || DEFAULT_SEMANTIC_POLICY;
 
   const ins = insights[tab];
   const selectedKpiDef = displayKpis.find(k => k.id === selKpi) || displayKpis[0];

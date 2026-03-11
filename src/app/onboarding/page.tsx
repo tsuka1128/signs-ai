@@ -17,7 +17,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase";
 import { Sun, Cloud, CloudRain, Check } from "lucide-react";
-import { KPI_UNIT_OPTIONS } from "@/lib/constants";
+import { KPI_UNIT_OPTIONS, DEFAULT_SEMANTIC_POLICY } from "@/lib/constants";
 
 /** 部署の入力フォーム */
 interface DeptInput {
@@ -104,7 +104,7 @@ function OnboardingContent() {
         invitationToken: tokenParam || "",
         departments: [{ name: "", headcount: 0 }],
         kpis: [{ name: "", unit: "件", target_default: "", owner_dept_index: null, sort_order: 0 }],
-        semanticContent: "",
+        semanticContent: DEFAULT_SEMANTIC_POLICY,
         selectedKpiIds: [],
         websiteUrl: "",
     });
@@ -628,6 +628,19 @@ function OnboardingContent() {
                                                     onChange={(e) => updateKpi(i, "target_default", e.target.value)}
                                                     className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold"
                                                 />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">担当部署</label>
+                                                <select
+                                                    value={kpi.owner_dept_index ?? ""}
+                                                    onChange={(e) => updateKpi(i, "owner_dept_index", e.target.value === "" ? null : parseInt(e.target.value))}
+                                                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-slate-50 focus:bg-white transition-colors"
+                                                >
+                                                    <option value="">部署を選択（任意）</option>
+                                                    {state.departments.map((dept, idx) => (
+                                                        <option key={idx} value={idx}>{dept.name || `部署 ${idx + 1}`}</option>
+                                                    ))}
+                                                </select>
                                             </div>
                                         </div>
                                     ))}
