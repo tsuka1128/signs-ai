@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const { searchParams, origin } = request.nextUrl;
     const code = searchParams.get("code");
     const next = searchParams.get("next") ?? "/";
+    const type = searchParams.get("type"); // recovery 等
 
     if (!code) {
         return NextResponse.redirect(`${origin}/login?error=no_code`);
@@ -47,6 +48,10 @@ export async function GET(request: NextRequest) {
                 : `${origin}/onboarding`;
             return NextResponse.redirect(onboardingUrl);
         }
+    }
+
+    if (type === "recovery") {
+        return NextResponse.redirect(`${origin}/password-update`);
     }
 
     return NextResponse.redirect(`${origin}${next}`);

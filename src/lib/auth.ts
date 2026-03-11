@@ -67,6 +67,32 @@ export async function signOut() {
     }
 }
 
+/** パスワード再設定メールを送信する */
+export async function sendPasswordResetEmail(email: string, redirectToOption?: string) {
+    const supabase = createClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectToOption || `${getBaseURL()}/auth/callback?type=recovery`,
+    });
+
+    if (error) {
+        console.error("パスワードリセットメール送信エラー:", error.message);
+        throw error;
+    }
+}
+
+/** パスワードを更新する（ログイン中または再設定フロー中） */
+export async function updatePassword(newPassword: string) {
+    const supabase = createClient();
+    const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+    });
+
+    if (error) {
+        console.error("パスワード更新エラー:", error.message);
+        throw error;
+    }
+}
+
 /** 現在のユーザー情報を取得する（クライアント側） */
 export async function getCurrentUser() {
     const supabase = createClient();

@@ -136,6 +136,14 @@ function LoginForm() {
                         </button>
                     </div>
                 </div>
+                <div className="flex justify-end">
+                    <Link
+                        href="/forgot-password"
+                        className="text-[11px] text-slate-400 hover:text-teal-600 font-bold transition-colors"
+                    >
+                        パスワードをお忘れですか？
+                    </Link>
+                </div>
                 <button
                     type="submit"
                     disabled={loading}
