@@ -42,7 +42,7 @@ export function MainInsightCard({ icon, title, tone, text, weather, trend, onOpe
                 <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1.5">
                         <span className="text-base">{icon}</span>
-                        <Badge className="bg-teal/10 text-teal">{title}向け</Badge>
+                        <Badge className="bg-teal/10 text-teal">{title}{title === "全社" ? "" : "向け"}</Badge>
                         <span className="text-[10px] text-slate-400">トーン: {tone}</span>
                     </div>
                     <p className="text-sm leading-relaxed text-slate-700 font-medium">

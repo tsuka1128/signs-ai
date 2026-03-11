@@ -38,18 +38,14 @@ const questions = [
 
 // モックデータを削除。DBから集計。
 
-const insights = {
-  exec: { icon: "👔", title: "経営層", tone: "戦略的分析", text: "組織方針に基づき、各部署の体温スコアとKPI達成状況を俯瞰的に分析します。現在、実データの蓄積を開始した段階です。" },
-  admin: { icon: "📋", title: "経企・人事", tone: "構造分析", text: "全部署のコンディションを横断的にモニタリングします。データ不足箇所は早急なアクションが必要です。" },
-  mgr: { icon: "🎯", title: "マネージャー", tone: "現場支援", text: "担当部署のボイスチェックに基づき、現場メンバーの心理的安全性と生産性の両立を支援します。" },
-  player: { icon: "💪", title: "現場", tone: "前向きな共有", text: "SignsAIを通じて現場の今の声を可視化し、より良い働き方の実現に向けたフィードバックを行います。" }
-};
+/** 部署タブ用のアイコンリスト（部署インデックス順に循環） */
+const DEPT_ICONS = ['💼', '💻', '📣', '🤝', '⚙️', '📈', '🏢', '📋'];
 
 const actions: any[] = [];
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [tab, setTab] = useState<keyof typeof insights>("exec");
+  const [tab, setTab] = useState<string>("all");
   const [sec, setSec] = useState("matrix");
   const [matView, setMatView] = useState("dept");
   const [selKpi, setSelKpi] = useState("mrr");
@@ -448,7 +444,31 @@ export default function DashboardPage() {
 
   const displaySem = realSem || DEFAULT_SEMANTIC_POLICY;
 
-  const ins = insights[tab];
+  // 部署連動のインサイトを動的に生成
+  const deptTabs = useMemo(() => [
+    { id: "all", label: "🏢 全社" },
+    ...realDepts.map((d, i) => ({ id: d.id, label: `${DEPT_ICONS[i % DEPT_ICONS.length]} ${d.name}` }))
+  ], [realDepts]);
+
+  const ins = useMemo(() => {
+    if (tab === "all") {
+      return {
+        icon: "🏢",
+        title: "全社",
+        tone: "戦略的分析",
+        text: "組織方針に基づき、各部署の体温スコアとKPI達成状況を俯瞰的に分析します。現在、実データの蓄積を開始した段階です。"
+      };
+    }
+    const deptIdx = realDepts.findIndex(d => d.id === tab);
+    const dept = realDepts[deptIdx];
+    if (!dept) return { icon: "🏢", title: "全社", tone: "戦略的分析", text: "" };
+    return {
+      icon: DEPT_ICONS[deptIdx % DEPT_ICONS.length],
+      title: dept.name,
+      tone: ["前向き・行動喚起", "冷静・品質重視", "共感・伴走", "構造的・警告的"][deptIdx % 4],
+      text: `「${dept.name}」の直近の体温とKPI達成状況に基づく分析です。AIエンジン接続後、ここに${dept.name}専用の診断テキストが自動生成されます。`
+    };
+  }, [tab, realDepts]);
   const selectedKpiDef = displayKpis.find(k => k.id === selKpi) || displayKpis[0];
   const achRate = (() => {
     if (!selectedKpiDef || !selectedKpiDef.target) return null;
@@ -528,17 +548,32 @@ export default function DashboardPage() {
             text={ins.text}
             weather="cloud"
             trend="down"
-            onOpenDeepReport={tab === "exec" ? () => setShowDeepReport(true) : undefined}
+            onOpenDeepReport={tab === "all" ? () => setShowDeepReport(true) : undefined}
           />
+
+          {/* 部署別AI方針翻訳プレビュー（部署タブ選択時のみ表示） */}
+          {tab !== "all" && (() => {
+            const deptIdx = realDepts.findIndex(d => d.id === tab);
+            const dept = realDepts[deptIdx];
+            if (!dept) return null;
+            return (
+              <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-base">🤖</span>
+                  <h5 className="text-xs font-bold text-slate-700">AI方針翻訳 — {dept.name}</h5>
+                  <span className="text-[9px] text-white font-bold px-2 py-0.5 bg-teal/80 rounded-full">最新の通知</span>
+                </div>
+                <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                  ※現在AIエンジン未接続です。フェーズ7以降、ここに「{dept.name}」の直近のコンディション（体温）と全社方針を掛け合わせた、専用の翻訳メッセージが毎月自動生成されます。
+                </p>
+              </div>
+            );
+          })()}
+
           <TabBar
-            tabs={[
-              { id: "exec", label: "👔 経営層" },
-              { id: "admin", label: "📋 経企・人事" },
-              { id: "mgr", label: "🎯 マネージャー" },
-              { id: "player", label: "💪 現場" }
-            ]}
+            tabs={deptTabs}
             active={tab}
-            onChange={(id) => setTab(id as any)}
+            onChange={setTab}
           />
         </div>
 
