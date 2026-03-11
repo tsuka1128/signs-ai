@@ -1074,6 +1074,7 @@ export default function DashboardPage() {
               <SemanticLayer
                 initialText={displaySem}
                 history={realSemHistory}
+                departments={realDepts}
                 onSave={async (txt: string) => {
                   const supabase = createClient();
                   const { data: { user } } = await supabase.auth.getUser();

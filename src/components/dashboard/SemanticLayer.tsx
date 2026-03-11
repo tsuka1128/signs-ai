@@ -7,9 +7,10 @@ import { Bot, Send, CheckCircle2, X, Trash2 } from "lucide-react";
 
 interface SemanticLayerProps {
     initialText: string;
-    history?: any[];
-    onSave: (text: string) => void;
+    history: any[];
+    onSave: (text: string) => Promise<void>;
     onDelete?: (id: string) => Promise<void>;
+    departments?: any[];
 }
 
 const VERSION_CONTENTS: Record<string, string> = {
@@ -58,7 +59,7 @@ const VERSION_CONTENTS: Record<string, string> = {
 - 全員が全プロダクトの売上に責任を持つ。`
 };
 
-export function SemanticLayer({ initialText, history = [], onSave, onDelete }: SemanticLayerProps) {
+export function SemanticLayer({ initialText, history = [], onSave, onDelete, departments }: SemanticLayerProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [currentText, setCurrentText] = useState(initialText);
     const [viewingId, setViewingId] = useState<string | null>(null);
@@ -171,34 +172,30 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete }: S
                     <Badge className="bg-blue-50 text-blue-600 border-none text-[10px] ml-2">Beta Preview</Badge>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex gap-4 transition-all hover:bg-white hover:shadow-md hover:border-slate-200">
-                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-lg shadow-sm border border-slate-100 shrink-0">
-                            💼
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2 mb-1.5">
-                                <h6 className="text-xs font-bold text-slate-700">営業部</h6>
-                                <span className="text-[9px] text-slate-400 font-bold px-2 py-0.5 bg-slate-200/50 rounded-full">トーン: 前向き・行動喚起</span>
+                    {departments && departments.length > 0 ? (
+                        departments.map((dept, idx) => (
+                            <div key={dept.id || idx} className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex gap-4 transition-all hover:bg-white hover:shadow-md hover:border-slate-200">
+                                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-lg shadow-sm border border-slate-100 shrink-0">
+                                    {['💼', '💻', '📣', '🤝', '⚙️', '📈', '🏢', '📋'][idx % 8]}
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <h6 className="text-xs font-bold text-slate-700">{dept.name}</h6>
+                                        <span className="text-[9px] text-slate-400 font-bold px-2 py-0.5 bg-slate-200/50 rounded-full">
+                                            トーン: {['前向き・行動喚起', '冷静・品質重視', '共感・伴走', '構造的・警告的'][idx % 4]}
+                                        </span>
+                                    </div>
+                                    <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                                        ※現在AIエンジン未接続です。フェーズ7以降、ここに「{dept.name}」の直近のコンディション（体温）と全社方針を掛け合わせた、専用の翻訳メッセージが自動生成されます。
+                                    </p>
+                                </div>
                             </div>
-                            <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-                                現在の方針「顧客満足度の向上 ＞ 拡大スピード」を受け、皆様には「目先の成約」よりも「長期的なLTV」を意識した提案をお願いします。顧客の本当の課題解決に寄り添うスタンスへのシフトが求められています。
-                            </p>
+                        ))
+                    ) : (
+                        <div className="col-span-1 md:col-span-2 p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-xs text-slate-400">
+                            部署データがありません
                         </div>
-                    </div>
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex gap-4 transition-all hover:bg-white hover:shadow-md hover:border-slate-200">
-                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-lg shadow-sm border border-slate-100 shrink-0">
-                            💻
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2 mb-1.5">
-                                <h6 className="text-xs font-bold text-slate-700">開発部</h6>
-                                <span className="text-[9px] text-slate-400 font-bold px-2 py-0.5 bg-slate-200/50 rounded-full">トーン: 冷静・品質重視</span>
-                            </div>
-                            <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-                                「顧客価値の最大化」という方針に基づき、新規機能のリリーススピードよりも「既存機能の安定性」と「使い勝手の改善」を最優先事項として再設定します。技術的負債の解消にリソースを充ててください。
-                            </p>
-                        </div>
-                    </div>
+                    )}
                 </div>
                 <div className="mt-4 p-3 bg-teal/5 border border-teal/10 rounded-xl flex items-start gap-3">
                     <div className="text-teal pt-0.5">💡</div>
