@@ -98,6 +98,24 @@ function SurveyFormContent() {
                     setHasAnswered(true);
                 }
 
+                // 2. 重複回答チェック (DB / ログイン済みの場合)
+                const { data: { user: authUser } } = await supabase.auth.getUser();
+                if (authUser) {
+                    const { data: existingResponse } = await supabase
+                        .from('survey_responses')
+                        .select('id')
+                        .eq('user_id', authUser.id)
+                        .eq('recorded_month', `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`)
+                        .limit(1)
+                        .maybeSingle();
+
+                    if (existingResponse) {
+                        setHasAnswered(true);
+                        // LocalStorageも同期しておく
+                        localStorage.setItem(storageKey, "true");
+                    }
+                }
+
                 // 2. 設問取得
                 const { data: qData, error: qErr } = await supabase
                     .from('survey_questions')
@@ -158,17 +176,22 @@ function SurveyFormContent() {
         setIsSubmitting(true);
 
         try {
-            // 1. response 保存
             const now = new Date();
-            const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+            const currentMonthPart = `${now.getFullYear()}_${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const dbRecordedMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
+            // 0. user_id 取得
+            const { data: { user: authUser } } = await supabase.auth.getUser();
+
+            // 1. response 保存
             const { data: response, error: rErr } = await supabase
                 .from('survey_responses')
                 .insert({
                     company_id: resolvedCompanyId,
                     department_id: department,
+                    user_id: authUser?.id || null,
                     axis_id: axisId || null,
-                    recorded_month: currentMonth,
+                    recorded_month: dbRecordedMonth,
                     free_comment: freeComment,
                     cross_dept_feedback: kpiImprovement // KPI改善案をこちらに格納
                 })
@@ -192,7 +215,7 @@ function SurveyFormContent() {
 
             // 3. 成功処理
             if (resolvedCompanyId) {
-                localStorage.setItem(`signs_ai_answered_${resolvedCompanyId}_2026_02`, "true");
+                localStorage.setItem(`signs_ai_answered_${resolvedCompanyId}_${currentMonthPart}`, "true");
             }
             setHasAnswered(true);
             window.scrollTo(0, 0);

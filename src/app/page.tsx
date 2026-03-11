@@ -188,6 +188,7 @@ export default function DashboardPage() {
     }
 
     const latestMonth = last13Months[12];
+    const prevMonth = last13Months[11];
     const latestAnswers = filtered
       .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
       .flatMap(r => r.survey_answers || []);
@@ -197,6 +198,18 @@ export default function DashboardPage() {
       const scoresForQ: number[] = [];
       filtered
         .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
+        .forEach(r => {
+          const ans = r.survey_answers || [];
+          if (ans[qi]) scoresForQ.push(ans[qi].score);
+        });
+      if (scoresForQ.length === 0) return 0;
+      return scoresForQ.reduce((sum: number, s: number) => sum + s, 0) / scoresForQ.length;
+    });
+
+    const prevQScores = questions.map((_, qi) => {
+      const scoresForQ: number[] = [];
+      filtered
+        .filter(r => normalizeMonth(r.recorded_month) === prevMonth)
         .forEach(r => {
           const ans = r.survey_answers || [];
           if (ans[qi]) scoresForQ.push(ans[qi].score);
@@ -227,7 +240,7 @@ export default function DashboardPage() {
       }
     }
 
-    return { viewName, scores: qScores, pulse: avgPulse, pulseHistory, aiComment: comment };
+    return { viewName, scores: qScores, prevScores: prevQScores, pulse: avgPulse, pulseHistory, aiComment: comment };
   }, [orgView, realResponses, realDepts, last13Months]);
 
   const displayDepts = useMemo(() => {
@@ -1075,7 +1088,7 @@ export default function DashboardPage() {
                             question={q.text}
                             hint={q.hint}
                             score={data.scores[i]}
-                            prevScore={data.scores[i] * 0.95}
+                            prevScore={data.prevScores[i]}
                           />
                         ))}
                       </div>
