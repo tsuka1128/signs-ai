@@ -1130,11 +1130,32 @@ export default function DashboardPage() {
                 }}
                 onDelete={async (id: string) => {
                   const supabase = createClient();
-                  const { error } = await supabase.from('semantic_layers').delete().eq('id', id);
-                  if (!error) {
-                    setRealSemHistory(prev => prev.filter(h => h.id !== id));
-                  } else {
-                    alert("削除に失敗しました。時間をおいて再度お試しください。");
+                  console.log('[SemanticLayer] 削除開始: id =', id);
+                  const { error } = await supabase
+                    .from('semantic_layers')
+                    .delete()
+                    .eq('id', id);
+                  console.log('[SemanticLayer] 削除結果:', { error });
+
+                  if (error) {
+                    console.error('[SemanticLayer] 削除エラー:', error);
+                    alert(`削除に失敗しました: ${error.message}`);
+                    return;
+                  }
+
+                  // DBから再取得して確実に同期
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (!user) return;
+                  const { data: comp } = await supabase.from('users').select('company_id').eq('id', user.id).single();
+                  if (!comp?.company_id) return;
+                  const { data: freshHistory } = await supabase
+                    .from('semantic_layers')
+                    .select('*')
+                    .eq('company_id', comp.company_id)
+                    .order('created_at', { ascending: false });
+                  if (freshHistory) {
+                    console.log('[SemanticLayer] 再取得した履歴件数:', freshHistory.length);
+                    setRealSemHistory(freshHistory);
                   }
                 }}
               />
