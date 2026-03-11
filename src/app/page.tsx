@@ -1071,16 +1071,6 @@ export default function DashboardPage() {
 
           {sec === "semantic" && (
             <div className="space-y-6 animate-fadeIn">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">🧬</span>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-800">組織方針</h3>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">AIの判断基準</p>
-                </div>
-              </div>
-              <p className="text-xs text-slate-400 leading-relaxed font-medium">
-                組織方針・KPIの解釈・組織のフェーズをMarkdownで記述。AIはこの文書を毎月の診断時に読み込み、数字の良し悪しを「あなたの会社の文脈」で判断します。
-              </p>
               <SemanticLayer
                 initialText={displaySem}
                 history={realSemHistory}
