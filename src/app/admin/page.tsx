@@ -1,44 +1,144 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useAdmin } from "@/hooks/useAdmin";
 import { Badge } from "@/components/ui/Badge";
+import { Loading } from "@/components/ui/Loading";
 import {
     Building2,
     Users,
     TrendingUp,
     AlertCircle,
     ArrowUpRight,
-    ArrowDownRight
+    ArrowDownRight,
+    PieChart
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface Stats {
+    companyCount: number;
+    userCount: number;
+    activeCount: number;
+    alertCount: number;
+}
 
 export default function AdminDashboardPage() {
+    const { supabase, loading: authLoading } = useAdmin();
+    const [stats, setStats] = useState<Stats | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchStats() {
+            if (authLoading) return;
+            try {
+                // 1. 企業総数とステータス別内訳
+                const { data: companies, error: compErr } = await supabase
+                    .from('companies')
+                    .select('status');
+                if (compErr) throw compErr;
+
+                // 2. 総ユーザー数
+                const { count: userCount, error: userErr } = await supabase
+                    .from('users')
+                    .select('*', { count: 'exact', head: true });
+                if (userErr) throw userErr;
+
+                // 3. アラート（30日以上更新がない企業など）
+                // ※ ここでは簡易的に、最終更新が30日以前の企業をカウント（updated_atを使用）
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+                const { count: alertCount } = await supabase
+                    .from('companies')
+                    .select('*', { count: 'exact', head: true })
+                    .lt('updated_at', thirtyDaysAgo.toISOString());
+
+                setStats({
+                    companyCount: companies?.length || 0,
+                    userCount: userCount || 0,
+                    activeCount: companies?.filter(c => c.status === 'active').length || 0,
+                    alertCount: alertCount || 0
+                });
+            } catch (error) {
+                console.error("Error fetching admin stats:", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchStats();
+    }, [supabase, authLoading]);
+
+    if (loading || authLoading) {
+        return <Loading fullScreen message="統計情報を集計しています..." />;
+    }
+
+    const cards = [
+        {
+            label: "契約企業数",
+            value: stats?.companyCount.toLocaleString() || "0",
+            unit: "社",
+            change: `内 active ${stats?.activeCount}`,
+            icon: Building2,
+            trend: "up",
+            color: "text-blue-500",
+            bg: "bg-blue-50"
+        },
+        {
+            label: "総ユーザー数",
+            value: stats?.userCount.toLocaleString() || "0",
+            unit: "名",
+            change: "全テナント合計",
+            icon: Users,
+            trend: "up",
+            color: "text-purple-500",
+            bg: "bg-purple-50"
+        },
+        {
+            label: "アクティブ率",
+            value: stats?.companyCount ? Math.round((stats.activeCount / stats.companyCount) * 100).toString() : "0",
+            unit: "%",
+            change: "Active / Total",
+            icon: TrendingUp,
+            trend: "up",
+            color: "text-teal",
+            bg: "bg-teal/5"
+        },
+        {
+            label: "要フォロー企業",
+            value: stats?.alertCount.toLocaleString() || "0",
+            unit: "社",
+            change: "30日以上未更新",
+            icon: AlertCircle,
+            trend: stats?.alertCount && stats.alertCount > 0 ? "up" : "down",
+            color: stats?.alertCount && stats.alertCount > 0 ? "text-rose-500" : "text-slate-400",
+            bg: stats?.alertCount && stats.alertCount > 0 ? "bg-rose-50" : "bg-slate-50"
+        },
+    ];
+
     return (
         <main className="p-8 space-y-10 animate-fadeIn">
             <header className="flex flex-col gap-2">
                 <div className="flex items-center gap-3">
                     <h1 className="text-2xl font-black text-slate-800 tracking-tighter">全体サマリー</h1>
-                    <Badge className="bg-emerald-50 text-emerald-600 border-none font-bold">システム正常運用中</Badge>
+                    <Badge className="bg-emerald-50 text-emerald-600 border-none font-bold">実データ連携済み</Badge>
                 </div>
-                <p className="text-slate-500 font-medium font-sans">全導入企業の利用状況と主要KPIを一括で把握します。</p>
+                <p className="text-slate-500 font-medium font-sans">全導入企業の利用状況と主要KPIをリアルタイムに把握します。</p>
             </header>
 
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[
-                    { label: "契約企業数", value: "24", unit: "社", change: "+2", icon: Building2, trend: "up" },
-                    { label: "総ユーザー数", value: "1,248", unit: "名", change: "+124", icon: Users, trend: "up" },
-                    { label: "推定 MRR", value: "480", unit: "万円", change: "+35", icon: TrendingUp, trend: "up" },
-                    { label: "警告アラート", value: "3", unit: "件", change: "-1", icon: AlertCircle, trend: "down" },
-                ].map((stat, i) => (
+                {cards.map((stat, i) => (
                     <div key={i} className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all group">
                         <div className="flex justify-between items-start mb-4">
-                            <div className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-teal group-hover:text-white transition-colors">
+                            <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center transition-colors shadow-sm", stat.bg, stat.color)}>
                                 <stat.icon className="w-5 h-5" />
                             </div>
                             <div className={cn(
                                 "flex items-center gap-0.5 text-[10px] font-black px-2 py-1 rounded-full",
-                                stat.trend === "up" ? "bg-emerald-50 text-emerald-500" : "bg-rose-50 text-rose-500"
+                                stat.trend === "up" && stat.label !== "要フォロー企業" ? "bg-emerald-50 text-emerald-500" :
+                                    stat.label === "要フォロー企業" && stat.value !== "0" ? "bg-rose-50 text-rose-500" : "bg-slate-50 text-slate-500"
                             )}>
-                                {stat.trend === "up" ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
                                 {stat.change}
                             </div>
                         </div>
@@ -51,27 +151,41 @@ export default function AdminDashboardPage() {
                 ))}
             </div>
 
-            {/* Main Content Area (Layout Placeholder) */}
+            {/* Main Content Area */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm h-96 flex flex-col items-center justify-center text-center space-y-4">
-                        <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center">
+                    <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm h-96 flex flex-col items-center justify-center text-center space-y-4 relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-slate-50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center relative z-10 transition-transform group-hover:scale-110">
                             <TrendingUp className="w-8 h-8 text-slate-200" />
                         </div>
-                        <div>
+                        <div className="relative z-10">
                             <h3 className="text-sm font-bold text-slate-800">成長トレンド（構築中）</h3>
-                            <p className="text-xs text-slate-400 mt-1 max-w-xs">MRR と解約率の推移グラフがここに表示されます。</p>
+                            <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+                                各プランごとの MRR 推移や Churn Rate（解約率）を可視化するグラフを準備中です。
+                            </p>
                         </div>
                     </div>
                 </div>
                 <div className="space-y-6">
-                    <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm h-96 flex flex-col items-center justify-center text-center space-y-4">
-                        <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center">
+                    <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm h-96 flex flex-col items-center justify-center text-center space-y-4 relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-slate-50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center relative z-10 transition-transform group-hover:scale-110">
                             <AlertCircle className="w-8 h-8 text-slate-200" />
                         </div>
-                        <div>
-                            <h3 className="text-sm font-bold text-slate-800">最新アラート（構築中）</h3>
-                            <p className="text-xs text-slate-400 mt-1 max-w-xs">解約リスクの高い企業や、未解決のサポート依頼が表示されます。</p>
+                        <div className="relative z-10">
+                            <h3 className="text-sm font-bold text-slate-800">最新アラート</h3>
+                            <div className="mt-4 space-y-2">
+                                {stats?.alertCount && stats.alertCount > 0 ? (
+                                    <div className="text-rose-500 text-xs font-bold bg-rose-50 p-3 rounded-xl border border-rose-100 animate-pulse">
+                                        注意が必要な企業が {stats.alertCount} 社あります。
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-slate-400 max-w-xs mx-auto">
+                                        現在、緊急の対応が必要なアラートはありません。
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -79,6 +193,3 @@ export default function AdminDashboardPage() {
         </main>
     );
 }
-
-// cn をインポートするために一時的に追加 (後で整理)
-import { cn } from "@/lib/utils";
