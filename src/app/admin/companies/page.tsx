@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { CopyButton } from "@/components/ui/CopyButton";
 
 export default function AdminCompaniesPage() {
     const { supabase, loading: authLoading } = useAdmin();
@@ -139,7 +140,10 @@ export default function AdminCompaniesPage() {
                                             </div>
                                             <div>
                                                 <p className="text-sm font-bold text-slate-800">{company.name}</p>
-                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">ID: {company.id.substring(0, 8)}</p>
+                                                <div className="flex items-center gap-1.5 mt-0.5">
+                                                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{company.short_id || company.id.substring(0, 8)}</p>
+                                                    <CopyButton value={company.short_id || company.id} iconSize={10} className="p-1" />
+                                                </div>
                                             </div>
                                         </div>
                                     </td>

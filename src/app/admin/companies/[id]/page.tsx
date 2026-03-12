@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { CopyButton } from "@/components/ui/CopyButton";
 
 export default function AdminCompanyDetailPage() {
     const params = useParams();
@@ -127,9 +128,18 @@ export default function AdminCompanyDetailPage() {
                                     {company.status}
                                 </Badge>
                             </div>
-                            <div className="flex items-center gap-4 text-xs font-bold text-slate-400">
+                            <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-xs font-bold text-slate-400">
                                 <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> 2026/03/01 契約開始</span>
-                                <span className="flex items-center gap-1.5 uppercase tracking-widest"><ShieldAlert className="w-3.5 h-3.5" /> ID: {company.id}</span>
+                                <div className="flex items-center gap-2 px-2.5 py-1 bg-slate-50 rounded-lg border border-slate-100 group/id">
+                                    <span className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">Signs ID:</span>
+                                    <span className="text-slate-600 font-bold tracking-widest">{company.short_id || "---"}</span>
+                                    <CopyButton value={company.short_id || ""} iconSize={10} className="p-0.5 bg-white border-none shadow-none" />
+                                </div>
+                                <div className="flex items-center gap-2 group/uuid">
+                                    <ShieldAlert className="w-3.5 h-3.5 text-slate-300" />
+                                    <span className="uppercase tracking-tighter opacity-60">UUID: {company.id}</span>
+                                    <CopyButton value={company.id} iconSize={10} className="p-0.5 bg-transparent border-none shadow-none text-slate-300 hover:text-slate-500" />
+                                </div>
                             </div>
                         </div>
                     </div>
