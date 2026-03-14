@@ -11,9 +11,22 @@ import {
     Building2,
     Calendar,
     ArrowUpRight,
-    Search
+    Search,
+    BarChart3
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+    AreaChart,
+    Area,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    LineChart,
+    Line,
+    Legend
+} from 'recharts';
 
 // プラン別の推定単価
 const PLAN_PRICES: Record<string, number> = {
@@ -23,12 +36,20 @@ const PLAN_PRICES: Record<string, number> = {
     'Pro': 500000
 };
 
+const PLAN_COLORS: Record<string, string> = {
+    'Free': '#94a3b8',
+    'Team': '#3b82f6',
+    'Standard': '#a855f7',
+    'Pro': '#f59e0b'
+};
+
 export default function AdminBillingPage() {
     const { supabase, loading: authLoading } = useAdmin();
     const [companies, setCompanies] = useState<any[]>([]);
     const [plans, setPlans] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
+    const [chartData, setChartData] = useState<any[]>([]);
 
     useEffect(() => {
         async function fetchData() {
@@ -44,10 +65,56 @@ export default function AdminBillingPage() {
                 const { data: compData, error: compErr } = await supabase
                     .from('companies')
                     .select('*, plans(name)')
-                    .order('created_at', { ascending: false });
+                    .order('created_at', { ascending: true }); // 時系列集計のために昇順で取得
 
                 if (compErr) throw compErr;
-                setCompanies(compData || []);
+                const fetchedCompanies = compData || [];
+                setCompanies([...fetchedCompanies].reverse()); // テーブル表示用には降順に戻す
+
+                // 3. グラフデータの生成 (過去6ヶ月)
+                const months = [];
+                for (let i = 5; i >= 0; i--) {
+                    const d = new Date();
+                    d.setMonth(d.getMonth() - i);
+                    months.push({
+                        date: d,
+                        label: `${d.getMonth() + 1}月`,
+                        yearMonth: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+                        mrr: 0,
+                        Free: 0,
+                        Team: 0,
+                        Standard: 0,
+                        Pro: 0
+                    });
+                }
+
+                const timeSeries = months.map(month => {
+                    let monthlyMRR = 0;
+                    const counts: Record<string, number> = { Free: 0, Team: 0, Standard: 0, Pro: 0 };
+
+                    fetchedCompanies.forEach(comp => {
+                        const compDate = new Date(comp.created_at);
+                        const compYearMonth = `${compDate.getFullYear()}-${String(compDate.getMonth() + 1).padStart(2, '0')}`;
+
+                        // その月以前に作成された企業をカウント
+                        if (compYearMonth <= month.yearMonth) {
+                            const planName = comp.plans?.name || 'Free';
+                            monthlyMRR += (PLAN_PRICES[planName] || 0);
+                            if (counts.hasOwnProperty(planName)) {
+                                counts[planName]++;
+                            }
+                        }
+                    });
+
+                    return {
+                        ...month,
+                        mrr: monthlyMRR,
+                        ...counts
+                    };
+                });
+
+                setChartData(timeSeries);
+
             } catch (error) {
                 console.error("Error fetching billing data:", error);
             } finally {
@@ -80,7 +147,7 @@ export default function AdminBillingPage() {
     }
 
     return (
-        <main className="p-8 space-y-10 animate-fadeIn">
+        <main className="p-8 space-y-10 animate-fadeIn text-slate-900">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div className="space-y-2">
                     <h1 className="text-2xl font-black text-slate-800 tracking-tighter">プラン・請求管理</h1>
@@ -102,7 +169,7 @@ export default function AdminBillingPage() {
 
             {/* Billing Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+                <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm outline outline-2 outline-teal/20">
                     <div className="w-10 h-10 rounded-2xl bg-teal/5 flex items-center justify-center text-teal mb-4">
                         <TrendingUp className="w-5 h-5" />
                     </div>
@@ -110,7 +177,7 @@ export default function AdminBillingPage() {
                         <span className="text-2xl font-black text-slate-800 tabular-nums">¥{(estimatedMRR / 10000).toLocaleString()}</span>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">万円</span>
                     </div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 text-teal">推定 MRR (月次収益)</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 text-teal">推定 MRR (合計収益)</p>
                 </div>
 
                 {['Team', 'Standard', 'Pro'].map((planName) => (
@@ -136,8 +203,92 @@ export default function AdminBillingPage() {
                 ))}
             </div>
 
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* MRR Trend Chart */}
+                <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm flex flex-col h-[400px]">
+                    <div className="mb-6">
+                        <h2 className="text-lg font-black text-slate-800 tracking-tight flex items-center gap-2">
+                            <TrendingUp className="w-5 h-5 text-teal" />
+                            MRR 推移
+                        </h2>
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Monthly Recurring Revenue</p>
+                    </div>
+                    <div className="flex-1 w-full min-h-0">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={chartData}>
+                                <defs>
+                                    <linearGradient id="colorMrr" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#2DD4BF" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="#2DD4BF" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                <XAxis
+                                    dataKey="label"
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 'bold' }}
+                                    dy={10}
+                                />
+                                <YAxis
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }}
+                                    tickFormatter={(value) => `¥${(value / 10000)}万`}
+                                />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#fff', borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                    formatter={(value: number) => [`¥${value.toLocaleString()}`, '推定MRR']}
+                                />
+                                <Area type="monotone" dataKey="mrr" stroke="#2DD4BF" strokeWidth={4} fillOpacity={1} fill="url(#colorMrr)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Plan Distribution Trend */}
+                <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm flex flex-col h-[400px]">
+                    <div className="mb-6">
+                        <h2 className="text-lg font-black text-slate-800 tracking-tight flex items-center gap-2">
+                            <BarChart3 className="w-5 h-5 text-blue-500" />
+                            プラン別社数推移
+                        </h2>
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Plan Distribution Trend</p>
+                    </div>
+                    <div className="flex-1 w-full min-h-0">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={chartData}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                <XAxis
+                                    dataKey="label"
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 'bold' }}
+                                    dy={10}
+                                />
+                                <YAxis
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }}
+                                    tickFormatter={(value) => `${value}社`}
+                                />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#fff', borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                />
+                                <Legend />
+                                <Line type="monotone" dataKey="Pro" stroke={PLAN_COLORS.Pro} strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                                <Line type="monotone" dataKey="Standard" stroke={PLAN_COLORS.Standard} strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                                <Line type="monotone" dataKey="Team" stroke={PLAN_COLORS.Team} strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                                <Line type="monotone" dataKey="Free" stroke={PLAN_COLORS.Free} strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            </div>
+
             {/* Companies Table */}
-            <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden text-slate-900">
                 <div className="p-8 border-b border-slate-50 flex items-center justify-between">
                     <div>
                         <h2 className="text-lg font-black text-slate-800 tracking-tight">プラン別利用状況一覧</h2>
@@ -168,10 +319,10 @@ export default function AdminBillingPage() {
                                     </td>
                                     <td className="px-6 py-5">
                                         <Badge className={cn(
-                                            "border-none font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase",
-                                            company.plans?.name === 'Pro' ? "bg-amber-50 text-amber-600" :
-                                                company.plans?.name === 'Standard' ? "bg-purple-50 text-purple-600" :
-                                                    company.plans?.name === 'Team' ? "bg-blue-50 text-blue-600" : "bg-slate-100 text-slate-500"
+                                            "border-none font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase text-white",
+                                            company.plans?.name === 'Pro' ? "bg-amber-500" :
+                                                company.plans?.name === 'Standard' ? "bg-purple-500" :
+                                                    company.plans?.name === 'Team' ? "bg-blue-500" : "bg-slate-400"
                                         )}>
                                             {company.plans?.name}
                                         </Badge>
