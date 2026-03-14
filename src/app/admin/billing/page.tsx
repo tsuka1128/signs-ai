@@ -195,9 +195,9 @@ export default function AdminBillingPage() {
                 setChartData(timeSeries);
             }
             setEditingCompany(null);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error updating billing info:", error);
-            alert("保存に失敗しました。");
+            alert(`保存に失敗しました。\nエラー内容: ${error.message || "不明なエラー"}\n詳細: ${JSON.stringify(error)}`);
         } finally {
             setIsSaving(false);
         }
