@@ -2,14 +2,18 @@
 
 import { useAdmin } from "@/hooks/useAdmin";
 import { useCompany } from "@/hooks/useCompany";
+import { usePathname } from "next/navigation";
 import { ShieldAlert, LogOut, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function ImpersonationBanner() {
     const { isSuperAdmin, stopImpersonating } = useAdmin();
     const { company, isImpersonating } = useCompany();
+    const pathname = usePathname();
 
-    if (!isSuperAdmin || !isImpersonating || !company) return null;
+    const isAdminPage = pathname?.startsWith('/admin');
+
+    if (!isSuperAdmin || !isImpersonating || !company || isAdminPage) return null;
 
     return (
         <div className="fixed top-0 left-0 right-0 z-[9999] animate-slideDown">
@@ -55,6 +59,9 @@ export function ImpersonationBanner() {
 // Layout用のアジャスター（バナー分の高さを確保）
 export function ImpersonationSpacer() {
     const { isSuperAdmin, impersonatedCompanyId } = useAdmin();
-    if (!isSuperAdmin || !impersonatedCompanyId) return null;
+    const pathname = usePathname();
+    const isAdminPage = pathname?.startsWith('/admin');
+
+    if (!isSuperAdmin || !impersonatedCompanyId || isAdminPage) return null;
     return <div className="h-[45px]" />;
 }
