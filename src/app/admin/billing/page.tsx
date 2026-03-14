@@ -462,7 +462,7 @@ export default function AdminBillingPage() {
                                 <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">プラン</th>
                                 <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">MRR / 初期費用</th>
                                 <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">契約開始日</th>
-                                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">契約終了日</th>
+                                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">自動契約更新日</th>
                                 <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">解約通知日</th>
                                 <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">請求先</th>
                                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">操作</th>
@@ -610,7 +610,7 @@ export default function AdminBillingPage() {
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <p className="text-[9px] font-bold text-slate-400 ml-1">終了日</p>
+                                        <p className="text-[9px] font-bold text-slate-400 ml-1">自動契約更新日</p>
                                         <input
                                             type="date"
                                             value={editingCompany.contract_end_date || ""}
