@@ -18,7 +18,8 @@ import {
     User,
     FileText,
     X,
-    Save
+    Save,
+    Plus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -57,6 +58,7 @@ export default function AdminBillingPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [chartData, setChartData] = useState<any[]>([]);
     const [editingCompany, setEditingCompany] = useState<any | null>(null);
+    const [isAddingNew, setIsAddingNew] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
@@ -144,7 +146,11 @@ export default function AdminBillingPage() {
                     setup_fee: editingCompany.setup_fee || null,
                     billing_email: editingCompany.billing_email,
                     billing_contact_name: editingCompany.billing_contact_name,
-                    billing_memo: editingCompany.billing_memo
+                    billing_memo: editingCompany.billing_memo,
+                    contract_start_date: editingCompany.contract_start_date || null,
+                    contract_end_date: editingCompany.contract_end_date || null,
+                    cancellation_notice_date: editingCompany.cancellation_notice_date || null,
+                    status: editingCompany.status
                 })
                 .eq('id', editingCompany.id);
 
@@ -194,10 +200,45 @@ export default function AdminBillingPage() {
                 });
                 setChartData(timeSeries);
             }
-            setEditingCompany(null);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleCreateCompany = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingCompany.name || !editingCompany.plan_id) {
+            alert("企業名とプランを選択してください");
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            const { data, error } = await supabase
+                .from('companies')
+                .insert([{
+                    name: editingCompany.name,
+                    plan_id: editingCompany.plan_id,
+                    status: editingCompany.status,
+                    custom_mrr: editingCompany.custom_mrr || null,
+                    setup_fee: editingCompany.setup_fee || null,
+                    billing_email: editingCompany.billing_email,
+                    billing_contact_name: editingCompany.billing_contact_name,
+                    billing_memo: editingCompany.billing_memo,
+                    contract_start_date: editingCompany.contract_start_date || null,
+                    contract_end_date: editingCompany.contract_end_date || null,
+                    cancellation_notice_date: editingCompany.cancellation_notice_date || null
+                }])
+                .select(`*, plans(name)`)
+                .single();
+
+            if (error) throw error;
+
+            // ページ全体をリロードせずにリストを更新（簡易版。本来はデータの完全同期が望ましい）
+            window.location.reload();
         } catch (error: any) {
-            console.error("Error updating billing info:", error);
-            alert(`保存に失敗しました。\nエラー内容: ${error.message || "不明なエラー"}\n詳細: ${JSON.stringify(error)}`);
+            console.error("Error creating company:", error);
+            alert(`登録に失敗しました。\nエラー内容: ${error.message || "不明なエラー"}`);
         } finally {
             setIsSaving(false);
         }
@@ -243,6 +284,28 @@ export default function AdminBillingPage() {
                             className="pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal transition-all w-64 shadow-sm"
                         />
                     </div>
+                    <button
+                        onClick={() => {
+                            setEditingCompany({
+                                name: "",
+                                plan_id: plans[0]?.id || "",
+                                status: "trial",
+                                custom_mrr: null,
+                                setup_fee: null,
+                                billing_email: "",
+                                billing_contact_name: "",
+                                billing_memo: "",
+                                contract_start_date: null,
+                                contract_end_date: null,
+                                cancellation_notice_date: null
+                            });
+                            setIsAddingNew(true);
+                        }}
+                        className="px-4 py-2 bg-teal text-white rounded-xl text-sm font-bold shadow-lg shadow-teal/20 hover:bg-teal/90 transition-all flex items-center gap-2"
+                    >
+                        <Plus className="w-4 h-4" />
+                        新規企業登録
+                    </button>
                 </div>
             </header>
 
@@ -375,20 +438,23 @@ export default function AdminBillingPage() {
                     </div>
                 </div>
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full text-left border-collapse min-w-[1300px]">
                         <thead>
                             <tr className="bg-slate-50/50 border-b border-slate-100">
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">企業名</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] sticky left-0 bg-slate-50 z-20">企業名</th>
                                 <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">プラン</th>
                                 <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">MRR / 初期費用</th>
+                                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">契約開始日</th>
+                                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">契約終了日</th>
+                                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">解約通知日</th>
                                 <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">請求先</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">アクション</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">操作</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {filteredCompanies.map((company) => (
                                 <tr key={company.id} className="hover:bg-slate-50/50 transition-colors group text-sm">
-                                    <td className="px-8 py-5">
+                                    <td className="px-8 py-5 sticky left-0 bg-white group-hover:bg-slate-50 z-10">
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center font-bold text-slate-400 italic">
                                                 {company.name.substring(0, 1)}
@@ -412,14 +478,21 @@ export default function AdminBillingPage() {
                                     <td className="px-6 py-5">
                                         <div className="space-y-1">
                                             <div className="font-bold text-slate-700 text-xs">
-                                                MRR: <span className={cn(company.custom_mrr ? "text-teal" : "text-slate-400")}>
-                                                    ¥{(company.custom_mrr || PLAN_PRICES[company.plans?.name || 'Free']).toLocaleString()}
-                                                </span>
+                                                MRR: ¥{(company.custom_mrr || PLAN_PRICES[company.plans?.name || 'Free']).toLocaleString()}
                                             </div>
                                             <div className="text-[10px] font-bold text-slate-400">
                                                 Setup: ¥{(company.setup_fee || 0).toLocaleString()}
                                             </div>
                                         </div>
+                                    </td>
+                                    <td className="px-6 py-5 text-xs font-bold text-slate-600 tabular-nums">
+                                        {company.contract_start_date ? new Date(company.contract_start_date).toLocaleDateString('ja-JP') : '---'}
+                                    </td>
+                                    <td className="px-6 py-5 text-xs font-bold text-slate-600 tabular-nums">
+                                        {company.contract_end_date ? new Date(company.contract_end_date).toLocaleDateString('ja-JP') : '---'}
+                                    </td>
+                                    <td className="px-6 py-5 text-xs font-bold text-slate-400 tabular-nums">
+                                        {company.cancellation_notice_date ? new Date(company.cancellation_notice_date).toLocaleDateString('ja-JP') : '---'}
                                     </td>
                                     <td className="px-6 py-5">
                                         <div className="space-y-0.5">
@@ -427,7 +500,7 @@ export default function AdminBillingPage() {
                                             <div className="text-[10px] text-slate-400 font-medium truncate max-w-[150px]">{company.billing_contact_name || '-'}</div>
                                         </div>
                                     </td>
-                                    <td className="px-8 py-5">
+                                    <td className="px-8 py-5 text-right">
                                         <button
                                             onClick={() => setEditingCompany({ ...company })}
                                             className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg text-slate-400 hover:text-teal transition-all shadow-sm group"
@@ -448,25 +521,96 @@ export default function AdminBillingPage() {
                     <div className="bg-white rounded-[32px] w-full max-w-xl shadow-2xl overflow-hidden animate-slideUp">
                         <header className="px-8 py-6 border-b border-slate-50 flex items-center justify-between">
                             <div>
-                                <h3 className="text-xl font-black text-slate-800 tracking-tight">請求情報の編集</h3>
-                                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">{editingCompany.name}</p>
+                                <h3 className="text-xl font-black text-slate-800 tracking-tight">
+                                    {isAddingNew ? "新規企業の登録" : "請求情報の編集"}
+                                </h3>
+                                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
+                                    {isAddingNew ? "New Enterprise Registration" : editingCompany.name}
+                                </p>
                             </div>
-                            <button onClick={() => setEditingCompany(null)} className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 transition-colors">
+                            <button
+                                onClick={() => {
+                                    setEditingCompany(null);
+                                    setIsAddingNew(false);
+                                }}
+                                className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 transition-colors"
+                            >
                                 <X className="w-5 h-5" />
                             </button>
                         </header>
-                        <form onSubmit={handleUpdateBilling} className="p-8 space-y-6">
+                        <form onSubmit={isAddingNew ? handleCreateCompany : handleUpdateBilling} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
+                            {isAddingNew && (
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">企業名</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={editingCompany.name || ""}
+                                        onChange={(e) => setEditingCompany({ ...editingCompany, name: e.target.value })}
+                                        placeholder="株式会社SignsAI"
+                                        className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-teal/20 transition-all"
+                                    />
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">プラン</label>
+                                    <select
+                                        value={editingCompany.plan_id}
+                                        onChange={(e) => setEditingCompany({ ...editingCompany, plan_id: e.target.value })}
+                                        className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-teal/20 transition-all appearance-none cursor-pointer"
+                                    >
+                                        {plans.map((plan) => (
+                                            <option key={plan.id} value={plan.id}>{plan.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">ステータス</label>
+                                    <select
+                                        value={editingCompany.status}
+                                        onChange={(e) => setEditingCompany({ ...editingCompany, status: e.target.value })}
+                                        className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-teal/20 transition-all appearance-none cursor-pointer"
+                                    >
+                                        <option value="trial">Trial</option>
+                                        <option value="active">Active</option>
+                                        <option value="suspended">Suspended</option>
+                                    </select>
+                                </div>
+                            </div>
+
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">現在のプラン</label>
-                                <select
-                                    value={editingCompany.plan_id}
-                                    onChange={(e) => setEditingCompany({ ...editingCompany, plan_id: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-teal/20 transition-all appearance-none cursor-pointer"
-                                >
-                                    {plans.map((plan) => (
-                                        <option key={plan.id} value={plan.id}>{plan.name}</option>
-                                    ))}
-                                </select>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">契約期間・条件</label>
+                                <div className="grid grid-cols-3 gap-3">
+                                    <div className="space-y-1">
+                                        <p className="text-[9px] font-bold text-slate-400 ml-1">開始日</p>
+                                        <input
+                                            type="date"
+                                            value={editingCompany.contract_start_date || ""}
+                                            onChange={(e) => setEditingCompany({ ...editingCompany, contract_start_date: e.target.value || null })}
+                                            className="w-full px-3 py-2 bg-slate-50 border-none rounded-xl text-xs font-bold focus:ring-2 focus:ring-teal/20 transition-all"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[9px] font-bold text-slate-400 ml-1">終了日</p>
+                                        <input
+                                            type="date"
+                                            value={editingCompany.contract_end_date || ""}
+                                            onChange={(e) => setEditingCompany({ ...editingCompany, contract_end_date: e.target.value || null })}
+                                            className="w-full px-3 py-2 bg-slate-50 border-none rounded-xl text-xs font-bold focus:ring-2 focus:ring-teal/20 transition-all"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[9px] font-bold text-slate-400 ml-1">解約通知日</p>
+                                        <input
+                                            type="date"
+                                            value={editingCompany.cancellation_notice_date || ""}
+                                            onChange={(e) => setEditingCompany({ ...editingCompany, cancellation_notice_date: e.target.value || null })}
+                                            className="w-full px-3 py-2 bg-slate-50 border-none rounded-xl text-xs font-bold focus:ring-2 focus:ring-teal/20 transition-all"
+                                        />
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-6">
