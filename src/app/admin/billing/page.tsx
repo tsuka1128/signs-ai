@@ -253,8 +253,8 @@ export default function AdminBillingPage() {
                         <TrendingUp className="w-5 h-5" />
                     </div>
                     <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-black text-slate-800 tabular-nums">¥{(totalMRR / 10000).toLocaleString()}</span>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">万円</span>
+                        <span className="text-2xl font-black text-slate-800 tabular-nums">¥{totalMRR.toLocaleString()}</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">円</span>
                     </div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 text-teal">合計 MRR (手入力優先)</p>
                 </div>
@@ -314,7 +314,7 @@ export default function AdminBillingPage() {
                                     axisLine={false}
                                     tickLine={false}
                                     tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }}
-                                    tickFormatter={(value) => `¥${(value / 10000)}万`}
+                                    tickFormatter={(value) => `¥${(value / 10000).toFixed(1)}万`}
                                 />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#fff', borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
