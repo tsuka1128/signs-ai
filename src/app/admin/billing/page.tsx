@@ -314,7 +314,7 @@ export default function AdminBillingPage() {
                                     axisLine={false}
                                     tickLine={false}
                                     tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }}
-                                    tickFormatter={(value) => `¥${(value / 10000).toFixed(1)}万`}
+                                    tickFormatter={(value) => `¥${Number(value).toLocaleString()}`}
                                 />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#fff', borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
