@@ -22,18 +22,39 @@ export function Header() {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 setUserInitial(user.email?.[0].toUpperCase() || "U");
-                const { data: profile } = await supabase
-                    .from("users")
-                    .select("display_name, companies(name, plans(name))")
-                    .eq("id", user.id)
-                    .single();
 
-                if (profile) {
-                    const comp = (profile as any).companies;
-                    setCompanyName(comp?.name || "Signs AI User");
-                    let pName = comp?.plans?.name || "Trial";
-                    if (pName === "Free") pName = "Freetrial";
-                    setPlanName(pName);
+                // 代理ログイン ID の確認
+                const impersonatedId = typeof window !== "undefined" ? localStorage.getItem("impersonated_company_id") : null;
+
+                if (impersonatedId) {
+                    // 代理ログイン中の場合は代理先の企業情報を取得
+                    const { data: company } = await supabase
+                        .from("companies")
+                        .select("name, plans(name)")
+                        .eq("id", impersonatedId)
+                        .single();
+
+                    if (company) {
+                        setCompanyName(company.name);
+                        const pName = Array.isArray(company.plans)
+                            ? company.plans[0]?.name
+                            : (company.plans as any)?.name;
+                        setPlanName(pName || "Standard");
+                    }
+                } else {
+                    // 通常ログイン時は自分のプロファイル情報を取得
+                    const { data: profile } = await supabase
+                        .from("users")
+                        .select("display_name, companies(name, plans(name))")
+                        .eq("id", user.id)
+                        .single();
+
+                    if (profile) {
+                        const comp = (profile as any).companies;
+                        setCompanyName(comp?.name || "Signs AI User");
+                        const pName = comp?.plans?.name || "Standard";
+                        setPlanName(pName);
+                    }
                 }
             }
         };

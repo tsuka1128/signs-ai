@@ -33,6 +33,13 @@ export function useAdmin() {
                     .single();
 
                 if (error || userData?.role !== 'super_admin') {
+                    // 代理ログイン中の場合は、権限不足エラーを出さずに終了（バナー表示のため）
+                    const currentImpersonatedId = typeof window !== "undefined" ? localStorage.getItem("impersonated_company_id") : null;
+                    if (currentImpersonatedId) {
+                        setIsSuperAdmin(true);
+                        setLoading(false);
+                        return;
+                    }
                     console.error("Access denied: Not a super_admin");
                     router.push("/");
                     return;
@@ -41,7 +48,8 @@ export function useAdmin() {
                 setIsSuperAdmin(true);
             } catch (error) {
                 console.error("Error in useAdmin:", error);
-                router.push("/");
+                const currentImpersonatedId = typeof window !== "undefined" ? localStorage.getItem("impersonated_company_id") : null;
+                if (!currentImpersonatedId) router.push("/");
             } finally {
                 setLoading(false);
             }
