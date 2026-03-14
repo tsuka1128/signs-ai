@@ -12,7 +12,13 @@ import {
     Calendar,
     ArrowUpRight,
     Search,
-    BarChart3
+    BarChart3,
+    Edit2,
+    Mail,
+    User,
+    FileText,
+    X,
+    Save
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -50,10 +56,13 @@ export default function AdminBillingPage() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [chartData, setChartData] = useState<any[]>([]);
+    const [editingCompany, setEditingCompany] = useState<any | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         async function fetchData() {
             if (authLoading) return;
+            setLoading(true);
             try {
                 // 1. プラン一覧の取得
                 const { data: planData } = await supabase
@@ -96,25 +105,21 @@ export default function AdminBillingPage() {
                         const compDate = new Date(comp.created_at);
                         const compYearMonth = `${compDate.getFullYear()}-${String(compDate.getMonth() + 1).padStart(2, '0')}`;
 
-                        // その月以前に作成された企業をカウント
                         if (compYearMonth <= month.yearMonth) {
+                            // custom_mrr があればそれを優先、なければプラン単価
                             const planName = comp.plans?.name || 'Free';
-                            monthlyMRR += (PLAN_PRICES[planName] || 0);
+                            const mrrValue = comp.custom_mrr !== null ? Number(comp.custom_mrr) : (PLAN_PRICES[planName] || 0);
+                            monthlyMRR += mrrValue;
                             if (counts.hasOwnProperty(planName)) {
                                 counts[planName]++;
                             }
                         }
                     });
 
-                    return {
-                        ...month,
-                        mrr: monthlyMRR,
-                        ...counts
-                    };
+                    return { ...month, mrr: monthlyMRR, ...counts };
                 });
 
                 setChartData(timeSeries);
-
             } catch (error) {
                 console.error("Error fetching billing data:", error);
             } finally {
@@ -125,6 +130,78 @@ export default function AdminBillingPage() {
         fetchData();
     }, [supabase, authLoading]);
 
+    const handleUpdateBilling = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingCompany) return;
+
+        setIsSaving(true);
+        try {
+            const { error } = await supabase
+                .from('companies')
+                .update({
+                    custom_mrr: editingCompany.custom_mrr || null,
+                    setup_fee: editingCompany.setup_fee || null,
+                    billing_email: editingCompany.billing_email,
+                    billing_contact_name: editingCompany.billing_contact_name,
+                    billing_memo: editingCompany.billing_memo
+                })
+                .eq('id', editingCompany.id);
+
+            if (error) throw error;
+
+            // データの再取得とステート更新
+            const { data: compData } = await supabase
+                .from('companies')
+                .select('*, plans(name)')
+                .order('created_at', { ascending: true });
+
+            if (compData) {
+                const fetchedCompanies = compData || [];
+                setCompanies([...fetchedCompanies].reverse());
+
+                // グラフデータの再計算 (useEffectと同じロジック)
+                const months = [];
+                for (let i = 5; i >= 0; i--) {
+                    const d = new Date();
+                    d.setMonth(d.getMonth() - i);
+                    months.push({
+                        date: d,
+                        label: `${d.getMonth() + 1}月`,
+                        yearMonth: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+                        mrr: 0,
+                        Free: 0,
+                        Team: 0,
+                        Standard: 0,
+                        Pro: 0
+                    });
+                }
+
+                const timeSeries = months.map(month => {
+                    let monthlyMRR = 0;
+                    const counts: Record<string, number> = { Free: 0, Team: 0, Standard: 0, Pro: 0 };
+                    fetchedCompanies.forEach(comp => {
+                        const compDate = new Date(comp.created_at);
+                        const compYearMonth = `${compDate.getFullYear()}-${String(compDate.getMonth() + 1).padStart(2, '0')}`;
+                        if (compYearMonth <= month.yearMonth) {
+                            const planName = comp.plans?.name || 'Free';
+                            const mrrValue = comp.custom_mrr !== null ? Number(comp.custom_mrr) : (PLAN_PRICES[planName] || 0);
+                            monthlyMRR += mrrValue;
+                            if (counts.hasOwnProperty(planName)) counts[planName]++;
+                        }
+                    });
+                    return { ...month, mrr: monthlyMRR, ...counts };
+                });
+                setChartData(timeSeries);
+            }
+            setEditingCompany(null);
+        } catch (error) {
+            console.error("Error updating billing info:", error);
+            alert("保存に失敗しました。");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     // プラン別の社数集計
     const planCounts = companies.reduce((acc, comp) => {
         const planName = comp.plans?.name || 'Unknown';
@@ -132,10 +209,11 @@ export default function AdminBillingPage() {
         return acc;
     }, {} as Record<string, number>);
 
-    // 推定 MRR の計算
-    const estimatedMRR = companies.reduce((total, comp) => {
+    // 推定 MRR の計算 (custom_mrr を優先)
+    const totalMRR = companies.reduce((total, comp) => {
         const planName = comp.plans?.name || 'Free';
-        return total + (PLAN_PRICES[planName] || 0);
+        const mrrValue = comp.custom_mrr !== null ? Number(comp.custom_mrr) : (PLAN_PRICES[planName] || 0);
+        return total + mrrValue;
     }, 0);
 
     const filteredCompanies = companies.filter(c =>
@@ -174,10 +252,10 @@ export default function AdminBillingPage() {
                         <TrendingUp className="w-5 h-5" />
                     </div>
                     <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-black text-slate-800 tabular-nums">¥{(estimatedMRR / 10000).toLocaleString()}</span>
+                        <span className="text-2xl font-black text-slate-800 tabular-nums">¥{(totalMRR / 10000).toLocaleString()}</span>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">万円</span>
                     </div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 text-teal">推定 MRR (合計収益)</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 text-teal">合計 MRR (手入力優先)</p>
                 </div>
 
                 {['Team', 'Standard', 'Pro'].map((planName) => (
@@ -301,9 +379,9 @@ export default function AdminBillingPage() {
                             <tr className="bg-slate-50/50 border-b border-slate-100">
                                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">企業名</th>
                                 <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">プラン</th>
-                                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ステータス</th>
-                                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">推定単価</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">契約開始日</th>
+                                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">MRR / 初期費用</th>
+                                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">請求先</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">アクション</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
@@ -314,7 +392,10 @@ export default function AdminBillingPage() {
                                             <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center font-bold text-slate-400 italic">
                                                 {company.name.substring(0, 1)}
                                             </div>
-                                            <span className="font-bold text-slate-800">{company.name}</span>
+                                            <div>
+                                                <div className="font-bold text-slate-800">{company.name}</div>
+                                                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider tabular-nums">ID: {company.short_id}</div>
+                                            </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-5">
@@ -328,23 +409,30 @@ export default function AdminBillingPage() {
                                         </Badge>
                                     </td>
                                     <td className="px-6 py-5">
-                                        <div className="flex items-center gap-2">
-                                            <div className={cn(
-                                                "w-1.5 h-1.5 rounded-full",
-                                                company.status === 'active' ? "bg-emerald-500" :
-                                                    company.status === 'trial' ? "bg-amber-400" : "bg-slate-300"
-                                            )} />
-                                            <span className="font-bold text-slate-600 capitalize">{company.status}</span>
+                                        <div className="space-y-1">
+                                            <div className="font-bold text-slate-700 text-xs">
+                                                MRR: <span className={cn(company.custom_mrr ? "text-teal" : "text-slate-400")}>
+                                                    ¥{(company.custom_mrr || PLAN_PRICES[company.plans?.name || 'Free']).toLocaleString()}
+                                                </span>
+                                            </div>
+                                            <div className="text-[10px] font-bold text-slate-400">
+                                                Setup: ¥{(company.setup_fee || 0).toLocaleString()}
+                                            </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-5 font-bold text-slate-600 tabular-nums text-xs">
-                                        ¥{(PLAN_PRICES[company.plans?.name || 'Free'] || 0).toLocaleString()}
-                                    </td>
-                                    <td className="px-8 py-5 font-bold text-slate-500 tabular-nums text-xs">
-                                        <div className="flex items-center gap-2">
-                                            <Calendar className="w-3.5 h-3.5 text-slate-300" />
-                                            {new Date(company.created_at).toLocaleDateString('ja-JP')}
+                                    <td className="px-6 py-5">
+                                        <div className="space-y-0.5">
+                                            <div className="text-xs font-bold text-slate-600 truncate max-w-[150px]">{company.billing_email || '-'}</div>
+                                            <div className="text-[10px] text-slate-400 font-medium truncate max-w-[150px]">{company.billing_contact_name || '-'}</div>
                                         </div>
+                                    </td>
+                                    <td className="px-8 py-5">
+                                        <button
+                                            onClick={() => setEditingCompany({ ...company })}
+                                            className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg text-slate-400 hover:text-teal transition-all shadow-sm group"
+                                        >
+                                            <Edit2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                        </button>
                                     </td>
                                 </tr>
                             ))}
@@ -352,6 +440,110 @@ export default function AdminBillingPage() {
                     </table>
                 </div>
             </div>
+
+            {/* Edit Modal */}
+            {editingCompany && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fadeIn">
+                    <div className="bg-white rounded-[32px] w-full max-w-xl shadow-2xl overflow-hidden animate-slideUp">
+                        <header className="px-8 py-6 border-b border-slate-50 flex items-center justify-between">
+                            <div>
+                                <h3 className="text-xl font-black text-slate-800 tracking-tight">請求情報の編集</h3>
+                                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">{editingCompany.name}</p>
+                            </div>
+                            <button onClick={() => setEditingCompany(null)} className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </header>
+                        <form onSubmit={handleUpdateBilling} className="p-8 space-y-6">
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">月次収益 (MRR)</label>
+                                    <div className="relative">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">¥</span>
+                                        <input
+                                            type="number"
+                                            value={editingCompany.custom_mrr || ""}
+                                            onChange={(e) => setEditingCompany({ ...editingCompany, custom_mrr: e.target.value === "" ? null : Number(e.target.value) })}
+                                            placeholder={(PLAN_PRICES[editingCompany.plans?.name || 'Free']).toLocaleString()}
+                                            className="w-full pl-8 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-teal/20 transition-all"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">初期費用 (Setup)</label>
+                                    <div className="relative">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">¥</span>
+                                        <input
+                                            type="number"
+                                            value={editingCompany.setup_fee || ""}
+                                            onChange={(e) => setEditingCompany({ ...editingCompany, setup_fee: e.target.value === "" ? null : Number(e.target.value) })}
+                                            placeholder="0"
+                                            className="w-full pl-8 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-teal/20 transition-all"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">請求先メールアドレス</label>
+                                    <div className="relative">
+                                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                        <input
+                                            type="email"
+                                            value={editingCompany.billing_email || ""}
+                                            onChange={(e) => setEditingCompany({ ...editingCompany, billing_email: e.target.value })}
+                                            className="w-full pl-11 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-teal/20 transition-all"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">請求先担当者</label>
+                                    <div className="relative">
+                                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                        <input
+                                            type="text"
+                                            value={editingCompany.billing_contact_name || ""}
+                                            onChange={(e) => setEditingCompany({ ...editingCompany, billing_contact_name: e.target.value })}
+                                            className="w-full pl-11 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-teal/20 transition-all"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">請求メモ / 特記事項</label>
+                                    <div className="relative">
+                                        <FileText className="absolute left-4 top-4 w-4 h-4 text-slate-400" />
+                                        <textarea
+                                            value={editingCompany.billing_memo || ""}
+                                            onChange={(e) => setEditingCompany({ ...editingCompany, billing_memo: e.target.value })}
+                                            rows={3}
+                                            className="w-full pl-11 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-teal/20 transition-all"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <footer className="pt-4 flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingCompany(null)}
+                                    className="flex-1 py-4 px-6 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all"
+                                >
+                                    キャンセル
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSaving}
+                                    className="flex-[2] py-4 px-6 bg-teal text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-teal/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                >
+                                    <Save className="w-4 h-4" />
+                                    {isSaving ? "保存中..." : "保存する"}
+                                </button>
+                            </footer>
+                        </form>
+                    </div>
+                </div>
+            )}
         </main>
     );
 }
