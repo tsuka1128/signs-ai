@@ -139,6 +139,7 @@ export default function AdminBillingPage() {
             const { error } = await supabase
                 .from('companies')
                 .update({
+                    plan_id: editingCompany.plan_id,
                     custom_mrr: editingCompany.custom_mrr || null,
                     setup_fee: editingCompany.setup_fee || null,
                     billing_email: editingCompany.billing_email,
@@ -455,6 +456,19 @@ export default function AdminBillingPage() {
                             </button>
                         </header>
                         <form onSubmit={handleUpdateBilling} className="p-8 space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">現在のプラン</label>
+                                <select
+                                    value={editingCompany.plan_id}
+                                    onChange={(e) => setEditingCompany({ ...editingCompany, plan_id: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-teal/20 transition-all appearance-none cursor-pointer"
+                                >
+                                    {plans.map((plan) => (
+                                        <option key={plan.id} value={plan.id}>{plan.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">月次収益 (MRR)</label>
