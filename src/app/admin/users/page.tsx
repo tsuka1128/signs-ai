@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { useAdmin } from "@/hooks/useAdmin";
 import {
     Users,
     ShieldCheck,
@@ -12,11 +12,11 @@ import {
     UserPlus
 } from "lucide-react";
 import { Loading } from "@/components/ui/Loading";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 
 export default function AdminUsersPage() {
-    const supabase = createClientComponentClient();
+    const { supabase, loading: authLoading } = useAdmin();
     const [admins, setAdmins] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
@@ -41,7 +41,7 @@ export default function AdminUsersPage() {
         }
 
         fetchAdmins();
-    }, [supabase]);
+    }, [supabase, authLoading]);
 
     const filteredAdmins = admins.filter(admin =>
         admin.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
