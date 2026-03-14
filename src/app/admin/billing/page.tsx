@@ -239,7 +239,7 @@ export default function AdminBillingPage() {
                                 />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#fff', borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                                    formatter={(value: number) => [`¥${value.toLocaleString()}`, '推定MRR']}
+                                    formatter={(value: any) => [`¥${Number(value).toLocaleString()}`, '推定MRR']}
                                 />
                                 <Area type="monotone" dataKey="mrr" stroke="#2DD4BF" strokeWidth={4} fillOpacity={1} fill="url(#colorMrr)" />
                             </AreaChart>
