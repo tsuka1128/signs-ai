@@ -104,11 +104,20 @@ export default function AdminBillingPage() {
                     const counts: Record<string, number> = { Free: 0, Team: 0, Standard: 0, Pro: 0 };
 
                     fetchedCompanies.forEach(comp => {
-                        const compDate = new Date(comp.created_at);
-                        const compYearMonth = `${compDate.getFullYear()}-${String(compDate.getMonth() + 1).padStart(2, '0')}`;
+                        // 契約開始日の特定（未設定なら created_at）
+                        const startDateStr = comp.contract_start_date || comp.created_at;
+                        const startDate = new Date(startDateStr);
+                        const startYearMonth = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}`;
 
-                        if (compYearMonth <= month.yearMonth) {
-                            // custom_mrr があればそれを優先、なければプラン単価
+                        // 契約終了日の特定（任意）
+                        let endYearMonth = "9999-12";
+                        if (comp.contract_end_date) {
+                            const endDate = new Date(comp.contract_end_date);
+                            endYearMonth = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}`;
+                        }
+
+                        // 月の範囲内に契約があるかチェック
+                        if (startYearMonth <= month.yearMonth && endYearMonth >= month.yearMonth) {
                             const planName = comp.plans?.name || 'Free';
                             const mrrValue = comp.custom_mrr !== null ? Number(comp.custom_mrr) : (PLAN_PRICES[planName] || 0);
                             monthlyMRR += mrrValue;
@@ -187,9 +196,17 @@ export default function AdminBillingPage() {
                     let monthlyMRR = 0;
                     const counts: Record<string, number> = { Free: 0, Team: 0, Standard: 0, Pro: 0 };
                     fetchedCompanies.forEach(comp => {
-                        const compDate = new Date(comp.created_at);
-                        const compYearMonth = `${compDate.getFullYear()}-${String(compDate.getMonth() + 1).padStart(2, '0')}`;
-                        if (compYearMonth <= month.yearMonth) {
+                        const startDateStr = comp.contract_start_date || comp.created_at;
+                        const startDate = new Date(startDateStr);
+                        const startYearMonth = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}`;
+
+                        let endYearMonth = "9999-12";
+                        if (comp.contract_end_date) {
+                            const endDate = new Date(comp.contract_end_date);
+                            endYearMonth = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}`;
+                        }
+
+                        if (startYearMonth <= month.yearMonth && endYearMonth >= month.yearMonth) {
                             const planName = comp.plans?.name || 'Free';
                             const mrrValue = comp.custom_mrr !== null ? Number(comp.custom_mrr) : (PLAN_PRICES[planName] || 0);
                             monthlyMRR += mrrValue;
