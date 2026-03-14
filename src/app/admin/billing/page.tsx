@@ -147,6 +147,10 @@ export default function AdminBillingPage() {
 
         setIsSaving(true);
         try {
+            // 現在のプランを確認（履歴保存用）
+            const originalCompany = companies.find(c => c.id === editingCompany.id);
+            const isPlanChanged = originalCompany && originalCompany.plan_id !== editingCompany.plan_id;
+
             const { error } = await supabase
                 .from('companies')
                 .update({
@@ -164,6 +168,18 @@ export default function AdminBillingPage() {
                 .eq('id', editingCompany.id);
 
             if (error) throw error;
+
+            // プランが変更された場合のみ履歴を保存
+            if (isPlanChanged) {
+                await supabase
+                    .from('company_plan_history')
+                    .insert([{
+                        company_id: editingCompany.id,
+                        old_plan_id: originalCompany.plan_id,
+                        new_plan_id: editingCompany.plan_id,
+                        changed_by: (await supabase.auth.getUser()).data.user?.id
+                    }]);
+            }
 
             // データの再取得とステート更新
             const { data: compData } = await supabase
@@ -483,14 +499,28 @@ export default function AdminBillingPage() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-5">
-                                        <Badge className={cn(
-                                            "border-none font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase text-white",
-                                            company.plans?.name === 'Pro' ? "bg-amber-500" :
-                                                company.plans?.name === 'Standard' ? "bg-purple-500" :
-                                                    company.plans?.name === 'Team' ? "bg-blue-500" : "bg-slate-400"
-                                        )}>
-                                            {company.plans?.name}
-                                        </Badge>
+                                        <div className="flex flex-col gap-1 items-start">
+                                            <Badge className={cn(
+                                                "border-none font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase text-white",
+                                                company.plans?.name === 'Pro' ? "bg-amber-500" :
+                                                    company.plans?.name === 'Standard' ? "bg-purple-500" :
+                                                        company.plans?.name === 'Team' ? "bg-blue-500" : "bg-slate-400"
+                                            )}>
+                                                {company.plans?.name}
+                                            </Badge>
+                                            {(company.status === 'trial' || company.plans?.name === 'Free') && company.contract_end_date && (
+                                                <div className={cn(
+                                                    "text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100",
+                                                    new Date(company.contract_end_date) < new Date() ? "text-rose-500 bg-rose-50" : "text-slate-500"
+                                                )}>
+                                                    {(() => {
+                                                        const diff = new Date(company.contract_end_date).getTime() - new Date().getTime();
+                                                        const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                                                        return days > 0 ? `残り ${days} 日` : "期限切れ";
+                                                    })()}
+                                                </div>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-6 py-5">
                                         <div className="space-y-1">
