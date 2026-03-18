@@ -21,7 +21,10 @@ import {
     Link2,
     Zap,
     FileText,
-    BarChart3
+    BarChart3,
+    ChevronDown,
+    ChevronRight,
+    Command
 } from "lucide-react";
 import { Loading } from "@/components/ui/Loading";
 import { Badge } from "@/components/ui/Badge";
@@ -43,6 +46,19 @@ export default function AdminSettingsPage() {
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<SettingCategory>("system");
     const [localSettings, setLocalSettings] = useState<Record<string, any>>({});
+    const [openSlot, setOpenSlot] = useState<string | null>(null);
+
+    // AIスロットの定義
+    const AI_SLOTS = [
+        { id: 'ai_dashboard_summary', label: '1. ダッシュボード要約 (全社/部署)', desc: 'MainInsightCardの4〜5行のサマリー', defaultTokens: 1024 },
+        { id: 'ai_deep_report', label: '2. ディープレポート', desc: 'DeepReportの経営層向け詳細分析', defaultTokens: 4096 },
+        { id: 'ai_pulse_analysis', label: '3. 体温分析レポート', desc: 'SurveySectionのボイスチェックAI分析', defaultTokens: 1024 },
+        { id: 'ai_policy_translation', label: '4. 方針プレビュー翻訳', desc: 'SemanticLayerで組織方針を各部署の文脈に合わせて翻訳', defaultTokens: 1024 },
+        { id: 'ai_policy_extraction', label: '5. 方針サマリー抽出', desc: 'SemanticLayerでフェーズ/最重要KPI/最優先アジェンダを自動抽出', defaultTokens: 512 },
+        { id: 'ai_matrix_analysis', label: '6. マトリックス分析', desc: '部署/プロダクトマトリックスでの配置状況・相関の分析', defaultTokens: 1024 },
+        { id: 'ai_action_proposal', label: '7. アクション提案', desc: '組織状態に基づき今月打つべき具体策を3〜5点提案', defaultTokens: 1024 },
+        { id: 'ai_kpi_insight', label: '8. KPI・プロダクト示唆', desc: '各指標ごとの局所的な相関や示唆テキスト', defaultTokens: 512 },
+    ];
 
     useEffect(() => {
         if (authLoading) return;
@@ -447,6 +463,88 @@ export default function AdminSettingsPage() {
                                 </div>
                             </div>
                         </div>
+                        <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-8">
+                            <div className="flex items-center gap-3 border-b border-slate-50 pb-6">
+                                <div className="p-3 bg-teal/10 rounded-2xl">
+                                    <Command className="w-6 h-6 text-teal" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black text-slate-900 tracking-tight">各生成箇所のプロンプト・設定（スロット別）</h3>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Generative AI Slots</p>
+                                </div>
+                            </div>
+                            
+                            <p className="text-sm font-medium text-slate-500 mb-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                画面内でAIが回答を生成する各箇所に対して、個別にプロンプト（指示書）と制限文字数を与えます。以下のアコーディオンを開いて各スロットの設定を行ってください。
+                            </p>
+
+                            <div className="space-y-3">
+                                {AI_SLOTS.map(slot => {
+                                    const isOpen = openSlot === slot.id;
+                                    const promptKey = `${slot.id}_prompt`;
+                                    const tokensKey = `${slot.id}_tokens`;
+                                    
+                                    return (
+                                        <div key={slot.id} className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm transition-all">
+                                            <button 
+                                                onClick={() => setOpenSlot(isOpen ? null : slot.id)}
+                                                className="w-full flex items-center justify-between p-5 hover:bg-slate-50 transition-colors text-left"
+                                            >
+                                                <div>
+                                                    <h4 className="text-sm font-black text-slate-800">{slot.label}</h4>
+                                                    <p className="text-[11px] font-bold text-slate-400 mt-1">{slot.desc}</p>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-3 py-1 bg-slate-100 rounded-full">
+                                                        Max {localSettings[tokensKey] || slot.defaultTokens} Tokens
+                                                    </div>
+                                                    {isOpen ? <ChevronDown className="w-5 h-5 text-slate-400" /> : <ChevronRight className="w-5 h-5 text-slate-400" />}
+                                                </div>
+                                            </button>
+                                            
+                                            {isOpen && (
+                                                <div className="p-6 border-t border-slate-100 bg-slate-50/50 space-y-6">
+                                                    <label className="block space-y-2">
+                                                        <span className="text-sm font-black text-slate-900">専用システムプロンプト</span>
+                                                        <textarea 
+                                                            value={localSettings[promptKey] || ""}
+                                                            onChange={(e) => handleChange(promptKey, e.target.value)}
+                                                            rows={6}
+                                                            className="w-full px-5 py-4 bg-white border border-slate-200 rounded-[20px] text-sm font-medium text-slate-700 focus:ring-2 focus:ring-teal/30 focus:border-teal/30 transition-all font-mono leading-relaxed shadow-sm"
+                                                            placeholder={`${slot.label}用のプロンプトを入力してください...`}
+                                                        />
+                                                    </label>
+
+                                                    <div className="space-y-3 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-xs font-black text-slate-700">Max Tokens (応答の最大長)</span>
+                                                            <span className="text-sm font-black text-teal tabular-nums bg-teal/5 px-3 py-1 rounded-xl border border-teal/10">
+                                                                {localSettings[tokensKey] || slot.defaultTokens}
+                                                            </span>
+                                                        </div>
+                                                        <input 
+                                                            type="range" 
+                                                            min="256" 
+                                                            max="4096" 
+                                                            step="128" 
+                                                            value={localSettings[tokensKey] || slot.defaultTokens}
+                                                            onChange={(e) => handleChange(tokensKey, parseInt(e.target.value))}
+                                                            className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-teal"
+                                                        />
+                                                        <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest pt-1">
+                                                            <span>256 (簡潔)</span>
+                                                            <span className="text-center">{slot.defaultTokens} (推奨)</span>
+                                                            <span>4096 (詳細)</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
                     </section>
                 )}
 
