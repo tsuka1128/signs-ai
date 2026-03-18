@@ -14,14 +14,28 @@ import {
     Mail,
     Globe,
     Lock,
-    Cpu
+    Cpu,
+    ClipboardList,
+    CreditCard,
+    Timer,
+    Link2,
+    Zap,
+    FileText,
+    BarChart3
 } from "lucide-react";
 import { Loading } from "@/components/ui/Loading";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 
-type SettingCategory = "system" | "ai" | "alert";
+/** 設定タブの種別 */
+type SettingCategory = "system" | "ai" | "alert" | "survey";
 
+/**
+ * 管理者設定ページ
+ * 
+ * サービス全体の設定を管理するページ。
+ * タブ: システム制御 / AIコントロール / 通知・監視 / ボイスチェック
+ */
 export default function AdminSettingsPage() {
     const { supabase, loading: authLoading } = useAdmin();
     const [settings, setSettings] = useState<any[]>([]);
@@ -35,6 +49,7 @@ export default function AdminSettingsPage() {
         fetchSettings();
     }, [supabase, authLoading]);
 
+    /** DB から全設定を取得し、ローカルの key-value マップに変換する */
     async function fetchSettings() {
         setLoading(true);
         try {
@@ -59,6 +74,10 @@ export default function AdminSettingsPage() {
         }
     }
 
+    /**
+     * 設定値の変更ハンドラ
+     * システム制御の重要項目は確認ダイアログを表示
+     */
     const handleChange = (key: string, value: any) => {
         // システム制御項目の場合は確認ポップアップを表示
         if (key === 'maintenance_mode' || key === 'registration_enabled') {
@@ -75,6 +94,12 @@ export default function AdminSettingsPage() {
         }));
     };
 
+    /**
+     * カテゴリ単位で設定を保存する
+     * 
+     * handleSave は現在 アクティブタブのカテゴリに属する設定だけを upsert する。
+     * ボイスチェックタブは category='survey' でフィルタされる。
+     */
     const handleSave = async (category: SettingCategory) => {
         setSaving(true);
         try {
@@ -93,7 +118,6 @@ export default function AdminSettingsPage() {
                 .upsert(updates);
 
             if (error) throw error;
-            // 通知はシンプルなアラートのまま、デザインを改善したボタン側でフィードバック
         } catch (error) {
             console.error("Error saving settings:", error);
             alert("保存に失敗しました。");
@@ -122,17 +146,18 @@ export default function AdminSettingsPage() {
             </header>
 
             {/* Tab Navigation */}
-            <div className="flex p-1.5 bg-slate-100/80 backdrop-blur-md rounded-[24px] w-fit border border-slate-200/50">
+            <div className="flex p-1.5 bg-slate-100/80 backdrop-blur-md rounded-[24px] w-fit border border-slate-200/50 overflow-x-auto">
                 {[
                     { id: "system", label: "システム制御", icon: Globe },
                     { id: "ai", label: "AIコントロール", icon: Brain },
                     { id: "alert", label: "通知・監視", icon: Bell },
+                    { id: "survey", label: "ボイスチェック", icon: ClipboardList },
                 ].map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as SettingCategory)}
                         className={cn(
-                            "flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold transition-all duration-300",
+                            "flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold transition-all duration-300 whitespace-nowrap",
                             activeTab === tab.id
                                 ? "bg-white text-slate-900 shadow-[0_4px_12px_rgba(0,0,0,0.05)] translate-y-[-1px]"
                                 : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
@@ -146,9 +171,10 @@ export default function AdminSettingsPage() {
 
             {/* Main Content Area */}
             <div className="space-y-6">
+                {/* ========== システム制御タブ ========== */}
                 {activeTab === "system" && (
                     <section className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-slideUp">
-                        {/* Maintenance Mode */}
+                        {/* Maintenance Mode & Registration */}
                         <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-6 hover:shadow-md transition-shadow">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
@@ -193,7 +219,7 @@ export default function AdminSettingsPage() {
                             </div>
                         </div>
 
-                        {/* Other System Settings */}
+                        {/* Trial & Invitation Settings */}
                         <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-6 hover:shadow-md transition-shadow">
                             <div className="space-y-4">
                                 <label className="block">
@@ -209,10 +235,74 @@ export default function AdminSettingsPage() {
                                     </div>
                                 </label>
                             </div>
+                            <div className="space-y-4">
+                                <label className="block">
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <Link2 className="w-4 h-4 text-slate-400" />
+                                        <span className="text-sm font-black text-slate-900">招待リンク有効期限（日）</span>
+                                    </div>
+                                    <div className="relative group">
+                                        <input 
+                                            type="number"
+                                            value={localSettings['invitation_expiry_days'] || 30}
+                                            onChange={(e) => handleChange('invitation_expiry_days', parseInt(e.target.value))}
+                                            className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-black focus:ring-2 focus:ring-teal/20 transition-all group-hover:bg-slate-100/50"
+                                        />
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Days</div>
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 mt-1 ml-1">招待トークンが自動失効するまでの日数</p>
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* Plan Pricing Table */}
+                        <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-6 hover:shadow-md transition-shadow md:col-span-2">
+                            <div className="flex items-center gap-3 border-b border-slate-50 pb-4">
+                                <div className="p-2.5 bg-indigo-50 rounded-xl">
+                                    <CreditCard className="w-5 h-5 text-indigo-500" />
+                                </div>
+                                <div>
+                                    <h3 className="font-black text-slate-900">プラン別料金テーブル</h3>
+                                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">Plan Pricing Configuration</p>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {[
+                                    { key: 'plan_price_free', label: 'Free', color: 'slate' },
+                                    { key: 'plan_price_team', label: 'Team', color: 'blue' },
+                                    { key: 'plan_price_standard', label: 'Standard', color: 'purple' },
+                                    { key: 'plan_price_pro', label: 'Pro', color: 'amber' },
+                                ].map((plan) => (
+                                    <div key={plan.key} className="space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <div className={cn(
+                                                "w-2.5 h-2.5 rounded-full",
+                                                plan.color === 'slate' && "bg-slate-400",
+                                                plan.color === 'blue' && "bg-blue-500",
+                                                plan.color === 'purple' && "bg-purple-500",
+                                                plan.color === 'amber' && "bg-amber-500",
+                                            )} />
+                                            <span className="text-xs font-black text-slate-700">{plan.label}</span>
+                                        </div>
+                                        <div className="relative">
+                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">¥</span>
+                                            <input 
+                                                type="number"
+                                                value={localSettings[plan.key] ?? 0}
+                                                onChange={(e) => handleChange(plan.key, parseInt(e.target.value) || 0)}
+                                                className="w-full pl-8 pr-14 py-3 bg-slate-50 border-none rounded-2xl text-sm font-black focus:ring-2 focus:ring-teal/20 transition-all text-right"
+                                            />
+                                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">/ 月</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="text-[10px] text-slate-400 ml-1">※ MRR計算や課金画面のデフォルト単価として利用されます</p>
                         </div>
                     </section>
                 )}
 
+                {/* ========== AIコントロールタブ ========== */}
                 {activeTab === "ai" && (
                     <section className="space-y-6 animate-slideUp">
                         <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-8">
@@ -281,6 +371,70 @@ export default function AdminSettingsPage() {
                                             <span>Creative</span>
                                         </div>
                                     </div>
+
+                                    {/* Max Tokens – 新規追加 */}
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <FileText className="w-4 h-4 text-slate-400" />
+                                                <span className="text-sm font-black text-slate-900">Max Tokens (応答の最大長)</span>
+                                            </div>
+                                            <span className="text-sm font-black text-teal tabular-nums bg-teal/5 px-2 py-0.5 rounded-lg border border-teal/10">{localSettings['max_tokens'] || 1024}</span>
+                                        </div>
+                                        <input 
+                                            type="range" 
+                                            min="256" 
+                                            max="4096" 
+                                            step="256" 
+                                            value={localSettings['max_tokens'] || 1024}
+                                            onChange={(e) => handleChange('max_tokens', parseInt(e.target.value))}
+                                            className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-slate-900"
+                                        />
+                                        <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                            <span>256 (簡潔)</span>
+                                            <span>4096 (詳細)</span>
+                                        </div>
+                                    </div>
+
+                                    {/* AI自動実行 – 新規追加 */}
+                                    <div className="p-5 bg-slate-50 rounded-[28px] space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-white rounded-xl shadow-sm">
+                                                    <Zap className="w-4 h-4 text-amber-500" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-black text-slate-900">AI分析の自動実行</p>
+                                                    <p className="text-[10px] font-bold text-slate-400 tracking-tight">Scheduled Auto-Analysis</p>
+                                                </div>
+                                            </div>
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={localSettings['auto_analysis_enabled'] === true}
+                                                    onChange={(e) => handleChange('auto_analysis_enabled', e.target.checked)}
+                                                    className="sr-only peer" 
+                                                />
+                                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal"></div>
+                                            </label>
+                                        </div>
+                                        {localSettings['auto_analysis_enabled'] === true && (
+                                            <div className="pl-11">
+                                                <label className="block">
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">実行頻度</span>
+                                                    <select
+                                                        value={localSettings['auto_analysis_frequency'] || "monthly"}
+                                                        onChange={(e) => handleChange('auto_analysis_frequency', e.target.value)}
+                                                        className="w-full px-3 py-2.5 bg-white border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-teal/20"
+                                                    >
+                                                        <option value="daily">毎日</option>
+                                                        <option value="weekly">毎週</option>
+                                                        <option value="monthly">毎月</option>
+                                                    </select>
+                                                </label>
+                                            </div>
+                                        )}
+                                    </div>
                                     
                                     <div className="p-5 bg-amber-50 rounded-[28px] border border-amber-100/50 flex gap-4 shadow-sm shadow-amber-100/20">
                                         <div className="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0">
@@ -296,6 +450,7 @@ export default function AdminSettingsPage() {
                     </section>
                 )}
 
+                {/* ========== 通知・監視タブ ========== */}
                 {activeTab === "alert" && (
                     <section className="animate-slideUp max-w-2xl space-y-6">
                         {/* Status Thresholds */}
@@ -329,6 +484,48 @@ export default function AdminSettingsPage() {
                                             />
                                             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">MONTHS</div>
                                         </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* 非アクティブ検知閾値 – 新規追加 */}
+                            <div className="space-y-6 pt-6 border-t border-slate-50">
+                                <h3 className="font-black text-slate-900 flex items-center gap-2">
+                                    <Timer className="w-5 h-5 text-amber-500" />
+                                    非アクティブ企業の検知閾値
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <label className="block">
+                                        <div className="flex items-center gap-2 mb-1.5">
+                                            <div className="w-2 h-2 rounded-full bg-amber-400" />
+                                            <span className="text-[11px] font-black text-amber-600 uppercase tracking-widest">中程度アラート</span>
+                                        </div>
+                                        <div className="relative">
+                                            <input 
+                                                type="number"
+                                                value={localSettings['inactivity_warning_days'] || 30}
+                                                onChange={(e) => handleChange('inactivity_warning_days', parseInt(e.target.value))}
+                                                className="w-full px-4 py-3 bg-amber-50/50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-amber-200"
+                                            />
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">DAYS</div>
+                                        </div>
+                                        <p className="text-[10px] text-slate-400 mt-1 ml-1">最終更新からこの日数で中アラート</p>
+                                    </label>
+                                    <label className="block">
+                                        <div className="flex items-center gap-2 mb-1.5">
+                                            <div className="w-2 h-2 rounded-full bg-rose-500" />
+                                            <span className="text-[11px] font-black text-rose-600 uppercase tracking-widest">高アラート</span>
+                                        </div>
+                                        <div className="relative">
+                                            <input 
+                                                type="number"
+                                                value={localSettings['inactivity_critical_days'] || 60}
+                                                onChange={(e) => handleChange('inactivity_critical_days', parseInt(e.target.value))}
+                                                className="w-full px-4 py-3 bg-rose-50/50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-rose-200"
+                                            />
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">DAYS</div>
+                                        </div>
+                                        <p className="text-[10px] text-slate-400 mt-1 ml-1">最終更新からこの日数で高アラート</p>
                                     </label>
                                 </div>
                             </div>
@@ -381,6 +578,28 @@ export default function AdminSettingsPage() {
                                             <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal"></div>
                                         </label>
                                     </div>
+
+                                    {/* オンボーディング未完了通知 – 新規追加 */}
+                                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-[20px] hover:bg-slate-100 transition-colors">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-white rounded-xl shadow-sm">
+                                                <ClipboardList className="w-4 h-4 text-blue-500" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-black text-slate-900">オンボーディング未完了の通知</p>
+                                                <p className="text-[10px] font-bold text-slate-400 tracking-tight">Alert on incomplete onboarding</p>
+                                            </div>
+                                        </div>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={localSettings['notify_onboarding_incomplete'] === true}
+                                                onChange={(e) => handleChange('notify_onboarding_incomplete', e.target.checked)}
+                                                className="sr-only peer" 
+                                            />
+                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal"></div>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -422,6 +641,85 @@ export default function AdminSettingsPage() {
                         </div>
                     </section>
                 )}
+
+                {/* ========== ボイスチェックタブ（新規追加） ========== */}
+                {activeTab === "survey" && (
+                    <section className="animate-slideUp max-w-2xl space-y-6">
+                        <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-8">
+                            <div className="flex items-center gap-3 border-b border-slate-50 pb-6">
+                                <div className="p-3 bg-indigo-50 rounded-2xl">
+                                    <ClipboardList className="w-6 h-6 text-indigo-500" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black text-slate-900 tracking-tight">ボイスチェック設定</h3>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Survey & Voice Check Configuration</p>
+                                </div>
+                            </div>
+
+                            {/* 自由記述の最低文字数 */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <FileText className="w-4 h-4 text-slate-400" />
+                                    <span className="text-sm font-black text-slate-900">自由記述の最低文字数</span>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex-1 relative">
+                                        <input 
+                                            type="number"
+                                            min={0}
+                                            max={500}
+                                            value={localSettings['min_free_text_length'] ?? 100}
+                                            onChange={(e) => handleChange('min_free_text_length', parseInt(e.target.value) || 0)}
+                                            className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-black focus:ring-2 focus:ring-teal/20 transition-all"
+                                        />
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase tracking-widest">文字</div>
+                                    </div>
+                                    <span className="text-sm font-black text-teal tabular-nums bg-teal/5 px-3 py-2 rounded-xl border border-teal/10 whitespace-nowrap">
+                                        {(localSettings['min_free_text_length'] ?? 100) === 0 ? '任意入力' : `${localSettings['min_free_text_length'] ?? 100}文字以上`}
+                                    </span>
+                                </div>
+                                <p className="text-[10px] text-slate-400 ml-1">
+                                    アンケートフォームのKPI改善記述欄に適用されます。0にすると自由記述が任意になります。
+                                </p>
+                            </div>
+
+                            {/* アンケート設問管理（将来対応の枠） */}
+                            <div className="space-y-4 pt-6 border-t border-slate-50">
+                                <div className="flex items-center gap-2">
+                                    <BarChart3 className="w-4 h-4 text-slate-400" />
+                                    <span className="text-sm font-black text-slate-900">アンケート設問管理</span>
+                                    <Badge className="bg-slate-100 text-slate-500 border-none font-black text-[10px] px-2 py-0.5">将来対応</Badge>
+                                </div>
+                                <div className="p-6 bg-slate-50 rounded-[24px] border border-dashed border-slate-200 text-center space-y-3">
+                                    <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto">
+                                        <ClipboardList className="w-6 h-6 text-slate-300" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-500">現在、アンケート設問はデフォルト11問で固定されています。</p>
+                                        <p className="text-[11px] text-slate-400 mt-1">
+                                            今後のアップデートで、管理者が設問テキスト・ヒント文・並び順をこの画面から管理できるようになる予定です。
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 回答期間（将来対応の枠） */}
+                            <div className="space-y-4 pt-6 border-t border-slate-50">
+                                <div className="flex items-center gap-2">
+                                    <Timer className="w-4 h-4 text-slate-400" />
+                                    <span className="text-sm font-black text-slate-900">回答期間ウィンドウ</span>
+                                    <Badge className="bg-slate-100 text-slate-500 border-none font-black text-[10px] px-2 py-0.5">将来対応</Badge>
+                                </div>
+                                <div className="p-6 bg-slate-50 rounded-[24px] border border-dashed border-slate-200 text-center space-y-3">
+                                    <p className="text-sm font-bold text-slate-500">現在、ボイスチェックは常時回答可能です。</p>
+                                    <p className="text-[11px] text-slate-400">
+                                        「毎月1日〜15日のみ回答可能」のようなウィンドウ制御は将来実装予定です。
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                )}
             </div>
 
             {/* Premium Floating Action Bar */}
@@ -454,6 +752,7 @@ export default function AdminSettingsPage() {
     );
 }
 
+/** ローディングスピナーコンポーネント */
 function RefreshingLoader({ className }: { className?: string }) {
     return (
         <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -462,6 +761,7 @@ function RefreshingLoader({ className }: { className?: string }) {
     );
 }
 
+/** ビルディングアイコンコンポーネント */
 function Building2Icon({ className }: { className?: string }) {
     return (
         <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
