@@ -60,6 +60,15 @@ export default function AdminSettingsPage() {
     }
 
     const handleChange = (key: string, value: any) => {
+        // システム制御項目の場合は確認ポップアップを表示
+        if (key === 'maintenance_mode' || key === 'registration_enabled') {
+            const label = key === 'maintenance_mode' ? 'メンテナンスモード' : '新規登録の受付';
+            const action = value ? '有効' : '解除';
+            if (!window.confirm(`${label}を${action}に変更してもよろしいですか？\nシステム全体に影響します。`)) {
+                return;
+            }
+        }
+
         setLocalSettings(prev => ({
             ...prev,
             [key]: value
@@ -84,12 +93,12 @@ export default function AdminSettingsPage() {
                 .upsert(updates);
 
             if (error) throw error;
-            alert("設定を保存しました。");
+            // 通知はシンプルなアラートのまま、デザインを改善したボタン側でフィードバック
         } catch (error) {
             console.error("Error saving settings:", error);
             alert("保存に失敗しました。");
         } finally {
-            setSaving(false);
+            setTimeout(() => setSaving(false), 800);
         }
     };
 
@@ -98,7 +107,7 @@ export default function AdminSettingsPage() {
     }
 
     return (
-        <div className="p-8 space-y-8 animate-fadeIn max-w-6xl mx-auto">
+        <div className="p-8 space-y-8 animate-fadeIn max-w-6xl mx-auto pb-32">
             {/* Header Section */}
             <header className="flex items-center justify-between">
                 <div>
@@ -108,28 +117,28 @@ export default function AdminSettingsPage() {
                         </div>
                         <h1 className="text-3xl font-black text-slate-900 tracking-tight">システム設定</h1>
                     </div>
-                    <p className="text-slate-500 font-medium">サービス全体の制御・AI品質・アラート基準を管理します</p>
+                    <p className="text-slate-500 font-medium font-mono text-sm">/ SERVICE_LEVEL_CONFIGURATION</p>
                 </div>
             </header>
 
             {/* Tab Navigation */}
-            <div className="flex p-1.5 bg-slate-100 rounded-[24px] w-fit">
+            <div className="flex p-1.5 bg-slate-100/80 backdrop-blur-md rounded-[24px] w-fit border border-slate-200/50">
                 {[
                     { id: "system", label: "システム制御", icon: Globe },
                     { id: "ai", label: "AIコントロール", icon: Brain },
-                    { id: "alert", label: "アラート・通知", icon: Bell },
+                    { id: "alert", label: "通知・監視", icon: Bell },
                 ].map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as SettingCategory)}
                         className={cn(
-                            "flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold transition-all",
+                            "flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold transition-all duration-300",
                             activeTab === tab.id
-                                ? "bg-white text-slate-900 shadow-sm"
-                                : "text-slate-500 hover:text-slate-700"
+                                ? "bg-white text-slate-900 shadow-[0_4px_12px_rgba(0,0,0,0.05)] translate-y-[-1px]"
+                                : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
                         )}
                     >
-                        <tab.icon className={cn("w-4 h-4", activeTab === tab.id ? "text-teal" : "text-slate-400")} />
+                        <tab.icon className={cn("w-4 h-4 transition-colors", activeTab === tab.id ? "text-teal" : "text-slate-400")} />
                         {tab.label}
                     </button>
                 ))}
@@ -140,15 +149,15 @@ export default function AdminSettingsPage() {
                 {activeTab === "system" && (
                     <section className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-slideUp">
                         {/* Maintenance Mode */}
-                        <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-6">
+                        <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-6 hover:shadow-md transition-shadow">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-rose-50 rounded-xl">
+                                    <div className="p-2.5 bg-rose-50 rounded-xl">
                                         <Lock className="w-5 h-5 text-rose-500" />
                                     </div>
                                     <div>
                                         <h3 className="font-black text-slate-900">メンテナンスモード</h3>
-                                        <p className="text-xs font-medium text-slate-400">一般ユーザーのアクセスを制限します</p>
+                                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">Service Interruption Control</p>
                                     </div>
                                 </div>
                                 <label className="relative inline-flex items-center cursor-pointer">
@@ -158,18 +167,18 @@ export default function AdminSettingsPage() {
                                         onChange={(e) => handleChange('maintenance_mode', e.target.checked)}
                                         className="sr-only peer" 
                                     />
-                                    <div className="w-14 h-7 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-rose-500"></div>
+                                    <div className="w-14 h-7 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-rose-500 shadow-inner"></div>
                                 </label>
                             </div>
                             
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-teal-50 rounded-xl">
+                                    <div className="p-2.5 bg-teal-50 rounded-xl">
                                         <RefreshCcw className="w-5 h-5 text-teal" />
                                     </div>
                                     <div>
                                         <h3 className="font-black text-slate-900">新規登録の受付</h3>
-                                        <p className="text-xs font-medium text-slate-400">LPからのサインアップを許可します</p>
+                                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">Public Registration Gate</p>
                                     </div>
                                 </div>
                                 <label className="relative inline-flex items-center cursor-pointer">
@@ -179,22 +188,25 @@ export default function AdminSettingsPage() {
                                         onChange={(e) => handleChange('registration_enabled', e.target.checked)}
                                         className="sr-only peer" 
                                     />
-                                    <div className="w-14 h-7 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-teal"></div>
+                                    <div className="w-14 h-7 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-teal shadow-inner"></div>
                                 </label>
                             </div>
                         </div>
 
                         {/* Other System Settings */}
-                        <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-6">
+                        <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-6 hover:shadow-md transition-shadow">
                             <div className="space-y-4">
                                 <label className="block">
                                     <span className="text-sm font-black text-slate-900 mb-1.5 block">デフォルトトライアル期間（日）</span>
-                                    <input 
-                                        type="number"
-                                        value={localSettings['default_trial_days'] || 0}
-                                        onChange={(e) => handleChange('default_trial_days', parseInt(e.target.value))}
-                                        className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-teal/20 transition-all"
-                                    />
+                                    <div className="relative group">
+                                        <input 
+                                            type="number"
+                                            value={localSettings['default_trial_days'] || 0}
+                                            onChange={(e) => handleChange('default_trial_days', parseInt(e.target.value))}
+                                            className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm font-black focus:ring-2 focus:ring-teal/20 transition-all group-hover:bg-slate-100/50"
+                                        />
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Days</div>
+                                    </div>
                                 </label>
                             </div>
                         </div>
@@ -209,8 +221,8 @@ export default function AdminSettingsPage() {
                                     <Brain className="w-6 h-6 text-teal" />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-black text-slate-900">AI分析エンジン調整</h3>
-                                    <p className="text-sm font-medium text-slate-500">プロンプトと生成パラメータをチューニングします</p>
+                                    <h3 className="text-xl font-black text-slate-900 tracking-tight">AI分析エンジン調整</h3>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Cognitive Core Configuration</p>
                                 </div>
                             </div>
 
@@ -219,13 +231,13 @@ export default function AdminSettingsPage() {
                                     <label className="block">
                                         <div className="flex items-center justify-between mb-2">
                                             <span className="text-sm font-black text-slate-900">ベースシステムプロンプト</span>
-                                            <Badge className="bg-slate-100 text-slate-500 border-none font-black text-[10px]">Global Prompt</Badge>
+                                            <Badge className="bg-slate-900 text-white border-none font-black text-[10px] px-3 py-1">STATIC_CORE_PROMPT</Badge>
                                         </div>
                                         <textarea 
                                             value={localSettings['base_system_prompt'] || ""}
                                             onChange={(e) => handleChange('base_system_prompt', e.target.value)}
                                             rows={8}
-                                            className="w-full px-5 py-4 bg-slate-50 border-none rounded-[24px] text-sm font-medium focus:ring-2 focus:ring-teal/20 transition-all font-mono leading-relaxed"
+                                            className="w-full px-5 py-4 bg-slate-950 border-none rounded-[24px] text-xs font-medium text-emerald-400 focus:ring-2 focus:ring-teal/40 transition-all font-mono leading-relaxed shadow-xl ring-1 ring-white/5"
                                             placeholder="AIに対する基本的な役割分担や禁止事項を入力してください..."
                                         />
                                     </label>
@@ -234,21 +246,26 @@ export default function AdminSettingsPage() {
                                 <div className="space-y-8">
                                     <label className="block">
                                         <span className="text-sm font-black text-slate-900 mb-2 block">デフォルト使用モデル</span>
-                                        <select 
-                                            value={localSettings['default_model'] || ""}
-                                            onChange={(e) => handleChange('default_model', e.target.value)}
-                                            className="w-full px-4 py-3.5 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-teal/20 transition-all appearance-none"
-                                        >
-                                            <option value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet (Latest)</option>
-                                            <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
-                                            <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku (Fast)</option>
-                                        </select>
+                                        <div className="relative">
+                                            <select 
+                                                value={localSettings['default_model'] || ""}
+                                                onChange={(e) => handleChange('default_model', e.target.value)}
+                                                className="w-full px-4 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-teal/20 transition-all appearance-none pr-10"
+                                            >
+                                                <option value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet (Latest Premium)</option>
+                                                <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet (Legacy)</option>
+                                                <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku (Fast Logic)</option>
+                                            </select>
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                                <Cpu className="w-4 h-4 text-slate-400" />
+                                            </div>
+                                        </div>
                                     </label>
 
                                     <div className="space-y-4">
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm font-black text-slate-900">Temperature (創造性の強さ)</span>
-                                            <span className="text-sm font-black text-teal tabular-nums">{localSettings['temperature'] || 0.7}</span>
+                                            <span className="text-sm font-black text-teal tabular-nums bg-teal/5 px-2 py-0.5 rounded-lg border border-teal/10">{localSettings['temperature'] || 0.7}</span>
                                         </div>
                                         <input 
                                             type="range" 
@@ -257,18 +274,20 @@ export default function AdminSettingsPage() {
                                             step="0.1" 
                                             value={localSettings['temperature'] || 0.7}
                                             onChange={(e) => handleChange('temperature', parseFloat(e.target.value))}
-                                            className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-teal"
+                                            className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-slate-900"
                                         />
                                         <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                            <span>堅実・一貫性</span>
-                                            <span>創造的・多様性</span>
+                                            <span>Deterministic</span>
+                                            <span>Creative</span>
                                         </div>
                                     </div>
                                     
-                                    <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex gap-3">
-                                        <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
-                                        <p className="text-[11px] font-bold text-amber-800 leading-relaxed">
-                                            プロンプトやモデルの変更は、すべての企業のAI分析に即座に反映されます。本番環境での大幅な変更は十分な検証後に行ってください。
+                                    <div className="p-5 bg-amber-50 rounded-[28px] border border-amber-100/50 flex gap-4 shadow-sm shadow-amber-100/20">
+                                        <div className="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0">
+                                            <AlertTriangle className="w-5 h-5 text-amber-600" />
+                                        </div>
+                                        <p className="text-[12px] font-bold text-amber-900 leading-relaxed">
+                                            コア・プロンプトの変更は、稼働中の全企業のAI分析ロジックにグローバルに影響します。大規模な改修を行う際は、別ブランチ等での検証後に行ってください。
                                         </p>
                                     </div>
                                 </div>
@@ -278,58 +297,124 @@ export default function AdminSettingsPage() {
                 )}
 
                 {activeTab === "alert" && (
-                    <section className="animate-slideUp max-w-2xl">
+                    <section className="animate-slideUp max-w-2xl space-y-6">
+                        {/* Status Thresholds */}
                         <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-8">
                             <div className="space-y-6">
                                 <h3 className="font-black text-slate-900 flex items-center gap-2">
-                                    <AlertTriangle className="w-5 h-5 text-amber-500" />
-                                    解約リスク（アラート）閾値
+                                    <AlertTriangle className="w-5 h-5 text-rose-500" />
+                                    解約リスク検知基準
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <label className="block">
                                         <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">最終ログイン経過日数</span>
-                                        <input 
-                                            type="number"
-                                            value={localSettings['churn_threshold_days'] || 0}
-                                            onChange={(e) => handleChange('churn_threshold_days', parseInt(e.target.value))}
-                                            className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold"
-                                        />
+                                        <div className="relative">
+                                            <input 
+                                                type="number"
+                                                value={localSettings['churn_threshold_days'] || 0}
+                                                onChange={(e) => handleChange('churn_threshold_days', parseInt(e.target.value))}
+                                                className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-rose-200"
+                                            />
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">DAYS</div>
+                                        </div>
                                     </label>
                                     <label className="block">
                                         <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">KPI未入力月数</span>
-                                        <input 
-                                            type="number"
-                                            value={localSettings['kpi_missing_threshold_months'] || 0}
-                                            onChange={(e) => handleChange('kpi_missing_threshold_months', parseInt(e.target.value))}
-                                            className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold"
-                                        />
+                                        <div className="relative">
+                                            <input 
+                                                type="number"
+                                                value={localSettings['kpi_missing_threshold_months'] || 0}
+                                                onChange={(e) => handleChange('kpi_missing_threshold_months', parseInt(e.target.value))}
+                                                className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-rose-200"
+                                            />
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">MONTHS</div>
+                                        </div>
                                     </label>
                                 </div>
                             </div>
 
+                            {/* Activity Notifications */}
                             <div className="space-y-6 pt-6 border-t border-slate-50">
                                 <h3 className="font-black text-slate-900 flex items-center gap-2">
-                                    <Mail className="w-5 h-5 text-teal" />
-                                    運営用通知先設定
+                                    <RefreshCcw className="w-5 h-5 text-teal" />
+                                    アクティビティ通知設定
                                 </h3>
                                 <div className="space-y-4">
+                                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-[20px] hover:bg-slate-100 transition-colors">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-white rounded-xl shadow-sm">
+                                                <Building2Icon className="w-4 h-4 text-teal" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-black text-slate-900">新規企業の登録通知</p>
+                                                <p className="text-[10px] font-bold text-slate-400 tracking-tight">Send alert on new signup</p>
+                                            </div>
+                                        </div>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={localSettings['notify_new_registration'] === true}
+                                                onChange={(e) => handleChange('notify_new_registration', e.target.checked)}
+                                                className="sr-only peer" 
+                                            />
+                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal"></div>
+                                        </label>
+                                    </div>
+
+                                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-[20px] hover:bg-slate-100 transition-colors">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-white rounded-xl shadow-sm">
+                                                <Settings className="w-4 h-4 text-amber-500" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-black text-slate-900">クライアントの経営方針変更</p>
+                                                <p className="text-[10px] font-bold text-slate-400 tracking-tight">Send alert on policy updates</p>
+                                            </div>
+                                        </div>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={localSettings['notify_policy_change'] === true}
+                                                onChange={(e) => handleChange('notify_policy_change', e.target.checked)}
+                                                className="sr-only peer" 
+                                            />
+                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal"></div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Destinations */}
+                        <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-6">
+                            <h3 className="font-black text-slate-900 flex items-center gap-2">
+                                <Mail className="w-5 h-5 text-slate-900" />
+                                通知先デスティネーション
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="space-y-4">
                                     <label className="block">
-                                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Slack Webhook URL</span>
-                                        <input 
-                                            type="text"
-                                            value={localSettings['notification_slack_webhook'] || ""}
-                                            onChange={(e) => handleChange('notification_slack_webhook', e.target.value)}
-                                            className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-medium"
-                                            placeholder="https://hooks.slack.com/services/..."
-                                        />
+                                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">Notification Webhook</span>
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex-1 relative">
+                                                <input 
+                                                    type="text"
+                                                    value={localSettings['notification_slack_webhook'] || ""}
+                                                    onChange={(e) => handleChange('notification_slack_webhook', e.target.value)}
+                                                    className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl text-xs font-mono text-slate-600 focus:ring-1 focus:ring-slate-200"
+                                                    placeholder="https://hooks.slack.com/services/..."
+                                                />
+                                            </div>
+                                            <button className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-colors">Test</button>
+                                        </div>
                                     </label>
                                     <label className="block">
-                                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">管理用メールアドレス</span>
+                                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">Main Admin Email</span>
                                         <input 
                                             type="email"
                                             value={localSettings['notification_email'] || ""}
                                             onChange={(e) => handleChange('notification_email', e.target.value)}
-                                            className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-medium"
+                                            className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold"
                                         />
                                     </label>
                                 </div>
@@ -339,20 +424,31 @@ export default function AdminSettingsPage() {
                 )}
             </div>
 
-            {/* Bottom Floating Action Bar */}
-            <div className="sticky bottom-8 flex justify-center pt-8">
-                <button
-                    onClick={() => handleSave(activeTab)}
-                    disabled={saving}
-                    className="flex items-center gap-3 px-10 py-4.5 bg-slate-900 text-white rounded-[24px] font-black text-lg shadow-2xl shadow-slate-300 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
-                >
-                    {saving ? (
-                        <RefreshingLoader className="w-6 h-6 animate-spin" />
-                    ) : (
-                        <Save className="w-6 h-6" />
-                    )}
-                    {saving ? "保存中..." : `${activeTab === 'system' ? 'システム' : activeTab === 'ai' ? 'AI' : 'アラート'}設定を保存`}
-                </button>
+            {/* Premium Floating Action Bar */}
+            <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] w-full max-w-lg px-8">
+                <div className="bg-slate-900/95 backdrop-blur-xl rounded-[32px] p-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/10 flex items-center justify-between">
+                    <div className="pl-6 flex items-center gap-3">
+                        <div className={cn(
+                            "w-2.5 h-2.5 rounded-full transition-all duration-500",
+                            saving ? "bg-teal animate-pulse" : "bg-teal/40"
+                        )} />
+                        <span className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em]">
+                            {saving ? "Deploying Changes..." : `${activeTab.toUpperCase()}_SETTINGS`}
+                        </span>
+                    </div>
+                    <button
+                        onClick={() => handleSave(activeTab)}
+                        disabled={saving}
+                        className="flex items-center gap-3 px-8 py-3.5 bg-white text-slate-900 rounded-[22px] font-black text-sm hover:bg-teal hover:text-white transition-all duration-500 shadow-lg active:scale-[0.96] disabled:opacity-50 min-w-[180px] justify-center"
+                    >
+                        {saving ? (
+                            <RefreshingLoader className="w-5 h-5 animate-spin" />
+                        ) : (
+                            <Save className="w-4 h-4" />
+                        )}
+                        {saving ? "保存中" : "この内容で適用する"}
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -362,6 +458,20 @@ function RefreshingLoader({ className }: { className?: string }) {
     return (
         <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+        </svg>
+    );
+}
+
+function Building2Icon({ className }: { className?: string }) {
+    return (
+        <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
+            <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/>
+            <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/>
+            <path d="M10 6h4"/>
+            <path d="M10 10h4"/>
+            <path d="M10 14h4"/>
+            <path d="M10 18h4"/>
         </svg>
     );
 }
