@@ -6,6 +6,7 @@ interface SemanticSectionProps {
     displaySem: string;
     realSemHistory: any[];
     realDepts: any[];
+    actions: any[];
     onSave: (txt: string) => Promise<void>;
     onDelete: (id: string) => Promise<void>;
 }
@@ -14,6 +15,7 @@ export function SemanticSection({
     displaySem,
     realSemHistory,
     realDepts,
+    actions,
     onSave,
     onDelete,
 }: SemanticSectionProps) {
@@ -23,6 +25,7 @@ export function SemanticSection({
                 initialText={displaySem}
                 history={realSemHistory}
                 departments={realDepts}
+                actions={actions}
                 onSave={onSave}
                 onDelete={onDelete}
             />

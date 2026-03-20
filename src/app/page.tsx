@@ -23,7 +23,14 @@ import { Loading, LoadingCard } from "@/components/ui/Loading";
 import { EmptyState } from "@/components/ui/EmptyState";
 
 const questions = DEFAULT_SURVEY_QUESTIONS;
-const actions: any[] = [];
+const actions = [
+  { priority: 'urgent', title: "営業部の承認プロセス簡素化", desc: "意思決定スピードの外部要因として、100万円未満の案件承認に3日以上かかっています。部門長への権限委譲を推奨します。", dept: "Sales", owner: "部門長", initialStatus: 'pending', isAiGenerated: true, createdAt: "2024/03/18", isArchived: false },
+  { priority: 'high', title: "開発部の1on1頻度向上", desc: "フィードバックスコアが低下傾向にあります。隔週から毎週15分への頻度変更を試験的に導入してください。", dept: "Engineering", owner: "マネージャー", initialStatus: 'kept', isAiGenerated: true, createdAt: "2024/03/15", isArchived: false },
+  { priority: 'normal', title: "全社ビジョンの浸透ワークショップ", desc: "組織方針の「明確性」が全体的に低迷しています。対話型のワークショップ開催が有効です。", dept: "全社", owner: "人事担当", initialStatus: 'accepted', isAiGenerated: true, createdAt: "2024/03/10", isArchived: false },
+  { priority: 'normal', title: "Q3 採用戦略の見直し", desc: "採用チャネルの最適化により、採用コストを15%削減しました。", dept: "HR", owner: "採用マネージャー", initialStatus: 'completed', isAiGenerated: false, createdAt: "2024/02/15", isArchived: false },
+  { priority: 'high', title: "全社オフサイトミーティングの開催", desc: "現時点では業務負荷が高すぎるため、次四半期まで検討を見送ります。", dept: "全社", owner: "経営企画", initialStatus: 'rejected', isAiGenerated: true, createdAt: "2024/02/01", isArchived: false },
+  { priority: 'normal', title: "以前の施策：社内Wikiの刷新", desc: "過去に完了し、AIの更新タイミングで自動アーカイブされた施策です。", dept: "全社", owner: "人事担当", initialStatus: 'completed', isAiGenerated: true, createdAt: "2023/12/01", isArchived: false }
+];
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -661,6 +668,7 @@ export default function DashboardPage() {
               displaySem={displaySem}
               realSemHistory={realSemHistory}
               realDepts={realDepts}
+              actions={actions}
               onSave={handleSaveSemantic}
               onDelete={handleDeleteSemantic}
             />
