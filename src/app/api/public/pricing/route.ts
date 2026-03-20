@@ -1,27 +1,28 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// SUPABASE_SERVICE_ROLE_KEY を用いてRLSをバイパスし、
-// system_settings の限定的な情報を非ログインユーザーに提供するAPI
+// RLSポリシーで 'plan_price_%' のキーに対するSELECTがpublicに許可されているため、
+// ANON_KEYでも読み取り可能です。
 export async function GET() {
     try {
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-        if (!supabaseUrl || !supabaseServiceKey) {
-            console.error("Missing Supabase credentials for Service Role.");
+        if (!supabaseUrl || !supabaseAnonKey) {
+            console.error("Missing Supabase credentials.");
             return NextResponse.json({ team: 30000, standard: 50000, pro: 150000 }); // デフォルトフォールバック
         }
 
-        const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+        const supabase = createClient(supabaseUrl, supabaseAnonKey);
         
-        const { data, error } = await supabaseAdmin
+        const { data, error } = await supabase
             .from("system_settings")
             .select("key, value")
             .in("key", ["plan_price_team", "plan_price_standard", "plan_price_pro"]);
 
         if (error) {
             console.error("Error fetching pricing settings:", error);
+            // エラーの場合もフォールバックを返す
             return NextResponse.json({ team: 30000, standard: 50000, pro: 150000 });
         }
 
