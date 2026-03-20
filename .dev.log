@@ -16,3 +16,6 @@
  GET / 200 in 695ms (compile: 65ms, proxy.ts: 530ms, render: 100ms)
  DELETE /api/semantic-layers?id=61feb310-111e-44f7-b9ae-c2295dc2bfe3 200 in 1839ms (compile: 630ms, proxy.ts: 202ms, render: 1007ms)
  GET /form 200 in 863ms (compile: 294ms, proxy.ts: 546ms, render: 23ms)
+✓ Compiled in 399ms
+✓ Compiled in 158ms
+✓ Compiled in 84ms

@@ -223,11 +223,14 @@ export default function DashboardPage() {
       });
 
       const activeHead = headHistory[12];
+      const respondentsCount = deptResponses.filter(r => normalizeMonth(r.recorded_month) === latestMonth).length;
 
       return {
         id: d.id,
         name: d.name,
         head: `${activeHead} / ${d.headcount || 0}`,
+        respondentsCount,
+        masterHeadcount: d.headcount || 0,
         headHistory,
         productivity: 150,
         pulse: Number(pulseScore.toFixed(1)),
@@ -354,6 +357,8 @@ export default function DashboardPage() {
         id: axis.id,
         name: axis.name,
         head: `${activeHead} / ${axis.headcount || 0}`, // 表示用: "回答/所属"
+        respondentsCount: activeHead,
+        masterHeadcount: axis.headcount || 0,
         headHistory,
         xAxisHead: axis.headcount || 0,                 // 散布図のX軸用: 純粋な数値
         sizeValue: sizeValue,                          // 散布図のバブルサイズ用

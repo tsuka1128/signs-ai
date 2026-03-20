@@ -12,9 +12,10 @@ interface ScatterData {
     kpiAch: number;
     kpiName?: string;
     prevHead?: number;
-    prevProductivity?: number;
     mrr?: number;
     sizeValue?: number; // 追加
+    respondentsCount?: number;
+    masterHeadcount?: number;
 }
 
 interface ScatterPlotProps {
@@ -90,7 +91,7 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
             <line x1={PAD.l} y1={midY} x2={PAD.l + pw} y2={midY} stroke={colors.gray} strokeWidth={1} strokeDasharray="4,4" opacity={0.3} />
 
             {/* Data Points */}
-            {[...data].filter(d => d.pulse > 0).sort((a, b) => (a.id === hoveredId ? 1 : b.id === hoveredId ? -1 : 0)).map((d, i) => {
+            {[...data].sort((a, b) => (a.id === hoveredId ? 1 : b.id === hoveredId ? -1 : 0)).map((d, i) => {
                 const x = cx(d.head);
                 const y = cy(d.productivity);
 
@@ -108,7 +109,14 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
                     }
                 }
 
-                const col = d.weather === "sun" ? colors.sun : d.weather === "rain" ? colors.rain : colors.cloud;
+                // 半数以上が回答しているかどうかの判定 (m:0 の場合はr>0でOKとする安全策)
+                const requiredResponses = (d.masterHeadcount && d.masterHeadcount > 0) ? (d.masterHeadcount / 2) : 1;
+                const hasEnoughResponses = d.respondentsCount !== undefined 
+                    ? d.respondentsCount >= requiredResponses 
+                    : d.pulse > 0; // fallback
+
+                const isGrayOut = !hasEnoughResponses || d.pulse === 0;
+                const col = isGrayOut ? colors.gray : (d.weather === "sun" ? colors.sun : d.weather === "rain" ? colors.rain : colors.cloud);
 
                 const isAchieved = d.kpiAch >= 100;
 
@@ -152,8 +160,10 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
                         )}
 
                         {/* 体温 背景とテキスト */}
-                        <rect x={-30} y={r + 5} width={60} height={12} rx={3} fill="white" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-                        <text x={0} y={r + 14} textAnchor="middle" className="text-[9px] fill-slate-400 font-bold transition-all duration-1000 ease-in-out pointer-events-none">体温 {d.pulse.toFixed(1)}</text>
+                        <rect x={-45} y={r + 5} width={90} height={12} rx={3} fill="white" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                        <text x={0} y={r + 14} textAnchor="middle" className="text-[9px] fill-slate-400 font-bold transition-all duration-1000 ease-in-out pointer-events-none">
+                            {d.pulse === 0 ? "体温 未取得" : (!hasEnoughResponses ? "回答不足(過半数未満)" : `体温 ${d.pulse.toFixed(1)}`)}
+                        </text>
 
                         {/* ホバー時リング */}
                         <circle cx={0} cy={0} r={r + 4} fill="none" stroke={col} strokeWidth={1.5} className="opacity-0 group-hover:opacity-70 transition-opacity duration-300 pointer-events-none" strokeDasharray="3,2" />
@@ -188,6 +198,12 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
                 <text x={170} y={4} className="text-[9px] fill-slate-400 font-bold">☔️ 危険域</text>
 
                 <g transform="translate(240, 0)">
+                    <circle cx={0} cy={0} r={4} fill={colors.gray} opacity={0.3} stroke={colors.gray} strokeWidth={1} />
+                    <circle cx={0} cy={0} r={1.5} fill={colors.gray} />
+                    <text x={10} y={4} className="text-[9px] fill-slate-400 font-bold">🔘 未取得/回答不足</text>
+                </g>
+
+                <g transform="translate(340, 0)">
                     <circle cx={0} cy={0} r={4} fill={colors.gray} className="animate-ping opacity-75" style={{ transformOrigin: "0px 0px" }} />
                     <circle cx={0} cy={0} r={4} fill={colors.gray} />
                     <text x={10} y={4} className="text-[9px] fill-slate-400 font-bold">波紋: KPI達成</text>
