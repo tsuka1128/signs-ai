@@ -395,7 +395,7 @@ export default function AdminSettingsPage() {
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                                 <FileText className="w-4 h-4 text-slate-400" />
-                                                <span className="text-sm font-black text-slate-900">Max Tokens (応答の最大長)</span>
+                                                <span className="text-sm font-black text-slate-900">Max Tokens (出力上限の目安：約{localSettings['max_tokens'] || 1024}文字)</span>
                                             </div>
                                             <span className="text-sm font-black text-teal tabular-nums bg-teal/5 px-2 py-0.5 rounded-lg border border-teal/10">{localSettings['max_tokens'] || 1024}</span>
                                         </div>
@@ -409,8 +409,8 @@ export default function AdminSettingsPage() {
                                             className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-slate-900"
                                         />
                                         <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                            <span>256 (簡潔)</span>
-                                            <span>4096 (詳細)</span>
+                                            <span>256 (約250文字)</span>
+                                            <span>4096 (約4000文字)</span>
                                         </div>
                                     </div>
 
@@ -519,7 +519,7 @@ export default function AdminSettingsPage() {
 
                                                     <div className="space-y-3 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
                                                         <div className="flex items-center justify-between">
-                                                            <span className="text-xs font-black text-slate-700">Max Tokens (応答の最大長)</span>
+                                                            <span className="text-xs font-black text-slate-700">Max Tokens (目安: 約{localSettings[tokensKey] || slot.defaultTokens}文字)</span>
                                                             <span className="text-sm font-black text-teal tabular-nums bg-teal/5 px-3 py-1 rounded-xl border border-teal/10">
                                                                 {localSettings[tokensKey] || slot.defaultTokens}
                                                             </span>
@@ -534,9 +534,9 @@ export default function AdminSettingsPage() {
                                                             className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-teal"
                                                         />
                                                         <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest pt-1">
-                                                            <span>256 (簡潔)</span>
+                                                            <span>256 (約250文字)</span>
                                                             <span className="text-center">{slot.defaultTokens} (推奨)</span>
-                                                            <span>4096 (詳細)</span>
+                                                            <span>4096 (約4000文字)</span>
                                                         </div>
                                                     </div>
                                                 </div>
