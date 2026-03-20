@@ -844,9 +844,24 @@ function HeroVisual() {
 export default function MarketingPage() {
   /* ナビスクロール */
   const [scrolled, setScrolled] = useState(false);
+  const [prices, setPrices] = useState({ team: 30000, standard: 50000, pro: 150000 });
+  const [pricesLoaded, setPricesLoaded] = useState(false);
+
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", fn);
+    
+    // 料金プランの動的取得
+    fetch("/api/public/pricing")
+      .then(res => res.json())
+      .then(data => {
+        if (!data.error) {
+          setPrices(data);
+          setPricesLoaded(true);
+        }
+      })
+      .catch(console.error);
+
     return () => window.removeEventListener("scroll", fn);
   }, []);
 
@@ -1240,11 +1255,12 @@ export default function MarketingPage() {
               <Reveal direction="left">
                 <PricingCard
                   plan="Team"
-                  sub="スモールスタートに最適"
-                  price="30,000"
+                  sub="20名までの組織に最適"
+                  price={pricesLoaded ? prices.team.toLocaleString() : "..."}
                   features={[
+                    "20名まで",
                     "KPI 5個まで",
-                    "4軸バブルチャート（部署軸）",
+                    "部署別バブルチャート",
                     "ボイスチェック",
                     "AI提案（現場向け）",
                     "メールサポート",
@@ -1256,11 +1272,11 @@ export default function MarketingPage() {
               <Reveal delay={0.05}>
                 <PricingCard
                   plan="Standard"
-                  sub="100名までの組織に最適"
-                  price="50,000"
+                  sub="50名までの組織に最適"
+                  price={pricesLoaded ? prices.standard.toLocaleString() : "..."}
                   recommended
                   features={[
-                    "100名まで",
+                    "50名まで",
                     "KPI 10個まで",
                     "部署 無制限",
                     "タイムラプス機能",
@@ -1276,11 +1292,11 @@ export default function MarketingPage() {
               <Reveal direction="right" delay={0.1}>
                 <PricingCard
                   plan="Pro"
-                  sub="100名以上の大規模組織向け"
-                  price="150,000〜"
+                  sub="51名以上の大規模組織向け"
+                  price={pricesLoaded ? `${prices.pro.toLocaleString()}〜` : "..."}
                   features={[
                     "Standard全機能",
-                    "100名以上対応",
+                    "51名以上対応",
                     "部署間360度クロス分析",
                     "提案レポートエクスポート（PDF）",
                     "組織開示レポート出力",
