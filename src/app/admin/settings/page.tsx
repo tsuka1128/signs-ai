@@ -114,12 +114,14 @@ export default function AdminSettingsPage() {
      * カテゴリ単位で設定を保存する
      * 
      * handleSave は現在 アクティブタブのカテゴリに属する設定だけを upsert する。
-     * ボイスチェックタブは category='survey' でフィルタされる。
+     * AIタブの場合は、'ai' および 'ai_prompt' カテゴリの設定を両方保存する。
      */
     const handleSave = async (category: SettingCategory) => {
         setSaving(true);
         try {
-            const categorySettings = settings.filter(s => s.category === category);
+            const categorySettings = settings.filter(s => 
+                s.category === category || (category === 'ai' && s.category === 'ai_prompt')
+            );
             
             const updates = categorySettings.map(s => ({
                 id: s.id,
