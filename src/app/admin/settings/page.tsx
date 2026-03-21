@@ -144,6 +144,37 @@ export default function AdminSettingsPage() {
         }
     };
 
+    /**
+     * テストSlack通知送信（管理用）
+     */
+    const handleTestSlackWebhook = async () => {
+        const webhookUrl = localSettings['notification_slack_webhook'];
+        if (!webhookUrl) {
+            alert("Webhook URLを入力・保存してからテストしてください。");
+            return;
+        }
+        
+        setSaving(true);
+        try {
+            const res = await fetch("/api/admin/settings/test-slack", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ webhookUrl })
+            });
+
+            if (res.ok) {
+                alert("テスト通知を送信しました。Slackチャンネルをご確認ください✅");
+            } else {
+                const data = await res.json();
+                alert(`送信失敗: ${data.error || "詳細不明"}`);
+            }
+        } catch (error: any) {
+            alert(`エラーが発生しました: ${error.message}`);
+        } finally {
+            setSaving(false);
+        }
+    };
+
     if (loading) {
         return <Loading fullScreen message="システム設定を読み込んでいます..." />;
     }
@@ -724,7 +755,12 @@ export default function AdminSettingsPage() {
                                                     placeholder="https://hooks.slack.com/services/..."
                                                 />
                                             </div>
-                                            <button className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-colors">Test</button>
+                                            <button 
+                                                onClick={handleTestSlackWebhook}
+                                                disabled={saving}
+                                                className="px-4 py-3 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-colors">
+                                                {saving ? "..." : "Test"}
+                                            </button>
                                         </div>
                                     </label>
                                     <label className="block">
