@@ -205,6 +205,34 @@ export default function SettingsPage() {
         }
     };
 
+    const handleTestMemberSlack = async (slackUserId: string) => {
+        const webhookUrl = company?.slack_webhook_url;
+        if (!webhookUrl) {
+            alert("まず「外部連携」タブでWebhook URLを保存してください。");
+            return;
+        }
+        if (!slackUserId) {
+            alert("Slack User IDを入力してください。");
+            return;
+        }
+
+        try {
+            const res = await fetch("/api/settings/test-slack", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ webhookUrl, slackUserId })
+            });
+            if (res.ok) {
+                alert(`Slack ID: ${slackUserId} 宛にテストメンションを送信しました。Slackをご確認ください✅`);
+            } else {
+                const data = await res.json();
+                alert(`送信失敗: ${data.error || "詳細不明"}`);
+            }
+        } catch (e: any) {
+            alert(`エラーが発生しました: ${e.message}`);
+        }
+    };
+
     const handleAddDept = () => {
         setDepts([...depts, { id: `new_${Date.now()}`, name: "", headcount: 0, is_new: true }]);
     };
@@ -873,13 +901,22 @@ export default function SettingsPage() {
                                                 Slack User ID (任意)
                                                 <SlackHelpTooltip />
                                             </label>
-                                            <input
-                                                type="text"
-                                                value={inviteSlackUserId}
-                                                onChange={(e) => setInviteSlackUserId(e.target.value)}
-                                                placeholder="例: U12345678"
-                                                className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:border-teal"
-                                            />
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={inviteSlackUserId}
+                                                    onChange={(e) => setInviteSlackUserId(e.target.value)}
+                                                    placeholder="例: U12345678"
+                                                    className="flex-1 bg-white border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:border-teal"
+                                                />
+                                                <button
+                                                    onClick={() => handleTestMemberSlack(inviteSlackUserId)}
+                                                    className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 rounded-2xl transition-colors flex items-center gap-1.5 text-[10px] font-black uppercase whitespace-nowrap"
+                                                    title="テストメンションを送信"
+                                                >
+                                                    テスト送信
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
 

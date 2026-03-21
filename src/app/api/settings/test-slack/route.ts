@@ -11,14 +11,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // `slack_webhook_url` をリクエストボディから取得
-    const { webhookUrl } = await req.json();
+    // `slack_webhook_url` と `slackUserId` をリクエストボディから取得
+    const { webhookUrl, slackUserId } = await req.json();
 
     if (!webhookUrl) {
       return NextResponse.json({ error: "Webhook URL is required" }, { status: 400 });
     }
 
-    const message = "🎉 *SignsAI* \n✅ これはSignsAIからのテスト通知です。Slack連携は正常に動作しています！";
+    const message = slackUserId 
+      ? `🎉 *SignsAI メンメンションテスト* \n✅ <@${slackUserId}> さん、SignsAIとの連携に成功しました！\nこのメンションが正しく青色で表示されていれば、ユーザーIDは正確です。`
+      : "🎉 *SignsAI* \n✅ これはSignsAIからのテスト通知です。Slack連携は正常に動作しています！";
 
     const blocks = [
       {
@@ -33,7 +35,9 @@ export async function POST(req: Request) {
         elements: [
           {
             type: "mrkdwn",
-            text: "💡 SignsAIでは、毎月のAI分析結果やアンケートの配信状況がこのチャンネルへ通知されます。"
+            text: slackUserId 
+              ? `💡 特定のメンバー（${slackUserId}）への個別メンションのテストです。`
+              : "💡 SignsAIでは、毎月のAI分析結果やアンケートの配信状況がこのチャンネルへ通知されます。"
           }
         ]
       }
