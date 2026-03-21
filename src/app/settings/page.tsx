@@ -855,7 +855,7 @@ export default function SettingsPage() {
                                         </div>
 
                                         <div>
-                                            <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">担当{secondaryAxisName} (任意)</label>
+                                            <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">{secondaryAxisName} (任意)</label>
                                             <select
                                                 value={inviteAxisId}
                                                 onChange={(e) => setInviteAxisId(e.target.value)}
