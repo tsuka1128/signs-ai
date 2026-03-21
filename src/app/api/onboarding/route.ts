@@ -138,8 +138,10 @@ export async function POST(request: NextRequest) {
             const { error: userUpdateError } = await supabase.from("users").upsert({
                 id: user.id,
                 company_id: invite.company_id,
-                department_id: selectedDeptId || null,
-                axis_id: selectedAxisId || null,
+                department_id: selectedDeptId || invite.department_id || null,
+                axis_id: selectedAxisId || invite.axis_id || null,
+                assigned_kpi_id: (selectedKpiIds && selectedKpiIds.length > 0) ? selectedKpiIds[0] : (invite.assigned_kpi_id || null),
+                slack_user_id: invite.slack_user_id || null,
                 email: user.email ?? "",
                 display_name: user.user_metadata?.full_name ?? user.email ?? "",
                 role: invite.role,

@@ -98,21 +98,38 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
         }
     };
 
-    const handleConfirmSend = () => {
+    const handleConfirmSend = async () => {
         setIsSending(true);
-        // 保存のみ実行
-        setTimeout(() => {
+        try {
+            // 1. API 経由で Slack 通知を送信
+            const res = await fetch("/api/notifications/slack/policy", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: currentText })
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "通知の送信に失敗しました");
+            }
+
+            // 2. 成功時：保存処理（DB更新）を実行
+            await onSave(currentText);
+
             setIsSending(false);
             setIsSent(true);
 
-            onSave(currentText);
             // 2秒後にモーダルを閉じる
             setTimeout(() => {
                 setIsSent(false);
                 setShowPreviewModal(false);
                 setIsEditing(false);
             }, 2000);
-        }, 1000);
+        } catch (err: any) {
+            console.error("Slack Send Error:", err);
+            alert(`エラー: ${err.message}`);
+            setIsSending(false);
+        }
     };
 
     const handleDeleteClick = async (e: React.MouseEvent, id: string) => {
@@ -399,12 +416,16 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
 
                         {/* Modal Body / Previews */}
                         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white custom-scrollbar">
-                            <div className="p-8 text-center border-2 border-dashed border-slate-100 rounded-3xl space-y-3">
-                                <div className="text-3xl grayscale mb-2">🚥</div>
-                                <p className="text-sm font-bold text-slate-600">AI通知機能は準備中です</p>
-                                <p className="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
-                                    現在は方針の「保存」のみ可能です。フェーズ7のAI実装完了後、ここに入力した方針から自動的に各部署向けの通知メッセージが生成・プレビューできるようになります。
+                            <div className="p-8 text-center border-2 border-dashed border-teal/10 bg-teal/5 rounded-3xl space-y-3">
+                                <div className="text-3xl mb-2">🔔</div>
+                                <p className="text-sm font-bold text-slate-700">Slack通知の準備が整いました</p>
+                                <p className="text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
+                                    「保存・送信」をクリックすると、入力された方針の抜粋と共に、<br />
+                                    <span className="text-teal font-bold text-[11px]">各部署の担当メンバー（Slack ID登録済み）へメンション付き</span>で通知が送信されます。
                                 </p>
+                            </div>
+                            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 italic text-[10px] text-slate-400">
+                                ※ AIによる高度な状況分析とトーン調整（Phase 7）が有効になるまでは、今回の方針内容をベースとした標準通知フォーマットで送信されます。
                             </div>
                         </div>
 

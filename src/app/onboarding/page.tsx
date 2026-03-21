@@ -205,6 +205,9 @@ function OnboardingContent() {
 
                 setState(prev => ({
                     ...prev,
+                    selectedDeptId: invite.department_id || prev.selectedDeptId,
+                    selectedAxisId: invite.axis_id || prev.selectedAxisId,
+                    selectedKpiIds: invite.assigned_kpi_id ? [invite.assigned_kpi_id] : prev.selectedKpiIds,
                     invitedCompany: {
                         name: company.name,
                         departments: company.departments || [],
