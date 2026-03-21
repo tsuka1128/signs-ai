@@ -1262,7 +1262,7 @@ export default function MarketingPage() {
                     "KPI 5個まで",
                     "部署別バブルチャート",
                     "ボイスチェック",
-                    "AI提案（現場向け）",
+                    "AI組織分析と施策提案",
                     "各部署へのAI通知文",
                     "メールサポート",
                   ]}
@@ -1277,13 +1277,13 @@ export default function MarketingPage() {
                   price={pricesLoaded ? prices.standard.toLocaleString() : "..."}
                   recommended
                   features={[
+                    "Team全機能",
                     "50名まで",
                     "KPI 10個まで",
                     "部署 無制限",
                     "タイムラプス機能",
                     "第2軸バブルチャート解放",
                     "Slack連携",
-                    "4階層AI提案",
                     "組織方針の反映",
                     "カスタマーサクセス",
                   ]}
