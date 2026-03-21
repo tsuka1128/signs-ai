@@ -1263,6 +1263,7 @@ export default function MarketingPage() {
                     "部署別バブルチャート",
                     "ボイスチェック",
                     "AI提案（現場向け）",
+                    "各部署へのAI通知文",
                     "メールサポート",
                   ]}
                   cta="無料で始める"
@@ -1280,13 +1281,13 @@ export default function MarketingPage() {
                     "KPI 10個まで",
                     "部署 無制限",
                     "タイムラプス機能",
-                    "第2軸解放（プロダクト軸等）",
+                    "第2軸バブルチャート解放",
                     "Slack連携",
                     "4階層AI提案",
                     "組織方針の反映",
-                    "チャットサポート",
+                    "カスタマーサクセス",
                   ]}
-                  cta="1ヶ月間トライアル"
+                  cta="1ヶ月無料トライアル"
                 />
               </Reveal>
               <Reveal direction="right" delay={0.1}>
