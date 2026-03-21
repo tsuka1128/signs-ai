@@ -1137,14 +1137,23 @@ export default function SettingsPage() {
                                         Slack User ID
                                         <SlackHelpTooltip />
                                     </label>
-                                    <div className="relative">
-                                        <input
-                                            type="text"
-                                            value={editForm.slack_user_id}
-                                            onChange={(e) => setEditForm({ ...editForm, slack_user_id: e.target.value })}
-                                            placeholder="例: U12345678"
-                                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-teal transition-all"
-                                        />
+                                    <div className="flex gap-2">
+                                        <div className="relative flex-1">
+                                            <input
+                                                type="text"
+                                                value={editForm.slack_user_id || ""}
+                                                onChange={(e) => setEditForm({...editForm, slack_user_id: e.target.value})}
+                                                placeholder="例: U12345678"
+                                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-teal transition-all"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={() => handleTestMemberSlack(editForm.slack_user_id || "")}
+                                            className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 rounded-2xl transition-colors flex items-center gap-1.5 text-[10px] font-black uppercase whitespace-nowrap"
+                                            title="テストメンションを送信"
+                                        >
+                                            テスト送信
+                                        </button>
                                     </div>
                                     <p className="text-[10px] text-slate-400 mt-2 ml-1 font-medium">※ Slackでの個人宛メンション通知に使用されます</p>
                                 </div>
