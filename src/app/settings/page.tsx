@@ -53,6 +53,7 @@ export default function SettingsPage() {
     // Editing user state
     const [editingUser, setEditingUser] = useState<any>(null);
     const [editForm, setEditForm] = useState({
+        display_name: "",
         slack_user_id: "",
         department_id: "",
         axis_id: ""
@@ -330,6 +331,7 @@ export default function SettingsPage() {
     const handleStartEditUser = (u: any) => {
         setEditingUser(u);
         setEditForm({
+            display_name: u.display_name || "",
             slack_user_id: u.slack_user_id || "",
             department_id: u.department_id || "",
             axis_id: u.axis_id || ""
@@ -340,6 +342,7 @@ export default function SettingsPage() {
         if (!editingUser) return;
         const supabase = createClient();
         const { error } = await supabase.from('users').update({
+            display_name: editForm.display_name || null,
             slack_user_id: editForm.slack_user_id || null,
             department_id: editForm.department_id || null,
             axis_id: editForm.axis_id || null
@@ -352,6 +355,21 @@ export default function SettingsPage() {
             setEditingUser(null);
         } else {
             alert(`保存に失敗しました: ${error.message}`);
+        }
+    };
+
+    const handleDeleteUser = async (userId: string) => {
+        if (!window.confirm("本当にこのメンバーを削除しますか？\nこの操作は取り消せません。")) return;
+        
+        const supabase = createClient();
+        const { error } = await supabase.from('users').delete().eq('id', userId);
+
+        if (!error) {
+            alert("メンバーを削除しました");
+            setUsers(users.filter(u => u.id !== userId));
+            setEditingUser(null);
+        } else {
+            alert(`削除に失敗しました: ${error.message}`);
         }
     };
 
@@ -987,6 +1005,17 @@ export default function SettingsPage() {
                         <div className="p-8 space-y-6">
                             <div className="space-y-4">
                                 <div>
+                                    <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest">氏名 (任意)</label>
+                                    <input
+                                        type="text"
+                                        value={editForm.display_name}
+                                        onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
+                                        placeholder="例: 佐藤 太郎"
+                                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-teal transition-all"
+                                    />
+                                </div>
+
+                                <div>
                                     <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest">所属部署</label>
                                     <select
                                         value={editForm.department_id}
@@ -1026,19 +1055,30 @@ export default function SettingsPage() {
                             </div>
                         </div>
 
-                        <div className="p-8 bg-slate-50 flex gap-3">
-                            <button
-                                onClick={() => setEditingUser(null)}
-                                className="flex-1 py-4 bg-white border border-slate-200 rounded-2xl font-bold text-slate-400 hover:text-slate-600 transition-all"
-                            >
-                                キャンセル
-                            </button>
-                            <button
-                                onClick={handleSaveUserDetail}
-                                className="flex-[2] py-4 bg-teal text-white rounded-2xl font-black shadow-lg shadow-teal/20 hover:bg-teal-600 transition-all flex items-center justify-center gap-2"
-                            >
-                                <Save className="w-4 h-4" /> ユーザー情報を保存
-                            </button>
+                        <div className="p-8 bg-slate-50 flex flex-col gap-3 font-bold">
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setEditingUser(null)}
+                                    className="flex-1 py-4 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-slate-600 transition-all font-bold"
+                                >
+                                    キャンセル
+                                </button>
+                                <button
+                                    onClick={handleSaveUserDetail}
+                                    className="flex-[2] py-4 bg-teal text-white rounded-2xl font-black shadow-lg shadow-teal/20 hover:bg-teal-600 transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Save className="w-4 h-4" /> ユーザー情報を保存
+                                </button>
+                            </div>
+                            
+                            <div className="pt-2 border-t border-slate-200 mt-2">
+                                <button
+                                    onClick={() => handleDeleteUser(editingUser.id)}
+                                    className="w-full py-4 text-rose-500 hover:text-rose-600 hover:bg-rose-50 rounded-2xl transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Trash2 className="w-4 h-4" /> このメンバーを削除する
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
