@@ -52,7 +52,6 @@ interface OnboardingState {
         axes: any[];
     };
     selectedDeptId?: string;
-    selectedKpiIds: string[];
     selectedAxisId?: string;
     websiteUrl?: string;
 }
@@ -105,7 +104,6 @@ function OnboardingContent() {
         departments: [{ name: "", headcount: 0 }],
         kpis: [{ name: "", unit: "件", target_default: "", owner_dept_index: null, sort_order: 0 }],
         semanticContent: DEFAULT_SEMANTIC_POLICY,
-        selectedKpiIds: [],
         websiteUrl: "",
     });
 
@@ -115,7 +113,7 @@ function OnboardingContent() {
             return [
                 { id: 1, label: "参加確認" },
                 { id: 2, label: "所属部署" },
-                { id: 3, label: state.invitedCompany?.secondaryAxisName || "担当項目" },
+                { id: 3, label: state.invitedCompany?.secondaryAxisName || "担当領域" },
             ];
         }
         return [
@@ -207,12 +205,11 @@ function OnboardingContent() {
                     ...prev,
                     selectedDeptId: invite.department_id || prev.selectedDeptId,
                     selectedAxisId: invite.axis_id || prev.selectedAxisId,
-                    selectedKpiIds: invite.assigned_kpi_id ? [invite.assigned_kpi_id] : prev.selectedKpiIds,
                     invitedCompany: {
                         name: company.name,
                         departments: company.departments || [],
                         kpis: company.kpi_definitions || [],
-                        secondaryAxisName: company.kpi_secondary_axis_name || "担当項目",
+                        secondaryAxisName: company.kpi_secondary_axis_name || "担当領域",
                         axes: company.kpi_axes || [],
                     }
                 }));
@@ -337,7 +334,6 @@ function OnboardingContent() {
             const payload: any = {
                 invitationToken: state.mode === "join" ? state.invitationToken : undefined,
                 selectedDeptId: state.mode === "join" ? state.selectedDeptId : undefined,
-                selectedKpiIds: state.mode === "join" ? state.selectedKpiIds : undefined,
                 selectedAxisId: state.mode === "join" ? state.selectedAxisId : undefined,
                 companyName: state.mode === "create" ? state.companyName : undefined,
                 websiteUrl: state.mode === "create" ? state.websiteUrl : undefined,
@@ -660,7 +656,7 @@ function OnboardingContent() {
                             <>
                                 <div>
                                     <h2 className="text-lg font-black text-slate-800">
-                                        担当の{state.invitedCompany?.secondaryAxisName || "項目"}を選択してください
+                                        担当の{state.invitedCompany?.secondaryAxisName || "領域"}を選択してください
                                     </h2>
                                     <p className="text-sm text-slate-400">あなたが所属する、または担当する単位を選んでください</p>
                                 </div>
@@ -688,7 +684,7 @@ function OnboardingContent() {
                                         ))
                                     ) : (
                                         <div className="p-8 text-center border-2 border-dashed border-slate-100 rounded-2xl text-slate-400 text-sm">
-                                            選択可能な {state.invitedCompany?.secondaryAxisName || "項目"} がありません。<br />そのまま完了して進んでください。
+                                            選択可能な {state.invitedCompany?.secondaryAxisName || "領域"} がありません。<br />そのまま完了して進んでください。
                                         </div>
                                     )}
                                 </div>

@@ -15,7 +15,6 @@ interface OnboardingPayload {
     companyName?: string;
     invitationToken?: string;
     selectedDeptId?: string;
-    selectedKpiIds?: string[];
     selectedAxisId?: string;
     departments?: { name: string; headcount: number }[];
     kpis?: {
@@ -49,7 +48,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: "リクエストの形式が不正です" }, { status: 400 });
     }
 
-    const { companyName, departments, kpis, semanticContent, invitationToken, selectedDeptId, selectedKpiIds, selectedAxisId, websiteUrl } = payload;
+    const { companyName, departments, kpis, semanticContent, invitationToken, selectedDeptId, selectedAxisId, websiteUrl } = payload;
 
     // A. 招待トークンがある場合の処理
     if (invitationToken) {
@@ -140,7 +139,6 @@ export async function POST(request: NextRequest) {
                 company_id: invite.company_id,
                 department_id: selectedDeptId || invite.department_id || null,
                 axis_id: selectedAxisId || invite.axis_id || null,
-                assigned_kpi_id: (selectedKpiIds && selectedKpiIds.length > 0) ? selectedKpiIds[0] : (invite.assigned_kpi_id || null),
                 slack_user_id: invite.slack_user_id || null,
                 email: user.email ?? "",
                 display_name: user.user_metadata?.full_name ?? user.email ?? "",

@@ -39,7 +39,7 @@ export default function SettingsPage() {
     const [depts, setDepts] = useState<any[]>([]);
     const [kpis, setKpis] = useState<any[]>([]);
     const [axes, setAxes] = useState<any[]>([]);
-    const [secondaryAxisName, setSecondaryAxisName] = useState("");
+    const [secondaryAxisName, setSecondaryAxisName] = useState("担当領域");
     const [users, setUsers] = useState<any[]>([]);
     const [invitations, setInvitations] = useState<any[]>([]);
     const [inviteEmail, setInviteEmail] = useState("");
@@ -48,7 +48,6 @@ export default function SettingsPage() {
     // Invitation extra state
     const [inviteDeptId, setInviteDeptId] = useState("");
     const [inviteAxisId, setInviteAxisId] = useState("");
-    const [inviteKpiId, setInviteKpiId] = useState("");
     const [inviteSlackUserId, setInviteSlackUserId] = useState("");
 
     // Editing user state
@@ -56,8 +55,7 @@ export default function SettingsPage() {
     const [editForm, setEditForm] = useState({
         slack_user_id: "",
         department_id: "",
-        axis_id: "",
-        assigned_kpi_id: ""
+        axis_id: ""
     });
 
     const handleCopyId = () => {
@@ -93,7 +91,7 @@ export default function SettingsPage() {
 
             if (comp.data) {
                 setCompany(comp.data);
-                setSecondaryAxisName(comp.data.secondary_axis_name || "プロダクト");
+                setSecondaryAxisName(comp.data.secondary_axis_name || "担当領域");
             }
             if (d.data) setDepts(d.data);
             if (k.data) setKpis(k.data);
@@ -313,7 +311,6 @@ export default function SettingsPage() {
             role: 'member',
             department_id: inviteDeptId || null,
             axis_id: inviteAxisId || null,
-            assigned_kpi_id: inviteKpiId || null,
             slack_user_id: inviteSlackUserId || null
         });
 
@@ -322,7 +319,6 @@ export default function SettingsPage() {
             setInviteEmail("");
             setInviteDeptId("");
             setInviteAxisId("");
-            setInviteKpiId("");
             setInviteSlackUserId("");
             const { data } = await supabase.from('invitations').select('*').eq('company_id', company.id).eq('status', 'pending');
             if (data) setInvitations(data);
@@ -336,8 +332,7 @@ export default function SettingsPage() {
         setEditForm({
             slack_user_id: u.slack_user_id || "",
             department_id: u.department_id || "",
-            axis_id: u.axis_id || "",
-            assigned_kpi_id: u.assigned_kpi_id || ""
+            axis_id: u.axis_id || ""
         });
     };
 
@@ -347,8 +342,7 @@ export default function SettingsPage() {
         const { error } = await supabase.from('users').update({
             slack_user_id: editForm.slack_user_id || null,
             department_id: editForm.department_id || null,
-            axis_id: editForm.axis_id || null,
-            assigned_kpi_id: editForm.assigned_kpi_id || null
+            axis_id: editForm.axis_id || null
         }).eq('id', editingUser.id);
 
         if (!error) {
@@ -383,7 +377,7 @@ export default function SettingsPage() {
                         { id: "company", icon: Building2, label: "基本設定" },
                         { id: "dept", icon: Users, label: "部署" },
                         { id: "kpi", icon: Target, label: "KPI" },
-                        { id: "axis", icon: Layers, label: "第2軸" },
+                        { id: "axis", icon: Layers, label: "担当領域" },
                         { id: "users", icon: UserPlus, label: "メンバー" },
                         { id: "integration", icon: Link2, label: "外部連携" }
                     ].map(t => (
@@ -661,7 +655,7 @@ export default function SettingsPage() {
                         <div className="space-y-8 animate-in fade-in">
                             <div>
                                 <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-                                    <Layers className="w-5 h-5 text-teal" /> 第2軸の設定（プロダクト・地域など）
+                                    <Layers className="w-5 h-5 text-teal" /> 担当領域の設定（地域・プロダクトなど）
                                 </h2>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
@@ -670,7 +664,7 @@ export default function SettingsPage() {
                                         <input
                                             type="text"
                                             value={secondaryAxisName}
-                                            placeholder="例: プロダクト"
+                                            placeholder="例: 担当領域"
                                             onChange={(e) => setSecondaryAxisName(e.target.value)}
                                             className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-800 outline-none focus:border-teal"
                                         />
@@ -802,17 +796,6 @@ export default function SettingsPage() {
                                             </select>
                                         </div>
 
-                                        <div>
-                                            <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">担当KPI (任意)</label>
-                                            <select
-                                                value={inviteKpiId}
-                                                onChange={(e) => setInviteKpiId(e.target.value)}
-                                                className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-600 outline-none focus:border-teal appearance-none"
-                                            >
-                                                <option value="">未設定</option>
-                                                {kpis.map(k => <option key={k.id} value={k.id}>{k.name}</option>)}
-                                            </select>
-                                        </div>
 
                                         <div>
                                             <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">Slack User ID (任意)</label>
@@ -849,7 +832,7 @@ export default function SettingsPage() {
                                                 <tr className="bg-slate-50 border-b border-slate-100">
                                                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">メンバー</th>
                                                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">所属部署</th>
-                                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">担当項目/KPI</th>
+                                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">担当領域</th>
                                                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Slack ID</th>
                                                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">設定</th>
                                                 </tr>
@@ -883,19 +866,14 @@ export default function SettingsPage() {
                                                             </td>
                                                             <td className="px-6 py-5">
                                                                 <div className="flex flex-col gap-1">
-                                                                    {axis && (
+                                                                    {axis ? (
                                                                         <div className="flex items-center gap-1.5">
                                                                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                                                            <span className="text-[10px] font-black text-slate-600">{secondaryAxisName}: {axis.name}</span>
+                                                                            <span className="text-[10px] font-black text-slate-600">{axis.name}</span>
                                                                         </div>
+                                                                    ) : (
+                                                                        <span className="text-slate-300 text-[10px] font-bold">未設定</span>
                                                                     )}
-                                                                    {kpi && (
-                                                                        <div className="flex items-center gap-1.5">
-                                                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                                                                            <span className="text-[10px] font-black text-slate-600">KPI: {kpi.name}</span>
-                                                                        </div>
-                                                                    )}
-                                                                    {!axis && !kpi && <span className="text-slate-300 text-[10px] font-bold">未設定</span>}
                                                                 </div>
                                                             </td>
                                                             <td className="px-6 py-5 text-center">
@@ -1020,29 +998,16 @@ export default function SettingsPage() {
                                     </select>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest">{secondaryAxisName}</label>
-                                        <select
-                                            value={editForm.axis_id}
-                                            onChange={(e) => setEditForm({ ...editForm, axis_id: e.target.value })}
-                                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-teal transition-all"
-                                        >
-                                            <option value="">未設定</option>
-                                            {axes.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest">担当KPI</label>
-                                        <select
-                                            value={editForm.assigned_kpi_id}
-                                            onChange={(e) => setEditForm({ ...editForm, assigned_kpi_id: e.target.value })}
-                                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-teal transition-all"
-                                        >
-                                            <option value="">未設定</option>
-                                            {kpis.map(k => <option key={k.id} value={k.id}>{k.name}</option>)}
-                                        </select>
-                                    </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest">{secondaryAxisName}</label>
+                                    <select
+                                        value={editForm.axis_id}
+                                        onChange={(e) => setEditForm({ ...editForm, axis_id: e.target.value })}
+                                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-teal transition-all"
+                                    >
+                                        <option value="">未設定</option>
+                                        {axes.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                    </select>
                                 </div>
 
                                 <div>
