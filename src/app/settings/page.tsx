@@ -144,7 +144,8 @@ export default function SettingsPage() {
 
             if (comp.data) {
                 setCompany(comp.data);
-                setSecondaryAxisName(comp.data.secondary_axis_name || "担当領域");
+                const axisName = comp.data.secondary_axis_name;
+                setSecondaryAxisName((!axisName || axisName === "プロダクト" || axisName === "担当プロダクト") ? "担当領域" : axisName);
             }
             if (d.data) setDepts(d.data);
             if (k.data) setKpis(k.data);
