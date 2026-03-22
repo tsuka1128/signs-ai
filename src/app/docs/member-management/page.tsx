@@ -195,7 +195,6 @@ export default function MemberManagementPage() {
                 </div>
             </section>
 
-
             {/* Section 3: Join Mode Onboarding */}
             <section className="space-y-8">
                 <div className="space-y-4">
@@ -267,7 +266,6 @@ export default function MemberManagementPage() {
                 </div>
             </section>
 
-
             {/* Section 4: Slack Integration */}
             <section className="space-y-8">
                 <div className="space-y-4">
@@ -283,80 +281,67 @@ export default function MemberManagementPage() {
                         </div>
                     </div>
                     <div className="text-[15px] text-slate-600 font-medium leading-loose pt-2 max-w-3xl">
-                        AIが分析結果やアクション提案をSlackへ自動通知し、担当者へ直接メンション（@）を飛ばすための設定です。<br/>
+                        AIが分析結果やアクション提案をSlackへ自動通知し、担当者へ直接メンション（@）を飛ばすための設定です。<br className="hidden md:block"/>
                         この機能を利用するには、<strong>①通知先チャンネル（Webhook）の設定</strong> と <strong>②各ユーザーのID登録</strong> の2つのステップが必要です。
                     </div>
                 </div>
 
-                <div className="space-y-6">
-                    {/* Step 1: Webhook */}
-                    <div className="bg-slate-50 border border-slate-200 p-8 rounded-[2rem]">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="px-3 py-1 bg-slate-800 text-white text-[10px] font-black rounded-lg uppercase tracking-widest">Step 1</div>
-                            <h3 className="text-lg font-black text-slate-800">通知先Slackチャンネルの連携（管理者のみ）</h3>
-                        </div>
-                        <p className="text-[14.5px] text-slate-600 font-medium leading-relaxed mb-6">
-                            Signs AIが通知を送るための「Incoming Webhook URL」を設定します。Slack上でアプリを開発・申請する必要はなく、通知先のチャンネルでWebhook URLを発行するだけで完了します。
-                        </p>
-                        <ul className="text-[14.5px] text-slate-700 font-medium space-y-3 bg-white p-6 rounded-2xl border border-slate-100">
-                            <li className="flex items-start gap-2">
-                                <span className="text-teal-500 mt-0.5">✓</span>
-                                Slackのワークスペースにて、通知を受け取りたいチャンネルの「インテグレーション（Integrations）」設定から <strong>Incoming Webhook</strong> を追加し、URLを発行します。
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <span className="text-teal-500 mt-0.5">✓</span>
-                                Signs AIの設定画面 <strong>「外部連携（Integration）」</strong> タブを開き、発行したURLを保存します。
-                            </li>
-                        </ul>
-                    </div>
-
-                    {/* Step 2: User IDs */}
-                    <div className="bg-white border border-slate-200 p-8 rounded-[2rem] shadow-[0_10px_40px_-5px_rgba(0,0,0,0.05)] relative overflow-hidden">
-                        <div className="absolute top-0 right-0 -mr-6 -mt-6 text-[#4A154B] opacity-[0.03] pointer-events-none">
+                <div className="space-y-12">
+                    {/* Simplified Slack Section */}
+                    <div className="bg-white border border-slate-200 p-8 lg:p-12 rounded-[2.5rem] shadow-[0_15px_50px_-12px_rgba(0,0,0,0.05)] relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none group-hover:scale-110 transition-transform duration-700">
                             <Slack className="w-48 h-48" />
                         </div>
                         
-                        <div className="flex items-center gap-3 mb-4 relative z-10">
-                            <div className="px-3 py-1 bg-[#4A154B] text-white text-[10px] font-black rounded-lg uppercase tracking-widest">Step 2</div>
-                            <h3 className="text-lg font-black text-[#1e293b]">各メンバーの Slack User ID 登録</h3>
-                        </div>
-                        <p className="text-[14.5px] text-slate-600 font-medium leading-relaxed mb-6 relative z-10">
-                            通知されるメッセージ内で特定の担当者をメンションするためのID設定です。Webhook連携が完了した上でこのIDを登録しておくことで、「全体通知の中で名指しされる」形になります。
-                        </p>
+                        <div className="grid lg:grid-cols-2 gap-12 items-center relative z-10">
+                            <div className="space-y-8">
+                                <div>
+                                    <h3 className="text-2xl font-black text-slate-800 mb-4 tracking-tight">ステップ1：通知先Slackチャンネルの連携</h3>
+                                    <p className="text-[15px] text-slate-600 font-medium leading-relaxed">
+                                        Signs AIが分析結果やアクション提案を送信するための「受け口」として、Slackアプリ（Incoming Webhook）を設定します。この設定は組織全体で一度行えば完了です。
+                                    </p>
+                                </div>
 
-                        <div className="grid md:grid-cols-2 gap-8 relative z-10">
-                            <div>
-                                <h4 className="text-[14px] font-black text-slate-800 mb-4 flex items-center gap-2">
-                                    <Search className="w-4 h-4 text-indigo-500" /> IDの調べ方
-                                </h4>
-                                <ol className="space-y-4 text-[13.5px] text-slate-600 font-medium pl-2 border-l-2 border-slate-100">
-                                    <li className="pl-4 relative before:absolute before:left-[-5px] before:top-2 before:w-2 before:h-2 before:bg-slate-300 before:rounded-full">
-                                        Slackで対象メンバーのプロフィールを開く
-                                    </li>
-                                    <li className="pl-4 relative before:absolute before:left-[-5px] before:top-2 before:w-2 before:h-2 before:bg-slate-300 before:rounded-full">
-                                        「その他 <span className="text-[10px]">⋯</span>」をクリック
-                                    </li>
-                                    <li className="pl-4 relative before:absolute before:left-[-5px] before:top-2 before:w-2 before:h-2 before:bg-slate-300 before:rounded-full">
-                                        <strong>「メンバーIDをコピー」</strong>を選択（例: <code>U0123ABCD</code>）
-                                    </li>
-                                </ol>
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-3 text-slate-700">
+                                        <div className="w-6 h-6 rounded-full bg-teal-100/80 text-teal-800 flex items-center justify-center text-[11px] font-black">1</div>
+                                        <span className="text-[14px] font-bold tracking-tight">通知を受け取りたいSlackチャンネルの決定</span>
+                                    </div>
+                                    <div className="flex items-center gap-3 text-slate-700">
+                                        <div className="w-6 h-6 rounded-full bg-teal-100/80 text-teal-800 flex items-center justify-center text-[11px] font-black">2</div>
+                                        <span className="text-[14px] font-bold tracking-tight">Webhook URLの発行と登録</span>
+                                    </div>
+                                    <div className="pt-2">
+                                        <Link 
+                                            href="/docs/slack-integration" 
+                                            className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-2xl text-[13px] font-black hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 group/btn"
+                                        >
+                                            Slackアプリの準備手順を詳しく見る
+                                            <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                                        </Link>
+                                    </div>
+                                </div>
                             </div>
-                            
-                            <div>
-                                <h4 className="text-[14px] font-black text-slate-800 mb-4 flex items-center gap-2">
-                                    <Users className="w-4 h-4 text-indigo-500" /> 管理画面での登録手順
-                                </h4>
-                                <ol className="space-y-4 text-[13.5px] text-slate-600 font-medium pl-2 border-l-2 border-slate-100">
-                                    <li className="pl-4 relative before:absolute before:left-[-5px] before:top-2 before:w-2 before:h-2 before:bg-indigo-300 before:rounded-full">
-                                        「設定」＞「メンバー」タブの編集ボタン（鉛筆）をクリック。
-                                    </li>
-                                    <li className="pl-4 relative before:absolute before:left-[-5px] before:top-2 before:w-2 before:h-2 before:bg-indigo-300 before:rounded-full">
-                                        コピーしたIDを貼り付けて<strong>「テスト送信」</strong>を押す。
-                                    </li>
-                                    <li className="pl-4 relative before:absolute before:left-[-5px] before:top-2 before:w-2 before:h-2 before:bg-indigo-300 before:rounded-full">
-                                        対象メンバー宛にテスト通知が届けば連携成功です。「保存」を押して完了します。
-                                    </li>
-                                </ol>
+
+                            <div className="space-y-8 lg:border-l lg:border-slate-100 lg:pl-12">
+                                <div>
+                                    <h3 className="text-2xl font-black text-slate-800 mb-4 tracking-tight">ステップ2：各メンバーの User ID 登録</h3>
+                                    <p className="text-[15px] text-slate-600 font-medium leading-relaxed">
+                                        特定の担当者へ確実にメンション（@通知）を飛ばすための設定です。各メンバーのプロフィールから取得できる「メンバーID」をSigns AIに登録します。
+                                    </p>
+                                </div>
+
+                                <div className="p-6 bg-slate-50 border border-slate-100 rounded-[2rem] space-y-4">
+                                    <div className="flex items-center gap-3">
+                                        <Search className="w-5 h-5 text-indigo-500" />
+                                        <span className="text-sm font-black text-slate-800">ユーザーIDの見つけ方</span>
+                                    </div>
+                                    <ol className="text-[13px] text-slate-600 space-y-2 font-bold ml-1">
+                                        <li>1. 該当メンバーのプロフィールを表示</li>
+                                        <li>2. 「その他 ⋯ 」＞「メンバーIDをコピー」</li>
+                                        <li>3. Signs AIのメンバー編集画面で貼り付け</li>
+                                    </ol>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -370,7 +355,7 @@ export default function MemberManagementPage() {
                     <div>
                         <h3 className="text-[16px] font-black mb-3 text-white tracking-tight">なぜ個人宛のメンションが重要か？</h3>
                         <p className="text-[14.5px] text-slate-300 leading-relaxed font-medium">
-                            AIが分析を通じて有用なアクション（施策）を提案しても、全体チャンネルにただ通知されるだけでは「誰かがやるだろう」という傍観者効果が働き、誰も対応せずに終わってしまう傾向があります。<br/>
+                            AIが分析を通じて有用なアクション（施策）を提案しても、全体チャンネルにただ通知されるだけでは「誰かがやるだろう」という傍観者効果が働き、誰も対応せずに終わってしまう傾向があります。<br className="hidden lg:block"/>
                             Signs AIでは対象部署の担当チームメンバーに対し、Slack User IDを通じて確実にメンション（@）を飛ばすことで、「自分ごと」としてアクションの実行とPDCAサイクルを促す仕組みを実現しています。
                         </p>
                     </div>

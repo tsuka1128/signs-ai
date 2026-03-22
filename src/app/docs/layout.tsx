@@ -27,10 +27,10 @@ const DOCS_MENU = [
     {
         title: "設定と連携",
         items: [
-            { title: "Slack連携の手順", href: "/docs/slack-integration", icon: MessageSquare },
-            { title: "メンバーの招待・管理", href: "/docs/member-management", icon: Users },
             { title: "KPIの設定と入力", href: "/docs/kpi-setup", icon: BarChart3 },
             { title: "組織方針の登録", href: "/docs/policy-guide", icon: Target },
+            { title: "Slackアプリを準備する", href: "/docs/slack-integration", icon: MessageSquare },
+            { title: "メンバーの招待・管理", href: "/docs/member-management", icon: Users },
         ]
     },
     {
