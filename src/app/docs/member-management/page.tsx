@@ -36,77 +36,77 @@ export default function MemberManagementPage() {
             </section>
 
             {/* Section 1: Initial Registration & Onboarding */}
-            <section className="space-y-6">
-                <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
-                    <div className="w-10 h-10 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center font-black">1</div>
-                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">
-                        アカウントの新規作成（初回登録）
-                    </h2>
+            <section className="space-y-8">
+                <div className="space-y-4">
+                    <div className="flex items-center gap-4 pb-4 border-b border-slate-100/80">
+                        <div className="w-10 h-10 bg-teal-50 text-teal-700 rounded-lg flex items-center justify-center font-black text-lg">1</div>
+                        <h2 className="text-[22px] md:text-[26px] font-black text-[#1e293b] tracking-tight">
+                            アカウントの新規作成（初回登録）
+                        </h2>
+                    </div>
+                    <div className="text-[15px] text-slate-600 font-medium leading-loose pt-2">
+                        初めてSigns AIを利用する管理者向けのセットアップ手順です。メールアドレスまたは<br className="hidden md:block"/>
+                        Googleアカウントでログイン後、組織の基本情報を登録する「オンボーディング画面」が表示されます。
+                    </div>
                 </div>
 
-                <div className="prose prose-slate max-w-none text-slate-600 font-medium leading-loose mb-6">
-                    <p>
-                        初めてSigns AIを利用する管理者向けのセットアップ手順です。メールアドレスまたはGoogleアカウントでログイン後、組織の基本情報を登録する「オンボーディング画面」が表示されます。
-                    </p>
-                </div>
-
-                <div className="bg-slate-50 border border-slate-200 rounded-3xl p-6 md:p-8">
-                    <div className="grid md:grid-cols-2 gap-8 items-center">
-                        <div className="space-y-5">
-                            <div className="flex gap-4 items-start">
-                                <div className="w-6 h-6 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">A</div>
+                <div className="bg-white border border-slate-200 rounded-[2rem] p-8 lg:p-10 shadow-sm relative overflow-hidden">
+                    <div className="grid lg:grid-cols-[1fr_400px] gap-10 items-center">
+                        <div className="space-y-8">
+                            <div className="flex gap-5 items-start">
+                                <div className="w-8 h-8 rounded-full bg-teal-100/80 text-teal-800 flex items-center justify-center font-black text-sm shrink-0">A</div>
                                 <div>
-                                    <span className="font-bold text-slate-800 block mb-1">企業情報の入力</span>
-                                    <span className="text-sm text-slate-600">画面の案内に従い、「新規作成」を選択して会社名とWebサイトURLを入力します。</span>
+                                    <span className="font-bold text-slate-800 text-[17px] tracking-tight block mb-2">企業情報の入力</span>
+                                    <span className="text-[14.5px] text-slate-600 leading-relaxed font-medium">画面の案内に従い、「新規作成」を選択して会社名とWebサイトURLを入力します。</span>
                                 </div>
                             </div>
-                            <div className="flex gap-4 items-start">
-                                <div className="w-6 h-6 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">B</div>
+                            <div className="flex gap-5 items-start">
+                                <div className="w-8 h-8 rounded-full bg-teal-100/80 text-teal-800 flex items-center justify-center font-black text-sm shrink-0">B</div>
                                 <div>
-                                    <span className="font-bold text-slate-800 block mb-1">部署とKPIの定義</span>
-                                    <span className="text-sm text-slate-600">マトリックスで比較したい主要な部署と、目標となる数値を順に登録していきます。</span>
+                                    <span className="font-bold text-slate-800 text-[17px] tracking-tight block mb-2">部署とKPIの定義</span>
+                                    <span className="text-[14.5px] text-slate-600 leading-relaxed font-medium">マトリックスで比較したい主要な部署と、目標となる数値を順に登録していきます。</span>
                                 </div>
                             </div>
-                            <div className="flex gap-4 items-start">
-                                <div className="w-6 h-6 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">C</div>
+                            <div className="flex gap-5 items-start">
+                                <div className="w-8 h-8 rounded-full bg-teal-100/80 text-teal-800 flex items-center justify-center font-black text-sm shrink-0">C</div>
                                 <div>
-                                    <span className="font-bold text-slate-800 block mb-1">組織方針（セマンティックレイヤー）の入力</span>
-                                    <span className="text-sm text-slate-600">AIに会社の方向性を学習させるためのウィザードに回答します（後からダッシュボードでも変更可能）。</span>
+                                    <span className="font-bold text-slate-800 text-[17px] tracking-tight block mb-2">組織方針（セマンティックレイヤー）の入力</span>
+                                    <span className="text-[14.5px] text-slate-600 leading-relaxed font-medium">AIに会社の方向性を学習させるためのウィザードに回答します（後からダッシュボードでも変更可能）。</span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* UI Mockup for Onboarding */}
-                        <div className="bg-white rounded-2xl border border-slate-100 shadow-xl overflow-hidden hidden md:block select-none pointer-events-none">
-                            <div className="bg-slate-50 border-b border-slate-100 px-4 py-3 text-center">
+                        {/* UI Mockup for Onboarding Step 1 */}
+                        <div className="bg-white rounded-3xl border border-slate-50 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] overflow-hidden hidden md:block select-none pointer-events-none relative z-10 w-[380px] justify-self-end">
+                            <div className="bg-white px-6 py-5 text-center">
                                 <div className="inline-flex items-center gap-2">
                                     <span className="text-sm">🌡️</span>
-                                    <span className="text-xs font-black text-slate-800">初期設定</span>
+                                    <span className="text-[13px] font-black text-slate-800 tracking-tight">初期設定</span>
                                 </div>
                             </div>
-                            <div className="p-5 space-y-4">
-                                <div className="flex gap-2 mb-4 justify-center">
-                                    <div className="w-5 h-5 rounded-full bg-teal-500 text-white text-[9px] font-bold flex items-center justify-center">1</div>
-                                    <div className="w-5 h-px bg-teal-200 my-auto" />
-                                    <div className="w-5 h-5 rounded-full bg-slate-100 text-slate-400 text-[9px] font-bold flex items-center justify-center">2</div>
-                                    <div className="w-5 h-px bg-slate-100 my-auto" />
-                                    <div className="w-5 h-5 rounded-full bg-slate-100 text-slate-400 text-[9px] font-bold flex items-center justify-center">3</div>
-                                    <div className="w-5 h-px bg-slate-100 my-auto" />
-                                    <div className="w-5 h-5 rounded-full bg-slate-100 text-slate-400 text-[9px] font-bold flex items-center justify-center">4</div>
+                            <div className="p-8 pt-2 space-y-6">
+                                <div className="flex gap-3 mb-6 justify-center">
+                                    <div className="w-6 h-6 rounded-full bg-teal-500 text-white text-[11px] font-bold flex items-center justify-center">1</div>
+                                    <div className="w-8 h-px bg-teal-200 my-auto" />
+                                    <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-400 text-[11px] font-bold flex items-center justify-center">2</div>
+                                    <div className="w-8 h-px bg-slate-100 my-auto" />
+                                    <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-400 text-[11px] font-bold flex items-center justify-center">3</div>
+                                    <div className="w-8 h-px bg-slate-100 my-auto" />
+                                    <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-400 text-[11px] font-bold flex items-center justify-center">4</div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div className="p-3 rounded-xl border-2 border-teal-500 bg-teal-50/50">
-                                        <div className="text-xs font-bold text-slate-700">新規作成</div>
-                                        <div className="text-[9px] text-slate-400 mt-0.5">新しい組織を作成</div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="p-4 rounded-xl border-2 border-teal-500 bg-white">
+                                        <div className="text-sm font-black text-slate-800">新規作成</div>
+                                        <div className="text-[10px] text-slate-400 mt-1 font-bold">新しい組織を作成</div>
                                     </div>
-                                    <div className="p-3 rounded-xl border-2 border-slate-100 bg-white opacity-50">
-                                        <div className="text-xs font-bold text-slate-700">参加</div>
-                                        <div className="text-[9px] text-slate-400 mt-0.5">招待を受けて参加</div>
+                                    <div className="p-4 rounded-xl border-2 border-slate-50 bg-white opacity-40">
+                                        <div className="text-sm font-black text-slate-800">参加</div>
+                                        <div className="text-[10px] text-slate-400 mt-1 font-bold">招待を受けて参加</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">企業名</div>
-                                    <div className="w-full h-8 bg-slate-50 border border-slate-200 rounded-lg" />
+                                <div className="pt-2">
+                                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">企業名</div>
+                                    <div className="w-full h-11 bg-slate-50 border border-slate-100 rounded-xl" />
                                 </div>
                             </div>
                         </div>
@@ -115,27 +115,27 @@ export default function MemberManagementPage() {
             </section>
 
             {/* Section 2: Member Invitation */}
-            <section className="space-y-6">
-                <div className="flex items-center gap-3 border-b border-slate-200 pb-4 mt-12">
-                    <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center font-black">2</div>
-                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">
-                        メンバーの招待・追加
-                    </h2>
-                </div>
-
-                <div className="prose prose-slate max-w-none text-slate-600 font-medium leading-loose">
-                    <p>
-                        初回セットアップ完了後、サイドバー（またはヘッダー）の右上メニューから<strong>「設定（Settings）」</strong>を開き、<strong>「メンバー」</strong>タブからチームメンバーを招待します。
-                    </p>
+            <section className="space-y-8">
+                <div className="space-y-4">
+                    <div className="flex items-center gap-4 pb-4 border-b border-slate-100/80">
+                        <div className="w-10 h-10 bg-indigo-50 text-indigo-700 rounded-lg flex items-center justify-center font-black text-lg">2</div>
+                        <h2 className="text-[22px] md:text-[26px] font-black text-[#1e293b] tracking-tight">
+                            メンバーの招待・追加
+                        </h2>
+                    </div>
+                    <div className="text-[15px] text-slate-600 font-medium leading-loose pt-2">
+                        初回セットアップ完了後、サイドバー（またはヘッダー）の右上メニューから<strong>「設定（Settings）」</strong>を開き、<br className="hidden lg:block"/>
+                        <strong>「メンバー」</strong>タブからチームメンバーを招待します。
+                    </div>
                 </div>
 
                 {/* UI Mockup for Invitation Form */}
-                <div className="mt-8 relative max-w-3xl mx-auto">
-                    <div className="bg-white border border-slate-200 rounded-[2rem] shadow-xl shadow-slate-200/50 p-8">
-                        <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                <div className="relative max-w-4xl mx-auto">
+                    <div className="bg-white border border-slate-200 rounded-[2rem] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] p-6 md:p-8 lg:p-10">
+                        <h2 className="text-[17px] font-bold text-slate-800 mb-6 flex items-center gap-2">
                             <UserPlus className="w-5 h-5 text-teal-500" /> メンバーを招待
                         </h2>
-                        <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 space-y-6">
+                        <div className="bg-slate-50 p-6 md:p-8 rounded-3xl border border-slate-100 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Email */}
                                 <div className="md:col-span-2">
@@ -193,66 +193,177 @@ export default function MemberManagementPage() {
                         </div>
                     </div>
                 </div>
+            </section>
 
-                <div className="mt-8 space-y-4 text-sm text-slate-600 font-medium">
-                    <p>
-                        招待を受ける側のメンバーは、メールに記載された招待リンクをクリックすると「オンボーディング画面（参加モード）」に案内されます。<br/>
-                        そこで自分の部署・担当領域を確認し、ログインを完了させます。
-                    </p>
+
+            {/* Section 3: Join Mode Onboarding */}
+            <section className="space-y-8">
+                <div className="space-y-4">
+                    <div className="flex items-center gap-4 pb-4 border-b border-slate-100/80">
+                        <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center font-black text-lg">3</div>
+                        <h2 className="text-[22px] md:text-[26px] font-black text-[#1e293b] tracking-tight">
+                            招待されたメンバーの「オンボーディング」
+                        </h2>
+                    </div>
+                    <div className="text-[15px] text-slate-600 font-medium leading-loose pt-2">
+                        管理者が招待メールを送信すると、対象のメンバーにリンクが記載されたメールが届きます。<br className="hidden lg:block"/>
+                        メンバーがそのリンクからログインを完了すると、<strong>参加モード</strong>のオンボーディング画面が表示されます。
+                    </div>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-[2rem] p-8 lg:p-10 shadow-sm relative overflow-hidden">
+                    <div className="grid lg:grid-cols-[1fr_400px] gap-10 items-center">
+                        <div className="space-y-8">
+                            <div className="flex gap-5 items-start">
+                                <div className="w-8 h-8 rounded-full bg-amber-100/80 text-amber-800 flex items-center justify-center font-black text-sm shrink-0">A</div>
+                                <div>
+                                    <span className="font-bold text-slate-800 text-[17px] tracking-tight block mb-2">「参加」モードの選択</span>
+                                    <span className="text-[14.5px] text-slate-600 leading-relaxed font-medium">招待を受けたユーザーは自動的に「参加」が選択された状態になり、企業の新規作成はスキップされます。</span>
+                                </div>
+                            </div>
+                            <div className="flex gap-5 items-start">
+                                <div className="w-8 h-8 rounded-full bg-amber-100/80 text-amber-800 flex items-center justify-center font-black text-sm shrink-0">B</div>
+                                <div>
+                                    <span className="font-bold text-slate-800 text-[17px] tracking-tight block mb-2">所属と担当領域の登録</span>
+                                    <span className="text-[14.5px] text-slate-600 leading-relaxed font-medium">管理者が事前に指定した自分の所属部署・担当領域を確認（未設定の場合は自ら選択）します。内容が正しければ完了してダッシュボードへ遷移します。</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* UI Mockup for Onboarding Step 1 (Join mode) */}
+                        <div className="bg-white rounded-3xl border border-slate-50 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] overflow-hidden hidden md:block select-none pointer-events-none relative z-10 w-[380px] justify-self-end">
+                            <div className="bg-white px-6 py-5 text-center">
+                                <div className="inline-flex items-center gap-2">
+                                    <span className="text-sm">🌡️</span>
+                                    <span className="text-[13px] font-black text-slate-800 tracking-tight">初期設定</span>
+                                </div>
+                            </div>
+                            <div className="p-8 pt-2 space-y-6">
+                                <div className="flex gap-3 mb-6 justify-center">
+                                    <div className="w-6 h-6 rounded-full bg-amber-500 text-white text-[11px] font-bold flex items-center justify-center">1</div>
+                                    <div className="w-8 h-px bg-slate-100 my-auto" />
+                                    <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-400 text-[11px] font-bold flex items-center justify-center">2</div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="p-4 rounded-xl border-2 border-slate-50 bg-white opacity-40">
+                                        <div className="text-sm font-black text-slate-800">新規作成</div>
+                                        <div className="text-[10px] text-slate-400 mt-1 font-bold">新しい組織を作成</div>
+                                    </div>
+                                    <div className="p-4 rounded-xl border-2 border-amber-500 bg-amber-50/50">
+                                        <div className="text-sm font-black text-amber-900">参加</div>
+                                        <div className="text-[10px] text-amber-700/70 mt-1 font-bold">招待を受けて参加</div>
+                                    </div>
+                                </div>
+                                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 mt-4 flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-black text-xs">A</div>
+                                    <div>
+                                        <div className="text-[10px] text-slate-500 font-bold mb-0.5">招待元ワークスペース</div>
+                                        <div className="text-[13px] font-black text-slate-800">Acme Corporation</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
 
-            {/* Section 3: Slack ID */}
-            <section className="space-y-6">
-                <div className="flex items-center gap-3 border-b border-slate-200 pb-4 mt-12">
-                    <div className="w-10 h-10 bg-[#4A154B] text-white rounded-xl flex items-center justify-center font-black">3</div>
-                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">
-                        Slack User IDの紐付け（重要）
-                    </h2>
+            {/* Section 4: Slack ID */}
+            <section className="space-y-8">
+                <div className="space-y-4">
+                    <div className="flex items-start md:items-center justify-between gap-4 pb-4 border-b border-slate-100/80 flex-col md:flex-row">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-[#4A154B] text-white rounded-lg flex items-center justify-center font-black text-lg">4</div>
+                            <h2 className="text-[22px] md:text-[26px] font-black text-[#1e293b] tracking-tight">
+                                Slack User IDの紐付け
+                            </h2>
+                        </div>
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-black tracking-widest uppercase shrink-0">
+                            <ShieldCheck className="w-3.5 h-3.5" /> Standardプラン以上
+                        </div>
+                    </div>
+                    <div className="text-[15px] text-slate-600 font-medium leading-loose pt-2 max-w-3xl">
+                        AIがアクション提案をSlackへ通知する際、担当者へ直接メンション（@）を飛ばすための設定です。<br/>
+                        <strong>各メンバーのプロフィールにSlack User IDを登録することで、AIからの提案を個人宛のメンションとして届ける特別な連携機能</strong>が有効になります。<br/>
+                        <span className="text-[13px] text-slate-400 mt-1 block">（※Slack連携自体はStandardプラン以上から対象となります）</span>
+                    </div>
                 </div>
 
-                <div className="prose prose-slate max-w-none text-slate-600 font-medium leading-loose mb-6">
-                    <p>
-                        Signs AIがSlackへアクション提案を通知する際、担当者に直接メンション（@）を飛ばすためには、各メンバーのプロフィールに<strong>Slack User ID</strong>を登録する必要があります。
-                    </p>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-6">
-                    <div className="bg-slate-50 border-2 border-slate-100 p-6 rounded-3xl">
-                        <h4 className="text-sm font-black text-slate-900 mb-4 flex items-center gap-2">
-                            <Search className="w-4 h-4 text-slate-400" />
-                            IDの調べ方
+                <div className="grid md:grid-cols-2 gap-8">
+                    {/* How to find ID */}
+                    <div className="bg-slate-50 border border-slate-200 p-8 rounded-[2rem] shadow-sm">
+                        <h4 className="text-[16px] font-black text-slate-900 mb-6 flex items-center gap-2">
+                            <Search className="w-5 h-5 text-indigo-500" />
+                            Slack User IDの調べ方
                         </h4>
-                        <ol className="space-y-4 list-decimal pl-5 text-sm text-slate-600 font-medium">
-                            <li>Slackアプリで、対象メンバーのプロフィール画面を開く。</li>
-                            <li>「その他」のアイコン <span className="inline-block px-1 border border-slate-300 rounded mx-1 pb-0.5">⋯</span> （縦に点の並んだアイコン）をクリック。</li>
-                            <li><strong>「メンバーIDをコピー」</strong> を選択。<br/><span className="text-[10px] text-slate-400 mt-1 block">（例: U0123ABCD）</span></li>
+                        <ol className="space-y-6 text-[14.5px] text-slate-700 font-medium relative before:absolute before:inset-y-0 before:left-[11px] before:w-0.5 before:bg-slate-200">
+                            <li className="relative pl-8">
+                                <span className="absolute left-0 top-0.5 w-6 h-6 rounded-full bg-slate-800 text-white text-[11px] font-black flex items-center justify-center z-10 border-4 border-slate-50">1</span>
+                                <div>
+                                    <strong className="text-slate-900 block mb-1">プロフィールを開く</strong>
+                                    Slackアプリ（PC版/スマホ版）で、対象となるメンバーのアイコンまたは名前をクリックし、プロフィール画面を表示します。
+                                </div>
+                            </li>
+                            <li className="relative pl-8">
+                                <span className="absolute left-0 top-0.5 w-6 h-6 rounded-full bg-slate-800 text-white text-[11px] font-black flex items-center justify-center z-10 border-4 border-slate-50">2</span>
+                                <div>
+                                    <strong className="text-slate-900 block mb-1">メニューを展開</strong>
+                                    プロフィール欄にある「その他」のアイコン <span className="inline-flex items-center justify-center w-6 h-5 border border-slate-300 rounded bg-white text-slate-500 mx-1 align-middle text-[10px]">⋯</span> （縦または横に点の並んだメニューアイコン）をクリックします。
+                                </div>
+                            </li>
+                            <li className="relative pl-8">
+                                <span className="absolute left-0 top-0.5 w-6 h-6 rounded-full bg-slate-800 text-white text-[11px] font-black flex items-center justify-center z-10 border-4 border-slate-50">3</span>
+                                <div>
+                                    <strong className="text-slate-900 block mb-1">IDをコピー</strong>
+                                    <strong>「メンバーIDをコピー」</strong> を選択してクリップボードにコピーします。（IDは通常 <code>U0123ABCD</code> などの文字列です）
+                                </div>
+                            </li>
                         </ol>
                     </div>
 
-                    <div className="bg-white border-2 border-slate-100 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden">
-                        <div className="absolute top-0 right-0 -mr-4 -mt-4 text-[#4A154B] opacity-5">
-                            <Slack className="w-32 h-32" />
+                    {/* How to register */}
+                    <div className="bg-white border border-slate-200 p-8 rounded-[2rem] shadow-sm relative overflow-hidden flex flex-col justify-between">
+                        <div className="absolute top-0 right-0 -mr-6 -mt-6 text-[#4A154B] opacity-[0.03] pointer-events-none">
+                            <Slack className="w-48 h-48" />
                         </div>
-                        <h4 className="text-sm font-black text-slate-900 mb-3 relative z-10">
-                            設定画面での登録
-                        </h4>
-                        <p className="text-xs text-slate-500 mb-4 font-medium leading-relaxed relative z-10">
-                            「設定」＞「メンバー」タブを開き、各メンバーの「編集」ボタンからコピーしたIDを貼り付けて保存します。<br/>その後<strong>「🔍Slack通信テスト」</strong>ボタンを押して、該当メンバーにメンション付きの通知が届くか確認してください。
-                        </p>
+                        
+                        <div>
+                            <h4 className="text-[16px] font-black text-slate-900 mb-6 flex items-center gap-2 relative z-10">
+                                <Slack className="w-5 h-5 text-[#4A154B]" />
+                                管理画面での登録手順
+                            </h4>
+                            <div className="space-y-4 text-[14.5px] text-slate-600 font-medium leading-loose relative z-10">
+                                <p>
+                                    「設定」＞「メンバー」タブに移動し、登録済みメンバーリストの右端にある<strong>「編集（鉛筆アイコン）」</strong>をクリックします。
+                                </p>
+                                <p>
+                                    編集ダイアログ内にある<strong>「Slack User ID」</strong>の入力欄に、先ほどコピーしたIDを貼り付けます。<br/>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 bg-indigo-50 p-6 rounded-2xl relative z-10 border border-indigo-100">
+                            <div className="text-[13px] font-black text-indigo-900 mb-2 flex items-center gap-2">
+                                <ShieldCheck className="w-4 h-4 text-indigo-500" />
+                                確実に通知を届けるために
+                            </div>
+                            <p className="text-[12px] text-indigo-800/80 font-medium leading-relaxed">
+                                ID入力後、入力欄の横にある<strong>「テスト送信」</strong>ボタンを必ず押してください。対象メンバーのSlack宛にSigns AIからダイレクトメッセージ（または指定チャンネルでのメンション）が届けば成功です。最後に「ユーザー情報を保存」を押して適用を完了させます。
+                            </p>
+                        </div>
                     </div>
                 </div>
 
                 {/* Hint section */}
-                <div className="p-6 bg-slate-900 text-white rounded-3xl flex gap-4 mt-8 shadow-xl">
-                    <div className="p-2 bg-white/10 rounded-xl h-fit">
-                        <Slack className="w-5 h-5 text-white" />
+                <div className="p-8 bg-[#1e293b] text-white rounded-[2rem] flex flex-col sm:flex-row gap-6 mt-12 shadow-xl items-start">
+                    <div className="p-3 bg-white/10 rounded-2xl h-fit border border-white/10 shrink-0">
+                        <Slack className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                        <h3 className="text-sm font-black mb-1 text-white">なぜメンションIDが必要か？</h3>
-                        <p className="text-sm text-slate-300 leading-relaxed font-medium">
-                            AIがアクションを提案しても、ただチャンネルに投稿されるだけでは誰も対応せずに終わってしまいます。対象部署の担当者に確実にメンションを飛ばすことで、「自分ごと」としてアクションの実行漏れを防ぐ効果があります。
+                        <h3 className="text-[16px] font-black mb-3 text-white tracking-tight">なぜ個人宛のメンションが重要か？</h3>
+                        <p className="text-[14.5px] text-slate-300 leading-relaxed font-medium">
+                            AIが分析を通じて有用なアクション（施策）を提案しても、全体チャンネルにただ通知されるだけでは「誰かがやるだろう」という傍観者効果が働き、誰も対応せずに終わってしまう傾向があります。<br/>
+                            Signs AIでは対象部署の担当チームメンバーに対し、Slack User IDを通じて確実にメンション（@）を飛ばすことで、「自分ごと」としてアクションの実行とPDCAサイクルを促す仕組みを実現しています。
                         </p>
                     </div>
                 </div>
