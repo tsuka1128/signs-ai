@@ -407,9 +407,10 @@ export default function BubbleChartGuidePage() {
                         <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
                             <Sparkles className="w-12 h-12 text-teal" />
                         </div>
-                        <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                        <h3 className="text-lg font-black text-slate-900 flex items-center gap-3">
                             <span className="text-2xl">🏷️</span>
                             第2軸（担当領域）別分析
+                            <span className="text-[10px] font-black bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full uppercase tracking-tighter border border-amber-200">Standard〜</span>
                         </h3>
                         <p className="text-sm text-slate-600 font-medium leading-relaxed">
                             部署という「組織の箱」とは別に、製品や地域、ブランドといった<strong>ビジネスの実態に即した切り口</strong>で組織を多角的に分析できます。
