@@ -31,7 +31,11 @@ export default function MemberManagementPage() {
                     新規登録とメンバー管理
                 </h1>
                 <p className="text-base text-slate-600 font-medium leading-relaxed max-w-2xl mt-4">
-                    Signs AIの利用を開始するための初回セットアップ（オンボーディング）手順と、�            {/* Section 1: Initial Registration & Onboarding */}
+                    Signs AIの利用を開始するための初回セットアップ（オンボーディング）手順と、チームメンバーを招待して適切に権限を管理する方法をステップ・バイ・ステップで解説します。
+                </p>
+            </section>
+
+            {/* Section 1: Initial Registration & Onboarding */}
             <section className="space-y-8">
                 <div className="space-y-4">
                     <div className="flex items-center gap-4 pb-4 border-b border-slate-100/80">
@@ -372,45 +376,6 @@ export default function MemberManagementPage() {
                     </div>
                 </div>
             </section>
-        </div>
-    );
-}
->
-                                    「設定」＞「メンバー」タブに移動し、登録済みメンバーリストの右端にある<strong>「編集（鉛筆アイコン）」</strong>をクリックします。
-                                </p>
-                                <p>
-                                    編集ダイアログ内にある<strong>「Slack User ID」</strong>の入力欄に、先ほどコピーしたIDを貼り付けます。<br/>
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="mt-8 bg-indigo-50 p-6 rounded-2xl relative z-10 border border-indigo-100">
-                            <div className="text-[13px] font-black text-indigo-900 mb-2 flex items-center gap-2">
-                                <ShieldCheck className="w-4 h-4 text-indigo-500" />
-                                確実に通知を届けるために
-                            </div>
-                            <p className="text-[12px] text-indigo-800/80 font-medium leading-relaxed">
-                                ID入力後、入力欄の横にある<strong>「テスト送信」</strong>ボタンを必ず押してください。対象メンバーのSlack宛にSigns AIからダイレクトメッセージ（または指定チャンネルでのメンション）が届けば成功です。最後に「ユーザー情報を保存」を押して適用を完了させます。
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Hint section */}
-                <div className="p-8 bg-[#1e293b] text-white rounded-[2rem] flex flex-col sm:flex-row gap-6 mt-12 shadow-xl items-start">
-                    <div className="p-3 bg-white/10 rounded-2xl h-fit border border-white/10 shrink-0">
-                        <Slack className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                        <h3 className="text-[16px] font-black mb-3 text-white tracking-tight">なぜ個人宛のメンションが重要か？</h3>
-                        <p className="text-[14.5px] text-slate-300 leading-relaxed font-medium">
-                            AIが分析を通じて有用なアクション（施策）を提案しても、全体チャンネルにただ通知されるだけでは「誰かがやるだろう」という傍観者効果が働き、誰も対応せずに終わってしまう傾向があります。<br/>
-                            Signs AIでは対象部署の担当チームメンバーに対し、Slack User IDを通じて確実にメンション（@）を飛ばすことで、「自分ごと」としてアクションの実行とPDCAサイクルを促す仕組みを実現しています。
-                        </p>
-                    </div>
-                </div>
-            </section>
-
         </div>
     );
 }
