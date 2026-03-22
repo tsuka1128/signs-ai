@@ -199,7 +199,8 @@ export default function BubbleChartGuidePage() {
                         <div className="absolute top-0 bottom-10 left-4 md:left-6 right-0 border-l-4 border-b-4 border-slate-300">
                             {/* Y-axis arrow & label */}
                             <div className="absolute -top-3 -left-[14px] w-0 h-0 border-l-[12px] border-r-[12px] border-b-[16px] border-transparent border-b-slate-300"></div>
-                            <div className="absolute top-1/2 -left-12 rotate-[-90deg] origin-center -translate-y-1/2 text-slate-500 font-black tracking-widest text-[11px] md:text-xs whitespace-nowrap">一人当たり生産性（高・低）</div>
+                            {/* NOTE: rotate-[-90deg] uses unrotated width/height. Add -translate-x-1/2 to perfectly align the horizontal center. */}
+                            <div className="absolute top-1/2 -left-6 md:-left-8 -translate-x-1/2 -translate-y-1/2 rotate-[-90deg] origin-center text-slate-500 font-black tracking-widest text-[11px] md:text-xs whitespace-nowrap">一人当たり生産性（高・低）</div>
                             
                             {/* X-axis arrow & label */}
                             <div className="absolute top-full -right-4 -translate-y-[14px] w-0 h-0 border-t-[12px] border-b-[12px] border-l-[16px] border-transparent border-l-slate-300"></div>
