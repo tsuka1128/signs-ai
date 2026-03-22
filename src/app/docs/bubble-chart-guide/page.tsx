@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { 
+    Building2,
     ArrowRight, 
     BarChart3, 
     Sparkles, 
@@ -378,13 +379,30 @@ export default function BubbleChartGuidePage() {
                     <Maximize2 className="w-6 h-6 text-teal" />
                     表示モードとその他機能
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm space-y-2">
-                        <h3 className="text-sm font-black text-slate-900">📋 部署別（現在の表示）</h3>
-                        <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                            営業部、開発部、CS部などの組織単位でプロットします。部署間の生産性バランスを俯瞰するのに最適です。
+                <div className="flex flex-col gap-6">
+                    {/* Mode 1: Department */}
+                    <div className="p-6 bg-white border border-slate-100 rounded-3xl shadow-md space-y-4 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <Building2 className="w-12 h-12 text-slate-400" />
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                            <span className="text-2xl">📋</span>
+                            部署別（標準表示）
+                        </h3>
+                        <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                            営業部、開発部、CS部などの<strong>組織図に基づいた単位</strong>でプロットします。部署間の生産性バランスを俯瞰し、リソース配分の最適化を検討するのに最適です。
                         </p>
+                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">主な活用シーン</h4>
+                            <ul className="text-xs text-slate-600 font-bold space-y-1.5 list-disc pl-4">
+                                <li>全社的なリソース配分（過不足）の把握</li>
+                                <li>部署ごとのカルチャーやマネジメント状態の比較</li>
+                                <li>組織構造上のボトルネック特定</li>
+                            </ul>
+                        </div>
                     </div>
+
+                    {/* Mode 2: Secondary Axis */}
                     <div className="p-6 bg-white border border-slate-100 rounded-3xl shadow-md space-y-4 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
                             <Sparkles className="w-12 h-12 text-teal" />
