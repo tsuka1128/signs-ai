@@ -20,7 +20,6 @@ const DOCS_MENU = [
         title: "はじめに",
         items: [
             { title: "Signs AIとは？", href: "/docs/introduction", icon: BookOpen },
-            { title: "Signs AIが考える組織成長", href: "/docs/scaling-philosophy", icon: BookOpen },
         ]
     },
     {
@@ -35,6 +34,7 @@ const DOCS_MENU = [
         items: [
             { title: "KPIの設定と入力", href: "/docs/kpi-setup", icon: BarChart3 },
             { title: "マトリックスの見方", href: "/docs/bubble-chart-guide", icon: BarChart3 },
+            { title: "マトリックスが示す成長の軌跡", href: "/docs/growth-steps", icon: BookOpen },
             // { title: "AI分析レポートの活用", href: "/docs/ai-reports", icon: Sparkles },
         ]
     }
