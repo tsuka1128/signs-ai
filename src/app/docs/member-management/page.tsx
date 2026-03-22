@@ -131,66 +131,63 @@ export default function MemberManagementPage() {
 
                 {/* UI Mockup for Invitation Form */}
                 <div className="mt-8 relative max-w-3xl mx-auto">
-                    <div className="bg-white border border-slate-200 rounded-3xl shadow-xl shadow-slate-200/50 overflow-hidden">
-                        <div className="bg-slate-50 border-b border-slate-100 px-6 py-4 flex items-center gap-2">
-                            <UserPlus className="w-4 h-4 text-indigo-500" />
-                            <span className="text-sm font-black text-slate-800">メンバー招待フォーム</span>
-                        </div>
-                        <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                            
-                            {/* Email */}
-                            <div className="md:col-span-2">
-                                <label className="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-tighter">メールアドレス</label>
-                                <div className="relative">
-                                    <Mail className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                                    <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-10 py-3 text-sm text-slate-400 font-medium">
-                                        member@example.com
+                    <div className="bg-white border border-slate-200 rounded-[2rem] shadow-xl shadow-slate-200/50 p-8">
+                        <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <UserPlus className="w-5 h-5 text-teal-500" /> メンバーを招待
+                        </h2>
+                        <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Email */}
+                                <div className="md:col-span-2">
+                                    <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">
+                                        メールアドレス <span className="text-rose-400">*</span>
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <div className="relative flex-1">
+                                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                            <div className="w-full bg-white border border-slate-200 rounded-2xl px-11 py-4 text-sm font-bold text-slate-400">
+                                                example@company.com
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Department */}
+                                <div>
+                                    <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">所属部署 (任意)</label>
+                                    <div className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 flex justify-between items-center">
+                                        <span>未設定</span>
+                                    </div>
+                                </div>
+
+                                {/* Axis/Area */}
+                                <div>
+                                    <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">担当領域 (任意)</label>
+                                    <div className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 flex justify-between items-center">
+                                        <span>未設定</span>
+                                    </div>
+                                </div>
+
+                                {/* Slack User ID */}
+                                <div className="md:col-span-2">
+                                    <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest flex items-center gap-1">
+                                        Slack User ID (任意)
+                                        <div className="w-3.5 h-3.5 rounded-full border border-slate-300 flex items-center justify-center text-[8px] text-slate-400">?</div>
+                                    </label>
+                                    <div className="flex gap-2 max-w-sm">
+                                        <div className="flex-1 bg-white border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-400">
+                                            例: U12345678
+                                        </div>
+                                        <div className="bg-slate-100 text-slate-600 px-4 rounded-2xl flex items-center gap-1.5 text-[10px] font-black uppercase">
+                                            テスト送信
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Department */}
-                            <div>
-                                <label className="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-tighter">所属部署</label>
-                                <div className="relative">
-                                    <Building2 className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                                    <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-10 py-3 text-sm text-slate-700 font-bold flex justify-between items-center">
-                                        <span>営業部</span>
-                                        <ChevronDown className="w-4 h-4 text-slate-400" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Axis/Area */}
-                            <div>
-                                <label className="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-tighter">担当領域</label>
-                                <div className="relative">
-                                    <Building className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                                    <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-10 py-3 text-sm text-slate-700 font-bold flex justify-between items-center">
-                                        <span>東京本店</span>
-                                        <ChevronDown className="w-4 h-4 text-slate-400" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Role */}
-                            <div className="md:col-span-2">
-                                <label className="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-tighter">権限（Role）</label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-600 opacity-60">
-                                        <div className="flex gap-2 items-center mb-1 text-slate-800"><ShieldCheck className="w-4 h-4"/> 管理者</div>
-                                        <div className="text-[10px] font-medium text-slate-400 font-normal">設定や方針の変更が可能</div>
-                                    </div>
-                                    <div className="px-4 py-3 rounded-xl border-2 border-indigo-500 bg-indigo-50/50 text-sm font-bold text-indigo-900">
-                                        <div className="flex gap-2 items-center mb-1"><Users className="w-4 h-4 text-indigo-500"/> メンバー</div>
-                                        <div className="text-[10px] font-medium text-indigo-600/70 font-normal">閲覧とアクション管理のみ</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="md:col-span-2 pt-2">
-                                <div className="w-full py-4 bg-slate-800 text-white rounded-xl font-bold text-sm text-center shadow-lg pointer-events-none">
-                                    招待メールを送信する
+                            <div className="flex justify-end pt-4">
+                                <div className="bg-teal-300 text-white px-10 py-4 rounded-2xl font-black shadow-xl shadow-teal-500/20 flex items-center gap-2 opacity-80 cursor-default">
+                                    招待メールを送信 <ArrowRight className="w-5 h-5" />
                                 </div>
                             </div>
                         </div>
