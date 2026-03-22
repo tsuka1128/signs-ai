@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/Badge";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Settings, LogOut } from "lucide-react";
+import { Settings, LogOut, HelpCircle } from "lucide-react";
 import { signOut } from "@/lib/auth";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
@@ -118,6 +118,10 @@ export function Header() {
 
                                         <Link href="/kpi" onClick={() => setIsProfileOpen(false)} className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-teal transition-colors flex items-center gap-2">
                                             📊 Monthly KPI Input
+                                        </Link>
+
+                                        <Link href="/docs" onClick={() => setIsProfileOpen(false)} className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-teal transition-colors flex items-center gap-2">
+                                            <HelpCircle className="w-4 h-4 text-slate-400" /> Help / Documentation
                                         </Link>
 
                                         <Link href="/settings" onClick={() => setIsProfileOpen(false)} className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-teal transition-colors flex items-center gap-2">
