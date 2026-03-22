@@ -158,7 +158,7 @@ export default function PolicyGuidePage() {
                     <div className="group space-y-4 p-6 bg-white border-2 border-slate-50 rounded-[32px] hover:border-teal/20 transition-all">
                         <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center font-black text-slate-400 group-hover:bg-teal group-hover:text-white transition-colors">1</div>
                         <div>
-                            <h4 className="font-black text-slate-800 mb-2 font-black">入力エリアへ</h4>
+                            <h4 className="font-black text-slate-800 mb-2">入力エリアへ</h4>
                             <p className="text-xs text-slate-500 font-medium leading-relaxed">
                                 ダッシュボード上部の「組織方針」セクション、または設定画面のセマンティックレイヤー管理を開きます。
                             </p>
@@ -167,7 +167,7 @@ export default function PolicyGuidePage() {
                     <div className="group space-y-4 p-6 bg-white border-2 border-slate-50 rounded-[32px] hover:border-teal/20 transition-all">
                         <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center font-black text-slate-400 group-hover:bg-teal group-hover:text-white transition-colors">2</div>
                         <div>
-                            <h4 className="font-black text-slate-800 mb-2 font-black">コンテキストを入力</h4>
+                            <h4 className="font-black text-slate-800 mb-2">コンテキストを入力</h4>
                             <p className="text-xs text-slate-500 font-medium leading-relaxed">
                                 上記のポイントを参考に記載。キックオフ資料からの転記も有効です。Markdownが自動適用されます。
                             </p>
@@ -176,7 +176,7 @@ export default function PolicyGuidePage() {
                     <div className="group space-y-4 p-6 bg-white border-2 border-slate-50 rounded-[32px] hover:border-teal/20 transition-all">
                         <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center font-black text-slate-400 group-hover:bg-teal group-hover:text-white transition-colors">3</div>
                         <div>
-                            <h4 className="font-black text-slate-800 mb-2 font-black">定期的な更新</h4>
+                            <h4 className="font-black text-slate-800 mb-2">定期的な更新</h4>
                             <p className="text-xs text-slate-500 font-medium leading-relaxed">
                                 四半期や各月の状況変化に合わせて更新。AIは常に「最新の方針」を前提としてデータを解析します。
                             </p>
