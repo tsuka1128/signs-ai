@@ -20,6 +20,7 @@ const DOCS_MENU = [
         title: "はじめに",
         items: [
             { title: "Signs AIとは？", href: "/docs/introduction", icon: BookOpen },
+            { title: "Signs AIが考える組織成長", href: "/docs/scaling-philosophy", icon: BookOpen },
         ]
     },
     {
