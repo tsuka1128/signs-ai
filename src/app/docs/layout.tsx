@@ -33,6 +33,7 @@ const DOCS_MENU = [
         title: "機能の使い方",
         items: [
             { title: "KPIの設定と入力", href: "/docs/kpi-setup", icon: BarChart3 },
+            { title: "マトリックスの見方", href: "/docs/bubble-chart-guide", icon: BarChart3 },
             // { title: "AI分析レポートの活用", href: "/docs/ai-reports", icon: Sparkles },
         ]
     }
