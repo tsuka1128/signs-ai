@@ -1,5 +1,5 @@
-import React from 'react';
-import { Target, BrainCircuit, MessageSquare, Lightbulb, AlertCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Target, BrainCircuit, MessageSquare, Lightbulb, AlertCircle, Copy, Check } from 'lucide-react';
 
 export default function PolicyGuidePage() {
     return (
@@ -29,7 +29,7 @@ export default function PolicyGuidePage() {
                     </h2>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-8 items-start">
+                <div className="flex flex-col gap-8">
                     <div className="prose prose-slate max-w-none text-slate-600 font-medium leading-loose">
                         <p>
                             Signs AIにおいて、組織方針は単なるメモではありません。AIが数字を解釈するための<strong className="text-indigo-600">「レンズ」</strong>の役割を果たします。
@@ -37,49 +37,20 @@ export default function PolicyGuidePage() {
                         <p>
                             例えば「退職率の上昇」という一つの事実も、組織方針によってAIの解釈は180度変わります。
                         </p>
-                        <div className="mt-4 space-y-3">
-                            <div className="p-4 bg-emerald-50 border-l-4 border-emerald-400 rounded-r-2xl text-xs sm:text-sm font-bold text-emerald-800 shadow-sm transition-transform hover:scale-[1.02]">
-                                <span className="block text-[10px] text-emerald-600 uppercase tracking-widest mb-1">Case A: 拡大フェーズ</span>
-                                「多少の離職は許容。採用と教育の速度を落とさず突き進む」 ➔ AIはポジティブな改善策を提案
+                        <div className="grid md:grid-cols-2 gap-4 mt-6">
+                            <div className="p-5 bg-emerald-50 border-l-4 border-emerald-400 rounded-r-2xl text-xs sm:text-sm font-bold text-emerald-800 shadow-sm transition-transform hover:scale-[1.02]">
+                                <span className="block text-[10px] text-emerald-600 uppercase tracking-widest mb-1.5 font-black">Case A: 拡大フェーズ</span>
+                                「多少の離職は許容範囲。採用と教育の速度を落とさず突き進むべし」 ➔ AIはポジティブな改善策（採用加速など）を提案
                             </div>
-                            <div className="p-4 bg-amber-50 border-l-4 border-amber-400 rounded-r-2xl text-xs sm:text-sm font-bold text-amber-800 shadow-sm transition-transform hover:scale-[1.02]">
-                                <span className="block text-[10px] text-amber-600 uppercase tracking-widest mb-1">Case B: 安定・質重視フェーズ</span>
-                                「1人の離職も重大なアラート。即座に組織崩壊の兆候として捉える」 ➔ AIは緊急の警告とフォローを提案
+                            <div className="p-5 bg-amber-50 border-l-4 border-amber-400 rounded-r-2xl text-xs sm:text-sm font-bold text-amber-800 shadow-sm transition-transform hover:scale-[1.02]">
+                                <span className="block text-[10px] text-amber-600 uppercase tracking-widest mb-1.5 font-black">Case B: 安定・質重視フェーズ</span>
+                                「1人の離職も重大なアラート。即座に組織崩壊の兆候として捉える」 ➔ AIは緊急の警告と個別のフォローアップを提案
                             </div>
                         </div>
                     </div>
                     
-                    {/* Markdown Mockup */}
-                    <div className="bg-slate-900 rounded-[32px] p-6 sm:p-8 shadow-2xl relative group overflow-hidden">
-                        <div className="absolute top-0 right-0 p-12 bg-teal-500/5 rounded-full blur-3xl -mr-6 -mt-6" />
-                        <div className="absolute top-6 left-8 flex gap-1.5 z-10">
-                            <div className="w-2.5 h-2.5 rounded-full bg-slate-700 hover:bg-rose-500 transition-colors" />
-                            <div className="w-2.5 h-2.5 rounded-full bg-slate-700 hover:bg-amber-500 transition-colors" />
-                            <div className="w-2.5 h-2.5 rounded-full bg-slate-700 hover:bg-emerald-500 transition-colors" />
-                        </div>
-                        <div className="mt-8 font-mono text-[11px] sm:text-[13px] leading-relaxed text-slate-300 relative z-10">
-                            <p className="text-slate-500 mb-2"># 登録サンプル (Markdown形式)</p>
-                            <p className="text-teal-400 font-bold"># 組織方針 v1.0</p>
-                            <br/>
-                            <p className="text-teal-400 font-bold">## 組織の現在地</p>
-                            <p>- フェーズ: 成長加速期</p>
-                            <p>- 優先順位: 顧客満足度 ＞ 拡大スピード</p>
-                            <br/>
-                            <p className="text-teal-400 font-bold">## KPIの解釈ガイド</p>
-                            <p>- 退職率は3%までは許容。ただしエース級は死守</p>
-                            <p>- 予実の乖離は「理由の透明性」があれば不問</p>
-                            <br/>
-                            <p className="text-teal-400 font-bold">## 気になるキーワード</p>
-                            <p>- 粗利率, 競合, エース, 離職の兆候</p>
-                        </div>
-                        <div className="mt-6 pt-6 border-t border-slate-800 flex justify-between items-center relative z-10">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Semantic Layer Active</span>
-                            </div>
-                            <span className="text-[10px] font-black text-teal-500 bg-teal/10 px-3 py-1 rounded-full border border-teal-500/20">AI Read Quality: High</span>
-                        </div>
-                    </div>
+                    {/* Markdown Mockup with Copy Feature */}
+                    <PolicySampleCard />
                 </div>
             </section>
 
@@ -194,6 +165,133 @@ export default function PolicyGuidePage() {
                     </div>
                 </div>
             </section>
+        </div>
+    );
+}
+
+function PolicySampleCard() {
+    const [copied, setCopied] = useState(false);
+    
+    const sampleText = `# 組織方針 v1.0
+
+## 組織の現在地
+- フェーズ: 成長加速期
+- 現在の優先順位: 顧客満足度の向上 ＞ 拡大スピード
+- 組織の目標: 全員が自律的に動き、顧客価値を最大化する組織の構築
+
+## KPIの解釈ガイド
+- 数字の達成だけでなく、そのプロセスや現場の熱量を重視する
+- 異常値（急激な改善・悪化）が見られた場合は、即座に背景を確認する
+- 長期的な成長を阻害する短期的な数値達成は「歪み」として検知する
+
+## 組織の注意点
+- 部門間の情報の不透明性を排除する
+- 「現場の声」が経営・意思決定に反映されている状態を維持する
+
+## 気になるキーワード（カンマ区切り）
+- 粗利率,競合,売上,失注,営業利益,新卒,開発`;
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(sampleText);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <div className="bg-slate-900 rounded-[32px] p-6 sm:p-10 shadow-2xl relative group overflow-hidden border border-slate-800">
+            <div className="absolute top-0 right-0 p-16 bg-teal-500/5 rounded-full blur-3xl -mr-8 -mt-8" />
+            
+            <div className="flex items-center justify-between mb-8 relative z-10">
+                <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-slate-700 hover:bg-rose-500 transition-colors" />
+                    <div className="w-3 h-3 rounded-full bg-slate-700 hover:bg-amber-500 transition-colors" />
+                    <div className="w-3 h-3 rounded-full bg-slate-700 hover:bg-emerald-500 transition-colors" />
+                </div>
+                <button 
+                    onClick={handleCopy}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                        copied 
+                        ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]' 
+                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+                    }`}
+                >
+                    {copied ? (
+                        <>
+                            <Check className="w-3.5 h-3.5" />
+                            コピーしました
+                        </>
+                    ) : (
+                        <>
+                            <Copy className="w-3.5 h-3.5" />
+                            テンプレートをコピー
+                        </>
+                    )}
+                </button>
+            </div>
+
+            <div className="font-mono text-[12px] sm:text-[14px] leading-relaxed text-slate-300 relative z-10 overflow-x-auto space-y-4">
+                <div>
+                    <span className="text-slate-500 block mb-2 font-sans italic tracking-wider">// そのまま登録に使える標準テンプレート</span>
+                    <span className="text-teal-400 font-black block mb-4 text-xl sm:text-2xl tracking-tight"># 組織方針 v1.0</span>
+                </div>
+
+                <div className="space-y-6">
+                    <div className="space-y-3">
+                        <p className="text-teal-400 font-black flex items-center gap-2 text-sm sm:text-base tracking-tight">
+                            <span className="w-2 h-2 bg-teal-500 rounded-full" />
+                            ## 組織の現在地
+                        </p>
+                        <div className="pl-6 space-y-1 font-bold">
+                            <p>- フェーズ: 成長加速期</p>
+                            <p>- 現在の優先順位: 顧客満足度の向上 ＞ 拡大スピード</p>
+                            <p>- 組織の目標: 全員が自律的に動き、顧客価値を最大化する組織の構築</p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        <p className="text-teal-400 font-black flex items-center gap-2 text-sm sm:text-base tracking-tight">
+                            <span className="w-2 h-2 bg-teal-500 rounded-full" />
+                            ## KPIの解釈ガイド
+                        </p>
+                        <div className="pl-6 space-y-1 text-slate-400 font-bold">
+                            <p>- 数字の達成だけでなく、そのプロセスや現場の熱量を重視する</p>
+                            <p>- 異常値（急激な改善・悪化）が見られた場合は、即座に背景を確認する</p>
+                            <p>- 長期的な成長を阻害する短期的な数値達成は「歪み」として検知する</p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        <p className="text-teal-400 font-black flex items-center gap-2 text-sm sm:text-base tracking-tight">
+                            <span className="w-2 h-2 bg-teal-500 rounded-full" />
+                            ## 組織の注意点
+                        </p>
+                        <div className="pl-6 space-y-1 font-bold">
+                            <p>- 部門間の情報の不透明性を排除する</p>
+                            <p>- 「現場の声」が経営・意思決定に反映されている状態を維持する</p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        <p className="text-teal-400 font-black flex items-center gap-2 text-sm sm:text-base tracking-tight">
+                            <span className="w-2 h-2 bg-teal-500 rounded-full" />
+                            ## 気になるキーワード
+                        </p>
+                        <div className="pl-6 font-bold">
+                            <p className="text-slate-400">- 粗利率, 競合, 売上, 失注, 営業利益, 新卒, 開発</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="mt-10 pt-8 border-t border-slate-800 flex justify-between items-center relative z-10">
+                <div className="flex items-center gap-2.5">
+                    <div className="w-3 h-3 rounded-full bg-teal-500 animate-pulse shadow-[0_0_10px_rgba(20,184,166,0.5)]" />
+                    <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">Semantic Context Ready</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black text-teal-400 bg-teal/10 px-3 py-1.5 rounded-full border border-teal-500/20 shadow-sm">AI Analysis Quality: Premium</span>
+                </div>
+            </div>
         </div>
     );
 }
