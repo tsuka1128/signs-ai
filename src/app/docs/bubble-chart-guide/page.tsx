@@ -393,8 +393,8 @@ export default function BubbleChartGuidePage() {
                             営業部、開発部、CS部などの<strong>組織図に基づいた単位</strong>でプロットします。部署間の生産性バランスを俯瞰し、リソース配分の最適化を検討するのに最適です。
                         </p>
                         <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">主な活用シーン</h4>
-                            <ul className="text-xs text-slate-600 font-bold space-y-1.5 list-disc pl-4">
+                            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2">主な活用シーン</h4>
+                            <ul className="text-sm text-slate-600 font-bold space-y-1.5 list-disc pl-4">
                                 <li>全社的なリソース配分（過不足）の把握</li>
                                 <li>部署ごとのカルチャーやマネジメント状態の比較</li>
                                 <li>組織構造上のボトルネック特定</li>
@@ -415,39 +415,39 @@ export default function BubbleChartGuidePage() {
                             部署という「組織の箱」とは別に、製品や地域、ブランドといった<strong>ビジネスの実態に即した切り口</strong>で組織を多角的に分析できます。
                         </p>
                         
-                        <div className="space-y-3 pt-2">
-                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">活用例のイメージ</h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="space-y-4 pt-2">
+                            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">活用例のイメージ</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {[
                                     { label: "製品 (Product)", desc: "プロダクトごとの収益性と顧客反応を可視化" },
                                     { label: "地域・エリア (Region)", desc: "拠点ごとの生産性と組織状態のムラを特定" },
                                     { label: "支店 (Branch)", desc: "支店別のマネジメント傾向と成果の相関を確認" },
                                     { label: "ブランド (Brand)", desc: "複数ブランド展開における成長健全性を分析" }
                                 ].map((item, i) => (
-                                    <div key={i} className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col justify-center">
-                                        <div className="text-[11px] font-black text-slate-800">{item.label}</div>
-                                        <div className="text-[9px] text-slate-500 font-bold leading-tight mt-0.5">{item.desc}</div>
+                                    <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col justify-center">
+                                        <div className="text-sm font-black text-slate-800">{item.label}</div>
+                                        <div className="text-xs text-slate-500 font-bold leading-tight mt-1">{item.desc}</div>
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        <div className="p-5 bg-teal/5 rounded-2xl border border-teal/10 space-y-3">
-                            <h4 className="text-xs font-black text-teal-800 flex items-center gap-2">
-                                <Target className="w-3.5 h-3.5" />
+                        <div className="p-6 bg-teal/5 rounded-2xl border border-teal/10 space-y-4">
+                            <h4 className="text-sm font-black text-teal-800 flex items-center gap-2">
+                                <Target className="w-4 h-4" />
                                 設定と使い方のステップ
                             </h4>
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                                 {[
                                     { step: "1", title: "組織情報の設定", text: "管理画面の「組織情報設定」から、第2軸の名称（例：地域）と、具体的な項目（東京、大阪など）を登録します。" },
                                     { step: "2", title: "KPI実績の入力", text: "「KPIの一括入力」画面にて、登録した各項目（第2軸）ごとの実績値を入力します。" },
                                     { step: "3", title: "マトリックスで分析", text: "ダッシュボードのマトリックス表示モードを、デフォルトの「部署別」から「担当領域別」に切り替えて分析を開始します。" }
                                 ].map((s, idx) => (
-                                    <div key={idx} className="flex gap-3">
-                                        <div className="w-4 h-4 rounded-full bg-teal text-white text-[9px] font-black flex items-center justify-center shrink-0 mt-0.5">{s.step}</div>
-                                        <div className="space-y-0.5">
-                                            <div className="text-[10px] font-black text-slate-800">{s.title}</div>
-                                            <div className="text-[10px] text-slate-500 font-medium leading-relaxed">{s.text}</div>
+                                    <div key={idx} className="flex gap-4">
+                                        <div className="w-5 h-5 rounded-full bg-teal text-white text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">{s.step}</div>
+                                        <div className="space-y-1">
+                                            <div className="text-xs font-black text-slate-800">{s.title}</div>
+                                            <div className="text-xs text-slate-500 font-medium leading-relaxed">{s.text}</div>
                                         </div>
                                     </div>
                                 ))}
