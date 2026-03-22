@@ -385,11 +385,56 @@ export default function BubbleChartGuidePage() {
                             営業部、開発部、CS部などの組織単位でプロットします。部署間の生産性バランスを俯瞰するのに最適です。
                         </p>
                     </div>
-                    <div className="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm space-y-2">
-                        <h3 className="text-sm font-black text-slate-900">🏷️ 担当領域別</h3>
-                        <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                            プロダクト、エリア、ブランドなどの切り口でプロットします。同一部署内でも異なる領域のパフォーマンス差が見えるようになります。
+                    <div className="p-6 bg-white border border-slate-100 rounded-3xl shadow-md space-y-4 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <Sparkles className="w-12 h-12 text-teal" />
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                            <span className="text-2xl">🏷️</span>
+                            第2軸（担当領域）別分析
+                        </h3>
+                        <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                            部署という「組織の箱」とは別に、製品や地域、ブランドといった<strong>ビジネスの実態に即した切り口</strong>で組織を多角的に分析できます。
                         </p>
+                        
+                        <div className="space-y-3 pt-2">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">活用例のイメージ</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {[
+                                    { label: "製品 (Product)", desc: "プロダクトごとの収益性と顧客反応を可視化" },
+                                    { label: "地域・エリア (Region)", desc: "拠点ごとの生産性と組織状態のムラを特定" },
+                                    { label: "支店 (Branch)", desc: "支店別のマネジメント傾向と成果の相関を確認" },
+                                    { label: "ブランド (Brand)", desc: "複数ブランド展開における成長健全性を分析" }
+                                ].map((item, i) => (
+                                    <div key={i} className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col justify-center">
+                                        <div className="text-[11px] font-black text-slate-800">{item.label}</div>
+                                        <div className="text-[9px] text-slate-500 font-bold leading-tight mt-0.5">{item.desc}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="p-5 bg-teal/5 rounded-2xl border border-teal/10 space-y-3">
+                            <h4 className="text-xs font-black text-teal-800 flex items-center gap-2">
+                                <Target className="w-3.5 h-3.5" />
+                                設定と使い方のステップ
+                            </h4>
+                            <div className="space-y-2">
+                                {[
+                                    { step: "1", title: "組織情報の設定", text: "管理画面の「組織情報設定」から、第2軸の名称（例：地域）と、具体的な項目（東京、大阪など）を登録します。" },
+                                    { step: "2", title: "KPI実績の入力", text: "「KPIの一括入力」画面にて、登録した各項目（第2軸）ごとの実績値を入力します。" },
+                                    { step: "3", title: "マトリックスで分析", text: "ダッシュボードのマトリックス表示モードを、デフォルトの「部署別」から「担当領域別」に切り替えて分析を開始します。" }
+                                ].map((s, idx) => (
+                                    <div key={idx} className="flex gap-3">
+                                        <div className="w-4 h-4 rounded-full bg-teal text-white text-[9px] font-black flex items-center justify-center shrink-0 mt-0.5">{s.step}</div>
+                                        <div className="space-y-0.5">
+                                            <div className="text-[10px] font-black text-slate-800">{s.title}</div>
+                                            <div className="text-[10px] text-slate-500 font-medium leading-relaxed">{s.text}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
