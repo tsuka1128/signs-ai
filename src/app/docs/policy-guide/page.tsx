@@ -11,7 +11,7 @@ export default function PolicyGuidePage() {
                     How to Use
                 </div>
                 <h1 className="text-3xl md:text-4xl font-black text-slate-900 leading-tight tracking-tight">
-                    「組織方針」の登録と活用
+                    「組織方針」の登録
                 </h1>
                 <p className="text-base text-slate-600 font-medium leading-relaxed max-w-2xl mt-4">
                     Signs AIの最大の特徴は、一般的なAIデータ分析ツールと異なり、**あなたの会社の文脈（コンテキスト）**を理解して分析できる点にあります。その心臓部となるのが「組織方針」の登録機能です。

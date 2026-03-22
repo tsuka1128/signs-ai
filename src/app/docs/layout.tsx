@@ -29,17 +29,17 @@ const DOCS_MENU = [
         items: [
             { title: "Slack連携の手順", href: "/docs/slack-integration", icon: MessageSquare },
             { title: "メンバーの招待・管理", href: "/docs/member-management", icon: Users },
+            { title: "KPIの設定と入力", href: "/docs/kpi-setup", icon: BarChart3 },
+            { title: "組織方針の登録", href: "/docs/policy-guide", icon: Target },
         ]
     },
     {
         title: "機能の使い方",
         items: [
-            { title: "KPIの設定と入力", href: "/docs/kpi-setup", icon: BarChart3 },
-            { title: "組織方針の登録と活用", href: "/docs/policy-guide", icon: Target },
+            { title: "組織改善のPDCAサイクル", href: "/docs/pdca-guide", icon: Target },
             { title: "アクション管理の使い方", href: "/docs/action-guide", icon: CheckSquare },
             { title: "マトリックスの見方", href: "/docs/bubble-chart-guide", icon: BarChart3 },
             { title: "マトリックスが示す成長の軌跡", href: "/docs/growth-steps", icon: BookOpen },
-            // { title: "AI分析レポートの活用", href: "/docs/ai-reports", icon: Sparkles },
         ]
     }
 ];
