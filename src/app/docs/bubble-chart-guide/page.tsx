@@ -193,21 +193,21 @@ export default function BubbleChartGuidePage() {
                 <h2 className="text-2xl font-black text-slate-900">4つの領域の意味</h2>
                 
                 {/* CSS Based Quadrant Diagram */}
-                <div className="p-8 bg-slate-50 border border-slate-200 rounded-[32px] mb-8">
+                <div className="py-12 pr-6 pl-14 md:pl-20 bg-slate-50 border border-slate-200 rounded-[32px] mb-8">
                     <div className="relative w-full max-w-2xl mx-auto aspect-square text-white">
                         {/* Axes */}
-                        <div className="absolute top-0 bottom-8 left-10 right-0 border-l-4 border-b-4 border-slate-300">
+                        <div className="absolute top-0 bottom-10 left-4 md:left-6 right-0 border-l-4 border-b-4 border-slate-300">
                             {/* Y-axis arrow & label */}
                             <div className="absolute -top-3 -left-[14px] w-0 h-0 border-l-[12px] border-r-[12px] border-b-[16px] border-transparent border-b-slate-300"></div>
-                            <div className="absolute top-1/2 -left-16 rotate-[-90deg] origin-center -translate-y-1/2 text-slate-500 font-black tracking-widest text-xs whitespace-nowrap">一人当たり生産性（高・低）</div>
+                            <div className="absolute top-1/2 -left-12 rotate-[-90deg] origin-center -translate-y-1/2 text-slate-500 font-black tracking-widest text-[11px] md:text-xs whitespace-nowrap">一人当たり生産性（高・低）</div>
                             
                             {/* X-axis arrow & label */}
-                            <div className="absolute top-full -right-3 -translate-y-[14px] w-0 h-0 border-t-[12px] border-b-[12px] border-l-[16px] border-transparent border-l-slate-300"></div>
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 text-slate-500 font-black tracking-widest text-xs whitespace-nowrap">リソース量 / 人数（少・多）</div>
+                            <div className="absolute top-full -right-4 -translate-y-[14px] w-0 h-0 border-t-[12px] border-b-[12px] border-l-[16px] border-transparent border-l-slate-300"></div>
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-5 text-slate-500 font-black tracking-widest text-[11px] md:text-xs whitespace-nowrap">リソース量 / 人数（少・多）</div>
                         </div>
 
                         {/* Quadrants Grid */}
-                        <div className="absolute top-6 left-14 right-6 bottom-14 grid grid-cols-2 grid-rows-2 gap-3">
+                        <div className="absolute top-6 left-8 md:left-12 right-6 bottom-16 grid grid-cols-2 grid-rows-2 gap-3 md:gap-4">
                             <div className="bg-gradient-to-br from-emerald-400 to-emerald-500 rounded-3xl shadow-md p-4 flex flex-col items-center justify-center text-center">
                                 <span className="font-black text-xl mb-1 drop-shadow-sm">開拓者 (PIONEER)</span>
                                 <span className="text-xs font-bold opacity-90 mb-1">少人数 × 高生産性</span>
