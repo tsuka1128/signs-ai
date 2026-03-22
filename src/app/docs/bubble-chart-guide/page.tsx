@@ -1,5 +1,7 @@
-import Image from "next/image";
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import { 
     ArrowRight, 
     BarChart3, 
@@ -12,14 +14,49 @@ import {
     Lightbulb,
     Maximize2
 } from "lucide-react";
+import { ScatterPlot } from "@/components/dashboard/ScatterPlot";
 
-/**
- * バブルチャート（部署別マトリックス）の活用ガイドページ
- *
- * Signs AIの核心機能であるマトリックス分析を、
- * 図解とともに分かりやすく解説する。
- */
+const dummyHistoricalData: Record<string, any[]> = {
+    "default": [
+        { id: "d1", name: "営業部", head: 25, productivity: 140, pulse: 2.1, weather: "rain", kpiAch: 110, kpiName: "売上高", respondentsCount: 20, masterHeadcount: 25 },
+        { id: "d2", name: "開発部", head: 45, productivity: 40, pulse: 2.9, weather: "cloud", kpiAch: 80, kpiName: "リリース件数", respondentsCount: 40, masterHeadcount: 45 },
+        { id: "d3", name: "マーケ部", head: 8, productivity: 180, pulse: 4.2, weather: "sun", kpiAch: 150, kpiName: "リード数", respondentsCount: 8, masterHeadcount: 8 },
+        { id: "d4", name: "人事部", head: 5, productivity: 110, pulse: 4.0, weather: "sun", kpiAch: 100, kpiName: "採用数", respondentsCount: 5, masterHeadcount: 5 },
+        { id: "d5", name: "CS部", head: 30, productivity: 60, pulse: 2.8, weather: "cloud", kpiAch: 90, kpiName: "解約抑制率", respondentsCount: 28, masterHeadcount: 30 },
+    ],
+    "1m": [
+        { id: "d1", name: "営業部", head: 25, productivity: 155, pulse: 2.8, weather: "cloud", kpiAch: 120, kpiName: "売上高", respondentsCount: 22, masterHeadcount: 25 },
+        { id: "d2", name: "開発部", head: 40, productivity: 60, pulse: 3.1, weather: "cloud", kpiAch: 90, kpiName: "リリース件数", respondentsCount: 38, masterHeadcount: 40 },
+        { id: "d3", name: "マーケ部", head: 8, productivity: 170, pulse: 4.1, weather: "sun", kpiAch: 140, kpiName: "リード数", respondentsCount: 8, masterHeadcount: 8 },
+        { id: "d4", name: "人事部", head: 5, productivity: 110, pulse: 4.0, weather: "sun", kpiAch: 100, kpiName: "採用数", respondentsCount: 5, masterHeadcount: 5 },
+        { id: "d5", name: "CS部", head: 28, productivity: 65, pulse: 3.0, weather: "cloud", kpiAch: 95, kpiName: "解約抑制率", respondentsCount: 25, masterHeadcount: 28 },
+    ],
+    "3m": [
+        { id: "d1", name: "営業部", head: 22, productivity: 160, pulse: 3.5, weather: "sun", kpiAch: 125, kpiName: "売上高", respondentsCount: 20, masterHeadcount: 22 },
+        { id: "d2", name: "開発部", head: 35, productivity: 80, pulse: 3.4, weather: "cloud", kpiAch: 95, kpiName: "リリース件数", respondentsCount: 33, masterHeadcount: 35 },
+        { id: "d3", name: "マーケ部", head: 7, productivity: 150, pulse: 3.8, weather: "sun", kpiAch: 130, kpiName: "リード数", respondentsCount: 7, masterHeadcount: 7 },
+        { id: "d4", name: "人事部", head: 4, productivity: 100, pulse: 3.9, weather: "sun", kpiAch: 100, kpiName: "採用数", respondentsCount: 4, masterHeadcount: 4 },
+        { id: "d5", name: "CS部", head: 25, productivity: 75, pulse: 3.2, weather: "cloud", kpiAch: 100, kpiName: "解約抑制率", respondentsCount: 22, masterHeadcount: 25 },
+    ],
+    "6m": [
+        { id: "d1", name: "営業部", head: 20, productivity: 170, pulse: 3.9, weather: "sun", kpiAch: 130, kpiName: "売上高", respondentsCount: 18, masterHeadcount: 20 },
+        { id: "d2", name: "開発部", head: 30, productivity: 100, pulse: 3.7, weather: "sun", kpiAch: 105, kpiName: "リリース件数", respondentsCount: 28, masterHeadcount: 30 },
+        { id: "d3", name: "マーケ部", head: 6, productivity: 140, pulse: 3.7, weather: "sun", kpiAch: 120, kpiName: "リード数", respondentsCount: 6, masterHeadcount: 6 },
+        { id: "d4", name: "人事部", head: 4, productivity: 95, pulse: 3.8, weather: "sun", kpiAch: 100, kpiName: "採用数", respondentsCount: 4, masterHeadcount: 4 },
+        { id: "d5", name: "CS部", head: 22, productivity: 85, pulse: 3.5, weather: "cloud", kpiAch: 105, kpiName: "解約抑制率", respondentsCount: 20, masterHeadcount: 22 },
+    ],
+    "12m": [
+        { id: "d1", name: "営業部", head: 15, productivity: 140, pulse: 4.2, weather: "sun", kpiAch: 110, kpiName: "売上高", respondentsCount: 15, masterHeadcount: 15 },
+        { id: "d2", name: "開発部", head: 20, productivity: 130, pulse: 4.1, weather: "sun", kpiAch: 115, kpiName: "リリース件数", respondentsCount: 20, masterHeadcount: 20 },
+        { id: "d3", name: "マーケ部", head: 4, productivity: 120, pulse: 4.0, weather: "sun", kpiAch: 110, kpiName: "リード数", respondentsCount: 4, masterHeadcount: 4 },
+        { id: "d4", name: "人事部", head: 2, productivity: 90, pulse: 4.0, weather: "sun", kpiAch: 100, kpiName: "採用数", respondentsCount: 2, masterHeadcount: 2 },
+        { id: "d5", name: "CS部", head: 15, productivity: 100, pulse: 4.0, weather: "sun", kpiAch: 100, kpiName: "解約抑制率", respondentsCount: 15, masterHeadcount: 15 },
+    ]
+};
+
 export default function BubbleChartGuidePage() {
+    const [guideMonth, setGuideMonth] = useState("default");
+    
     return (
         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Breadcrumbs */}
@@ -58,23 +95,48 @@ export default function BubbleChartGuidePage() {
                 </div>
             </div>
 
-            {/* Actual UI screenshot */}
+            {/* Actual UI Demonstration */}
             <section className="space-y-6">
                 <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
                     <BarChart3 className="w-7 h-7 text-teal" />
-                    実際の画面
+                    インタラクティブ・デモ
                 </h2>
-                <div className="rounded-[28px] border-2 border-slate-100 overflow-hidden shadow-lg">
-                    <Image 
-                        src="/docs/bubble_chart_current.png" 
-                        alt="Signs AI 部署別マトリックスの実際の画面" 
-                        width={1500} 
-                        height={900}
-                        className="w-full"
-                    />
+                <div className="bg-white rounded-[28px] border-2 border-slate-100 p-6 shadow-xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 pointer-events-none">
+                        <div className="bg-teal text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-md">Demo</div>
+                    </div>
+                    <div className="flex flex-col gap-4 mb-6 relative z-10">
+                        <div>
+                            <h3 className="text-sm font-bold text-slate-800 tracking-tight">部署 / 担当領域 マトリックス</h3>
+                            <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-tight">
+                                <span>縦軸: 一人当たり生産性 ｜ 横軸: リソース量 ｜ 円サイズ: KPI達成率</span>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">Time Lapse</span>
+                            <div className="flex items-center bg-slate-100/80 p-0.5 rounded-full z-20">
+                                {[{ id: "default", label: "現在" }, { id: "1m", label: "1ヶ月前" }, { id: "3m", label: "3ヶ月前" }, { id: "6m", label: "6ヶ月前" }, { id: "12m", label: "1年前" }].map((t) => (
+                                    <button 
+                                        key={t.id} 
+                                        onClick={() => setGuideMonth(t.id)} 
+                                        className={`px-4 py-1.5 rounded-full text-[10px] font-bold transition-all ${guideMonth === t.id ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+                                    >
+                                        {t.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="px-4">
+                        <ScatterPlot 
+                            data={dummyHistoricalData[guideMonth]}
+                            sizeKpiName="KPI達成率"
+                            month={guideMonth}
+                        />
+                    </div>
                 </div>
                 <p className="text-sm text-slate-500 font-medium text-center">
-                    ▲ Signs AI ダッシュボードの「マトリックス」タブに表示されるバブルチャート
+                    ▲ 実際の画面と同様に、マウスオーバーやタイムラプス切り替え（上部のボタン）をお試しいただけます
                 </p>
             </section>
 
@@ -93,7 +155,7 @@ export default function BubbleChartGuidePage() {
                             各部署のKPI実績を人数で割った<strong>効率性の指標</strong>です。上に位置する部署ほど、少ない人員で大きな成果を出していることを示します。
                         </p>
                         <div className="bg-blue-50 text-blue-700 rounded-xl px-4 py-3 text-xs font-bold">
-                            計算式：KPI達成率 ÷ 部署人数
+                            計算式：KPI達成率 × 体温係数
                         </div>
                     </div>
                     <div className="p-6 bg-white border-2 border-slate-100 rounded-[28px] shadow-sm space-y-3">
@@ -116,84 +178,112 @@ export default function BubbleChartGuidePage() {
                         <Target className="w-5 h-5 text-teal" />
                     </div>
                     <div>
-                        <h3 className="text-sm font-black text-slate-900 mb-1">円（バブル）のサイズ</h3>
+                        <h3 className="text-sm font-black text-slate-900 mb-1">円（バブル）のサイズと波紋</h3>
                         <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                            バブルの大きさは<strong>KPI達成率</strong>を表しています。大きな円ほどKPIの達成度が高い部署です。
-                            また、バブルの周囲に波紋（リップル）が見える場合は、ボイスチェック（体温）のスコアが反映されています。
+                            バブルの大きさは<strong>KPI達成率</strong>を表しています。大きな円ほど達成度が高い部署です。
+                            KPIが100%を達成している部署の周囲には、波紋（リップル）アニメーションが表示されます。
+                            また、色は「組織の体温（晴れ・曇り・雨）」などの直感的な指標を反映しています。
                         </p>
                     </div>
                 </div>
             </section>
 
-            {/* 4 Quadrants */}
+            {/* 4 Quadrants via CSS Grid */}
             <section className="space-y-6">
                 <h2 className="text-2xl font-black text-slate-900">4つの領域の意味</h2>
-                <div className="rounded-[28px] border-2 border-slate-100 overflow-hidden shadow-lg">
-                    <Image 
-                        src="/docs/bubble_chart_quadrant.png" 
-                        alt="4象限の概念図" 
-                        width={800} 
-                        height={800}
-                        className="w-full max-w-lg mx-auto"
-                    />
+                
+                {/* CSS Based Quadrant Diagram */}
+                <div className="p-8 bg-slate-50 border border-slate-200 rounded-[32px] mb-8">
+                    <div className="relative w-full max-w-2xl mx-auto aspect-square text-white">
+                        {/* Axes */}
+                        <div className="absolute top-0 bottom-8 left-8 right-0 border-l-4 border-b-4 border-slate-300">
+                            {/* Y-axis arrow & label */}
+                            <div className="absolute -top-3 -left-[14px] w-0 h-0 border-l-[12px] border-r-[12px] border-b-[16px] border-transparent border-b-slate-300"></div>
+                            <div className="absolute top-1/2 -left-16 rotate-[-90deg] origin-center -translate-y-1/2 text-slate-500 font-black tracking-widest uppercase text-xs">KPI / Productivity</div>
+                            
+                            {/* X-axis arrow & label */}
+                            <div className="absolute top-full -right-3 -translate-y-[14px] w-0 h-0 border-t-[12px] border-b-[12px] border-l-[16px] border-transparent border-l-slate-300"></div>
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 text-slate-500 font-black tracking-widest uppercase text-xs">Voice / Engagement (Temperature)</div>
+                        </div>
+
+                        {/* Quadrants Grid */}
+                        <div className="absolute top-6 left-12 right-6 bottom-14 grid grid-cols-2 grid-rows-2 gap-3">
+                            <div className="bg-gradient-to-br from-red-500 to-orange-400 rounded-3xl shadow-md p-4 flex flex-col items-center justify-center text-center">
+                                <span className="font-black text-xl mb-1 drop-shadow-sm">Burnout Risk</span>
+                                <span className="text-[10px] font-medium opacity-90 leading-tight">High performance but<br/>Low engagement</span>
+                            </div>
+                            <div className="bg-gradient-to-br from-teal-400 to-emerald-500 rounded-3xl shadow-md p-4 flex flex-col items-center justify-center text-center">
+                                <span className="font-black text-xl mb-1 drop-shadow-sm">Ideal / Success</span>
+                                <span className="text-[10px] font-medium opacity-90 leading-tight">High performance<br/>& Health</span>
+                            </div>
+                            <div className="bg-gradient-to-br from-slate-400 to-slate-500 rounded-3xl shadow-md p-4 flex flex-col items-center justify-center text-center">
+                                <span className="font-black text-xl mb-1 drop-shadow-sm">Structural Issues</span>
+                                <span className="text-[10px] font-medium opacity-90 leading-tight">Low performance &<br/>Low engagement</span>
+                            </div>
+                            <div className="bg-gradient-to-br from-cyan-400 to-blue-500 rounded-3xl shadow-md p-4 flex flex-col items-center justify-center text-center">
+                                <span className="font-black text-xl mb-1 drop-shadow-sm">Latent Potential</span>
+                                <span className="text-[10px] font-medium opacity-90 leading-tight">High engagement but<br/>Low performance</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="space-y-4">
                     {/* PIONEER */}
-                    <div className="flex gap-4 p-6 border border-green-100 bg-green-50/50 rounded-[28px]">
-                        <div className="text-3xl">⭐</div>
-                        <div className="space-y-2">
-                            <h3 className="text-lg font-black text-green-800">PIONEER（開拓者）</h3>
-                            <p className="text-xs font-bold text-green-600">左上エリア：少人数 × 高生産性</p>
+                    <div className="flex gap-4 p-6 border border-green-100 bg-green-50/50 rounded-[28px] overflow-hidden relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent w-full pointer-events-none" />
+                        <div className="text-3xl relative z-10">⭐</div>
+                        <div className="space-y-2 relative z-10">
+                            <h3 className="text-lg font-black text-emerald-800">PIONEER（開拓者） <span className="text-sm font-medium ml-2 text-emerald-600">右上エリア</span></h3>
                             <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                                少ない人数で高い成果を出している理想的なチーム。自律的な高効率組織であり、この状態を維持しつつ、成功ノウハウを他部署へ展開することが有効です。
+                                理想的なチーム。自律的な高効率組織であり、この状態を維持しつつ、成功ノウハウを他部署へ展開することが有効です。
                             </p>
-                            <div className="bg-white/80 rounded-xl px-4 py-2 text-xs font-bold text-green-700">
+                            <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-xl px-4 py-2 text-xs font-bold text-emerald-700">
                                 💡 アクション例：成功要因を言語化し、採用やオンボーディングに活用する
                             </div>
                         </div>
                     </div>
 
                     {/* SCALE */}
-                    <div className="flex gap-4 p-6 border border-blue-100 bg-blue-50/50 rounded-[28px]">
-                        <div className="text-3xl">🚀</div>
-                        <div className="space-y-2">
-                            <h3 className="text-lg font-black text-blue-800">SCALE（拡大期）</h3>
-                            <p className="text-xs font-bold text-blue-600">右上エリア：多人数 × 高生産性</p>
+                    <div className="flex gap-4 p-6 border border-blue-100 bg-blue-50/50 rounded-[28px] overflow-hidden relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent w-full pointer-events-none" />
+                        <div className="text-3xl relative z-10">🚀</div>
+                        <div className="space-y-2 relative z-10">
+                            <h3 className="text-lg font-black text-blue-800">SCALE（拡大期） <span className="text-sm font-medium ml-2 text-blue-600">右上〜左上エリア</span></h3>
                             <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                                大所帯でありながら高い生産性を維持している組織の主力部隊。マネジメントが機能している証拠ですが、人数増加に伴い情報伝達の鈍化やサイロ化のリスクも監視が必要です。
+                                組織の主力部隊。マネジメントが機能している証拠ですが、人数増加に伴い情報伝達の鈍化やサイロ化のリスクも監視が必要です。
                             </p>
-                            <div className="bg-white/80 rounded-xl px-4 py-2 text-xs font-bold text-blue-700">
+                            <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-xl px-4 py-2 text-xs font-bold text-blue-700">
                                 💡 アクション例：中間管理職の育成とチーム内コミュニケーションの仕組み化を推進
                             </div>
                         </div>
                     </div>
 
                     {/* SEED */}
-                    <div className="flex gap-4 p-6 border border-amber-100 bg-amber-50/50 rounded-[28px]">
-                        <div className="text-3xl">🌱</div>
-                        <div className="space-y-2">
-                            <h3 className="text-lg font-black text-amber-800">SEED（種まき）</h3>
-                            <p className="text-xs font-bold text-amber-600">左下エリア：少人数 × 低生産性</p>
+                    <div className="flex gap-4 p-6 border border-amber-100 bg-amber-50/50 rounded-[28px] overflow-hidden relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent w-full pointer-events-none" />
+                        <div className="text-3xl relative z-10">🌱</div>
+                        <div className="space-y-2 relative z-10">
+                            <h3 className="text-lg font-black text-amber-800">SEED（種まき） <span className="text-sm font-medium ml-2 text-amber-600">左下〜右下エリア（右下はLatent Potential）</span></h3>
                             <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                                新規事業やR&Dなど、投資フェーズにあるチーム。短期的なKPI達成率は低くても、中長期で見た場合の成長ポテンシャルがここに含まれます。ただし、いつまでこのフェーズを許容するかの判断基準が必要です。
+                                新規事業や投資フェーズにあるチーム。コンディションは良くても短期的な達成率が低い場合、ポテンシャルを活かす戦略が必要です。
                             </p>
-                            <div className="bg-white/80 rounded-xl px-4 py-2 text-xs font-bold text-amber-700">
-                                💡 アクション例：マイルストーンベースで進捗管理し、戦略的に投資を継続するか判断する
+                            <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-xl px-4 py-2 text-xs font-bold text-amber-700">
+                                💡 アクション例：マイルストーンベースで進捗管理し、戦略的にリソースを支援する
                             </div>
                         </div>
                     </div>
 
-                    {/* OVERWEIGHT */}
-                    <div className="flex gap-4 p-6 border border-red-100 bg-red-50/50 rounded-[28px]">
-                        <div className="text-3xl">⚠️</div>
-                        <div className="space-y-2">
-                            <h3 className="text-lg font-black text-red-800">OVERWEIGHT（肥大化）</h3>
-                            <p className="text-xs font-bold text-red-600">右下エリア：多人数 × 低生産性</p>
+                    {/* OVERWEIGHT or BURNOUT */}
+                    <div className="flex gap-4 p-6 border border-red-100 bg-red-50/50 rounded-[28px] overflow-hidden relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent w-full pointer-events-none" />
+                        <div className="text-3xl relative z-10">⚠️</div>
+                        <div className="space-y-2 relative z-10">
+                            <h3 className="text-lg font-black text-red-800">OVERWEIGHT / BURNOUT <span className="text-sm font-medium ml-2 text-red-600">左上(Burnout)・左下(Structural)</span></h3>
                             <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                                人員に対するリターンが見合っておらず、構造的な改善が必要な領域。調整コスト（会議、承認フロー等）の増大、業務の属人化、目標の曖昧さなどが原因として考えられます。
+                                負担増大や構造的課題により、現場が疲弊している領域。調整コストの増大、業務の属人化、目標の曖昧さなどが原因として考えられます。
                             </p>
-                            <div className="bg-white/80 rounded-xl px-4 py-2 text-xs font-bold text-red-700">
+                            <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-xl px-4 py-2 text-xs font-bold text-red-700">
                                 💡 アクション例：業務の棚卸しと再配分、KPIの見直し、場合によっては組織再編を検討
                             </div>
                         </div>
@@ -201,83 +291,15 @@ export default function BubbleChartGuidePage() {
                 </div>
             </section>
 
-            {/* Timelapse */}
-            <section className="space-y-6">
-                <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
-                    <Clock className="w-7 h-7 text-teal" />
-                    タイムラプスで変化を追う
-                </h2>
-                <p className="text-slate-600 font-medium leading-relaxed">
-                    マトリックスの上部にある「TIME LAPSE」では、<strong>現在・1ヶ月前・3ヶ月前・6ヶ月前・1年前</strong>の5段階で組織の変遷を確認できます。
-                </p>
-                <div className="rounded-[28px] border-2 border-slate-100 overflow-hidden shadow-lg">
-                    <Image 
-                        src="/docs/bubble_chart_timelapse.png" 
-                        alt="タイムラプス機能（1年前の表示例）" 
-                        width={1500} 
-                        height={900}
-                        className="w-full"
-                    />
-                </div>
-                <p className="text-sm text-slate-500 font-medium text-center">
-                    ▲ タイムラプスで「1年前」を選択した状態
-                </p>
-
-                <div className="bg-white border-2 border-slate-100 p-6 rounded-[32px] shadow-sm space-y-5">
-                    <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                        <Lightbulb className="w-5 h-5 text-amber-500" />
-                        タイムラプスで何が見えるのか
-                    </h3>
-                    <ul className="space-y-4">
-                        <li className="flex gap-3 items-start">
-                            <span className="text-lg">📍</span>
-                            <div>
-                                <h4 className="text-sm font-black text-slate-900 mb-1">バブルの「移動方向」を観察する</h4>
-                                <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                                    部署のバブルが<strong>左上（PIONEER）に移動</strong>していれば、効率化が進んでいる証拠です。逆に<strong>右下（OVERWEIGHT）に向かっている</strong>場合は、増員が成果に結びついていない可能性があります。
-                                </p>
-                            </div>
-                        </li>
-                        <li className="flex gap-3 items-start">
-                            <span className="text-lg">📐</span>
-                            <div>
-                                <h4 className="text-sm font-black text-slate-900 mb-1">組織再編の効果を検証する</h4>
-                                <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                                    3ヶ月前に実施した人事異動や組織再編の後、対象部署が期待通りの象限に移動したかを確認できます。施策の効果測定として非常に有効です。
-                                </p>
-                            </div>
-                        </li>
-                        <li className="flex gap-3 items-start">
-                            <span className="text-lg">🔄</span>
-                            <div>
-                                <h4 className="text-sm font-black text-slate-900 mb-1">季節変動と構造変化を区別する</h4>
-                                <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                                    営業部門の繁忙期（年度末など）による一時的な変動なのか、中長期で徐々に変化しているトレンドなのかを判別できます。1ヶ月前と6ヶ月前を比較するとよく分かります。
-                                </p>
-                            </div>
-                        </li>
-                        <li className="flex gap-3 items-start">
-                            <span className="text-lg">📊</span>
-                            <div>
-                                <h4 className="text-sm font-black text-slate-900 mb-1">バブルのサイズ変化にも注目</h4>
-                                <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                                    バブルが小さくなっていれば（KPI達成率が低下していれば）、位置だけでなくパフォーマンスの低下を事前に捉えることができます。
-                                </p>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-            </section>
-
             {/* View modes */}
             <section className="space-y-6">
                 <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
                     <Maximize2 className="w-6 h-6 text-teal" />
-                    表示モード
+                    表示モードとその他機能
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm space-y-2">
-                        <h3 className="text-sm font-black text-slate-900">📋 部署別</h3>
+                        <h3 className="text-sm font-black text-slate-900">📋 部署別（現在の表示）</h3>
                         <p className="text-xs text-slate-500 font-medium leading-relaxed">
                             営業部、開発部、CS部などの組織単位でプロットします。部署間の生産性バランスを俯瞰するのに最適です。
                         </p>
@@ -285,48 +307,20 @@ export default function BubbleChartGuidePage() {
                     <div className="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm space-y-2">
                         <h3 className="text-sm font-black text-slate-900">🏷️ 担当領域別</h3>
                         <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                            プロダクト、エリア、ブランドなどの切り口でプロットします。同一部署内でも異なるプロダクトのパフォーマンス差が見えるようになります。
+                            プロダクト、エリア、ブランドなどの切り口でプロットします。同一部署内でも異なる領域のパフォーマンス差が見えるようになります。
                         </p>
                     </div>
                 </div>
                 <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
                     <h3 className="text-sm font-black text-slate-900 mb-2 flex items-center gap-2">
-                        <Maximize2 className="w-4 h-4 text-slate-400" />
-                        拡大表示
+                        <Lightbulb className="w-4 h-4 text-slate-400" />
+                        タイムラプスで何が見えるのか？
                     </h3>
-                    <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                        右上の「拡大表示」ボタンを押すと、マトリックスをフルスクリーンに近い大きさで表示できます。会議中のプロジェクター投影や、経営会議での共有に便利です。
+                    <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                        上記のデモ上部にあるボタンで過去に遡ることができます。バブルが時間の経過とともに<strong>どう移動したか（左上へ向かっているか等）</strong>や、<strong>サイズがどう変化したか</strong>を追跡することで、組織の変化のトレンドを的確に捉えることができます。
                     </p>
                 </div>
             </section>
-
-            {/* AI Analysis */}
-            <section className="space-y-6">
-                <div className="p-6 bg-gradient-to-br from-teal/5 to-blue-50 border border-teal/10 rounded-3xl flex gap-4">
-                    <div className="p-2 bg-white rounded-xl h-fit shadow-sm">
-                        <Sparkles className="w-5 h-5 text-teal" />
-                    </div>
-                    <div>
-                        <h3 className="text-sm font-black text-slate-900 mb-1">AIのマトリックス分析</h3>
-                        <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                            マトリックスの下には、AIがデータを読み解いた分析コメントが自動生成されます。各部署がどの象限に位置し、前月からどの方向に移動したか、そしてどのようなアクションが推奨されるかがテキストで要約されます。
-                        </p>
-                    </div>
-                </div>
-            </section>
-
-            {/* Warning */}
-            <div className="p-6 bg-amber-50 border border-amber-100/50 rounded-3xl flex gap-4">
-                <div className="p-2 bg-white rounded-xl h-fit shadow-sm">
-                    <AlertTriangle className="w-5 h-5 text-amber-500" />
-                </div>
-                <div>
-                    <h3 className="text-sm font-black text-slate-900 mb-1">データ量に関する注意</h3>
-                    <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                        マトリックスを正確に表示するには、<strong>複数部署のKPI実績</strong>と<strong>ボイスチェック（体温）のスコア</strong>の両方が必要です。データが不十分な場合は「分析データが十分にありません」と表示されます。アンケートの回答率を上げることで、より信頼性の高い可視化が可能になります。
-                    </p>
-                </div>
-            </div>
 
             {/* Next buttons */}
             <div className="pt-10 border-t border-slate-100 flex items-center justify-between">
