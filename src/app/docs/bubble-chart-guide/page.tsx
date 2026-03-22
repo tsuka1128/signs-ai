@@ -196,33 +196,37 @@ export default function BubbleChartGuidePage() {
                 <div className="p-8 bg-slate-50 border border-slate-200 rounded-[32px] mb-8">
                     <div className="relative w-full max-w-2xl mx-auto aspect-square text-white">
                         {/* Axes */}
-                        <div className="absolute top-0 bottom-8 left-8 right-0 border-l-4 border-b-4 border-slate-300">
+                        <div className="absolute top-0 bottom-8 left-10 right-0 border-l-4 border-b-4 border-slate-300">
                             {/* Y-axis arrow & label */}
                             <div className="absolute -top-3 -left-[14px] w-0 h-0 border-l-[12px] border-r-[12px] border-b-[16px] border-transparent border-b-slate-300"></div>
-                            <div className="absolute top-1/2 -left-16 rotate-[-90deg] origin-center -translate-y-1/2 text-slate-500 font-black tracking-widest uppercase text-xs">KPI / Productivity</div>
+                            <div className="absolute top-1/2 -left-16 rotate-[-90deg] origin-center -translate-y-1/2 text-slate-500 font-black tracking-widest text-xs whitespace-nowrap">一人当たり生産性（高・低）</div>
                             
                             {/* X-axis arrow & label */}
                             <div className="absolute top-full -right-3 -translate-y-[14px] w-0 h-0 border-t-[12px] border-b-[12px] border-l-[16px] border-transparent border-l-slate-300"></div>
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 text-slate-500 font-black tracking-widest uppercase text-xs">Voice / Engagement (Temperature)</div>
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 text-slate-500 font-black tracking-widest text-xs whitespace-nowrap">リソース量 / 人数（少・多）</div>
                         </div>
 
                         {/* Quadrants Grid */}
-                        <div className="absolute top-6 left-12 right-6 bottom-14 grid grid-cols-2 grid-rows-2 gap-3">
-                            <div className="bg-gradient-to-br from-red-500 to-orange-400 rounded-3xl shadow-md p-4 flex flex-col items-center justify-center text-center">
-                                <span className="font-black text-xl mb-1 drop-shadow-sm">Burnout Risk</span>
-                                <span className="text-[10px] font-medium opacity-90 leading-tight">High performance but<br/>Low engagement</span>
+                        <div className="absolute top-6 left-14 right-6 bottom-14 grid grid-cols-2 grid-rows-2 gap-3">
+                            <div className="bg-gradient-to-br from-emerald-400 to-emerald-500 rounded-3xl shadow-md p-4 flex flex-col items-center justify-center text-center">
+                                <span className="font-black text-xl mb-1 drop-shadow-sm">開拓者 (PIONEER)</span>
+                                <span className="text-xs font-bold opacity-90 mb-1">少人数 × 高生産性</span>
+                                <span className="text-[10px] font-medium opacity-90 leading-tight">理想的な高効率・自律型チーム</span>
                             </div>
-                            <div className="bg-gradient-to-br from-teal-400 to-emerald-500 rounded-3xl shadow-md p-4 flex flex-col items-center justify-center text-center">
-                                <span className="font-black text-xl mb-1 drop-shadow-sm">Ideal / Success</span>
-                                <span className="text-[10px] font-medium opacity-90 leading-tight">High performance<br/>& Health</span>
+                            <div className="bg-gradient-to-br from-blue-400 to-blue-500 rounded-3xl shadow-md p-4 flex flex-col items-center justify-center text-center">
+                                <span className="font-black text-xl mb-1 drop-shadow-sm">拡大期 (SCALE)</span>
+                                <span className="text-xs font-bold opacity-90 mb-1">多人数 × 高生産性</span>
+                                <span className="text-[10px] font-medium opacity-90 leading-tight">組織の成果を牽引する主力部隊</span>
                             </div>
-                            <div className="bg-gradient-to-br from-slate-400 to-slate-500 rounded-3xl shadow-md p-4 flex flex-col items-center justify-center text-center">
-                                <span className="font-black text-xl mb-1 drop-shadow-sm">Structural Issues</span>
-                                <span className="text-[10px] font-medium opacity-90 leading-tight">Low performance &<br/>Low engagement</span>
+                            <div className="bg-gradient-to-br from-amber-400 to-amber-500 rounded-3xl shadow-md p-4 flex flex-col items-center justify-center text-center">
+                                <span className="font-black text-xl mb-1 drop-shadow-sm">種まき (SEED)</span>
+                                <span className="text-xs font-bold opacity-90 mb-1">少人数 × 低生産性</span>
+                                <span className="text-[10px] font-medium opacity-90 leading-tight">新規事業やR&Dなどの投資フェーズ</span>
                             </div>
-                            <div className="bg-gradient-to-br from-cyan-400 to-blue-500 rounded-3xl shadow-md p-4 flex flex-col items-center justify-center text-center">
-                                <span className="font-black text-xl mb-1 drop-shadow-sm">Latent Potential</span>
-                                <span className="text-[10px] font-medium opacity-90 leading-tight">High engagement but<br/>Low performance</span>
+                            <div className="bg-gradient-to-br from-rose-400 to-rose-500 rounded-3xl shadow-md p-4 flex flex-col items-center justify-center text-center">
+                                <span className="font-black text-xl mb-1 drop-shadow-sm">肥大化 (OVERWEIGHT)</span>
+                                <span className="text-xs font-bold opacity-90 mb-1">多人数 × 低生産性</span>
+                                <span className="text-[10px] font-medium opacity-90 leading-tight">調整コスト増大による改善必須領域</span>
                             </div>
                         </div>
                     </div>
@@ -230,13 +234,13 @@ export default function BubbleChartGuidePage() {
 
                 <div className="space-y-4">
                     {/* PIONEER */}
-                    <div className="flex gap-4 p-6 border border-green-100 bg-green-50/50 rounded-[28px] overflow-hidden relative">
+                    <div className="flex gap-4 p-6 border border-emerald-100 bg-emerald-50/50 rounded-[28px] overflow-hidden relative">
                         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent w-full pointer-events-none" />
                         <div className="text-3xl relative z-10">⭐</div>
                         <div className="space-y-2 relative z-10">
-                            <h3 className="text-lg font-black text-emerald-800">PIONEER（開拓者） <span className="text-sm font-medium ml-2 text-emerald-600">右上エリア</span></h3>
+                            <h3 className="text-lg font-black text-emerald-800">開拓者 (PIONEER) <span className="text-sm font-medium ml-2 text-emerald-600">左上エリア：少人数 × 高生産性</span></h3>
                             <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                                理想的なチーム。自律的な高効率組織であり、この状態を維持しつつ、成功ノウハウを他部署へ展開することが有効です。
+                                少ない人数で高い成果を出している理想的なチーム。自律的な高効率組織であり、この状態を維持しつつ、成功ノウハウを他部署へ展開することが有効です。
                             </p>
                             <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-xl px-4 py-2 text-xs font-bold text-emerald-700">
                                 💡 アクション例：成功要因を言語化し、採用やオンボーディングに活用する
@@ -249,9 +253,9 @@ export default function BubbleChartGuidePage() {
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent w-full pointer-events-none" />
                         <div className="text-3xl relative z-10">🚀</div>
                         <div className="space-y-2 relative z-10">
-                            <h3 className="text-lg font-black text-blue-800">SCALE（拡大期） <span className="text-sm font-medium ml-2 text-blue-600">右上〜左上エリア</span></h3>
+                            <h3 className="text-lg font-black text-blue-800">拡大期 (SCALE) <span className="text-sm font-medium ml-2 text-blue-600">右上エリア：多人数 × 高生産性</span></h3>
                             <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                                組織の主力部隊。マネジメントが機能している証拠ですが、人数増加に伴い情報伝達の鈍化やサイロ化のリスクも監視が必要です。
+                                大所帯でありながら高い生産性を維持している組織の主力部隊。マネジメントが機能している証拠ですが、人数増加に伴い情報伝達の鈍化やサイロ化のリスクも監視が必要です。
                             </p>
                             <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-xl px-4 py-2 text-xs font-bold text-blue-700">
                                 💡 アクション例：中間管理職の育成とチーム内コミュニケーションの仕組み化を推進
@@ -264,9 +268,9 @@ export default function BubbleChartGuidePage() {
                         <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent w-full pointer-events-none" />
                         <div className="text-3xl relative z-10">🌱</div>
                         <div className="space-y-2 relative z-10">
-                            <h3 className="text-lg font-black text-amber-800">SEED（種まき） <span className="text-sm font-medium ml-2 text-amber-600">左下〜右下エリア（右下はLatent Potential）</span></h3>
+                            <h3 className="text-lg font-black text-amber-800">種まき (SEED) <span className="text-sm font-medium ml-2 text-amber-600">左下エリア：少人数 × 低生産性</span></h3>
                             <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                                新規事業や投資フェーズにあるチーム。コンディションは良くても短期的な達成率が低い場合、ポテンシャルを活かす戦略が必要です。
+                                新規事業やR&Dなど、投資フェーズにあるチーム。短期的なKPI達成率は低くても、中長期で見た場合の成長ポテンシャルがここに含まれます。
                             </p>
                             <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-xl px-4 py-2 text-xs font-bold text-amber-700">
                                 💡 アクション例：マイルストーンベースで進捗管理し、戦略的にリソースを支援する
@@ -274,16 +278,16 @@ export default function BubbleChartGuidePage() {
                         </div>
                     </div>
 
-                    {/* OVERWEIGHT or BURNOUT */}
-                    <div className="flex gap-4 p-6 border border-red-100 bg-red-50/50 rounded-[28px] overflow-hidden relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent w-full pointer-events-none" />
+                    {/* OVERWEIGHT */}
+                    <div className="flex gap-4 p-6 border border-rose-100 bg-rose-50/50 rounded-[28px] overflow-hidden relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-rose-500/10 to-transparent w-full pointer-events-none" />
                         <div className="text-3xl relative z-10">⚠️</div>
                         <div className="space-y-2 relative z-10">
-                            <h3 className="text-lg font-black text-red-800">OVERWEIGHT / BURNOUT <span className="text-sm font-medium ml-2 text-red-600">左上(Burnout)・左下(Structural)</span></h3>
+                            <h3 className="text-lg font-black text-rose-800">肥大化 (OVERWEIGHT) <span className="text-sm font-medium ml-2 text-rose-600">右下エリア：多人数 × 低生産性</span></h3>
                             <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                                負担増大や構造的課題により、現場が疲弊している領域。調整コストの増大、業務の属人化、目標の曖昧さなどが原因として考えられます。
+                                人員に対するリターンが見合っておらず、構造的な改善が必要な領域。本質的な業務より調整コストが増大している可能性があります。
                             </p>
-                            <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-xl px-4 py-2 text-xs font-bold text-red-700">
+                            <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-xl px-4 py-2 text-xs font-bold text-rose-700">
                                 💡 アクション例：業務の棚卸しと再配分、KPIの見直し、場合によっては組織再編を検討
                             </div>
                         </div>
