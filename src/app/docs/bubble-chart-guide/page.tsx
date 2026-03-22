@@ -12,7 +12,8 @@ import {
     TrendingUp,
     AlertTriangle,
     Lightbulb,
-    Maximize2
+    Maximize2,
+    Compass
 } from "lucide-react";
 import { ScatterPlot } from "@/components/dashboard/ScatterPlot";
 
@@ -233,18 +234,81 @@ export default function BubbleChartGuidePage() {
                     </div>
                 </div>
 
+                {/* Growth Philosophy */}
+                <div className="p-6 md:p-8 bg-slate-900 border border-slate-800 rounded-[32px] mx-auto mb-8 shadow-xl relative overflow-hidden text-white">
+                    <div className="absolute top-0 right-0 p-32 bg-teal-500/10 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
+                    <div className="relative z-10 space-y-5">
+                        <h3 className="text-xl font-black text-white flex items-center gap-2">
+                            <Compass className="w-6 h-6 text-teal-400" />
+                            Signs AIが提唱する「組織成長の哲学」
+                        </h3>
+                        <p className="text-sm md:text-base text-slate-300 font-medium leading-relaxed">
+                            組織をスケールさせる際、むやみに人員を増やすのは危険です。<br/>
+                            <strong className="text-white">「まずは生産性を高め（上へ移動）、高い生産性を維持したまま人員を拡大する（右へ移動）」</strong>のが鉄則です。
+                        </p>
+                        <div className="flex flex-col gap-3 text-sm text-slate-300 font-medium bg-slate-800/50 p-5 rounded-2xl border border-slate-700/50">
+                            <div className="flex items-baseline gap-3">
+                                <span className="text-amber-400 font-black w-14 shrink-0 text-right">STEP 1</span>
+                                <p><strong className="text-amber-400">SEED（種まき）</strong> からスタートし、事業の「勝ちパターン」を見つける</p>
+                            </div>
+                            <div className="flex items-baseline gap-3">
+                                <span className="text-emerald-400 font-black w-14 shrink-0 text-right">STEP 2</span>
+                                <p>業務効率と組織体温を高めて生産性を向上させ、<strong className="text-emerald-400">開拓者（PIONEER）</strong> へと引き上げる</p>
+                            </div>
+                            <div className="flex items-baseline gap-3">
+                                <span className="text-blue-400 font-black w-14 shrink-0 text-right">STEP 3</span>
+                                <p>強力なカルチャーと仕組みが確立された高生産性の状態のまま人数を拡大し、<strong className="text-blue-400">拡大期（SCALE）</strong> へ移行する</p>
+                            </div>
+                        </div>
+                        <p className="text-sm md:text-base text-slate-300 font-medium leading-relaxed">
+                            この理想的な成長パス（<strong className="text-amber-400">SEED</strong> ➔ <strong className="text-emerald-400">PIONEER</strong> ➔ <strong className="text-blue-400">SCALE</strong>）を描けているか、あるいは生産性の低いまま人員を増やしてしまい <strong className="text-rose-400">OVERWEIGHT</strong> に陥っていないかを、タイムラプスで検証することがマトリックスの最大の強みです。
+                        </p>
+                    </div>
+                </div>
+
                 <div className="space-y-4">
+                    {/* SEED (Moved to top logically) */}
+                    <div className="flex gap-4 p-6 border border-amber-100 bg-amber-50/50 rounded-[28px] overflow-hidden relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent w-full pointer-events-none" />
+                        <div className="text-3xl relative z-10 mt-1">🌱</div>
+                        <div className="space-y-3 relative z-10 w-full">
+                            <div>
+                                <h3 className="text-xl font-black text-amber-800 mb-1">種まき (SEED)</h3>
+                                <div className="inline-flex items-center gap-2 bg-amber-100/80 text-amber-800 px-3 py-1 rounded-lg text-xs font-bold tracking-tight">
+                                    <span>左下エリア</span>
+                                    <span>|</span>
+                                    <span>少人数 × 低生産性</span>
+                                </div>
+                            </div>
+                            <p className="text-sm text-slate-700 font-medium leading-relaxed">
+                                新規事業や立ち上げフェーズのチームです。このフェーズでは、まずは<strong>生産性向上（PIONEERへの移動）に集中する</strong>ことが鉄則です。生産性が低いまま人員を増やすと、OVERWEIGHT（肥大化）に直行してしまうため、少人数のうちに「勝ちパターン」を見つけることが最重要になります。
+                            </p>
+                            <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-xl px-4 py-3 text-xs font-bold text-amber-800 border border-amber-200/50 flex gap-2">
+                                <span className="shrink-0">💡</span>
+                                <p>アクション：まずは生産性向上に必要なボトルネックを特定し、業務プロセスの構築とPMF（プロダクトフィット）に集中する。</p>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* PIONEER */}
                     <div className="flex gap-4 p-6 border border-emerald-100 bg-emerald-50/50 rounded-[28px] overflow-hidden relative">
                         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent w-full pointer-events-none" />
-                        <div className="text-3xl relative z-10">⭐</div>
-                        <div className="space-y-2 relative z-10">
-                            <h3 className="text-lg font-black text-emerald-800">開拓者 (PIONEER) <span className="text-sm font-medium ml-2 text-emerald-600">左上エリア：少人数 × 高生産性</span></h3>
-                            <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                                少ない人数で高い成果を出している理想的なチーム。自律的な高効率組織であり、この状態を維持しつつ、成功ノウハウを他部署へ展開することが有効です。
+                        <div className="text-3xl relative z-10 mt-1">⭐</div>
+                        <div className="space-y-3 relative z-10 w-full">
+                            <div>
+                                <h3 className="text-xl font-black text-emerald-800 mb-1">開拓者 (PIONEER)</h3>
+                                <div className="inline-flex items-center gap-2 bg-emerald-100/80 text-emerald-800 px-3 py-1 rounded-lg text-xs font-bold tracking-tight">
+                                    <span>左上エリア</span>
+                                    <span>|</span>
+                                    <span>少人数 × 高生産性</span>
+                                </div>
+                            </div>
+                            <p className="text-sm text-slate-700 font-medium leading-relaxed">
+                                少人数で高い成果を出している、組織の理想形となるチームです。SEEDから着実に成長し、自律的な高効率組織となった状態です。この「高生産性・高体温」のカルチャーや業務の仕組みが確立された状態で初めて、<strong>採用を強化し SCALE（拡大期）へと移行する</strong>準備が整います。
                             </p>
-                            <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-xl px-4 py-2 text-xs font-bold text-emerald-700">
-                                💡 アクション例：成功要因を言語化し、採用やオンボーディングに活用する
+                            <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-xl px-4 py-3 text-xs font-bold text-emerald-800 border border-emerald-200/50 flex gap-2">
+                                <span className="shrink-0">💡</span>
+                                <p>アクション：成功要因（カルチャー、ツール、仕組み）を言語化し、拡大に向けたオンボーディングの土台としてマニュアル化する。</p>
                             </div>
                         </div>
                     </div>
@@ -252,29 +316,22 @@ export default function BubbleChartGuidePage() {
                     {/* SCALE */}
                     <div className="flex gap-4 p-6 border border-blue-100 bg-blue-50/50 rounded-[28px] overflow-hidden relative">
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent w-full pointer-events-none" />
-                        <div className="text-3xl relative z-10">🚀</div>
-                        <div className="space-y-2 relative z-10">
-                            <h3 className="text-lg font-black text-blue-800">拡大期 (SCALE) <span className="text-sm font-medium ml-2 text-blue-600">右上エリア：多人数 × 高生産性</span></h3>
-                            <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                                大所帯でありながら高い生産性を維持している組織の主力部隊。マネジメントが機能している証拠ですが、人数増加に伴い情報伝達の鈍化やサイロ化のリスクも監視が必要です。
-                            </p>
-                            <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-xl px-4 py-2 text-xs font-bold text-blue-700">
-                                💡 アクション例：中間管理職の育成とチーム内コミュニケーションの仕組み化を推進
+                        <div className="text-3xl relative z-10 mt-1">🚀</div>
+                        <div className="space-y-3 relative z-10 w-full">
+                            <div>
+                                <h3 className="text-xl font-black text-blue-800 mb-1">拡大期 (SCALE)</h3>
+                                <div className="inline-flex items-center gap-2 bg-blue-100/80 text-blue-800 px-3 py-1 rounded-lg text-xs font-bold tracking-tight">
+                                    <span>右上エリア</span>
+                                    <span>|</span>
+                                    <span>多人数 × 高生産性</span>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-
-                    {/* SEED */}
-                    <div className="flex gap-4 p-6 border border-amber-100 bg-amber-50/50 rounded-[28px] overflow-hidden relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent w-full pointer-events-none" />
-                        <div className="text-3xl relative z-10">🌱</div>
-                        <div className="space-y-2 relative z-10">
-                            <h3 className="text-lg font-black text-amber-800">種まき (SEED) <span className="text-sm font-medium ml-2 text-amber-600">左下エリア：少人数 × 低生産性</span></h3>
-                            <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                                新規事業やR&Dなど、投資フェーズにあるチーム。短期的なKPI達成率は低くても、中長期で見た場合の成長ポテンシャルがここに含まれます。
+                            <p className="text-sm text-slate-700 font-medium leading-relaxed">
+                                PIONEERで確立された高い生産性を維持したまま、人員拡大に成功している組織の主力部隊です。この状態をいかに長く維持するかが企業収益の鍵となります。人数増加に伴うコミュニケーションコストの増大やサイロ化によって生産性が落ち、OVERWEIGHTへ転落しないよう監視が必要です。
                             </p>
-                            <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-xl px-4 py-2 text-xs font-bold text-amber-700">
-                                💡 アクション例：マイルストーンベースで進捗管理し、戦略的にリソースを支援する
+                            <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-xl px-4 py-3 text-xs font-bold text-blue-800 border border-blue-200/50 flex gap-2">
+                                <span className="shrink-0">💡</span>
+                                <p>アクション：中間管理職の育成や、1on1の充実などによるエンゲージメント維持施策を強化し、大所帯ならではの組織疲労を予防する。</p>
                             </div>
                         </div>
                     </div>
@@ -282,14 +339,22 @@ export default function BubbleChartGuidePage() {
                     {/* OVERWEIGHT */}
                     <div className="flex gap-4 p-6 border border-rose-100 bg-rose-50/50 rounded-[28px] overflow-hidden relative">
                         <div className="absolute inset-0 bg-gradient-to-r from-rose-500/10 to-transparent w-full pointer-events-none" />
-                        <div className="text-3xl relative z-10">⚠️</div>
-                        <div className="space-y-2 relative z-10">
-                            <h3 className="text-lg font-black text-rose-800">肥大化 (OVERWEIGHT) <span className="text-sm font-medium ml-2 text-rose-600">右下エリア：多人数 × 低生産性</span></h3>
-                            <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                                人員に対するリターンが見合っておらず、構造的な改善が必要な領域。本質的な業務より調整コストが増大している可能性があります。
+                        <div className="text-3xl relative z-10 mt-1">⚠️</div>
+                        <div className="space-y-3 relative z-10 w-full">
+                            <div>
+                                <h3 className="text-xl font-black text-rose-800 mb-1">肥大化 (OVERWEIGHT)</h3>
+                                <div className="inline-flex items-center gap-2 bg-rose-100/80 text-rose-800 px-3 py-1 rounded-lg text-xs font-bold tracking-tight">
+                                    <span>右下エリア</span>
+                                    <span>|</span>
+                                    <span>多人数 × 低生産性</span>
+                                </div>
+                            </div>
+                            <p className="text-sm text-slate-700 font-medium leading-relaxed">
+                                人員に対するリターンが見合っておらず、構造的な改善が必要なリスク領域です。<strong>「生産性が低いSEEDの状態で無理に人員を増やしてしまった」</strong>、あるいは<strong>「SCALEから組織規模が拡大しすぎて生産性が落ちてしまった」</strong>結果として行き着く状態です。
                             </p>
-                            <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-xl px-4 py-2 text-xs font-bold text-rose-700">
-                                💡 アクション例：業務の棚卸しと再配分、KPIの見直し、場合によっては組織再編を検討
+                            <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-xl px-4 py-3 text-xs font-bold text-rose-800 border border-rose-200/50 flex gap-2">
+                                <span className="shrink-0">💡</span>
+                                <p>アクション：採用を一旦ストップし、業務の棚卸しと構造的改善を実施する。場合によってはPIONEERレベルの少人数チームに分割する等の抜本的対策を検討する。</p>
                             </div>
                         </div>
                     </div>
