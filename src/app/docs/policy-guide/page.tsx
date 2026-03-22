@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import { Target, BrainCircuit, MessageSquare, Lightbulb, AlertCircle, Copy, Check } from 'lucide-react';
 
