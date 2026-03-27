@@ -10,12 +10,12 @@ import {
     ChevronRight, 
     ArrowLeft,
     Home,
-    Search,
     HelpCircle,
     Target,
     CheckSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DocsSearch } from "@/components/docs/DocsSearch";
 
 const DOCS_MENU = [
     {
@@ -61,11 +61,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <div className="hidden md:flex items-center gap-2 bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-full text-slate-400">
-                        <Search className="w-3.5 h-3.5" />
-                        <span className="text-xs font-medium">Search documentation...</span>
-                        <span className="text-[10px] bg-white border border-slate-200 px-1 rounded ml-2 font-mono">⌘K</span>
-                    </div>
+                    <DocsSearch />
                     <Link href="/" className="text-xs font-bold text-slate-600 hover:text-teal flex items-center gap-1.5 transition-colors">
                         <ArrowLeft className="w-3.5 h-3.5" />
                         Dashboard
