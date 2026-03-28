@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 
 export function useAdmin() {
     const router = useRouter();
+    const pathname = usePathname();
     const supabase = createClient();
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<any>(null);
@@ -21,7 +22,11 @@ export function useAdmin() {
             try {
                 const { data: { user: authUser } } = await supabase.auth.getUser();
                 if (!authUser) {
-                    router.push("/login?redirect=/admin");
+                    // 管理者ページ (/admin) にアクセスしている場合のみログインへ飛ばす
+                    if (pathname?.startsWith('/admin')) {
+                        router.push("/login?redirect=/admin");
+                    }
+                    setLoading(false);
                     return;
                 }
                 setUser(authUser);

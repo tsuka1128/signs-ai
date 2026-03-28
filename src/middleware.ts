@@ -17,7 +17,7 @@ export async function middleware(request: NextRequest) {
 
     // 認証不要のパス（パブリックルート）の判定を簡素化・堅牢化
     const publicPrefixes = ["/login", "/register", "/marketing", "/survey", "/auth/callback", "/form"];
-    const isPublic = pathname === "/" || publicPrefixes.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`));
+    const isPublic = publicPrefixes.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`));
 
     // パブリックルートの場合は早期リターンまたは認証チェックをスキップする設定も検討可能ですが、
     // Supabase SSR ではセッション更新のために一連の処理を推奨しています。
