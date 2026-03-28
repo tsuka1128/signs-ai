@@ -1076,24 +1076,27 @@ export default function SettingsPage() {
                                                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <button
                                                             onClick={() => handleCopyInviteLink(inv)}
-                                                            className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                                                            className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
                                                             title="招待リンクをコピー"
                                                         >
-                                                            <Copy className="w-4 h-4" />
+                                                            <Copy className="w-3.5 h-3.5" />
+                                                            リンクをコピー
                                                         </button>
                                                         <button
                                                             onClick={() => handleResendInvitation(inv)}
-                                                            className="p-2 text-slate-400 hover:text-teal hover:bg-teal-50 rounded-lg transition-all"
+                                                            className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-slate-500 hover:text-teal hover:bg-teal-50 rounded-xl transition-all"
                                                             title="再送する"
                                                         >
-                                                            <Send className="w-4 h-4" />
+                                                            <Send className="w-3.5 h-3.5" />
+                                                            再送
                                                         </button>
                                                         <button
                                                             onClick={() => handleDeleteInvitation(inv.id)}
-                                                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                            className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                                                             title="削除する"
                                                         >
-                                                            <Trash2 className="w-4 h-4" />
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                            削除
                                                         </button>
                                                     </div>
                                                 </div>
