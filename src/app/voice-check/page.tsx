@@ -144,7 +144,7 @@ export default function VoiceCheckPage() {
                                     <button
                                         onClick={() => {
                                             const url = `${window.location.origin}/form?c=${company?.short_id}`;
-                                            const text = `お疲れ様です！今月のボイスチェック（アンケート）の回答をお願いします。\n回答はこちらから（ログイン不要）：\n${url}\n\n※所要時間は5分程度です。率直な声をお聞かせください。`;
+                                            const text = `お疲れ様です！今月のボイスチェック（アンケート）の回答をお願いします。\n\n【回答期限：${company?.survey_deadline_day || 20}日】\n\n回答はこちらから（ログイン不要）：\n${url}\n\n※所要時間は5分程度です。率直な声をお聞かせください。`;
                                             navigator.clipboard.writeText(text);
                                             setCopiedTemplate(true);
                                             setTimeout(() => setCopiedTemplate(false), 2000);
