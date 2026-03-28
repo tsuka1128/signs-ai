@@ -97,31 +97,199 @@ export default function KpiInputPage() {
                 </div>
             </section>
 
-            {/* デモ */}
+            {/* 画面プレビュー */}
             <section className="space-y-4">
-                <a
-                    href="/demo/kpi-input.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block p-6 bg-gradient-to-r from-teal-50 to-emerald-50 border-2 border-teal-100 rounded-[28px] shadow-sm hover:shadow-lg hover:border-teal-200 transition-all group"
-                >
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-teal-500 rounded-2xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
-                                <span className="text-white text-xl">🧪</span>
+                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">画面イメージ</div>
+                <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                    {/* テーブルヘッダー */}
+                    <div className="bg-slate-800 px-4 py-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <div className="w-3.5 h-3.5 text-teal-400">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/></svg>
                             </div>
-                            <div>
-                                <div className="text-base font-black text-slate-800 group-hover:text-teal transition-colors">
-                                    インタラクティブデモを開く
-                                </div>
-                                <p className="text-xs text-slate-500 font-medium mt-0.5">
-                                    実際のKPI入力画面を体験できます。入力・ロック切替・保存など自由にお試しください。
-                                </p>
-                            </div>
+                            <span className="text-xs font-black text-white">全社・部署（基本）</span>
+                            <span className="text-[8px] font-black text-teal-300 bg-teal-500/20 px-1.5 py-0.5 rounded">MAIN</span>
                         </div>
-                        <ArrowRight className="w-5 h-5 text-teal group-hover:translate-x-1 transition-transform" />
+                        <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-400">
+                            <Lock className="w-3 h-3" />
+                            今月度のみ入力可能
+                        </div>
                     </div>
-                </a>
+                    {/* ミニテーブル */}
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse" style={{ minWidth: "580px" }}>
+                            <thead>
+                                <tr>
+                                    <th className="bg-white border-b border-r border-slate-200 px-3 py-2 w-[140px]">
+                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">項目名 / 部署</span>
+                                    </th>
+                                    <th className="bg-[#f0fdf4] border-b border-r-2 border-slate-200 px-3 py-2 text-center w-[120px]">
+                                        <div className="text-[10px] font-black text-teal-900">今月度</div>
+                                        <span className="text-[7px] font-black text-teal-500 bg-teal-500/10 px-1 rounded">INPUT</span>
+                                    </th>
+                                    <th className="bg-slate-50 border-b border-r border-slate-200 px-3 py-2 text-center w-[110px]">
+                                        <div className="text-[10px] font-black text-slate-500">2026 / 02</div>
+                                    </th>
+                                    <th className="bg-slate-50 border-b border-r border-slate-200 px-3 py-2 text-center w-[110px]">
+                                        <div className="text-[10px] font-black text-slate-500">2026 / 01</div>
+                                    </th>
+                                    <th className="bg-slate-50 border-b border-slate-200 px-3 py-2 text-center w-[110px]">
+                                        <div className="text-[10px] font-black text-slate-400">2025 / 12</div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {/* 月次売上 */}
+                                <tr>
+                                    <td className="bg-white border-b border-r border-slate-200 px-3 py-2">
+                                        <div className="text-[11px] font-bold text-slate-800">月次売上</div>
+                                        <span className="text-[8px] font-bold text-slate-400 bg-slate-100 px-1 rounded">営業部</span>
+                                        <div className="text-right text-[8px] text-slate-400 font-bold mt-1">万円</div>
+                                    </td>
+                                    <td className="bg-[#f0fdf4] border-b border-r-2 border-slate-200 px-3 py-0">
+                                        <div className="flex items-center justify-between py-1.5 border-b border-white">
+                                            <span className="text-[8px] font-black text-teal-700">実績</span>
+                                            <span className="text-[12px] font-black text-teal-900/30">---</span>
+                                        </div>
+                                        <div className="flex items-center justify-between py-1.5">
+                                            <span className="text-[7px] font-bold text-slate-400">目標</span>
+                                            <span className="text-[12px] font-black text-slate-400/30">---</span>
+                                        </div>
+                                    </td>
+                                    <td className="bg-white border-b border-r border-slate-200 px-3 py-0">
+                                        <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
+                                            <span className="text-[8px] font-black text-slate-400">実績</span>
+                                            <span className="text-[12px] font-black text-slate-700">2,450</span>
+                                        </div>
+                                        <div className="flex items-center justify-between py-1.5">
+                                            <span className="text-[7px] font-bold text-slate-400">目標</span>
+                                            <span className="text-[12px] font-black text-slate-400">2,500</span>
+                                        </div>
+                                    </td>
+                                    <td className="bg-white border-b border-r border-slate-200 px-3 py-0">
+                                        <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
+                                            <span className="text-[8px] font-black text-slate-400">実績</span>
+                                            <span className="text-[12px] font-black text-slate-700">2,380</span>
+                                        </div>
+                                        <div className="flex items-center justify-between py-1.5">
+                                            <span className="text-[7px] font-bold text-slate-400">目標</span>
+                                            <span className="text-[12px] font-black text-slate-400">2,400</span>
+                                        </div>
+                                    </td>
+                                    <td className="bg-white border-b border-slate-200 px-3 py-0">
+                                        <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
+                                            <span className="text-[8px] font-black text-slate-400">実績</span>
+                                            <span className="text-[12px] font-black text-slate-700">2,200</span>
+                                        </div>
+                                        <div className="flex items-center justify-between py-1.5">
+                                            <span className="text-[7px] font-bold text-slate-400">目標</span>
+                                            <span className="text-[12px] font-black text-slate-400">2,300</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {/* リード */}
+                                <tr>
+                                    <td className="bg-white border-b border-r border-slate-200 px-3 py-2">
+                                        <div className="text-[11px] font-bold text-slate-800">有効リード数</div>
+                                        <span className="text-[8px] font-bold text-slate-400 bg-slate-100 px-1 rounded">マーケ部</span>
+                                        <div className="text-right text-[8px] text-slate-400 font-bold mt-1">件</div>
+                                    </td>
+                                    <td className="bg-[#f0fdf4] border-b border-r-2 border-slate-200 px-3 py-0">
+                                        <div className="flex items-center justify-between py-1.5 border-b border-white">
+                                            <span className="text-[8px] font-black text-teal-700">実績</span>
+                                            <span className="text-[12px] font-black text-teal-900/30">---</span>
+                                        </div>
+                                        <div className="flex items-center justify-between py-1.5">
+                                            <span className="text-[7px] font-bold text-slate-400">目標</span>
+                                            <span className="text-[12px] font-black text-slate-400/30">---</span>
+                                        </div>
+                                    </td>
+                                    <td className="bg-white border-b border-r border-slate-200 px-3 py-0">
+                                        <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
+                                            <span className="text-[8px] font-black text-slate-400">実績</span>
+                                            <span className="text-[12px] font-black text-slate-700">320</span>
+                                        </div>
+                                        <div className="flex items-center justify-between py-1.5">
+                                            <span className="text-[7px] font-bold text-slate-400">目標</span>
+                                            <span className="text-[12px] font-black text-slate-400">300</span>
+                                        </div>
+                                    </td>
+                                    <td className="bg-white border-b border-r border-slate-200 px-3 py-0">
+                                        <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
+                                            <span className="text-[8px] font-black text-slate-400">実績</span>
+                                            <span className="text-[12px] font-black text-slate-700">285</span>
+                                        </div>
+                                        <div className="flex items-center justify-between py-1.5">
+                                            <span className="text-[7px] font-bold text-slate-400">目標</span>
+                                            <span className="text-[12px] font-black text-slate-400">280</span>
+                                        </div>
+                                    </td>
+                                    <td className="bg-white border-b border-slate-200 px-3 py-0">
+                                        <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
+                                            <span className="text-[8px] font-black text-slate-400">実績</span>
+                                            <span className="text-[12px] font-black text-slate-700">260</span>
+                                        </div>
+                                        <div className="flex items-center justify-between py-1.5">
+                                            <span className="text-[7px] font-bold text-slate-400">目標</span>
+                                            <span className="text-[12px] font-black text-slate-400">250</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {/* 商談 */}
+                                <tr>
+                                    <td className="bg-white border-r border-slate-200 px-3 py-2">
+                                        <div className="text-[11px] font-bold text-slate-800">商談獲得数</div>
+                                        <span className="text-[8px] font-bold text-slate-400 bg-slate-100 px-1 rounded">営業部</span>
+                                        <div className="text-right text-[8px] text-slate-400 font-bold mt-1">件</div>
+                                    </td>
+                                    <td className="bg-[#f0fdf4] border-r-2 border-slate-200 px-3 py-0">
+                                        <div className="flex items-center justify-between py-1.5 border-b border-white">
+                                            <span className="text-[8px] font-black text-teal-700">実績</span>
+                                            <span className="text-[12px] font-black text-teal-900/30">---</span>
+                                        </div>
+                                        <div className="flex items-center justify-between py-1.5">
+                                            <span className="text-[7px] font-bold text-slate-400">目標</span>
+                                            <span className="text-[12px] font-black text-slate-400/30">---</span>
+                                        </div>
+                                    </td>
+                                    <td className="bg-white border-r border-slate-200 px-3 py-0">
+                                        <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
+                                            <span className="text-[8px] font-black text-slate-400">実績</span>
+                                            <span className="text-[12px] font-black text-slate-700">85</span>
+                                        </div>
+                                        <div className="flex items-center justify-between py-1.5">
+                                            <span className="text-[7px] font-bold text-slate-400">目標</span>
+                                            <span className="text-[12px] font-black text-slate-400">80</span>
+                                        </div>
+                                    </td>
+                                    <td className="bg-white border-r border-slate-200 px-3 py-0">
+                                        <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
+                                            <span className="text-[8px] font-black text-slate-400">実績</span>
+                                            <span className="text-[12px] font-black text-slate-700">72</span>
+                                        </div>
+                                        <div className="flex items-center justify-between py-1.5">
+                                            <span className="text-[7px] font-bold text-slate-400">目標</span>
+                                            <span className="text-[12px] font-black text-slate-400">75</span>
+                                        </div>
+                                    </td>
+                                    <td className="bg-white border-slate-200 px-3 py-0">
+                                        <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
+                                            <span className="text-[8px] font-black text-slate-400">実績</span>
+                                            <span className="text-[12px] font-black text-slate-700">68</span>
+                                        </div>
+                                        <div className="flex items-center justify-between py-1.5">
+                                            <span className="text-[7px] font-bold text-slate-400">目標</span>
+                                            <span className="text-[12px] font-black text-slate-400">70</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div className="bg-slate-50 px-4 py-2 text-[9px] text-slate-400 font-bold text-center border-t border-slate-100">
+                        ← 横スクロールで過去月を確認 →
+                    </div>
+                </div>
             </section>
 
             {/* 入力の手順 */}
