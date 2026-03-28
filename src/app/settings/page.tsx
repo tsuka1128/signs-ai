@@ -402,7 +402,7 @@ export default function SettingsPage() {
             email: inviteEmail,
             company_id: company.id,
             inviter_id: currentUserId,
-            role: 'member',
+            role: 'player',
             department_id: inviteDeptId || null,
             axis_id: inviteAxisId || null,
             slack_user_id: inviteSlackUserId || null
