@@ -43,12 +43,16 @@ function extractText(filePath) {
     let text = content
         .replace(/import\s+.*?from\s+['"].*?['"];?/gs, '')
         .replace(/export\s+default\s+function\s+.*?\s*\{/gs, '')
+        .replace(/const\s+.*?\s*=\s*.*?;/gs, '') // 定数定義
         .replace(/return\s*\(/gs, '')
         .replace(/["']use\s+client["'];?/g, '')
         .replace(/useState\(.*?\);?/g, '')
-        .replace(/\(.*?\)\s*=>\s*\{.*?\}?/gs, '') // アロー関数
-        .replace(/<[^>]+>/g, ' ') // タグ内を削除
-        .replace(/\{[^}]+\}/g, ' ') // JSX波括弧内を削除
+        .replace(/\(.*?\) => \{/gs, '') // アロー関数
+        .replace(/\.map\(\(.*?\) => \{/gs, '') // map内
+        .replace(/<[^>]+>/gs, ' ') // タグ内を削除
+        .replace(/\{[^}]+\}/gs, ' ') // JSX波括弧内を削除
+        .replace(/\);/gs, ' ') // 終端記号
+        .replace(/\}/gs, ' ') // 終端記号
         .replace(/\s+/g, ' ') // 空白の整理
         .trim();
         

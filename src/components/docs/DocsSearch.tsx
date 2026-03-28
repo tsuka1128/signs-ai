@@ -47,16 +47,33 @@ export function DocsSearch() {
                 { name: 'title', weight: 0.7 },
                 { name: 'content', weight: 0.3 }
             ],
-            threshold: 0.3,
+            threshold: 0.4,
             includeMatches: true,
-            minMatchCharLength: 1
+            minMatchCharLength: 1,
+            ignoreLocation: true, // 文字列内の場所による減点を無効化（長文対応）
+            useExtendedSearch: true // より高度な検索を有効化
         });
     }, []);
 
     // 検索結果の計算
     const results = useMemo(() => {
         if (!query) return [];
-        return fuse.search(query).slice(0, 8);
+        const fuseResults = fuse.search(query);
+        
+        if (fuseResults.length > 0) {
+            return fuseResults.slice(0, 8);
+        }
+
+        // フォールバック: Fuseで見つからない場合の単純な部分一致検索 (日本語対応)
+        const lowQuery = query.toLowerCase();
+        const fallback = (searchIndex as SearchResult[])
+            .filter(item => 
+                item.title.toLowerCase().includes(lowQuery) || 
+                item.content.toLowerCase().includes(lowQuery)
+            )
+            .map(item => ({ item })); // result.item の形式に合わせる
+            
+        return fallback.slice(0, 8);
     }, [query, fuse]);
 
     useEffect(() => {
