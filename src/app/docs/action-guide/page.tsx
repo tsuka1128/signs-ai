@@ -25,7 +25,7 @@ export default function ActionGuidePage() {
                     <div className="w-10 h-10 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center">
                         <ListTodo className="w-5 h-5" />
                     </div>
-                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">
+                    <h2 id="ai-proposals" className="text-2xl font-black text-slate-800 tracking-tight">
                         AI提案の管理（ステータス変更）
                     </h2>
                 </div>
@@ -86,7 +86,7 @@ export default function ActionGuidePage() {
                     <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
                         <Plus className="w-5 h-5" />
                     </div>
-                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">
+                    <h2 id="manual-actions" className="text-2xl font-black text-slate-800 tracking-tight">
                         手動アクションの追加
                     </h2>
                 </div>
@@ -116,7 +116,7 @@ export default function ActionGuidePage() {
                     <div className="w-10 h-10 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center">
                         <Archive className="w-5 h-5" />
                     </div>
-                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">
+                    <h2 id="archive" className="text-2xl font-black text-slate-800 tracking-tight">
                         アーカイブと履歴の振り返り
                     </h2>
                 </div>

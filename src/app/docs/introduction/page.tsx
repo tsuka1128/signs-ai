@@ -26,7 +26,7 @@ export default function IntroductionPage() {
             </div>
 
             <div className="space-y-6">
-                <h2 className="text-2xl font-black text-slate-900">解決したい課題</h2>
+                <h2 id="challenges" className="text-2xl font-black text-slate-900">解決したい課題</h2>
                 <p className="text-slate-600 font-medium leading-relaxed">
                     多くの組織では、売上や利益などの「結果指標」が低下するまで、現場で起きている問題（離職、モチベーション低下、コミュニケーション不全）に気づくことができません。Signs AIは、組織の「体温」を計測することで、問題が表面化する前の「兆候（Signs）」を捉えることを目的としています。
                 </p>
@@ -35,14 +35,14 @@ export default function IntroductionPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
                     <Target className="w-6 h-6 text-teal mb-3" />
-                    <h3 className="text-lg font-black text-slate-900 mb-2">定量（KPI）</h3>
+                    <h3 id="kpi" className="text-lg font-black text-slate-900 mb-2">定量（KPI）</h3>
                     <p className="text-sm text-slate-500 leading-relaxed font-medium">
                         部署ごとの生産性、商談数、解約率などのKPIを追跡し、組織の成果を可視化します。
                     </p>
                 </div>
                 <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
                     <Users className="w-6 h-6 text-teal mb-3" />
-                    <h3 className="text-lg font-black text-slate-900 mb-2">定性（Voice）</h3>
+                    <h3 id="voice" className="text-lg font-black text-slate-900 mb-2">定性（Voice）</h3>
                     <p className="text-sm text-slate-500 leading-relaxed font-medium">
                         独自の11の質問により、現場の「本音」や「ボトルネック」をスコア化します。
                     </p>
@@ -50,7 +50,7 @@ export default function IntroductionPage() {
             </div>
 
             <div className="space-y-6">
-                <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2">
+                <h2 id="ai-features" className="text-2xl font-black text-slate-900 flex items-center gap-2">
                     <Zap className="w-6 h-6 text-amber-500 fill-amber-500" />
                     AIができること
                 </h2>

@@ -33,7 +33,7 @@ export default function GrowthStepsPage() {
                     Signs AIのバブルチャートは、単に部署同士を比較整理するためだけのマトリックスではありません。<strong className="text-slate-900 border-b-2 border-teal-300 pb-0.5">組織をいかにして健全に拡大（スケール）させるか</strong>という「成長のセオリー」そのものを可視化したものです。
                 </p>
 
-                <h2 className="flex items-center gap-3 text-2xl font-black text-slate-900 border-b border-slate-200 pb-4 mt-16 mb-6">
+                <h2 id="theory" className="flex items-center gap-3 text-2xl font-black text-slate-900 border-b border-slate-200 pb-4 mt-16 mb-6">
                     <Compass className="w-6 h-6 text-teal-500" />
                     王道のセオリー：「Nail It Then Scale It」
                 </h2>
@@ -50,7 +50,7 @@ export default function GrowthStepsPage() {
                     <div className="flex flex-col md:flex-row gap-5 p-6 bg-amber-50/50 border border-amber-100 rounded-[24px] shadow-sm relative">
                         <div className="w-12 h-12 shrink-0 bg-white text-amber-500 rounded-xl flex items-center justify-center text-xl font-black border border-amber-200 shadow-sm">1</div>
                         <div className="space-y-2">
-                            <h3 className="text-lg font-black text-amber-900 flex items-center gap-2">
+                            <h3 id="seed" className="text-lg font-black text-amber-900 flex items-center gap-2">
                                 🌱 SEED (種まき)
                             </h3>
                             <p className="text-sm text-amber-800 leading-relaxed font-medium">
@@ -62,7 +62,7 @@ export default function GrowthStepsPage() {
                     <div className="flex flex-col md:flex-row gap-5 p-6 bg-emerald-50/50 border border-emerald-100 rounded-[24px] shadow-sm relative">
                         <div className="w-12 h-12 shrink-0 bg-white text-emerald-500 rounded-xl flex items-center justify-center text-xl font-black border border-emerald-200 shadow-sm">2</div>
                         <div className="space-y-2">
-                            <h3 className="text-lg font-black text-emerald-900 flex items-center gap-2">
+                            <h3 id="pioneer" className="text-lg font-black text-emerald-900 flex items-center gap-2">
                                 ⭐ PIONEER (開拓者)
                             </h3>
                             <p className="text-sm text-emerald-800 leading-relaxed font-medium">
@@ -74,7 +74,7 @@ export default function GrowthStepsPage() {
                     <div className="flex flex-col md:flex-row gap-5 p-6 bg-blue-50/50 border border-blue-100 rounded-[24px] shadow-sm relative">
                         <div className="w-12 h-12 shrink-0 bg-white text-blue-500 rounded-xl flex items-center justify-center text-xl font-black border border-blue-200 shadow-sm">3</div>
                         <div className="space-y-2">
-                            <h3 className="text-lg font-black text-blue-900 flex items-center gap-2">
+                            <h3 id="scale" className="text-lg font-black text-blue-900 flex items-center gap-2">
                                 🚀 SCALE (拡大期)
                             </h3>
                             <p className="text-sm text-blue-800 leading-relaxed font-medium">
@@ -88,7 +88,7 @@ export default function GrowthStepsPage() {
                     マトリックスにおける<strong>「タイムラプス機能」</strong>は、まさに自社のそれぞれの部署がこの<strong>「SEED ➔ PIONEER ➔ SCALE」</strong>という健全な軌跡を描けているかを追跡するために存在します。
                 </p>
 
-                <h2 className="flex items-center gap-3 text-2xl font-black text-slate-900 border-b border-slate-200 pb-4 mt-16 mb-6">
+                <h2 id="traps" className="flex items-center gap-3 text-2xl font-black text-slate-900 border-b border-slate-200 pb-4 mt-16 mb-6">
                     <AlertTriangle className="w-6 h-6 text-rose-500" />
                     陥りやすい罠：ブルックスの法則と「肥大化」
                 </h2>
@@ -117,7 +117,7 @@ export default function GrowthStepsPage() {
                 </div>
 
 
-                <h2 className="flex items-center gap-3 text-2xl font-black text-slate-900 border-b border-slate-200 pb-4 mt-16 mb-6">
+                <h2 id="exceptions" className="flex items-center gap-3 text-2xl font-black text-slate-900 border-b border-slate-200 pb-4 mt-16 mb-6">
                     <Zap className="w-6 h-6 text-indigo-500" />
                     例外となる「逆説の戦略」
                 </h2>
@@ -151,7 +151,7 @@ export default function GrowthStepsPage() {
                 <div className="not-prose mt-12 p-8 bg-slate-900 rounded-[32px] text-white relative overflow-hidden shadow-xl">
                     <div className="absolute top-0 right-0 p-32 bg-teal-500/20 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
                     <div className="relative z-10 space-y-4">
-                        <h3 className="text-xl font-black flex items-center gap-2">
+                        <h3 id="conclusion" className="text-xl font-black flex items-center gap-2">
                             結論：王道こそが最短ルート
                         </h3>
                         <p className="text-sm md:text-base text-slate-300 font-medium leading-relaxed">

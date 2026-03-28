@@ -12,16 +12,31 @@ import {
     Home,
     HelpCircle,
     Target,
-    CheckSquare
+    CheckSquare,
+    Rocket,
+    MessageSquareHeart,
+    Table2,
+    LayoutDashboard,
+    TrendingUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DocsSearch } from "@/components/docs/DocsSearch";
 
+/**
+ * ドキュメントサイドメニュー定義
+ * ユーザーの利用順序に沿ったカテゴリ分け:
+ * 1. はじめに — 概要 → 初回セットアップ
+ * 2. 設定と連携 — KPI定義 → 方針 → Slack → メンバー
+ * 3. 日常の運用 — ボイスチェック → KPI入力 → ダッシュボード
+ * 4. 分析と改善 — PDCA → アクション → マトリックス → 成長の軌跡
+ * 5. サポート — FAQ
+ */
 const DOCS_MENU = [
     {
         title: "はじめに",
         items: [
             { title: "Signs AIとは？", href: "/docs/introduction", icon: BookOpen },
+            { title: "初回セットアップガイド", href: "/docs/getting-started", icon: Rocket },
         ]
     },
     {
@@ -34,12 +49,26 @@ const DOCS_MENU = [
         ]
     },
     {
-        title: "機能の使い方",
+        title: "日常の運用",
+        items: [
+            { title: "ボイスチェック回答ガイド", href: "/docs/voice-check", icon: MessageSquareHeart },
+            { title: "KPI実績の入力方法", href: "/docs/kpi-input", icon: Table2 },
+            { title: "ダッシュボードの見方", href: "/docs/dashboard-guide", icon: LayoutDashboard },
+        ]
+    },
+    {
+        title: "分析と改善",
         items: [
             { title: "組織改善のPDCAサイクル", href: "/docs/pdca-guide", icon: Target },
             { title: "アクション管理の使い方", href: "/docs/action-guide", icon: CheckSquare },
             { title: "マトリックスの見方", href: "/docs/bubble-chart-guide", icon: BarChart3 },
-            { title: "マトリックスが示す成長の軌跡", href: "/docs/growth-steps", icon: BookOpen },
+            { title: "マトリックスが示す成長の軌跡", href: "/docs/growth-steps", icon: TrendingUp },
+        ]
+    },
+    {
+        title: "サポート",
+        items: [
+            { title: "FAQ / トラブルシューティング", href: "/docs/faq", icon: HelpCircle },
         ]
     }
 ];

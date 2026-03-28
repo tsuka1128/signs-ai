@@ -31,7 +31,7 @@ export default function KpiSetupPage() {
             <section className="space-y-6">
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-black text-sm">1</div>
-                    <h2 className="text-2xl font-black text-slate-900">KPI項目を定義する</h2>
+                    <h2 id="define-kpi" className="text-2xl font-black text-slate-900">KPI項目を定義する</h2>
                 </div>
                 <div className="pl-11 space-y-4">
                     <p className="text-slate-600 font-medium leading-relaxed">
@@ -60,7 +60,7 @@ export default function KpiSetupPage() {
             <section className="space-y-6">
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-black text-sm">2</div>
-                    <h2 className="text-2xl font-black text-slate-900">月次の実績を入力する</h2>
+                    <h2 id="input-results" className="text-2xl font-black text-slate-900">月次の実績を入力する</h2>
                 </div>
                 <div className="pl-11 space-y-4">
                     <p className="text-slate-600 font-medium leading-relaxed">
@@ -84,7 +84,7 @@ export default function KpiSetupPage() {
                     <Zap className="w-5 h-5" />
                 </div>
                 <div>
-                    <h3 className="text-sm font-black text-slate-900 mb-1">効率的な運用</h3>
+                    <h3 id="tips" className="text-sm font-black text-slate-900 mb-1">効率的な運用</h3>
                     <p className="text-sm text-slate-600 leading-relaxed font-medium">
                         KPIの入力は毎月5日頃までに行うことを推奨します。これにより、AIが最新のデータに基づいた深い洞察（インサイト）を提供できます。
                     </p>

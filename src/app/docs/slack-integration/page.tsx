@@ -42,7 +42,7 @@ export default function SlackIntegrationPage() {
                     <div className="w-10 h-10 bg-white rounded-2xl shadow-sm flex items-center justify-center">
                         <MessageSquare className="w-5 h-5 text-[#4A154B]" />
                     </div>
-                    <h3 className="font-black text-slate-800 tracking-tight">リアルタイムな兆兆の把握</h3>
+                    <h3 id="benefit-realtime" className="font-black text-slate-800 tracking-tight">リアルタイムな兆兆の把握</h3>
                     <p className="text-sm text-slate-600 font-medium leading-relaxed">
                         ダッシュボードを開かなくても、組織の「温まり」や「冷え」の兆候をSlackでいち早く受け取れます。
                     </p>
@@ -51,7 +51,7 @@ export default function SlackIntegrationPage() {
                     <div className="w-10 h-10 bg-white rounded-2xl shadow-sm flex items-center justify-center">
                         <Terminal className="w-5 h-5 text-teal-600" />
                     </div>
-                    <h3 className="font-black text-slate-800 tracking-tight">AI提案の直接通知</h3>
+                    <h3 id="benefit-ai" className="font-black text-slate-800 tracking-tight">AI提案の直接通知</h3>
                     <p className="text-sm text-slate-600 font-medium leading-relaxed">
                         各部署に最適化されたAIの改善アクション案が直接届き、即座に検討・実行に移せます。
                     </p>
@@ -66,7 +66,7 @@ export default function SlackIntegrationPage() {
                     <div className="space-y-8 relative">
                         <div className="flex items-center gap-6">
                             <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-black text-xs shrink-0 z-10">1</div>
-                            <h2 className="text-[22px] font-black text-slate-900 tracking-tight">Slack App の新規作成</h2>
+                            <h2 id="create-app" className="text-[22px] font-black text-slate-900 tracking-tight">Slack App の新規作成</h2>
                         </div>
                         
                         <div className="md:pl-14 grid lg:grid-cols-2 gap-10 items-start">
@@ -121,7 +121,7 @@ export default function SlackIntegrationPage() {
                     <div className="space-y-8 relative">
                         <div className="flex items-center gap-6">
                             <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-black text-xs shrink-0 z-10">2</div>
-                            <h2 className="text-[22px] font-black text-slate-900 tracking-tight">Webhook URL の有効化と追加</h2>
+                            <h2 id="enable-webhook" className="text-[22px] font-black text-slate-900 tracking-tight">Webhook URL の有効化と追加</h2>
                         </div>
                         
                         <div className="md:pl-14 grid lg:grid-cols-2 gap-10 items-start">
@@ -188,7 +188,7 @@ export default function SlackIntegrationPage() {
                     <div className="space-y-8 relative">
                         <div className="flex items-center gap-6">
                             <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-black text-xs shrink-0 z-10">3</div>
-                            <h2 className="text-[22px] font-black text-slate-900 tracking-tight">Signs AI への URL 登録</h2>
+                            <h2 id="register-url" className="text-[22px] font-black text-slate-900 tracking-tight">Signs AI への URL 登録</h2>
                         </div>
                         
                         <div className="md:pl-14 max-w-2xl space-y-8">

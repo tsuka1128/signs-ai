@@ -86,7 +86,7 @@ export default function BubbleChartGuidePage() {
                         <Sparkles className="w-5 h-5 text-teal-400" />
                         <span className="text-xs font-black text-teal-400 uppercase tracking-widest">Why this matters</span>
                     </div>
-                    <h2 className="text-2xl font-black text-white leading-tight">
+                    <h2 id="why-2-axes" className="text-2xl font-black text-white leading-tight">
                         なぜ2軸で組織を見る必要があるのか？
                     </h2>
                     <p className="text-sm text-slate-300 leading-relaxed font-medium">
@@ -99,7 +99,7 @@ export default function BubbleChartGuidePage() {
 
             {/* Actual UI Demonstration */}
             <section className="space-y-6">
-                <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
+                <h2 id="demo" className="text-2xl font-black text-slate-900 flex items-center gap-3">
                     <BarChart3 className="w-7 h-7 text-teal" />
                     インタラクティブ・デモ
                 </h2>
@@ -109,7 +109,7 @@ export default function BubbleChartGuidePage() {
                     </div>
                     <div className="flex flex-col gap-4 mb-6 relative z-10">
                         <div>
-                            <h3 className="text-sm font-bold text-slate-800 tracking-tight">部署 / 担当領域 マトリックス</h3>
+                            <h3 id="matrix-concept" className="text-sm font-bold text-slate-800 tracking-tight">部署 / 担当領域 マトリックス</h3>
                             <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-tight">
                                 <span>縦軸: 一人当たり生産性 ｜ 横軸: リソース量 ｜ 円サイズ: KPI達成率</span>
                             </div>
@@ -144,14 +144,14 @@ export default function BubbleChartGuidePage() {
 
             {/* Axes explanation */}
             <section className="space-y-6">
-                <h2 className="text-2xl font-black text-slate-900">軸の意味</h2>
+                <h2 id="axes" className="text-2xl font-black text-slate-900">軸の意味</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="p-6 bg-white border-2 border-slate-100 rounded-[28px] shadow-sm space-y-3">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
                                 <TrendingUp className="w-5 h-5 text-blue-500" />
                             </div>
-                            <h3 className="text-lg font-black text-slate-900">縦軸：一人当たり生産性</h3>
+                            <h3 id="vertical-axis" className="text-lg font-black text-slate-900">縦軸：一人当たり生産性</h3>
                         </div>
                         <p className="text-sm text-slate-600 font-medium leading-relaxed">
                             各部署のKPI実績を人数で割った<strong>効率性の指標</strong>です。上に位置する部署ほど、少ない人員で大きな成果を出していることを示します。
@@ -165,7 +165,7 @@ export default function BubbleChartGuidePage() {
                             <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
                                 <Users className="w-5 h-5 text-amber-500" />
                             </div>
-                            <h3 className="text-lg font-black text-slate-900">横軸：リソース量</h3>
+                            <h3 id="horizontal-axis" className="text-lg font-black text-slate-900">横軸：リソース量</h3>
                         </div>
                         <p className="text-sm text-slate-600 font-medium leading-relaxed">
                             部署の人員数を表します。右に位置する部署ほど、多くの人員を有していることを示します。横軸の位置で「少数精鋭か、大所帯か」が一目で分かります。
@@ -180,7 +180,7 @@ export default function BubbleChartGuidePage() {
                         <Target className="w-5 h-5 text-teal" />
                     </div>
                     <div>
-                        <h3 className="text-sm font-black text-slate-900 mb-1">円（バブル）のサイズと波紋</h3>
+                        <h3 id="bubbles" className="text-sm font-black text-slate-900 mb-1">円（バブル）のサイズと波紋</h3>
                         <p className="text-sm text-slate-600 leading-relaxed font-medium">
                             バブルの大きさは<strong>KPI達成率</strong>を表しています。大きな円ほど達成度が高い部署です。
                             KPIが100%を達成している部署の周囲には、波紋（リップル）アニメーションが表示されます。
@@ -192,7 +192,7 @@ export default function BubbleChartGuidePage() {
 
             {/* 4 Quadrants via CSS Grid */}
             <section className="space-y-6">
-                <h2 className="text-2xl font-black text-slate-900">4つの領域の意味</h2>
+                <h2 id="quadrants" className="text-2xl font-black text-slate-900">4つの領域の意味</h2>
                 
                 {/* CSS Based Quadrant Diagram */}
                 <div className="py-12 pr-6 pl-14 md:pl-20 bg-slate-50 border border-slate-200 rounded-[32px] mb-8">
@@ -241,7 +241,7 @@ export default function BubbleChartGuidePage() {
                         <div className="w-12 h-12 shrink-0 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-2xl border border-amber-100">🌱</div>
                         <div className="space-y-4 w-full">
                             <div>
-                                <h3 className="text-xl font-black text-slate-800 mb-1">種まき (SEED)</h3>
+                                <h3 id="seed" className="text-xl font-black text-slate-800 mb-1">種まき (SEED)</h3>
                                 <div className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 text-slate-600 px-3 py-1 rounded-lg text-xs font-bold tracking-tight">
                                     <span className="text-amber-500">左下エリア</span>
                                     <span>|</span>
@@ -263,7 +263,7 @@ export default function BubbleChartGuidePage() {
                         <div className="w-12 h-12 shrink-0 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl border border-emerald-100">⭐</div>
                         <div className="space-y-4 w-full">
                             <div>
-                                <h3 className="text-xl font-black text-slate-800 mb-1">開拓者 (PIONEER)</h3>
+                                <h3 id="pioneer" className="text-xl font-black text-slate-800 mb-1">開拓者 (PIONEER)</h3>
                                 <div className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 text-slate-600 px-3 py-1 rounded-lg text-xs font-bold tracking-tight">
                                     <span className="text-emerald-500">左上エリア</span>
                                     <span>|</span>
@@ -285,7 +285,7 @@ export default function BubbleChartGuidePage() {
                         <div className="w-12 h-12 shrink-0 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl border border-blue-100">🚀</div>
                         <div className="space-y-4 w-full">
                             <div>
-                                <h3 className="text-xl font-black text-slate-800 mb-1">拡大期 (SCALE)</h3>
+                                <h3 id="scale" className="text-xl font-black text-slate-800 mb-1">拡大期 (SCALE)</h3>
                                 <div className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 text-slate-600 px-3 py-1 rounded-lg text-xs font-bold tracking-tight">
                                     <span className="text-blue-500">右上エリア</span>
                                     <span>|</span>
@@ -307,7 +307,7 @@ export default function BubbleChartGuidePage() {
                         <div className="w-12 h-12 shrink-0 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-2xl border border-rose-100">⚠️</div>
                         <div className="space-y-4 w-full">
                             <div>
-                                <h3 className="text-xl font-black text-slate-800 mb-1">肥大化 (OVERWEIGHT)</h3>
+                                <h3 id="overweight" className="text-xl font-black text-slate-800 mb-1">肥大化 (OVERWEIGHT)</h3>
                                 <div className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 text-slate-600 px-3 py-1 rounded-lg text-xs font-bold tracking-tight">
                                     <span className="text-rose-500">右下エリア</span>
                                     <span>|</span>
@@ -332,7 +332,7 @@ export default function BubbleChartGuidePage() {
                             <div className="w-10 h-10 bg-teal-50 border border-teal-100 rounded-xl flex items-center justify-center">
                                 <Compass className="w-5 h-5 text-teal-600" />
                             </div>
-                            <h3 className="text-xl font-black text-slate-900">
+                            <h3 id="growth-path" className="text-xl font-black text-slate-900">
                                 マトリックスが示す成長のステップ
                             </h3>
                         </div>
@@ -375,7 +375,7 @@ export default function BubbleChartGuidePage() {
 
             {/* View modes */}
             <section className="space-y-6">
-                <h2 className="text-2xl font-black text-slate-900 flex items-center gap-3">
+                <h2 id="features" className="text-2xl font-black text-slate-900 flex items-center gap-3">
                     <Maximize2 className="w-6 h-6 text-teal" />
                     表示モードとその他機能
                 </h2>
@@ -385,7 +385,7 @@ export default function BubbleChartGuidePage() {
                         <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
                             <Building2 className="w-12 h-12 text-slate-400" />
                         </div>
-                        <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                        <h3 id="mode-dept" className="text-lg font-black text-slate-900 flex items-center gap-2">
                             <span className="text-2xl">📋</span>
                             部署別（標準表示）
                         </h3>
@@ -407,7 +407,7 @@ export default function BubbleChartGuidePage() {
                         <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
                             <Sparkles className="w-12 h-12 text-teal" />
                         </div>
-                        <h3 className="text-lg font-black text-slate-900 flex items-center gap-3">
+                        <h3 id="mode-secondary" className="text-lg font-black text-slate-900 flex items-center gap-3">
                             <span className="text-2xl">🏷️</span>
                             第2軸（担当領域）別分析
                             <span className="text-[10px] font-black bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full uppercase tracking-tighter border border-amber-200">Standard〜</span>
@@ -457,7 +457,7 @@ export default function BubbleChartGuidePage() {
                     </div>
                 </div>
                 <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                    <h3 className="text-sm font-black text-slate-900 mb-2 flex items-center gap-2">
+                    <h3 id="timelapse" className="text-sm font-black text-slate-900 mb-2 flex items-center gap-2">
                         <Lightbulb className="w-4 h-4 text-slate-400" />
                         タイムラプスで何が見えるのか？
                     </h3>

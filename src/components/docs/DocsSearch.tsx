@@ -91,7 +91,37 @@ export function DocsSearch() {
     const onSelect = (href: string) => {
         setOpen(false);
         setQuery("");
+        
+        const [path, hash] = href.split("#");
+        const currentPath = window.location.pathname;
+        
+        // 同一ページ内のアンカー遷移の場合、即座にスクロール
+        if (hash && (path === currentPath || href.startsWith("#"))) {
+            const element = document.getElementById(hash);
+            if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "start" });
+                window.history.pushState(null, "", href);
+                return;
+            }
+        }
+
         router.push(href);
+        
+        // ハッシュが含まれる場合、Next.jsの遷移後に確実にスクロールさせるための処理
+        if (hash) {
+            let attempts = 0;
+            const scrollInterval = setInterval(() => {
+                const element = document.getElementById(hash);
+                if (element) {
+                    element.scrollIntoView({ behavior: "smooth", block: "start" });
+                    clearInterval(scrollInterval);
+                }
+                attempts++;
+                if (attempts > 20) {
+                    clearInterval(scrollInterval);
+                }
+            }, 100);
+        }
     };
 
     // スニペット（抜粋）の作成

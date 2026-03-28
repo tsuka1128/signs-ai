@@ -26,7 +26,7 @@ export default function PolicyGuidePage() {
                     <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
                         <BrainCircuit className="w-5 h-5" />
                     </div>
-                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">
+                    <h2 id="what-is-semantic-layer" className="text-2xl font-black text-slate-800 tracking-tight">
                         セマンティックレイヤー（意味の階層）とは
                     </h2>
                 </div>
@@ -62,7 +62,7 @@ export default function PolicyGuidePage() {
                     <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
                         <Lightbulb className="w-5 h-5" />
                     </div>
-                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">
+                    <h2 id="writing-tips" className="text-2xl font-black text-slate-800 tracking-tight">
                         価値ある「組織方針」を書く6つのポイント
                     </h2>
                 </div>
@@ -122,7 +122,7 @@ export default function PolicyGuidePage() {
                     <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
                         <MessageSquare className="w-5 h-5" />
                     </div>
-                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">
+                    <h2 id="setup-procedure" className="text-2xl font-black text-slate-800 tracking-tight">
                         登録・更新の手順
                     </h2>
                 </div>

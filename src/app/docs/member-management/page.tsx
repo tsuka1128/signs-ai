@@ -40,7 +40,7 @@ export default function MemberManagementPage() {
                 <div className="space-y-4">
                     <div className="flex items-center gap-4 pb-4 border-b border-slate-100/80">
                         <div className="w-10 h-10 bg-teal-50 text-teal-700 rounded-lg flex items-center justify-center font-black text-lg">1</div>
-                        <h2 className="text-[22px] md:text-[26px] font-black text-[#1e293b] tracking-tight">
+                        <h2 id="initial-registration" className="text-[22px] md:text-[26px] font-black text-[#1e293b] tracking-tight">
                             アカウントの新規作成（初回登録）
                         </h2>
                     </div>
@@ -119,7 +119,7 @@ export default function MemberManagementPage() {
                 <div className="space-y-4">
                     <div className="flex items-center gap-4 pb-4 border-b border-slate-100/80">
                         <div className="w-10 h-10 bg-indigo-50 text-indigo-700 rounded-lg flex items-center justify-center font-black text-lg">2</div>
-                        <h2 className="text-[22px] md:text-[26px] font-black text-[#1e293b] tracking-tight">
+                        <h2 id="member-invitation" className="text-[22px] md:text-[26px] font-black text-[#1e293b] tracking-tight">
                             メンバーの招待・追加
                         </h2>
                     </div>
@@ -200,7 +200,7 @@ export default function MemberManagementPage() {
                 <div className="space-y-4">
                     <div className="flex items-center gap-4 pb-4 border-b border-slate-100/80">
                         <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center font-black text-lg">3</div>
-                        <h2 className="text-[22px] md:text-[26px] font-black text-[#1e293b] tracking-tight">
+                        <h2 id="onboarding" className="text-[22px] md:text-[26px] font-black text-[#1e293b] tracking-tight">
                             招待されたメンバーの「オンボーディング」
                         </h2>
                     </div>
@@ -272,7 +272,7 @@ export default function MemberManagementPage() {
                     <div className="flex items-start md:items-center justify-between gap-4 pb-4 border-b border-slate-100/80 flex-col md:flex-row">
                         <div className="flex items-center gap-4">
                             <div className="w-10 h-10 bg-[#4A154B] text-white rounded-lg flex items-center justify-center font-black text-lg">4</div>
-                            <h2 className="text-[22px] md:text-[26px] font-black text-[#1e293b] tracking-tight">
+                            <h2 id="slack-mentions" className="text-[22px] md:text-[26px] font-black text-[#1e293b] tracking-tight">
                                 Slack連携とメンション通知
                             </h2>
                         </div>
@@ -296,7 +296,7 @@ export default function MemberManagementPage() {
                         <div className="grid lg:grid-cols-2 gap-12 items-center relative z-10">
                             <div className="space-y-8">
                                 <div>
-                                    <h3 className="text-2xl font-black text-slate-800 mb-4 tracking-tight">ステップ1：通知先Slackチャンネルの連携</h3>
+                                    <h3 id="slack-channel" className="text-2xl font-black text-slate-800 mb-4 tracking-tight">ステップ1：通知先Slackチャンネルの連携</h3>
                                     <p className="text-[15px] text-slate-600 font-medium leading-relaxed">
                                         Signs AIが分析結果やアクション提案を送信するための「受け口」として、Slackアプリ（Incoming Webhook）を設定します。この設定は組織全体で一度行えば完了です。
                                     </p>
@@ -325,7 +325,7 @@ export default function MemberManagementPage() {
 
                             <div className="space-y-8 lg:border-l lg:border-slate-100 lg:pl-12">
                                 <div>
-                                    <h3 className="text-2xl font-black text-slate-800 mb-4 tracking-tight">ステップ2：各メンバーの User ID 登録</h3>
+                                    <h3 id="slack-userid" className="text-2xl font-black text-slate-800 mb-4 tracking-tight">ステップ2：各メンバーの User ID 登録</h3>
                                     <p className="text-[15px] text-slate-600 font-medium leading-relaxed">
                                         特定の担当者へ確実にメンション（@通知）を飛ばすための設定です。各メンバーのプロフィールから取得できる「メンバーID」をSigns AIに登録します。
                                     </p>
@@ -353,7 +353,7 @@ export default function MemberManagementPage() {
                         <Slack className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                        <h3 className="text-[16px] font-black mb-3 text-white tracking-tight">なぜ個人宛のメンションが重要か？</h3>
+                        <h3 id="importance" className="text-[16px] font-black mb-3 text-white tracking-tight">なぜ個人宛のメンションが重要か？</h3>
                         <p className="text-[14.5px] text-slate-300 leading-relaxed font-medium">
                             AIが分析を通じて有用なアクション（施策）を提案しても、全体チャンネルにただ通知されるだけでは「誰かがやるだろう」という傍観者効果が働き、誰も対応せずに終わってしまう傾向があります。<br className="hidden lg:block"/>
                             Signs AIでは対象部署の担当チームメンバーに対し、Slack User IDを通じて確実にメンション（@）を飛ばすことで、「自分ごと」としてアクションの実行とPDCAサイクルを促す仕組みを実現しています。

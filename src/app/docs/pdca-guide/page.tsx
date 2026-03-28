@@ -34,7 +34,7 @@ export default function PDCAGuidePage() {
                         <div className="bg-slate-50 border border-slate-200 rounded-[24px] p-6 flex-1 shadow-sm relative overflow-hidden group hover:border-teal-200 transition-colors">
                             <div className="absolute top-0 right-0 p-16 bg-white/50 rounded-full blur-2xl -mr-12 -mt-12" />
                             <span className="text-xs font-black tracking-widest text-slate-400 uppercase mb-1 block">Step 01</span>
-                            <h3 className="text-xl font-black text-slate-800 mb-3 flex items-center gap-2">
+                            <h3 id="discovery" className="text-xl font-black text-slate-800 mb-3 flex items-center gap-2">
                                 <Search className="w-5 h-5 text-teal-500 md:hidden" />
                                 マトリックスから「課題」を発見する
                             </h3>
@@ -53,7 +53,7 @@ export default function PDCAGuidePage() {
                         </div>
                         <div className="bg-slate-50 border border-slate-200 rounded-[24px] p-6 flex-1 shadow-sm relative overflow-hidden group hover:border-indigo-200 transition-colors">
                             <span className="text-xs font-black tracking-widest text-slate-400 uppercase mb-1 block">Step 02</span>
-                            <h3 className="text-xl font-black text-slate-800 mb-3 flex items-center gap-2">
+                            <h3 id="identification" className="text-xl font-black text-slate-800 mb-3 flex items-center gap-2">
                                 <BarChart3 className="w-5 h-5 text-indigo-500 md:hidden" />
                                 KPIと体温で「原因」を特定する
                             </h3>
@@ -72,7 +72,7 @@ export default function PDCAGuidePage() {
                         </div>
                         <div className="bg-amber-50/50 border border-amber-100 rounded-[24px] p-6 flex-1 shadow-sm relative overflow-hidden group hover:border-amber-300 transition-colors">
                             <span className="text-xs font-black tracking-widest text-amber-500/50 uppercase mb-1 block">Step 03</span>
-                            <h3 className="text-xl font-black text-amber-900 mb-3 flex items-center gap-2">
+                            <h3 id="action" className="text-xl font-black text-amber-900 mb-3 flex items-center gap-2">
                                 <Lightbulb className="w-5 h-5 text-amber-500 md:hidden" />
                                 AI提案をもとに「施策（アクション）」を決める
                             </h3>
@@ -91,7 +91,7 @@ export default function PDCAGuidePage() {
                         </div>
                         <div className="bg-slate-50 border border-slate-200 rounded-[24px] p-6 flex-1 shadow-sm relative overflow-hidden group hover:border-slate-300 transition-colors">
                             <span className="text-xs font-black tracking-widest text-slate-400 uppercase mb-1 block">Step 04</span>
-                            <h3 className="text-xl font-black text-slate-800 mb-3 flex items-center gap-2">
+                            <h3 id="policy" className="text-xl font-black text-slate-800 mb-3 flex items-center gap-2">
                                 <PenLine className="w-5 h-5 text-slate-500 md:hidden" />
                                 「組織方針」をアップデートする
                             </h3>
@@ -110,7 +110,7 @@ export default function PDCAGuidePage() {
                         </div>
                         <div className="bg-sky-50/50 border border-sky-100 rounded-[24px] p-6 flex-1 shadow-sm relative overflow-hidden group hover:border-sky-300 transition-colors">
                             <span className="text-xs font-black tracking-widest text-sky-500/50 uppercase mb-1 block">Step 05</span>
-                            <h3 className="text-xl font-black text-sky-900 mb-3 flex items-center gap-2">
+                            <h3 id="notification" className="text-xl font-black text-sky-900 mb-3 flex items-center gap-2">
                                 <Send className="w-5 h-5 text-sky-500 md:hidden" />
                                 「部署への通知」を活用して伝達する
                             </h3>
@@ -126,7 +126,7 @@ export default function PDCAGuidePage() {
                     <ArrowDown className="w-8 h-8 text-slate-300 mb-4 animate-bounce" />
                     <div className="bg-slate-900 rounded-[32px] p-8 text-white w-full shadow-2xl relative overflow-hidden">
                         <div className="absolute inset-0 bg-gradient-to-r from-teal-500/20 to-indigo-500/20 opacity-50" />
-                        <h3 className="text-xl md:text-2xl font-black mb-3 relative z-10">
+                        <h3 id="verification" className="text-xl md:text-2xl font-black mb-3 relative z-10">
                             1ヶ月後、変化をマトリックスで確認する
                         </h3>
                         <p className="text-sm md:text-base text-slate-300 font-medium leading-relaxed relative z-10">

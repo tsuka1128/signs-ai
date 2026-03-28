@@ -9,6 +9,10 @@
   --font-noto-sans-jp: 'Noto Sans JP', sans-serif;
 }
 
+html {
+  scroll-padding-top: 100px;
+}
+
 body {
   font-family: var(--font-noto-sans-jp), var(--font-inter), sans-serif;
   @apply bg-slate-50 text-slate-900 antialiased;
