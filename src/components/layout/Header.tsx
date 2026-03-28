@@ -169,15 +169,27 @@ export function Header() {
                         <Link href="/marketing" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold bg-slate-800 text-white px-4 py-3 rounded-xl shadow-md flex items-center justify-center gap-1.5 hover:bg-teal-600 transition-colors">
                             LP
                         </Link>
-                        <Link href="/kpi" onClick={() => setIsMenuOpen(false)} className="col-span-2 text-sm font-bold bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:bg-slate-50 flex items-center justify-center gap-1.5">
+                        <Link href="/kpi" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:bg-slate-50 flex items-center justify-center gap-1.5">
                             KPI入力
                         </Link>
                         <Link href="/voice-check" onClick={() => setIsMenuOpen(false)} className="col-span-2 text-sm font-bold bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:bg-slate-50 flex items-center justify-center gap-1.5">
                             ボイスチェック運用
                         </Link>
-                        <Link href="/settings" onClick={() => setIsMenuOpen(false)} className="col-span-2 text-sm font-bold bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:bg-slate-50 flex items-center justify-center gap-1.5">
+                        <Link href="/docs" onClick={() => setIsMenuOpen(false)} className="col-span-2 text-sm font-bold bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:bg-slate-50 flex items-center justify-center gap-1.5">
+                            ヘルプ・ドキュメント
+                        </Link>
+                        <Link href="/settings" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:bg-slate-50 flex items-center justify-center gap-1.5">
                             設定
                         </Link>
+                        <button
+                            onClick={() => {
+                                handleSignOut();
+                                setIsMenuOpen(false);
+                            }}
+                            className="text-sm font-bold bg-rose-50 text-rose-600 px-4 py-3 rounded-xl shadow-sm hover:bg-rose-100 flex items-center justify-center gap-1.5"
+                        >
+                            ログアウト
+                        </button>
                     </div>
                 </div>
             )}

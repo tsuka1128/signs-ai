@@ -46,6 +46,8 @@ export interface SurveyHistoryData {
     pulse: number;
     pulseHistory: number[];
     aiComment: string;
+    responseCount: number;
+    responseRate: number;
 }
 
 export interface MatrixItemData extends DepartmentDisplayData {

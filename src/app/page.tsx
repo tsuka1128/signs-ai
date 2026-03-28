@@ -127,6 +127,7 @@ export default function DashboardPage() {
   const currentSurveyData = useMemo(() => {
     let filtered = realResponses;
     let viewName = "全社";
+    let targetHeadcount = realDepts.reduce((sum: number, d: any) => sum + (d.headcount || 0), 0);
 
     const surveyViewId = (orgView === "product" || orgView === "dept" || orgView === "all") ? "all" : orgView;
 
@@ -135,23 +136,25 @@ export default function DashboardPage() {
       const axis = realAxes.find(a => a.id === surveyViewId);
       viewName = dept ? dept.name : (axis ? axis.name : "不明なターゲット");
       filtered = realResponses.filter(r => r.department_id === surveyViewId || r.axis_id === surveyViewId);
+      targetHeadcount = dept ? (dept.headcount || 0) : (axis ? (axis.headcount || 0) : 0);
     }
 
     const latestMonth = last13Months[12];
     const prevMonth = last13Months[11];
-    const latestAnswers = filtered
-      .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
-      .flatMap(r => r.survey_answers || []);
+    
+    const latestResponses = filtered.filter(r => normalizeMonth(r.recorded_month) === latestMonth);
+    const latestAnswers = latestResponses.flatMap(r => r.survey_answers || []);
+
+    const responseCount = latestResponses.length;
+    const responseRate = targetHeadcount > 0 ? Math.round((responseCount / targetHeadcount) * 100) : 0;
 
     // question_id の UUID vs 整数不一致を回避するため、インデックスベースで設問別スコアを集計
     const qScores = questions.map((_, qi) => {
       const scoresForQ: number[] = [];
-      filtered
-        .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
-        .forEach(r => {
-          const ans = r.survey_answers || [];
-          if (ans[qi]) scoresForQ.push(ans[qi].score);
-        });
+      latestResponses.forEach(r => {
+        const ans = r.survey_answers || [];
+        if (ans[qi]) scoresForQ.push(ans[qi].score);
+      });
       if (scoresForQ.length === 0) return 0;
       return scoresForQ.reduce((sum: number, s: number) => sum + s, 0) / scoresForQ.length;
     });
@@ -190,8 +193,8 @@ export default function DashboardPage() {
       }
     }
 
-    return { viewName, scores: qScores, prevScores: prevQScores, pulse: avgPulse, pulseHistory, aiComment: comment };
-  }, [orgView, realResponses, realDepts, last13Months]);
+    return { viewName, scores: qScores, prevScores: prevQScores, pulse: avgPulse, pulseHistory, aiComment: comment, responseCount, responseRate };
+  }, [orgView, realResponses, realDepts, realAxes, last13Months]);
 
   const displayDepts = useMemo(() => {
     return realDepts.map((d, i) => {
@@ -414,14 +417,14 @@ export default function DashboardPage() {
 
   // 部署連動のインサイトを動的に生成
   const deptTabs = useMemo(() => [
-    { id: "all", label: "🏢 全社" },
-    ...realDepts.map((d, i) => ({ id: d.id, label: `${DEPT_ICONS[i % DEPT_ICONS.length]} ${d.name}` }))
+    { id: "all", label: "全社" },
+    ...realDepts.map((d, i) => ({ id: d.id, label: d.name }))
   ], [realDepts]);
 
   const ins = useMemo(() => {
     if (tab === "all") {
       return {
-        icon: "🏢",
+        icon: "",
         title: "全社",
         tone: "戦略的分析",
         text: "組織方針に基づき、各部署の体温スコアとKPI達成状況を俯瞰的に分析します。現在、実データの蓄積を開始した段階です。"
@@ -429,9 +432,9 @@ export default function DashboardPage() {
     }
     const deptIdx = realDepts.findIndex(d => d.id === tab);
     const dept = realDepts[deptIdx];
-    if (!dept) return { icon: "🏢", title: "全社", tone: "戦略的分析", text: "" };
+    if (!dept) return { icon: "", title: "全社", tone: "戦略的分析", text: "" };
     return {
-      icon: DEPT_ICONS[deptIdx % DEPT_ICONS.length],
+      icon: "",
       title: dept.name,
       tone: ["前向き・行動喚起", "冷静・品質重視", "共感・伴走", "構造的・警告的"][deptIdx % 4],
       text: `「${dept.name}」の直近の体温とKPI達成状況に基づく分析です。AIエンジン接続後、ここに${dept.name}専用の診断テキストが自動生成されます。`
@@ -602,12 +605,12 @@ export default function DashboardPage() {
         {/* Section Navigation */}
         <Pills
           items={[
-            { id: "matrix", label: "📊 マトリックス" },
-            { id: "kpi", label: "📈 KPI推移" },
-            { id: "org", label: "🏢 組織のKPI" },
-            { id: "survey", label: "🗣️ 組織の体温" },
-            { id: "action", label: "📌 アクション" },
-            { id: "semantic", label: "🧬 組織方針" }
+            { id: "matrix", label: "マトリックス" },
+            { id: "kpi", label: "KPI推移" },
+            { id: "org", label: "組織のKPI" },
+            { id: "survey", label: "組織の体温" },
+            { id: "action", label: "アクション" },
+            { id: "semantic", label: "組織方針" }
           ]}
           active={sec}
           onChange={setSec}

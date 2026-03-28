@@ -481,12 +481,12 @@ export default function SettingsPage() {
                 {/* Tabs */}
                 <div className="flex gap-1 bg-slate-100 p-1.5 rounded-2xl w-fit">
                     {[
-                        { id: "company", icon: Building2, label: "基本設定" },
-                        { id: "dept", icon: Users, label: "部署" },
-                        { id: "kpi", icon: Target, label: "KPI" },
-                        { id: "axis", icon: Layers, label: "担当領域" },
-                        { id: "users", icon: UserPlus, label: "メンバー" },
-                        { id: "integration", icon: Link2, label: "外部連携" }
+                        { id: "company", label: "基本設定" },
+                        { id: "dept", label: "部署" },
+                        { id: "kpi", label: "KPI" },
+                        { id: "axis", label: "担当領域" },
+                        { id: "users", label: "メンバー" },
+                        { id: "integration", label: "外部連携" }
                     ].map(t => (
                         <button
                             key={t.id}
@@ -496,7 +496,6 @@ export default function SettingsPage() {
                                 activeTab === t.id ? "bg-white text-teal shadow-md" : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
                             )}
                         >
-                            <t.icon className="w-4 h-4" />
                             {t.label}
                         </button>
                     ))}

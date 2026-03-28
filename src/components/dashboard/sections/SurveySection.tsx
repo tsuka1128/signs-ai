@@ -46,14 +46,14 @@ export function SurveySection({
                 </div>
                 <div className="flex flex-col gap-4">
                     <TabBar
-                        tabs={[{ id: "dept", label: "🏢 部署別" }, { id: "product", label: `📦 ${secondaryAxisName}別` }]}
+                        tabs={[{ id: "dept", label: "部署別" }, { id: "product", label: `${secondaryAxisName}別` }]}
                         active={matView}
                         onChange={setMatView}
                         className="w-fit"
                     />
                     <TabBar
                         tabs={[
-                            { id: "all", label: "🏢 全社" },
+                            { id: "all", label: "全社" },
                             ...(matView === "dept"
                                 ? realDepts.map(d => ({ id: d.id, label: d.name }))
                                 : realAxes.map(a => ({ id: a.id, label: a.name })))
@@ -74,26 +74,54 @@ export function SurveySection({
                 />
             ) : (
                 <>
-                    {/* Pulse History Chart */}
-                    <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm transition-all hover:shadow-md space-y-4">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-xl">🌡️</span>
-                                    <h3 className="text-lg font-black text-slate-800 tracking-tight">組織体温の推移</h3>
-                                </div>
-                                <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest pl-8">
-                                    継続的なストレスや熱量の変化をモニタリング
-                                </p>
-                            </div>
-                            <div className="text-right">
-                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-1">当月平均</span>
+                    {/* Summary Stats */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+                            <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">現在の回答率</span>
+                            <div className="flex items-baseline gap-2">
                                 <span className={cn(
-                                    "text-4xl font-black tabular-nums tracking-tighter",
+                                    "text-3xl font-black tabular-nums tracking-tighter",
+                                    data.responseRate >= 80 ? "text-teal" : data.responseRate >= 40 ? "text-indigo-400" : "text-rose-500"
+                                )}>
+                                    {data.responseRate}%
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-bold uppercase tabular-nums">({data.responseCount}名回答済)</span>
+                            </div>
+                            <div className="mt-3 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div 
+                                    className={cn(
+                                        "h-full transition-all duration-1000",
+                                        data.responseRate >= 80 ? "bg-teal" : data.responseRate >= 40 ? "bg-indigo-400" : "bg-rose-500"
+                                    )}
+                                    style={{ width: `${data.responseRate}%` }}
+                                />
+                            </div>
+                        </div>
+                        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+                            <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">当月平均体温</span>
+                            <div className="flex items-baseline gap-2">
+                                <span className={cn(
+                                    "text-3xl font-black tabular-nums tracking-tighter",
                                     data.pulse >= 3.5 ? "text-emerald-500" : data.pulse >= 2.5 ? "text-amber-500" : "text-rose-500"
                                 )}>
                                     {data.pulse.toFixed(1)}
                                 </span>
+                                <span className="text-[10px] text-slate-400 font-bold uppercase">/ 5.0</span>
+                            </div>
+                            <p className="mt-3 text-[10px] text-slate-400 font-bold leading-tight">
+                                {data.pulse >= 3.5 ? "非常に良好なコンディションです。" : data.pulse >= 2.5 ? "一部に課題が見られます。" : "早急な対話と対策が必要です。"}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Pulse History Chart */}
+                    <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm transition-all hover:shadow-md space-y-4">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <h3 className="text-lg font-black text-slate-800 tracking-tight">組織体温の推移</h3>
+                                <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">
+                                    継続的なストレスや熱量の変化をモニタリング
+                                </p>
                             </div>
                         </div>
 
