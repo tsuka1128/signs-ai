@@ -160,21 +160,52 @@ export default function VoiceCheckPage() {
                     管理者向け：回答URLの共有方法
                 </h2>
                 <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                    ボイスチェックのURLをメンバーに配布する方法です。
+                    ボイスチェックのURLをメンバーに配布する方法です。用途に合わせて2種類のURLを使い分けることができます。
                 </p>
-                <div className="bg-white border border-slate-200 rounded-[28px] p-6 space-y-4">
-                    <div className="space-y-2">
-                        <div className="text-xs font-black text-slate-400 uppercase tracking-widest">基本URL</div>
-                        <code className="block bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-slate-700">
-                            https://signs-ai.vercel.app/form
-                        </code>
-                        <p className="text-xs text-slate-500 font-medium">
-                            ログイン中のユーザーは自動的に所属企業のフォームが表示されます。
-                        </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white border border-slate-200 rounded-[28px] p-6 space-y-4 shadow-sm">
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">① ログイン用（基本）</div>
+                                <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[9px] font-bold rounded">アカウント必須</span>
+                            </div>
+                            <code className="block bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-xs font-bold text-slate-700 break-all">
+                                https://signs-ai.vercel.app/form
+                            </code>
+                            <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                                ログイン済みのユーザー向けです。自分のアカウントとして回答を残したい場合に適しています。
+                            </p>
+                        </div>
                     </div>
-                    <div className="border-t border-slate-100 pt-4">
-                        <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">配布のタイミング</div>
-                        <ul className="text-sm text-slate-600 font-medium space-y-2">
+
+                    <div className="bg-white border border-teal-100 rounded-[28px] p-6 space-y-4 shadow-sm relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8 bg-teal-50 rounded-full blur-2xl -mr-4 -mt-4" />
+                        <div className="relative z-10 space-y-2">
+                            <div className="flex items-center justify-between">
+                                <div className="text-[10px] font-black text-teal-500 uppercase tracking-widest">② ログイン不要用（推奨）</div>
+                                <span className="px-2 py-0.5 bg-teal-500 text-white text-[9px] font-bold rounded shadow-sm">ログイン不要</span>
+                            </div>
+                            <code className="block bg-teal-50/50 border border-teal-100 rounded-xl px-4 py-3 text-xs font-bold text-teal-700 break-all">
+                                https://signs-ai.vercel.app/form?c=YOUR_ID
+                            </code>
+                            <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                                パラメータに<strong>SignsAI ID</strong>を含めることで、ユーザーはログインせずに即座に回答できます。回答率を最大化したい場合に最適です。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-100 rounded-[28px] p-8 space-y-4">
+                    <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                        <Shield className="w-4 h-4 text-teal" />
+                        SignsAI IDの確認方法
+                    </h3>
+                    <p className="text-[13px] text-slate-600 font-medium leading-relaxed">
+                        管理者画面の<strong>「設定」→「基本設定」</strong>タブ内にある<strong>「SignsAI ID」</strong>（例: P-240328-ABCD）をコピーして、URLの <code>YOUR_ID</code> の部分に置き換えて配布してください。
+                    </p>
+                    <div className="border-t border-slate-200 pt-4">
+                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">配布のタイミング</div>
+                        <ul className="text-xs text-slate-600 font-medium space-y-2">
                             <li className="flex items-start gap-2">
                                 <span className="text-teal mt-0.5">📅</span>
                                 毎月1日〜5日頃に Slack チャンネルやメールで共有するのがおすすめです

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { createClient } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 
 // 型定義
 interface Question {
@@ -29,6 +30,7 @@ interface Axis {
 function SurveyFormContent() {
     const searchParams = useSearchParams();
     const companyId = searchParams.get("company_id");
+    const shortId = searchParams.get("c") || searchParams.get("short_id");
     const supabase = createClient();
 
     const [loading, setLoading] = useState(true);
@@ -40,6 +42,7 @@ function SurveyFormContent() {
     const [axes, setAxes] = useState<Axis[]>([]);
     const [secondaryAxisName, setSecondaryAxisName] = useState("第2軸");
     const [resolvedCompanyId, setResolvedCompanyId] = useState<string | null>(null);
+    const [deadlineDay, setDeadlineDay] = useState<number | null>(null);
 
     const [department, setDepartment] = useState("");
     const [axisId, setAxisId] = useState("");
@@ -60,7 +63,22 @@ function SurveyFormContent() {
                 const now = new Date();
                 const currentMonthPart = `${now.getFullYear()}_${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-                // 1. URLパラメータにない場合、ログインユーザーから取得を試みる
+                // 1. SignsAI ID (short_id) が指定されている場合、company_id を解決する
+                if (!effectiveCompanyId && shortId) {
+                    const { data: companyData, error: cErr } = await supabase
+                        .from('companies')
+                        .select('id')
+                        .eq('short_id', shortId)
+                        .single();
+                    
+                    if (companyData) {
+                        effectiveCompanyId = companyData.id;
+                    } else if (cErr) {
+                        console.error("ShortID resolution error:", cErr);
+                    }
+                }
+
+                // 2. それでもない場合、ログインユーザーから取得を試みる
                 if (!effectiveCompanyId) {
                     const { data: { user: authUser } } = await supabase.auth.getUser();
                     if (authUser) {
@@ -75,17 +93,8 @@ function SurveyFormContent() {
                     }
                 }
 
-                // 2. それでもない場合（デモ用フォールバック）、DB内の最初の企業を取得
-                if (!effectiveCompanyId) {
-                    const { data: companies } = await supabase
-                        .from('companies')
-                        .select('id')
-                        .limit(1);
-                    if (companies && companies.length > 0) {
-                        effectiveCompanyId = companies[0].id;
-                    }
-                }
-
+                // 安全のため、自動フォールバック（最初の企業を取得）は削除しました
+                
                 if (!effectiveCompanyId) {
                     setError("対象の企業を特定できませんでした。正しいリンクからアクセスしてください。");
                     setLoading(false);
@@ -118,9 +127,17 @@ function SurveyFormContent() {
                 setDepartments(dData || []);
                 setResolvedCompanyId(effectiveCompanyId);
 
-                // 4. 第2軸情報取得
-                const { data: cData } = await supabase.from('companies').select('kpi_secondary_axis_name').eq('id', effectiveCompanyId).single();
-                if (cData) setSecondaryAxisName(cData.kpi_secondary_axis_name);
+                // 4. 第2軸情報と回答期限の取得
+                const { data: cData } = await supabase
+                    .from('companies')
+                    .select('kpi_secondary_axis_name, survey_deadline_day')
+                    .eq('id', effectiveCompanyId)
+                    .single();
+                
+                if (cData) {
+                    setSecondaryAxisName(cData.kpi_secondary_axis_name);
+                    setDeadlineDay(cData.survey_deadline_day);
+                }
 
                 const { data: aData } = await supabase.from('kpi_axes').select('id, name').eq('company_id', effectiveCompanyId).order('sort_order', { ascending: true });
                 setAxes(aData || []);
@@ -137,7 +154,7 @@ function SurveyFormContent() {
         };
 
         checkAndFetch();
-    }, [companyId, supabase]);
+    }, [companyId, shortId, supabase]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -239,19 +256,58 @@ function SurveyFormContent() {
         );
     }
 
-    const progress = questions.length > 0 ? Math.round((Object.keys(answers).length / questions.length) * 100) : 0;
+const progress = questions.length > 0 ? Math.round((Object.keys(answers).length / questions.length) * 100) : 0;
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans pb-32">
-            <main className="max-w-xl mx-auto px-4 pt-16">
-                <div className="text-center mb-10 mt-6 relative z-10">
-                    <div className="inline-flex flex-col items-center">
-                        <h1 className="text-2xl font-black text-slate-800 tracking-tighter mb-2">Signs AI</h1>
-                        <Badge className="bg-teal/10 text-teal border-none text-[10px] font-bold py-1 px-3">
-                            {new Date().getFullYear()}年{new Date().getMonth() + 1}月度 ボイスチェック
-                        </Badge>
+            <main className="max-w-xl mx-auto px-4 pt-12">
+                <header className="mb-10 space-y-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-2xl font-black text-slate-800 tracking-tight">ボイスチェック</h1>
+                            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">{new Date().getFullYear()}年{new Date().getMonth() + 1}月度</p>
+                        </div>
+                        {deadlineDay && (
+                            <div className="text-right">
+                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">回答期限</div>
+                                <div className={cn(
+                                    "text-sm font-black tabular-nums transition-colors",
+                                    (() => {
+                                        const now = new Date();
+                                        const deadlineDate = new Date(now.getFullYear(), now.getMonth(), deadlineDay);
+                                        if (deadlineDate.getMonth() !== now.getMonth()) deadlineDate.setDate(0);
+                                        const diff = deadlineDate.getTime() - now.getTime();
+                                        return diff < (1000 * 60 * 60 * 24 * 3) ? "text-rose-500" : "text-slate-600";
+                                    })()
+                                )}>
+                                    {new Date().getMonth() + 1}/{deadlineDay}まで
+                                    {(() => {
+                                        const now = new Date();
+                                        const deadlineDate = new Date(now.getFullYear(), now.getMonth(), deadlineDay);
+                                        if (deadlineDate.getMonth() !== now.getMonth()) deadlineDate.setDate(0);
+                                        const diff = Math.ceil((deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                                        if (diff < 0) return <span className="ml-1 text-[10px] text-rose-500">(期限切れ)</span>;
+                                        if (diff <= 3) return <span className="ml-1 text-[10px]">(あと{diff}日)</span>;
+                                        return null;
+                                    })()}
+                                </div>
+                            </div>
+                        )}
                     </div>
-                </div>
+
+                    <div className="space-y-2">
+                        <div className="h-1.5 bg-slate-200/50 rounded-full overflow-hidden">
+                            <div 
+                                className="h-full bg-teal transition-all duration-500 ease-out"
+                                style={{ width: `${progress}%` }}
+                            />
+                        </div>
+                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-400 px-0.5">
+                            <span>Progress</span>
+                            <span className="tabular-nums">{progress}%</span>
+                        </div>
+                    </div>
+                </header>
 
                 {hasAnswered ? (
                     <div className="bg-white p-10 sm:p-14 rounded-[40px] shadow-sm border border-slate-100 text-center space-y-6 relative overflow-hidden">
