@@ -444,6 +444,17 @@ export default function SettingsPage() {
         }
     };
 
+    const handleCopyInviteLink = async (inv: any) => {
+        const url = `${window.location.origin}/onboarding?token=${inv.token}`;
+        try {
+            await navigator.clipboard.writeText(url);
+            alert("招待用URLをコピーしました！ Slackなどで共有してください。");
+        } catch (err) {
+            console.error("Copy error:", err);
+            alert(`コピーに失敗しました: ${url}`);
+        }
+    };
+
     const handleStartEditUser = (u: any) => {
         setEditingUser(u);
         setEditForm({
@@ -1063,6 +1074,13 @@ export default function SettingsPage() {
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button
+                                                            onClick={() => handleCopyInviteLink(inv)}
+                                                            className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                                                            title="招待リンクをコピー"
+                                                        >
+                                                            <Copy className="w-4 h-4" />
+                                                        </button>
                                                         <button
                                                             onClick={() => handleResendInvitation(inv)}
                                                             className="p-2 text-slate-400 hover:text-teal hover:bg-teal-50 rounded-lg transition-all"

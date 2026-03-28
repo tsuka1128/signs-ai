@@ -51,5 +51,9 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ message: "招待の作成に失敗しました" }, { status: 500 });
     }
 
+    // 4. メール送信 (将来的に Resend 等の API 連携を行う場所)
+    // const resend = new Resend(process.env.RESEND_API_KEY);
+    // await resend.emails.send({ ... });
+
     return NextResponse.json({ success: true, token: invitation.token });
 }

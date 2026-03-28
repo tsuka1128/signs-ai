@@ -30,6 +30,10 @@ function LoginForm() {
         if (searchParams.get("registered")) {
             setIsRegistered(true);
         }
+        const token = searchParams.get("token");
+        if (token) {
+            setInviteCode(token);
+        }
     }, [searchParams]);
 
     const handleGoogleLogin = async () => {
