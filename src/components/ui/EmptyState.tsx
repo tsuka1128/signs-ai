@@ -30,9 +30,9 @@ export function EmptyState({
             {actionLabel && actionHref && (
                 <Link
                     href={actionHref}
-                    className="inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold py-2.5 px-5 rounded-xl shadow-sm transition-all text-sm"
+                    className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 px-6 rounded-xl shadow-lg shadow-slate-200 transition-all text-[10px] uppercase tracking-widest"
                 >
-                    <PlusCircle className="w-4 h-4 text-teal-500" />
+                    <PlusCircle className="w-3.5 h-3.5 text-teal" />
                     {actionLabel}
                 </Link>
             )}

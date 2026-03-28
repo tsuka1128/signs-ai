@@ -102,6 +102,7 @@ export default function SettingsPage() {
     const [invitations, setInvitations] = useState<any[]>([]);
     const [inviteEmail, setInviteEmail] = useState("");
     const [copied, setCopied] = useState(false);
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     
     // Invitation extra state
     const [inviteDeptId, setInviteDeptId] = useState("");
@@ -133,6 +134,7 @@ export default function SettingsPage() {
                 router.push("/login");
                 return;
             }
+            setCurrentUserId(user.id);
 
             // Get company_id
             const { data: userData } = await supabase.from('users').select('company_id').eq('id', user.id).single();
@@ -203,7 +205,7 @@ export default function SettingsPage() {
                 body: JSON.stringify({ webhookUrl })
             });
             if (res.ok) {
-                alert("テスト通知を送信しました。Slackをご確認ください✅");
+                alert("テスト通知を送信しました。Slackをご確認ください");
             } else {
                 const data = await res.json();
                 alert(`送信失敗: ${data.error || "詳細不明"}`);
@@ -231,7 +233,7 @@ export default function SettingsPage() {
                 body: JSON.stringify({ webhookUrl, slackUserId })
             });
             if (res.ok) {
-                alert(`Slack ID: ${slackUserId} 宛にテストメンションを送信しました。Slackをご確認ください✅`);
+                alert(`Slack ID: ${slackUserId} 宛にテストメンションを送信しました。Slackをご確認ください`);
             } else {
                 const data = await res.json();
                 alert(`送信失敗: ${data.error || "詳細不明"}`);
@@ -393,11 +395,13 @@ export default function SettingsPage() {
     };
 
     const handleInvite = async () => {
-        if (!inviteEmail) return;
+        if (!company?.id || !currentUserId) return;
+
         const supabase = createClient();
         const { error } = await supabase.from('invitations').insert({
             email: inviteEmail,
             company_id: company.id,
+            inviter_id: currentUserId,
             role: 'member',
             department_id: inviteDeptId || null,
             axis_id: inviteAxisId || null,

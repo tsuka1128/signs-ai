@@ -163,7 +163,7 @@ export default function AdminSettingsPage() {
             });
 
             if (res.ok) {
-                alert("テスト通知を送信しました。Slackチャンネルをご確認ください✅");
+                alert("テスト通知を送信しました。Slackチャンネルをご確認ください");
             } else {
                 const data = await res.json();
                 alert(`送信失敗: ${data.error || "詳細不明"}`);

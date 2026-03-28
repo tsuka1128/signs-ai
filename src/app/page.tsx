@@ -15,7 +15,7 @@ import { OrganizationSection } from "@/components/dashboard/sections/Organizatio
 import { KpiSection } from "@/components/dashboard/sections/KpiSection";
 import { MatrixSection } from "@/components/dashboard/sections/MatrixSection";
 import { cn } from "@/lib/utils";
-import { Target, Thermometer, Shield, Rocket, Lightbulb } from "lucide-react";
+import { Target, Thermometer, Shield, AlertTriangle, Lightbulb, Rocket } from "lucide-react";
 import { DEFAULT_SURVEY_QUESTIONS, DEFAULT_SEMANTIC_POLICY } from "@/lib/constants";
 import { normalizeMonth, getLastNMonths, getMonthLabels, getFullMonthLabels } from "@/lib/utils/date";
 import { useCompany } from "@/hooks/useCompany";
@@ -760,28 +760,35 @@ export default function DashboardPage() {
             icon: <Target className="w-5 h-5 text-teal" />,
             title: "総評：組織の健全性と戦略進捗",
             subtitle: "Executive Summary",
-            content: aiContent?.deep_report?.executive_summary || "データに基づいた総評を生成するには、最新の分析を実行してください。"
+            content: aiContent?.deep_report?.executive_summary || "データに基づいた総評を分析中です..."
           },
           {
             id: "correlation",
             icon: <Thermometer className="w-5 h-5 text-teal" />,
             title: "組織力とKPIの相関解析",
             subtitle: "Organizational Health × KPI Correlation",
-            content: aiContent?.deep_report?.correlation || "組織体温とKPI達成率の相関分析データがありません。"
+            content: aiContent?.deep_report?.correlation || "相関の分析データを準備中です..."
           },
           {
             id: "strategic-alignment",
             icon: <Shield className="w-5 h-5 text-teal" />,
             title: "組織方針との整合性チェック",
-            subtitle: "Strategic Alignment Analysis",
-            content: aiContent?.deep_report?.strategic_alignment || "組織方針（Semantic Layer）との整合性分析データがありません。"
+            subtitle: "Strategic Alignment",
+            content: aiContent?.deep_report?.strategic_alignment || "方針との整合性を検証中です..."
           },
           {
-            id: "risks-opportunities",
-            icon: <Rocket className="w-5 h-5 text-teal" />,
-            title: "中長期リスクと成長機会",
-            subtitle: "Mid-term Risks & Growth Opportunities",
-            content: aiContent?.deep_report?.risks || "データに基づいたリスク・機会の分析がありません。"
+            id: "risks",
+            icon: <AlertTriangle className="w-5 h-5 text-teal" />,
+            title: "リスクと成長機会の特定",
+            subtitle: "Risks & Opportunities",
+            content: aiContent?.deep_report?.risks || "リスク項目を抽出中です..."
+          },
+          {
+            id: "recommendations",
+            icon: <Lightbulb className="w-5 h-5 text-teal" />,
+            title: "経営判断への具体的提言",
+            subtitle: "Actionable Recommendations",
+            content: aiContent?.deep_report?.recommendations || "提言を生成中です..."
           }
         ]}
       />

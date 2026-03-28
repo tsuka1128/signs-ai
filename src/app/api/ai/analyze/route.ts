@@ -103,10 +103,11 @@ export async function POST(req: Request) {
 {
   "summary": "140文字程度の全体サマリー",
   "deep_report": {
-    "executive_summary": "詳細な全社分析テキスト（経営への提言）",
-    "correlation": "体温とKPIの相関分析",
-    "strategic_alignment": "直近の組織方針との整合性評価",
-    "risks": "リスクと機会の指摘"
+    "executive_summary": "詳細な全社分析テキスト（経営への総評・戦略進捗）",
+    "correlation": "体温とKPIの相関分析（組織の健全性が成果にどう影響しているか）",
+    "strategic_alignment": "直近の組織方針との整合性評価（現場の動きと経営方針の乖離）",
+    "risks": "潜在的な中長期リスクと機会の指摘",
+    "recommendations": "経営層が明日から打つべき具体的な一手（経営判断の材料）"
   },
   "insights_by_dept": {
     "部署ID": {
