@@ -180,6 +180,24 @@ export default function VoiceCheckPage() {
                                     </div>
                                     <p className="text-[10px] text-slate-400 font-medium">※ 設定した日は、メンバーの回答画面にも「回答期限」として表示されます。</p>
                                 </div>
+
+                                <div className="p-6 bg-slate-50 border border-slate-100 rounded-[2rem] space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">回答画面のプレビュー</label>
+                                        <span className="text-[9px] font-bold text-slate-400">管理者用</span>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            const url = `/form?c=${company?.short_id}`;
+                                            window.open(url, '_blank');
+                                        }}
+                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-teal hover:bg-teal-50 hover:border-teal-200 transition-all shadow-sm flex items-center justify-center gap-2"
+                                    >
+                                        <ClipboardList className="w-4 h-4" />
+                                        ボイスチェックフォーム確認
+                                    </button>
+                                    <p className="text-[10px] text-slate-400 font-medium">※ メンバーが実際に回答する画面を別タブで開きます。</p>
+                                </div>
                             </div>
                         </section>
 

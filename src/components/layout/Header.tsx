@@ -95,9 +95,6 @@ export function Header() {
                         <Link href="/marketing" className="text-[10px] font-bold bg-slate-800 text-white px-3 py-1.5 rounded-full hover:bg-teal transition-colors shadow-sm flex items-center gap-1">
                             マーケティングLP
                         </Link>
-                        <Link href="/form" className="text-[10px] font-bold bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-1">
-                            アンケート回答
-                        </Link>
                         <div className="relative">
                             <button
                                 onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -168,9 +165,6 @@ export function Header() {
                     <div className="grid grid-cols-2 gap-3 mb-2">
                         <Link href="/" onClick={() => setIsMenuOpen(false)} className="col-span-2 text-sm font-bold bg-white border-2 border-slate-100 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:border-slate-300 flex items-center justify-center gap-2">
                             ダッシュボード
-                        </Link>
-                        <Link href="/form" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:bg-slate-50 flex items-center justify-center gap-1.5">
-                            アンケート回答
                         </Link>
                         <Link href="/marketing" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold bg-slate-800 text-white px-4 py-3 rounded-xl shadow-md flex items-center justify-center gap-1.5 hover:bg-teal-600 transition-colors">
                             LP
