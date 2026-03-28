@@ -98,9 +98,6 @@ export function Header() {
                         <Link href="/form" className="text-[10px] font-bold bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-1">
                             アンケート回答
                         </Link>
-                        <Link href="/voice-check" className="text-[10px] font-bold bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-1">
-                            ボイスチェック運用
-                        </Link>
                         <div className="relative">
                             <button
                                 onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -120,6 +117,10 @@ export function Header() {
 
                                         <Link href="/kpi" onClick={() => setIsProfileOpen(false)} className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-teal transition-colors flex items-center gap-2">
                                             KPI入力
+                                        </Link>
+
+                                        <Link href="/voice-check" onClick={() => setIsProfileOpen(false)} className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-teal transition-colors flex items-center gap-2">
+                                            ボイスチェック運用
                                         </Link>
 
                                         <Link href="/docs" onClick={() => setIsProfileOpen(false)} className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-teal transition-colors flex items-center gap-2">
@@ -174,11 +175,11 @@ export function Header() {
                         <Link href="/marketing" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold bg-slate-800 text-white px-4 py-3 rounded-xl shadow-md flex items-center justify-center gap-1.5 hover:bg-teal-600 transition-colors">
                             LP
                         </Link>
-                        <Link href="/voice-check" onClick={() => setIsMenuOpen(false)} className="col-span-2 text-sm font-bold bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:bg-slate-50 flex items-center justify-center gap-1.5">
-                            ボイスチェック運用
-                        </Link>
                         <Link href="/kpi" onClick={() => setIsMenuOpen(false)} className="col-span-2 text-sm font-bold bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:bg-slate-50 flex items-center justify-center gap-1.5">
                             KPI入力
+                        </Link>
+                        <Link href="/voice-check" onClick={() => setIsMenuOpen(false)} className="col-span-2 text-sm font-bold bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:bg-slate-50 flex items-center justify-center gap-1.5">
+                            ボイスチェック運用
                         </Link>
                         <Link href="/settings" onClick={() => setIsMenuOpen(false)} className="col-span-2 text-sm font-bold bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:bg-slate-50 flex items-center justify-center gap-1.5">
                             設定
