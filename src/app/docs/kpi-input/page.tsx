@@ -97,6 +97,33 @@ export default function KpiInputPage() {
                 </div>
             </section>
 
+            {/* デモ */}
+            <section className="space-y-4">
+                <a
+                    href="/demo/kpi-input.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block p-6 bg-gradient-to-r from-teal-50 to-emerald-50 border-2 border-teal-100 rounded-[28px] shadow-sm hover:shadow-lg hover:border-teal-200 transition-all group"
+                >
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-teal-500 rounded-2xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                                <span className="text-white text-xl">🧪</span>
+                            </div>
+                            <div>
+                                <div className="text-base font-black text-slate-800 group-hover:text-teal transition-colors">
+                                    インタラクティブデモを開く
+                                </div>
+                                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                                    実際のKPI入力画面を体験できます。入力・ロック切替・保存など自由にお試しください。
+                                </p>
+                            </div>
+                        </div>
+                        <ArrowRight className="w-5 h-5 text-teal group-hover:translate-x-1 transition-transform" />
+                    </div>
+                </a>
+            </section>
+
             {/* 入力の手順 */}
             <section className="space-y-6">
                 <h2 id="input-steps" className="text-2xl font-black text-slate-900">入力の手順</h2>

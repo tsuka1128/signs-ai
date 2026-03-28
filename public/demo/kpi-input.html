@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signs AI | 月次KPI一括入力（デモ）</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            min-height: 100vh;
+            padding-bottom: 120px;
+        }
+
+        /* ===== Header ===== */
+        .page-header {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px 24px 0;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            text-decoration: none;
+            margin-bottom: 12px;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: #475569; }
+        .back-link svg { width: 12px; height: 12px; }
+
+        .title-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .title-row h1 {
+            font-size: 24px;
+            font-weight: 900;
+            color: #1e293b;
+            letter-spacing: -0.03em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+        .badge-teal {
+            background: rgba(20, 184, 166, 0.1);
+            color: #14b8a6;
+        }
+        .badge-main {
+            background: rgba(20, 184, 166, 0.2);
+            color: #5eead4;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: -0.03em;
+            padding: 1px 8px;
+        }
+        .title-desc {
+            font-size: 15px;
+            color: #64748b;
+            font-weight: 500;
+            margin-top: 8px;
+            max-width: 640px;
+        }
+
+        /* ===== Action Buttons ===== */
+        .action-buttons {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-outline {
+            background: white;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+        .btn-outline:hover { background: #f8fafc; }
+        .btn-primary {
+            background: #14b8a6;
+            color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .btn-primary:hover {
+            background: #0d9488;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: scale(1.02);
+        }
+        .btn svg, .btn img { width: 14px; height: 14px; }
+
+        /* ===== Demo Banner ===== */
+        .demo-banner {
+            max-width: 1400px;
+            margin: 0 auto 24px;
+            padding: 0 24px;
+        }
+        .demo-banner-inner {
+            background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+            border: 2px dashed #86efac;
+            border-radius: 16px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #166534;
+        }
+
+        /* ===== Table ===== */
+        .table-wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        .table-container {
+            background: white;
+            box-shadow: 0 4px 24px -8px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 48px;
+        }
+
+        .table-header {
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .table-header-main {
+            background: #1e293b;
+            color: white;
+        }
+        .table-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .table-header-left svg { width: 16px; height: 16px; color: #5eead4; }
+        .table-header h2 {
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+        }
+        .lock-toggle {
+            font-size: 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: opacity 0.2s;
+        }
+        .lock-toggle:hover { opacity: 0.7; }
+        .lock-toggle svg { width: 14px; height: 14px; }
+
+        .scroll-container {
+            overflow-x: auto;
+            position: relative;
+        }
+        .scroll-container::-webkit-scrollbar { height: 8px; }
+        .scroll-container::-webkit-scrollbar-thumb {
+            background: rgba(203, 213, 225, 0.4);
+            border-radius: 10px;
+        }
+        .scroll-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.8);
+        }
+
+        table {
+            width: 100%;
+            text-align: left;
+            border-collapse: collapse;
+            table-layout: fixed;
+            min-width: 1800px;
+        }
+        th, td {
+            border-bottom: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        /* Fixed columns */
+        .col-label {
+            width: 220px;
+            min-width: 220px;
+            position: sticky;
+            left: 0;
+            z-index: 30;
+            background: white;
+            box-shadow: 2px 0 12px -4px rgba(0,0,0,0.05);
+        }
+        th.col-label {
+            z-index: 40;
+            padding: 12px;
+            text-align: center;
+        }
+        th.col-label span {
+            font-size: 9px;
+            font-weight: 900;
+            color: #94a3b8;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        td.col-label {
+            padding: 0;
+            vertical-align: top;
+        }
+        .label-inner {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 12px;
+            min-height: 90px;
+        }
+        .label-top {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 8px;
+            margin-left: 4px;
+        }
+        .label-num {
+            font-size: 10px;
+            font-weight: 900;
+            color: #cbd5e1;
+            margin-top: 2px;
+        }
+        .label-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e293b;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .label-dept {
+            font-size: 10px;
+            font-weight: 700;
+            color: #94a3b8;
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .label-unit {
+            text-align: right;
+            font-size: 10px;
+            color: #94a3b8;
+            font-weight: 700;
+            padding-right: 6px;
+        }
+
+        /* Current month column */
+        .col-current {
+            width: 200px;
+            min-width: 200px;
+            position: sticky;
+            left: 220px;
+            z-index: 20;
+            background: #f0fdf4;
+            box-shadow: 8px 0 16px -6px rgba(0,0,0,0.08);
+            border-right: 2px solid #e2e8f0;
+        }
+        th.col-current {
+            z-index: 50;
+            padding: 8px;
+            text-align: center;
+        }
+        .month-label {
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: -0.03em;
+        }
+        .month-label-current { color: #14532d; }
+        .month-label-past { color: #64748b; }
+        .input-badge {
+            display: inline-block;
+            font-size: 8px;
+            font-weight: 900;
+            color: #14b8a6;
+            background: rgba(20, 184, 166, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 2px;
+        }
+
+        /* Past month columns */
+        .col-past {
+            width: 200px;
+            min-width: 200px;
+            background: white;
+        }
+        th.col-past {
+            background: #f8fafc;
+            padding: 8px;
+            text-align: center;
+        }
+        .col-spacer {
+            background: #f8fafc;
+            min-width: 100px;
+            width: 100%;
+        }
+        td.col-spacer {
+            background: white;
+        }
+
+        /* Cell content */
+        td.col-current, td.col-past {
+            padding: 0;
+            vertical-align: top;
+        }
+        .cell-inner {
+            display: flex;
+            flex-direction: column;
+            min-height: 90px;
+        }
+        .cell-row {
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+        }
+        .cell-row:first-child {
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .col-current .cell-row:first-child {
+            border-bottom-color: white;
+        }
+        .cell-label {
+            font-size: 9px;
+            font-weight: 900;
+            flex-shrink: 0;
+        }
+        .cell-label-current { color: #15803d; }
+        .cell-label-past { color: #94a3b8; }
+        .cell-label-target {
+            font-size: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: -0.03em;
+            color: #94a3b8;
+        }
+        .cell-value {
+            font-size: 14px;
+            font-weight: 900;
+            text-align: right;
+            width: 100%;
+        }
+        .cell-value-current { color: #14532d; }
+        .cell-value-past { color: #334155; }
+        .cell-value-target { color: #94a3b8; }
+        .cell-value-empty { color: #e2e8f0; }
+
+        /* Input fields */
+        .cell-input {
+            width: 100%;
+            text-align: right;
+            font-size: 14px;
+            font-weight: 900;
+            outline: none;
+            background: transparent;
+            border: none;
+            color: #14532d;
+        }
+        .cell-input::placeholder { color: #d1d5db; }
+        .cell-input-target { color: #94a3b8; }
+
+        /* Row hover */
+        tr.data-row:hover td.col-label { background: #f8fafc; }
+        tr.data-row:hover td.col-current { background: #e9fbf0; }
+        tr.data-row:hover td.col-past { background: #f8fafc; }
+
+        /* ===== Footer ===== */
+        .info-footer {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        .info-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .info-card svg {
+            width: 20px;
+            height: 20px;
+            color: #94a3b8;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .info-card p {
+            font-size: 12px;
+            color: #475569;
+            font-weight: 500;
+            line-height: 1.6;
+        }
+        .info-card a {
+            color: #14b8a6;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .info-card a:hover { text-decoration: underline; }
+
+        /* Tooltip pulse animation */
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+        /* Demo notification */
+        .demo-toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1e293b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            z-index: 100;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+        }
+        .demo-toast.show { transform: translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <a href="#" class="back-link" onclick="showToast('デモのためダッシュボードには遷移しません'); return false;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+            ダッシュボードに戻る
+        </a>
+        <div class="title-row">
+            <div>
+                <h1>
+                    月次KPI一括入力
+                    <span class="badge badge-teal">管理者向け</span>
+                </h1>
+                <p class="title-desc">全社のKPIの実績と目標を入力します。直近1年分の推移を確認しながら、入力・編集が可能です。</p>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-outline" onclick="showToast('Sheets連携は今後のアップデートで対応予定です')">
+                    <svg viewBox="0 0 24 24" fill="#16a34a"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-2h2v2zm0-4H7v-2h2v2zm0-4H7V7h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"/></svg>
+                    Sheets連携設定
+                </button>
+                <button class="btn btn-primary" id="saveBtn" onclick="handleSave()">
+                    この内容で保存する
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Demo Banner -->
+    <div class="demo-banner">
+        <div class="demo-banner-inner">
+            🧪 これはデモ画面です。入力した値は保存されず、実際のデータには影響しません。操作感をお試しください。
+        </div>
+    </div>
+
+    <!-- Main KPI Table -->
+    <div class="table-wrapper">
+        <div class="table-container">
+            <!-- Table Header -->
+            <div class="table-header table-header-main">
+                <div class="table-header-left">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/></svg>
+                    <h2>全社・部署（基本）</h2>
+                    <span class="badge badge-main">Main</span>
+                </div>
+                <button class="lock-toggle" id="lockBtn" onclick="toggleLock()">
+                    <svg id="lockIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <span id="lockText">今月度のみ入力可能</span>
+                </button>
+            </div>
+
+            <!-- Scrollable Table -->
+            <div class="scroll-container">
+                <table id="kpiTable">
+                    <thead>
+                        <tr>
+                            <th class="col-label"><span>項目名 / 部署</span></th>
+                            <th class="col-current">
+                                <div class="month-label month-label-current">今月度</div>
+                                <span class="input-badge">INPUT</span>
+                            </th>
+                            <!-- Past months generated by JS -->
+                        </tr>
+                    </thead>
+                    <tbody id="kpiBody">
+                        <!-- Generated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Info -->
+    <div class="info-footer">
+        <div class="info-card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            <p>KPIの基礎項目定義や、ブランド / エリアの項目管理は <a href="#" onclick="showToast('デモのため遷移しません'); return false;">組織情報設定</a> から行ってください。</p>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="demo-toast" id="toast"></div>
+
+    <script>
+        // ===== デモ用データ =====
+        const KPI_DEFINITIONS = [
+            { name: "月次売上", unit: "万円", dept: "営業部" },
+            { name: "有効リード獲得数", unit: "件", dept: "マーケティング部" },
+            { name: "商談獲得数", unit: "件", dept: "営業部" },
+            { name: "顧客解約率", unit: "%", dept: "カスタマーサクセス部" },
+            { name: "新規契約件数", unit: "件", dept: "営業部" },
+            { name: "平均客単価", unit: "万円", dept: "営業部" },
+        ];
+
+        // 過去月のサンプルデータ（各KPIに対応）
+        const PAST_DATA = [
+            // 月次売上
+            [
+                { value: "2,450", target: "2,500" },
+                { value: "2,380", target: "2,400" },
+                { value: "2,200", target: "2,300" },
+                { value: "2,100", target: "2,200" },
+                { value: "1,980", target: "2,000" },
+                { value: "2,050", target: "2,000" },
+                { value: "1,900", target: "1,900" },
+                { value: "1,850", target: "1,800" },
+                { value: "1,750", target: "1,800" },
+                { value: "1,680", target: "1,700" },
+                { value: "1,600", target: "1,600" },
+            ],
+            // 有効リード
+            [
+                { value: "320", target: "300" },
+                { value: "285", target: "280" },
+                { value: "260", target: "250" },
+                { value: "240", target: "230" },
+                { value: "210", target: "220" },
+                { value: "195", target: "200" },
+                { value: "180", target: "180" },
+                { value: "170", target: "170" },
+                { value: "155", target: "160" },
+                { value: "140", target: "150" },
+                { value: "130", target: "140" },
+            ],
+            // 商談獲得数
+            [
+                { value: "85", target: "80" },
+                { value: "72", target: "75" },
+                { value: "68", target: "70" },
+                { value: "60", target: "65" },
+                { value: "55", target: "60" },
+                { value: "52", target: "55" },
+                { value: "48", target: "50" },
+                { value: "45", target: "45" },
+                { value: "42", target: "40" },
+                { value: "38", target: "40" },
+                { value: "35", target: "35" },
+            ],
+            // 顧客解約率
+            [
+                { value: "1.2", target: "1.5" },
+                { value: "1.4", target: "1.5" },
+                { value: "1.8", target: "1.5" },
+                { value: "2.0", target: "2.0" },
+                { value: "1.9", target: "2.0" },
+                { value: "2.1", target: "2.0" },
+                { value: "2.3", target: "2.5" },
+                { value: "2.5", target: "2.5" },
+                { value: "2.8", target: "3.0" },
+                { value: "3.0", target: "3.0" },
+                { value: "3.2", target: "3.5" },
+            ],
+            // 新規契約件数
+            [
+                { value: "42", target: "40" },
+                { value: "38", target: "35" },
+                { value: "33", target: "35" },
+                { value: "30", target: "30" },
+                { value: "28", target: "30" },
+                { value: "25", target: "25" },
+                { value: "22", target: "25" },
+                { value: "20", target: "20" },
+                { value: "18", target: "20" },
+                { value: "15", target: "18" },
+                { value: "14", target: "15" },
+            ],
+            // 平均客単価
+            [
+                { value: "58.3", target: "55.0" },
+                { value: "55.0", target: "55.0" },
+                { value: "52.8", target: "50.0" },
+                { value: "50.5", target: "50.0" },
+                { value: "48.0", target: "48.0" },
+                { value: "47.2", target: "48.0" },
+                { value: "45.5", target: "45.0" },
+                { value: "44.0", target: "45.0" },
+                { value: "42.5", target: "42.0" },
+                { value: "40.0", target: "42.0" },
+                { value: "38.5", target: "40.0" },
+            ],
+        ];
+
+        let isLocked = true;
+
+        /**
+         * 直近12ヶ月分のラベルを生成
+         */
+        function generateMonths() {
+            const months = [];
+            const now = new Date();
+            for (let i = 1; i <= 11; i++) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                months.push(`${yyyy} / ${mm}`);
+            }
+            return months;
+        }
+
+        /**
+         * テーブルを描画
+         */
+        function renderTable() {
+            const pastMonths = generateMonths();
+            const thead = document.querySelector('#kpiTable thead tr');
+            const tbody = document.getElementById('kpiBody');
+
+            // ヘッダーの過去月を追加
+            // 既存の過去月ヘッダーを削除
+            const existingPastThs = thead.querySelectorAll('.col-past, .col-spacer');
+            existingPastThs.forEach(el => el.remove());
+
+            pastMonths.forEach(label => {
+                const th = document.createElement('th');
+                th.className = 'col-past';
+                th.innerHTML = `<div class="month-label month-label-past">${label}</div>`;
+                thead.appendChild(th);
+            });
+            const spacerTh = document.createElement('th');
+            spacerTh.className = 'col-spacer';
+            thead.appendChild(spacerTh);
+
+            // ボディを生成
+            tbody.innerHTML = '';
+            KPI_DEFINITIONS.forEach((kpi, kpiIdx) => {
+                const tr = document.createElement('tr');
+                tr.className = 'data-row';
+
+                // ラベル列
+                tr.innerHTML = `
+                    <td class="col-label">
+                        <div class="label-inner">
+                            <div class="label-top">
+                                <span class="label-num">${kpiIdx + 1}.</span>
+                                <div>
+                                    <div class="label-name">${kpi.name}</div>
+                                    <span class="label-dept">${kpi.dept}</span>
+                                </div>
+                            </div>
+                            <div class="label-unit">${kpi.unit}</div>
+                        </div>
+                    </td>
+                    <td class="col-current">
+                        <div class="cell-inner">
+                            <div class="cell-row">
+                                <span class="cell-label cell-label-current">実績</span>
+                                <input type="number" class="cell-input" placeholder="---" min="0" data-kpi="${kpiIdx}" data-field="value">
+                            </div>
+                            <div class="cell-row">
+                                <span class="cell-label cell-label-target">目標</span>
+                                <input type="number" class="cell-input cell-input-target" placeholder="---" min="0" data-kpi="${kpiIdx}" data-field="target">
+                            </div>
+                        </div>
+                    </td>
+                `;
+
+                // 過去月の列
+                pastMonths.forEach((_, monthIdx) => {
+                    const data = PAST_DATA[kpiIdx] && PAST_DATA[kpiIdx][monthIdx]
+                        ? PAST_DATA[kpiIdx][monthIdx]
+                        : { value: "-", target: "-" };
+
+                    const td = document.createElement('td');
+                    td.className = 'col-past';
+
+                    if (isLocked) {
+                        td.innerHTML = `
+                            <div class="cell-inner">
+                                <div class="cell-row">
+                                    <span class="cell-label cell-label-past">実績</span>
+                                    <span class="cell-value cell-value-past">${data.value}</span>
+                                </div>
+                                <div class="cell-row">
+                                    <span class="cell-label cell-label-target">目標</span>
+                                    <span class="cell-value cell-value-target">${data.target}</span>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        td.innerHTML = `
+                            <div class="cell-inner">
+                                <div class="cell-row">
+                                    <span class="cell-label cell-label-past">実績</span>
+                                    <input type="text" class="cell-input" value="${data.value}" style="color: #334155;">
+                                </div>
+                                <div class="cell-row">
+                                    <span class="cell-label cell-label-target">目標</span>
+                                    <input type="text" class="cell-input cell-input-target" value="${data.target}">
+                                </div>
+                            </div>
+                        `;
+                    }
+                    tr.appendChild(td);
+                });
+
+                // スペーサー
+                const spacerTd = document.createElement('td');
+                spacerTd.className = 'col-spacer';
+                tr.appendChild(spacerTd);
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        /**
+         * ロック / アンロック切り替え
+         */
+        function toggleLock() {
+            isLocked = !isLocked;
+            const lockText = document.getElementById('lockText');
+            const lockIcon = document.getElementById('lockIcon');
+
+            if (isLocked) {
+                lockText.textContent = '今月度のみ入力可能';
+                lockText.style.color = '#94a3b8';
+                lockIcon.style.color = '#94a3b8';
+                lockIcon.classList.remove('animate-pulse');
+                lockIcon.innerHTML = '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>';
+            } else {
+                lockText.textContent = '過去実績の編集モード有効';
+                lockText.style.color = '#0d9488';
+                lockIcon.style.color = '#14b8a6';
+                lockIcon.classList.add('animate-pulse');
+                lockIcon.innerHTML = '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 5-5 5 5 0 0 1 5 5"/>';
+            }
+            renderTable();
+        }
+
+        /**
+         * 保存ボタン処理
+         */
+        function handleSave() {
+            const btn = document.getElementById('saveBtn');
+            btn.textContent = '保存中...';
+            btn.style.opacity = '0.7';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                btn.style.background = '#10b981';
+                btn.style.opacity = '1';
+                btn.innerHTML = '✓ 保存しました';
+                showToast('デモのためデータは保存されていません');
+
+                setTimeout(() => {
+                    btn.style.background = '#14b8a6';
+                    btn.innerHTML = `この内容で保存する <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:inline"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>`;
+                    btn.disabled = false;
+                }, 3000);
+            }, 800);
+        }
+
+        /**
+         * トースト通知
+         */
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // 初期描画
+        renderTable();
+    </script>
+</body>
+</html>
