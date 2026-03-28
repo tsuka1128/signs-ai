@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, PlayCircle, XCircle, Clock, Info, Bot, User, RefreshCcw } from "lucide-react";
@@ -25,6 +25,15 @@ interface ActionItemProps {
 export function ActionItem({ priority: initialPriority, title, description, dept, owner, isAiGenerated = true, isArchived = false, archivedAt, createdAt, initialStatus = 'pending', onPriorityChange, onStatusChange, onRevive }: ActionItemProps) {
     const [status, setStatus] = useState(initialStatus);
     const [priority, setPriority] = useState(initialPriority);
+
+    // 親コンポーネントからのプロパティ変更を同期
+    React.useEffect(() => {
+        setStatus(initialStatus);
+    }, [initialStatus]);
+
+    React.useEffect(() => {
+        setPriority(initialPriority);
+    }, [initialPriority]);
 
     const isUrgent = priority === 'urgent';
 
@@ -59,9 +68,9 @@ export function ActionItem({ priority: initialPriority, title, description, dept
 
     // 優先度表示用の設定
     const priorityConfig = {
-        urgent: { label: "🔴 最優先", class: "bg-rose-500 text-white" },
-        high: { label: "🟡 重要", class: "bg-amber-400 text-white" },
-        normal: { label: "🔵 推奨", class: "bg-slate-400 text-white" }
+        urgent: { label: "最優先", class: "bg-rose-500 text-white" },
+        high: { label: "重要", class: "bg-amber-400 text-white" },
+        normal: { label: "推奨", class: "bg-slate-400 text-white" }
     };
 
     const currentStatus = statusConfig[status];
@@ -137,11 +146,11 @@ export function ActionItem({ priority: initialPriority, title, description, dept
                             {dept}
                         </Badge>
                         <Badge className="bg-amber-50/50 text-amber-600/70 border-none font-bold text-[10px] px-3 py-1.5 rounded-lg shrink-0">
-                            💡 推奨担当: {owner}
+                            推奨担当: {owner}
                         </Badge>
                         {createdAt && (
                             <Badge className="bg-slate-50 text-slate-400 border-slate-100 font-bold text-[10px] px-3 py-1.5 rounded-lg shrink-0 border">
-                                📅 作成日: {createdAt}
+                                作成日: {createdAt}
                             </Badge>
                         )}
                     </div>

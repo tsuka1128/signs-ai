@@ -36,12 +36,12 @@ export default function DashboardGuidePage() {
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {[
-                        { icon: Grid3X3, label: "📊 マトリックス", color: "bg-teal-50 text-teal-700 border-teal-100" },
-                        { icon: BarChart3, label: "📈 KPI推移", color: "bg-blue-50 text-blue-700 border-blue-100" },
-                        { icon: Building2, label: "🏢 組織のKPI", color: "bg-indigo-50 text-indigo-700 border-indigo-100" },
-                        { icon: Thermometer, label: "🗣️ 組織の体温", color: "bg-amber-50 text-amber-700 border-amber-100" },
-                        { icon: ListTodo, label: "📌 アクション", color: "bg-emerald-50 text-emerald-700 border-emerald-100" },
-                        { icon: FileText, label: "🧬 組織方針", color: "bg-purple-50 text-purple-700 border-purple-100" },
+                        { icon: Grid3X3, label: "マトリックス", color: "bg-teal-50 text-teal-700 border-teal-100" },
+                        { icon: BarChart3, label: "KPI推移", color: "bg-blue-50 text-blue-700 border-blue-100" },
+                        { icon: Building2, label: "組織のKPI", color: "bg-indigo-50 text-indigo-700 border-indigo-100" },
+                        { icon: Thermometer, label: "組織の体温", color: "bg-amber-50 text-amber-700 border-amber-100" },
+                        { icon: ListTodo, label: "アクション", color: "bg-emerald-50 text-emerald-700 border-emerald-100" },
+                        { icon: FileText, label: "組織方針", color: "bg-purple-50 text-purple-700 border-purple-100" },
                     ].map((item, i) => (
                         <div key={i} className={`px-4 py-3 rounded-2xl border text-sm font-bold text-center ${item.color}`}>
                             {item.label}
@@ -81,12 +81,12 @@ export default function DashboardGuidePage() {
 
             {/* マトリックスセクション */}
             <section className="space-y-6">
-                <h2 id="matrix-section" className="text-2xl font-black text-slate-900">📊 マトリックスセクション</h2>
+                <h2 id="matrix-section" className="text-2xl font-black text-slate-900">マトリックスセクション</h2>
                 <p className="text-sm text-slate-600 font-medium leading-relaxed">
                     人員数（X軸）× 組織体温（Y軸）の散布図で、各部署・担当領域のポジションを可視化します。バブルの大きさはKPI達成率を反映しています。
                 </p>
                 <div className="bg-teal-50/50 border border-teal-100/50 rounded-xl px-5 py-4 text-xs font-bold text-teal-800">
-                    💡 詳しい読み方は「<Link href="/docs/bubble-chart-guide" className="underline">マトリックスの見方</Link>」をご覧ください。タイムラプス機能で、過去12ヶ月の変遷も確認できます。
+                    詳しい読み方は「<Link href="/docs/bubble-chart-guide" className="underline">マトリックスの見方</Link>」をご覧ください。タイムラプス機能で、過去12ヶ月の変遷も確認できます。
                 </div>
                 <div className="bg-white border border-slate-200 rounded-[28px] p-6 space-y-3">
                     <h3 id="matrix-switch" className="text-base font-black text-slate-800">表示の切り替え</h3>
@@ -109,7 +109,7 @@ export default function DashboardGuidePage() {
 
             {/* KPI推移セクション */}
             <section className="space-y-6">
-                <h2 id="kpi-trend" className="text-2xl font-black text-slate-900">📈 KPI推移セクション</h2>
+                <h2 id="kpi-trend" className="text-2xl font-black text-slate-900">KPI推移セクション</h2>
                 <p className="text-sm text-slate-600 font-medium leading-relaxed">
                     登録済みのKPIごとに、<strong>過去13ヶ月の実績推移</strong>と<strong>目標達成率</strong>をグラフで表示します。
                 </p>
@@ -130,14 +130,14 @@ export default function DashboardGuidePage() {
                         </li>
                     </ul>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-xs font-bold text-slate-600">
-                        📌 KPIの切り替えは、セクション上部のKPI名をタップすると他のKPIに切り替え可能です。
+                        KPIの切り替えは、セクション上部のKPI名をタップすると他のKPIに切り替え可能です。
                     </div>
                 </div>
             </section>
 
             {/* 組織のKPI */}
             <section className="space-y-6">
-                <h2 id="org-kpi" className="text-2xl font-black text-slate-900">🏢 組織のKPIセクション</h2>
+                <h2 id="org-kpi" className="text-2xl font-black text-slate-900">組織のKPIセクション</h2>
                 <p className="text-sm text-slate-600 font-medium leading-relaxed">
                     部署ごと（または担当領域ごと）の組織コンディションをカード形式で一覧表示します。各カードには以下の情報が含まれます。
                 </p>
@@ -163,7 +163,7 @@ export default function DashboardGuidePage() {
 
             {/* 組織の体温 */}
             <section className="space-y-6">
-                <h2 id="org-temperature" className="text-2xl font-black text-slate-900">🗣️ 組織の体温セクション</h2>
+                <h2 id="org-temperature" className="text-2xl font-black text-slate-900">組織の体温セクション</h2>
                 <p className="text-sm text-slate-600 font-medium leading-relaxed">
                     ボイスチェックの11設問を、設問ごとのスコアとして表示します。<strong>前月との比較（↑↓）</strong>も確認でき、どの設問のスコアが改善・悪化しているかが一目で分かります。
                 </p>
@@ -171,21 +171,21 @@ export default function DashboardGuidePage() {
                     <h3 id="score-meaning" className="text-base font-black text-slate-800">スコアの目安</h3>
                     <div className="space-y-2">
                         <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
-                            <span className="text-lg">☀️</span>
+                            <span className="text-lg font-black text-emerald-500">晴れ</span>
                             <div>
                                 <span className="text-sm font-black text-emerald-700">4.0 以上</span>
                                 <span className="text-xs text-emerald-600 font-medium ml-2">良好 — 前向きなエネルギーが維持されている</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-100 rounded-xl">
-                            <span className="text-lg">⛅</span>
+                            <span className="text-lg font-black text-amber-500">曇り</span>
                             <div>
                                 <span className="text-sm font-black text-amber-700">3.0 〜 3.9</span>
                                 <span className="text-xs text-amber-600 font-medium ml-2">注意 — 兆候を確認し、対策を検討すべき</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 p-3 bg-rose-50 border border-rose-100 rounded-xl">
-                            <span className="text-lg">🌧️</span>
+                            <span className="text-lg font-black text-rose-500">雨</span>
                             <div>
                                 <span className="text-sm font-black text-rose-700">3.0 未満</span>
                                 <span className="text-xs text-rose-600 font-medium ml-2">警告 — 早急なアクションが必要</span>
@@ -197,17 +197,17 @@ export default function DashboardGuidePage() {
 
             {/* アクション・組織方針 */}
             <section className="space-y-6">
-                <h2 id="action-policy" className="text-2xl font-black text-slate-900">📌 アクション & 🧬 組織方針</h2>
+                <h2 id="action-policy" className="text-2xl font-black text-slate-900">アクション & 組織方針</h2>
                 <p className="text-sm text-slate-600 font-medium leading-relaxed">
                     これらのセクションの詳しい使い方は、専用のドキュメントをご覧ください。
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Link href="/docs/action-guide" className="p-5 bg-white border border-slate-200 rounded-2xl hover:shadow-lg transition-all group">
-                        <div className="text-sm font-black text-slate-800 group-hover:text-teal transition-colors">📌 アクション管理の使い方 →</div>
+                        <div className="text-sm font-black text-slate-800 group-hover:text-teal transition-colors">アクション管理の使い方 →</div>
                         <p className="text-xs text-slate-500 font-medium mt-1">AI提案の管理・ライフサイクル</p>
                     </Link>
                     <Link href="/docs/policy-guide" className="p-5 bg-white border border-slate-200 rounded-2xl hover:shadow-lg transition-all group">
-                        <div className="text-sm font-black text-slate-800 group-hover:text-teal transition-colors">🧬 組織方針の登録 →</div>
+                        <div className="text-sm font-black text-slate-800 group-hover:text-teal transition-colors">組織方針の登録 →</div>
                         <p className="text-xs text-slate-500 font-medium mt-1">セマンティックレイヤーの編集と履歴管理</p>
                     </Link>
                 </div>
@@ -217,7 +217,7 @@ export default function DashboardGuidePage() {
             <section className="space-y-6">
                 <h2 id="dept-filter" className="text-2xl font-black text-slate-900">部署タブによる絞り込み</h2>
                 <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                    AIインサイトカードの下に表示される<strong>部署タブ</strong>（🏢 全社、📈 営業部、🎨 マーケティング部 など）をタップすると、ダッシュボード全体がその部署のデータに絞り込まれます。
+                    AIインサイトカードの下に表示される<strong>部署タブ</strong>（全社、営業部、マーケティング部 など）をタップすると、ダッシュボード全体がその部署のデータに絞り込まれます。
                 </p>
                 <div className="bg-indigo-50/50 border border-indigo-100/50 rounded-xl px-5 py-4 text-xs font-bold text-indigo-800">
                     💡 部署を選択すると、AIインサイトもその部署専用の診断テキストに切り替わり、「AI方針翻訳」カードが追加表示されて、全社方針がその部署にどう適用されるかが可視化されます。

@@ -323,7 +323,7 @@ function HeroVisual() {
               </div>
               {/* セクションピルズ */}
               <div className="flex gap-1.5 overflow-hidden">
-                {["📊 マトリックス", "📈 KPI詳細", "🏢 部署・プロダクト", "🗣️ 組織の体温", "📌 アクション", "🧭 組織方針"].map((p, i) => (
+                {["マトリックス", "KPI詳細", "部署・プロダクト", "組織の体温", "アクション", "組織方針"].map((p, i) => (
                   <span key={i} className={`shrink-0 px-2.5 md:px-3.5 py-1.5 rounded-full text-[7px] md:text-[9px] font-bold border ${i === 2 ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-500 border-slate-200"}`}>{p}</span>
                 ))}
               </div>
@@ -653,7 +653,7 @@ function HeroVisual() {
               </div>
               <div className="bg-white rounded-2xl p-3 border-l-4 border-teal-500 shadow-sm relative overflow-hidden">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm">🧠</span>
+                  <span className="text-sm font-black text-teal">AI</span>
                   <span className="text-[8px] md:text-[9px] font-bold text-slate-800">AIのマトリックス分析（{["現在", "1ヶ月前", "3ヶ月前", "6ヶ月前"][tlIdx ?? 0]}）</span>
                 </div>
                 <div className="relative h-[24px]">
@@ -702,12 +702,12 @@ function HeroVisual() {
             <div className="px-5 md:px-8 pt-3 md:pt-4 space-y-2.5 md:space-y-3">
               {/* ロールタブ + セクションピルズ */}
               <div className="flex gap-0">
-                {["🏢 経営層", "📁 経企・人事", "🎯 マネージャー", "💪 現場"].map((t, i) => (
+                {["経営層", "経企・人事", "マネージャー", "現場"].map((t, i) => (
                   <span key={i} className={`px-3 md:px-4 py-1.5 text-[7px] md:text-[9px] font-bold border-b-2 ${i === 0 ? "border-slate-800 text-slate-800 bg-white" : "border-transparent text-slate-400"}`}>{t}</span>
                 ))}
               </div>
               <div className="flex gap-1.5 overflow-hidden">
-                {["📊 マトリックス", "📈 KPI詳細", "🏢 部署・プロダクト", "🗣️ 組織の体温", "📌 アクション", "🧭 組織方針"].map((p, i) => (
+                {["マトリックス", "KPI詳細", "部署・プロダクト", "組織の体温", "アクション", "組織方針"].map((p, i) => (
                   <span key={i} className={`shrink-0 px-2.5 md:px-3.5 py-1.5 rounded-full text-[7px] md:text-[9px] font-bold border ${i === 4 ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-500 border-slate-200"}`}>{p}</span>
                 ))}
               </div>
@@ -715,7 +715,7 @@ function HeroVisual() {
               {/* アクション一覧カード */}
               <div className="bg-white rounded-2xl p-3 md:p-4 border border-slate-100 shadow-sm">
                 <div className="flex items-center justify-between mb-2.5">
-                  <h3 className="text-[9px] md:text-xs font-bold text-slate-800">📌 今月のアクション提案</h3>
+                  <h3 className="text-[9px] md:text-xs font-bold text-slate-800">今月のアクション提案</h3>
                   <div className="flex gap-1">
                     <span className="px-2 py-0.5 bg-rose-100 rounded-full text-[6px] md:text-[7px] font-black text-rose-600">緊急 2</span>
                     <span className="px-2 py-0.5 bg-amber-100 rounded-full text-[6px] md:text-[7px] font-black text-amber-600">注意 2</span>
@@ -724,11 +724,11 @@ function HeroVisual() {
                 </div>
                 <div className="space-y-1.5">
                   {[
-                    { pri: "🔴", title: "営業部のトップ営業依存を解消する", dept: "営業部", owner: "営業部長", impact: "高", progress: 15 },
-                    { pri: "🔴", title: "承認フローの2段階への短縮を検討", dept: "全社", owner: "CEO", impact: "高", progress: 40 },
-                    { pri: "🟡", title: "開発↔営業の仕様変更プロセス整備", dept: "開発×営業", owner: "PdM", impact: "中", progress: 60 },
-                    { pri: "�", title: "CS部のヘルススコア運用を自動化", dept: "CS部", owner: "CS責任者", impact: "中", progress: 25 },
-                    { pri: "🟢", title: "マーケ部リードスコアリング基準を改善", dept: "マーケ部", owner: "マーケMGR", impact: "低", progress: 80 },
+                    { pri: "最優先", title: "営業部のトップ営業依存を解消する", dept: "営業部", owner: "営業部長", impact: "高", progress: 15 },
+                    { pri: "最優先", title: "承認フローの2段階への短縮を検討", dept: "全社", owner: "CEO", impact: "高", progress: 40 },
+                    { pri: "重要", title: "開発↔営業の仕様変更プロセス整備", dept: "開発×営業", owner: "PdM", impact: "中", progress: 60 },
+                    { pri: "推奨", title: "CS部のヘルススコア運用を自動化", dept: "CS部", owner: "CS責任者", impact: "中", progress: 25 },
+                    { pri: "推奨", title: "マーケ部リードスコアリング基準を改善", dept: "マーケ部", owner: "マーケMGR", impact: "低", progress: 80 },
                   ].map(({ pri, title, dept, owner, impact, progress }, i) => (
                     <div key={i} className="flex items-center gap-2 p-2 rounded-xl bg-slate-50/80 border border-slate-100">
                       <span className="text-[10px] md:text-xs shrink-0">{pri}</span>

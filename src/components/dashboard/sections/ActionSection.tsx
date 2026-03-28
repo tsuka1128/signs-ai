@@ -1,23 +1,31 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { ActionItem } from "@/components/dashboard/ActionItem";
-import { Plus, X, Check, RefreshCcw } from "lucide-react";
+import { Plus, X, Check, RefreshCcw, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ActionSectionProps {
     actions: any[];
+    depts?: any[];
 }
 
-export function ActionSection({ actions: initialActions }: ActionSectionProps) {
+export function ActionSection({ actions: initialActions, depts = [] }: ActionSectionProps) {
     const [actions, setActions] = useState(initialActions);
+
+    // AI分析実行後など、親コンポーネントから新しいアクションが渡された場合に同期する
+    React.useEffect(() => {
+        setActions(initialActions);
+    }, [initialActions]);
+
     const [isAdding, setIsAdding] = useState(false);
     const [showArchived, setShowArchived] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     
     // フォーム用ステート
     const [newTitle, setNewTitle] = useState("");
     const [newDesc, setNewDesc] = useState("");
-    const [newDept, setNewDept] = useState("Sales");
+    const [newDept, setNewDept] = useState(depts.length > 0 ? depts[0].id : "全社");
     const [newPriority, setNewPriority] = useState<'urgent' | 'high' | 'normal'>('normal');
 
     // 優先度の重み付け
@@ -30,7 +38,8 @@ export function ActionSection({ actions: initialActions }: ActionSectionProps) {
     // 表示対象のアクションをフィルタリング & ソート
     const sortedActions = useMemo(() => {
         const filtered = actions.filter(a => {
-            return showArchived ? a.isArchived : !a.isArchived;
+            const archived = a.is_archived ?? a.isArchived;
+            return showArchived ? archived : !archived;
         });
 
         return [...filtered].sort((a, b) => {
@@ -40,46 +49,135 @@ export function ActionSection({ actions: initialActions }: ActionSectionProps) {
         });
     }, [actions, showArchived]);
 
-    const handleAddAction = () => {
-        if (!newTitle.trim()) return;
+    const handleAddAction = async () => {
+        if (!newTitle.trim() || isSubmitting) return;
+        setIsSubmitting(true);
         
-        const newAction = {
-            priority: newPriority,
-            title: newTitle,
-            desc: newDesc || "ユーザーによって手動登録されたアクションです。",
-            dept: newDept,
-            owner: "マネージャー",
-            initialStatus: 'pending',
-            isAiGenerated: false,
-            createdAt: new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' })
+        try {
+            const requestBody = {
+                title: newTitle,
+                description: newDesc || "ユーザーによって手動登録されたアクションです。",
+                department_id: newDept === "全社" ? null : newDept,
+                priority: newPriority,
+                owner: "マネージャー",
+                status: 'pending',
+                is_ai_generated: false
+            };
+
+            const response = await fetch('/api/actions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) throw new Error("Failed to add action");
+
+            const { data } = await response.json();
+
+            // 表示用に変換
+            const deptName = newDept === "全社" ? "全社" : (depts.find(d => d.id === newDept)?.name || "不明");
+            
+            const newAction = {
+                id: data.id,
+                priority: data.priority,
+                title: data.title,
+                desc: data.description,
+                dept: deptName,
+                owner: data.owner,
+                initialStatus: data.status,
+                isAiGenerated: data.is_ai_generated,
+                createdAt: new Date(data.created_at).toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' })
+            };
+            
+            setActions([newAction, ...actions]);
+            setNewTitle("");
+            setNewDesc("");
+            setIsAdding(false);
+        } catch (error) {
+            console.error(error);
+            alert("アクションの追加に失敗しました");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleStatusChange = async (index: number, newStatus: string) => {
+        const action = actions[index];
+        const nextActions = [...actions];
+        
+        // completed または rejected の場合、自動的にアーカイブ対象とする
+        const shouldArchive = newStatus === 'completed' || newStatus === 'rejected';
+        const now = new Date().toISOString();
+
+        nextActions[index] = { 
+            ...action, 
+            initialStatus: newStatus, 
+            status: newStatus,
+            isArchived: shouldArchive,
+            is_archived: shouldArchive,
+            archivedAt: shouldArchive ? now : null,
+            archived_at: shouldArchive ? now : null
         };
-        
-        setActions([newAction, ...actions]);
-        setNewTitle("");
-        setNewDesc("");
-        setIsAdding(false);
-    };
+        setActions(nextActions);
 
-    const handleStatusChange = (index: number, newStatus: string) => {
-        setActions(prev => prev.map((a, i) => {
-            if (i === index) {
-                return { 
-                    ...a, 
-                    initialStatus: newStatus
-                };
+        if (action.id) {
+            try {
+                await fetch('/api/actions', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        id: action.id, 
+                        updates: { 
+                            status: newStatus,
+                            is_archived: shouldArchive,
+                            archived_at: shouldArchive ? now : null
+                        } 
+                    })
+                });
+            } catch (error) {
+                console.error(error);
+                // 失敗時はロールバックする処理を入れることも可能
             }
-            return a;
-        }));
+        }
     };
 
-    const handlePriorityChange = (index: number, newPriority: 'urgent' | 'high' | 'normal') => {
-        setActions(prev => prev.map((a, i) => i === index ? { ...a, priority: newPriority } : a));
+    const handlePriorityChange = async (index: number, newPriority: 'urgent' | 'high' | 'normal') => {
+        const action = actions[index];
+        const nextActions = [...actions];
+        nextActions[index] = { ...action, priority: newPriority };
+        setActions(nextActions);
+
+        if (action.id) {
+            try {
+                await fetch('/api/actions', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: action.id, updates: { priority: newPriority } })
+                });
+            } catch (error) {
+                console.error(error);
+            }
+        }
     };
 
-    const handleRevive = (actionTitle: string) => {
-        setActions(prev => prev.map(a => 
-            a.title === actionTitle ? { ...a, initialStatus: 'pending', isArchived: false, archivedAt: undefined } : a
-        ));
+    const handleRevive = async (actionIdOrTitle: string, index: number) => {
+        const action = actions[index];
+        // 復活＝アーカイブ解除し、ステータスをpendingに
+        const nextActions = [...actions];
+        nextActions[index] = { ...action, initialStatus: 'pending', status: 'pending', isArchived: false, is_archived: false, archivedAt: undefined, archived_at: null };
+        setActions(nextActions);
+
+        if (action.id) {
+            try {
+                await fetch('/api/actions', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: action.id, updates: { status: 'pending', is_archived: false, archived_at: null } })
+                });
+            } catch (error) {
+                console.error(error);
+            }
+        }
     };
 
     const currentMonth = "3月";
@@ -88,7 +186,8 @@ export function ActionSection({ actions: initialActions }: ActionSectionProps) {
         <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                 <div className="flex flex-wrap items-center gap-3">
-                    <h3 className="text-base font-bold text-slate-800 font-display">🚀 今月のアクション提案</h3>
+                    <Target className="text-teal" size={20} />
+                    <h3 className="text-base font-bold text-slate-800 font-display">今月のアクション提案</h3>
                 </div>
                 <div className="flex items-center gap-2">
                     <button 
@@ -150,10 +249,10 @@ export function ActionSection({ actions: initialActions }: ActionSectionProps) {
                                     onChange={(e) => setNewDept(e.target.value)}
                                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-teal outline-none text-sm font-bold text-slate-700 bg-white"
                                 >
-                                    <option value="Sales">Sales</option>
-                                    <option value="Engineering">Engineering</option>
-                                    <option value="HR">HR</option>
                                     <option value="全社">全社</option>
+                                    {depts.map(d => (
+                                        <option key={d.id} value={d.id}>{d.name}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div>
@@ -163,19 +262,20 @@ export function ActionSection({ actions: initialActions }: ActionSectionProps) {
                                     onChange={(e) => setNewPriority(e.target.value as any)}
                                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-teal outline-none text-sm font-bold text-slate-700 bg-white"
                                 >
-                                    <option value="normal">🔵 推奨</option>
-                                    <option value="high">🟡 重要</option>
-                                    <option value="urgent">🔴 最優先</option>
+                                    <option value="normal">推奨</option>
+                                    <option value="high">重要</option>
+                                    <option value="urgent">最優先</option>
                                 </select>
                             </div>
                         </div>
                         <div className="flex justify-end pt-2">
                             <button 
                                 onClick={handleAddAction}
-                                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-teal text-white text-sm font-bold hover:bg-teal-600 transition-all shadow-md shadow-teal-100"
+                                disabled={isSubmitting}
+                                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-teal text-white text-sm font-bold hover:bg-teal-600 transition-all shadow-md shadow-teal-100 disabled:opacity-50"
                             >
                                 <Check size={16} />
-                                アクションを登録
+                                {isSubmitting ? "処理中..." : "アクションを登録"}
                             </button>
                         </div>
                     </div>
@@ -184,24 +284,29 @@ export function ActionSection({ actions: initialActions }: ActionSectionProps) {
 
             <div className="space-y-4">
                 {sortedActions.length > 0 ? (
-                    sortedActions.map((a, i) => (
-                        <ActionItem
-                            key={`${a.title}-${i}`}
-                            priority={a.priority}
-                            title={a.title}
-                            description={a.desc}
-                            dept={a.dept}
-                            owner={a.owner}
-                            isAiGenerated={a.isAiGenerated}
-                            isArchived={showArchived}
-                            archivedAt={a.archivedAt}
-                            createdAt={a.createdAt}
-                            initialStatus={a.initialStatus}
-                            onPriorityChange={(p) => handlePriorityChange(actions.indexOf(a), p)}
-                            onStatusChange={(s) => handleStatusChange(actions.indexOf(a), s)}
-                            onRevive={() => handleRevive(a.title)}
-                        />
-                    ))
+                    sortedActions.map((a, i) => {
+                        const deptName = a.dept || (a.department_id ? (depts.find(d => d.id === a.department_id)?.name || "不明") : "全社");
+                        
+                        return (
+                            <ActionItem
+                                key={a.id || `${a.title}-${i}`}
+                                id={a.id}
+                                priority={a.priority}
+                                title={a.title}
+                                description={a.description || a.desc}
+                                dept={deptName}
+                                owner={a.owner}
+                                isAiGenerated={a.is_ai_generated ?? a.isAiGenerated}
+                                isArchived={showArchived}
+                                archivedAt={a.archived_at ?? a.archivedAt}
+                                createdAt={a.created_at ? new Date(a.created_at).toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }) : a.createdAt}
+                                initialStatus={a.status ?? a.initialStatus}
+                                onPriorityChange={(p) => handlePriorityChange(actions.indexOf(a), p)}
+                                onStatusChange={(s) => handleStatusChange(actions.indexOf(a), s)}
+                                onRevive={() => handleRevive(a.title, actions.indexOf(a))}
+                            />
+                        );
+                    })
                 ) : (
                     <p className="text-center py-10 text-slate-400 text-sm italic">
                         {showArchived ? "アーカイブされたアクションはありません。" : "提案されたアクションはまだありません。"}

@@ -9,6 +9,7 @@ interface SemanticSectionProps {
     actions: any[];
     onSave: (txt: string) => Promise<void>;
     onDelete: (id: string) => Promise<void>;
+    aiContent?: any;
 }
 
 export function SemanticSection({
@@ -18,6 +19,7 @@ export function SemanticSection({
     actions,
     onSave,
     onDelete,
+    aiContent,
 }: SemanticSectionProps) {
     return (
         <div className="space-y-6 animate-fadeIn">
@@ -28,6 +30,7 @@ export function SemanticSection({
                 actions={actions}
                 onSave={onSave}
                 onDelete={onDelete}
+                aiContent={aiContent}
             />
         </div>
     );

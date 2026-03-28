@@ -51,9 +51,9 @@ export default function SurveyDashboard() {
     }, [company, supabase]);
 
     const tabs = useMemo(() => {
-        const base = [{ id: "all", label: "🏢 全社" }];
-        const deptTabs = depts.map(d => ({ id: `dept_${d.id}`, label: `👥 ${d.name}` }));
-        const axisTabs = axes.map(a => ({ id: `axis_${a.id}`, label: `🏷️ ${a.name}` }));
+        const base = [{ id: "all", label: "全社" }];
+        const deptTabs = depts.map(d => ({ id: `dept_${d.id}`, label: d.name }));
+        const axisTabs = axes.map(a => ({ id: `axis_${a.id}`, label: a.name }));
         return [...base, ...deptTabs, ...axisTabs];
     }, [depts, axes]);
 
@@ -213,7 +213,7 @@ export default function SurveyDashboard() {
                         <div className="lg:col-span-3 p-6 bg-slate-50 rounded-3xl border border-slate-100">
                             <div className="flex items-start gap-4">
                                 <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center shrink-0">
-                                    <span className="text-xl">💡</span>
+                                    <span className="text-sm font-black text-teal">AI</span>
                                 </div>
                                 <div>
                                     <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">AI要約・示唆</h4>

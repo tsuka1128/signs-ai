@@ -1,6 +1,7 @@
 "use client";
 
-import { X, TrendingUp, TrendingDown, AlertTriangle, Lightbulb, Target, Thermometer, Shield, Rocket } from "lucide-react";
+import { X, TrendingUp, TrendingDown, AlertTriangle, Lightbulb, Target, Thermometer, Shield, Rocket, Brain } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 
@@ -37,8 +38,9 @@ export function DeepReport({ isOpen, onClose, sections, generatedAt }: DeepRepor
                 <div className="max-w-3xl mx-auto px-5 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-teal/10 flex items-center justify-center">
-                            <span className="text-lg">🧠</span>
+                            <Brain className="w-5 h-5 text-teal" />
                         </div>
+
                         <div>
                             <h2 className="text-sm font-black text-slate-800 tracking-tight">AI 組織診断レポート</h2>
                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">

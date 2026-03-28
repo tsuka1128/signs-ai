@@ -59,10 +59,10 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
     const yLabelWordLow = "低生産性";
 
     const quads = [
-        { x: PAD.l, y: PAD.t, w: pw / 2, h: ph / 2, label: "PIONEER (開拓者)", sub: `少人数×${yLabelWord} | 理想的な自律型・高効率チーム`, color: "#ECFDF5", emoji: "⭐" },
-        { x: midX, y: PAD.t, w: pw / 2, h: ph / 2, label: "SCALE (拡大期)", sub: `多人数×${yLabelWord} | 組織の成果を牽引する主力部隊`, color: "#EFF6FF", emoji: "📈" },
-        { x: PAD.l, y: midY, w: pw / 2, h: ph / 2, label: "SEED (種まき)", sub: `少人数×${yLabelWordLow} | 新規事業・R&Dなどの投資フェーズ`, color: "#FFFBEB", emoji: "🌱" },
-        { x: midX, y: midY, w: pw / 2, h: ph / 2, label: "OVERWEIGHT (肥大化)", sub: `多人数×${yLabelWordLow} | 調整コスト増大による改善必須領域`, color: "#FFF1F2", emoji: "⚠️" }
+        { x: PAD.l, y: PAD.t, w: pw / 2, h: ph / 2, label: "PIONEER (開拓者)", sub: `少人数×${yLabelWord} | 理想的な自律型・高効率チーム`, color: "#ECFDF5" },
+        { x: midX, y: PAD.t, w: pw / 2, h: ph / 2, label: "SCALE (拡大期)", sub: `多人数×${yLabelWord} | 組織の成果を牽引する主力部隊`, color: "#EFF6FF" },
+        { x: PAD.l, y: midY, w: pw / 2, h: ph / 2, label: "SEED (種まき)", sub: `少人数×${yLabelWordLow} | 新規事業・R&Dなどの投資フェーズ`, color: "#FFFBEB" },
+        { x: midX, y: midY, w: pw / 2, h: ph / 2, label: "OVERWEIGHT (肥大化)", sub: `多人数×${yLabelWordLow} | 調整コスト増大による改善必須領域`, color: "#FFF1F2" }
     ];
 
     const colors = {
@@ -81,7 +81,7 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
             {quads.map((q, i) => (
                 <g key={i}>
                     <rect x={q.x} y={q.y} width={q.w} height={q.h} fill={q.color} />
-                    <text x={q.x + 12} y={q.y + 24} className="text-[10px] fill-slate-500 font-bold uppercase tracking-tight">{q.emoji} {q.label}</text>
+                    <text x={q.x + 12} y={q.y + 24} className="text-[10px] fill-slate-500 font-bold uppercase tracking-tight">{q.label}</text>
                     <text x={q.x + 12} y={q.y + 38} className="text-[9px] fill-slate-400 font-medium">{q.sub}</text>
                 </g>
             ))}
@@ -187,20 +187,20 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
             <g transform={`translate(${W / 2 - 160}, ${H - 25})`}>
                 <circle cx={0} cy={0} r={4} fill={colors.sun} opacity={0.3} stroke={colors.sun} strokeWidth={1} />
                 <circle cx={0} cy={0} r={1.5} fill={colors.sun} />
-                <text x={10} y={4} className="text-[9px] fill-slate-400 font-bold">☀️ 体温良好</text>
+                <text x={10} y={4} className="text-[9px] fill-slate-400 font-bold">体温良好</text>
 
                 <circle cx={80} cy={0} r={4} fill={colors.cloud} opacity={0.3} stroke={colors.cloud} strokeWidth={1} />
                 <circle cx={80} cy={0} r={1.5} fill={colors.cloud} />
-                <text x={90} y={4} className="text-[9px] fill-slate-400 font-bold">☁️ 要注意</text>
+                <text x={90} y={4} className="text-[9px] fill-slate-400 font-bold">要注意</text>
 
                 <circle cx={160} cy={0} r={4} fill={colors.rain} opacity={0.3} stroke={colors.rain} strokeWidth={1} />
                 <circle cx={160} cy={0} r={1.5} fill={colors.rain} />
-                <text x={170} y={4} className="text-[9px] fill-slate-400 font-bold">☔️ 危険域</text>
+                <text x={170} y={4} className="text-[9px] fill-slate-400 font-bold">危険域</text>
 
                 <g transform="translate(240, 0)">
                     <circle cx={0} cy={0} r={4} fill={colors.gray} opacity={0.3} stroke={colors.gray} strokeWidth={1} />
                     <circle cx={0} cy={0} r={1.5} fill={colors.gray} />
-                    <text x={10} y={4} className="text-[9px] fill-slate-400 font-bold">🔘 未取得/回答不足</text>
+                    <text x={10} y={4} className="text-[9px] fill-slate-400 font-bold">未取得/回答不足</text>
                 </g>
 
                 <g transform="translate(340, 0)">
@@ -244,7 +244,7 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
                                             <div className="relative group/calc">
                                                 <button className="w-3.5 h-3.5 rounded-full bg-slate-200 text-slate-500 hover:bg-slate-300 hover:text-slate-600 flex items-center justify-center text-[9px] font-black cursor-help transition-colors">?</button>
                                                 <div className="absolute top-full left-0 mt-2 w-56 md:w-64 bg-slate-800 text-white p-3.5 rounded-xl shadow-xl text-[10px] leading-relaxed break-normal whitespace-normal hidden group-hover/calc:block group-focus-within/calc:block z-[400] normal-case tracking-normal transition-all animate-in fade-in zoom-in-95">
-                                                    <div className="font-bold text-white mb-2 flex items-center gap-1.5"><span className="text-sm">📉</span>生産性スコアの計算式</div>
+                                                    <div className="font-bold text-white mb-2 flex items-center gap-1.5">生産性スコアの計算式</div>
                                                     <div className="bg-slate-900/80 p-2 rounded-lg font-mono text-[10px] text-emerald-400 mb-2.5 border border-slate-700">
                                                         主担当KPIの達成率 × 体温係数
                                                     </div>

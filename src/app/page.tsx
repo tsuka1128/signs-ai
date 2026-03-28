@@ -16,21 +16,15 @@ import { KpiSection } from "@/components/dashboard/sections/KpiSection";
 import { MatrixSection } from "@/components/dashboard/sections/MatrixSection";
 import { cn } from "@/lib/utils";
 import { Target, Thermometer, Shield, Rocket, Lightbulb } from "lucide-react";
-import { DEFAULT_SURVEY_QUESTIONS, DEPT_ICONS, DEFAULT_SEMANTIC_POLICY } from "@/lib/constants";
+import { DEFAULT_SURVEY_QUESTIONS, DEFAULT_SEMANTIC_POLICY } from "@/lib/constants";
 import { normalizeMonth, getLastNMonths, getMonthLabels, getFullMonthLabels } from "@/lib/utils/date";
 import { useCompany } from "@/hooks/useCompany";
 import { Loading, LoadingCard } from "@/components/ui/Loading";
 import { EmptyState } from "@/components/ui/EmptyState";
 
 const questions = DEFAULT_SURVEY_QUESTIONS;
-const actions = [
-  { priority: 'urgent', title: "営業部の承認プロセス簡素化", desc: "意思決定スピードの外部要因として、100万円未満の案件承認に3日以上かかっています。部門長への権限委譲を推奨します。", dept: "Sales", owner: "部門長", initialStatus: 'pending', isAiGenerated: true, createdAt: "2024/03/18", isArchived: false },
-  { priority: 'high', title: "開発部の1on1頻度向上", desc: "フィードバックスコアが低下傾向にあります。隔週から毎週15分への頻度変更を試験的に導入してください。", dept: "Engineering", owner: "マネージャー", initialStatus: 'kept', isAiGenerated: true, createdAt: "2024/03/15", isArchived: false },
-  { priority: 'normal', title: "全社ビジョンの浸透ワークショップ", desc: "組織方針の「明確性」が全体的に低迷しています。対話型のワークショップ開催が有効です。", dept: "全社", owner: "人事担当", initialStatus: 'accepted', isAiGenerated: true, createdAt: "2024/03/10", isArchived: false },
-  { priority: 'normal', title: "Q3 採用戦略の見直し", desc: "採用チャネルの最適化により、採用コストを15%削減しました。", dept: "HR", owner: "採用マネージャー", initialStatus: 'completed', isAiGenerated: false, createdAt: "2024/02/15", isArchived: false },
-  { priority: 'high', title: "全社オフサイトミーティングの開催", desc: "現時点では業務負荷が高すぎるため、次四半期まで検討を見送ります。", dept: "全社", owner: "経営企画", initialStatus: 'rejected', isAiGenerated: true, createdAt: "2024/02/01", isArchived: false },
-  { priority: 'normal', title: "以前の施策：社内Wikiの刷新", desc: "過去に完了し、AIの更新タイミングで自動アーカイブされた施策です。", dept: "全社", owner: "人事担当", initialStatus: 'completed', isAiGenerated: true, createdAt: "2023/12/01", isArchived: false }
-];
+// TODO: DBから取得するように変更するが、現時点では空配列
+const actions: any[] = [];
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -41,6 +35,7 @@ export default function DashboardPage() {
   const [orgView, setOrgView] = useState("dept");
   const [month, setMonth] = useState("default");
   const [showDeepReport, setShowDeepReport] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const { company, loading: authLoading, supabase } = useCompany();
 
@@ -52,6 +47,8 @@ export default function DashboardPage() {
   const [realAxes, setRealAxes] = useState<any[]>([]);
   const [realKpiRecords, setRealKpiRecords] = useState<any[]>([]);
   const [realResources, setRealResources] = useState<any[]>([]);
+  const [realAiInsights, setRealAiInsights] = useState<any[]>([]);
+  const [realActionItems, setRealActionItems] = useState<any[]>([]);
 
   const last13Months = useMemo(() => getLastNMonths(13), []);
   const monthLabels = useMemo(() => getMonthLabels(last13Months), [last13Months]);
@@ -61,19 +58,23 @@ export default function DashboardPage() {
     async function loadData() {
       if (!company) return;
 
-      const [d, k, s, r, a, recs, resources] = await Promise.all([
+      const [d, k, s, r, a, recs, resources, ai, act] = await Promise.all([
         supabase.from('departments').select('*').eq('company_id', company.id).order('sort_order', { ascending: true }),
         supabase.from('kpi_definitions').select('*').eq('company_id', company.id).order('sort_order', { ascending: true }),
         supabase.from('semantic_layers').select('*').eq('company_id', company.id).order('created_at', { ascending: false }),
         supabase.from('survey_responses').select('*, survey_answers(*)').eq('company_id', company.id),
         supabase.from('kpi_axes').select('*').eq('company_id', company.id).order('sort_order', { ascending: true }),
         supabase.from('kpi_records').select('*').in('recorded_month', last13Months),
-        supabase.from('resource_records').select('*').in('recorded_month', last13Months)
+        supabase.from('resource_records').select('*').in('recorded_month', last13Months),
+        supabase.from('ai_insights').select('*').eq('company_id', company.id).order('created_at', { ascending: false }).limit(1),
+        supabase.from('action_items').select('*').eq('company_id', company.id).eq('is_archived', false).order('created_at', { ascending: false })
       ]);
 
-      if (d.data && d.data.length > 0) setRealDepts(d.data);
+      if (d.data) setRealDepts(d.data);
       if (recs.data) setRealKpiRecords(recs.data);
       if (resources.data) setRealResources(resources.data);
+      if (ai.data) setRealAiInsights(ai.data);
+      if (act.data) setRealActionItems(act.data);
 
       // KPI定義に最新の実績・目標と推移をマージ
       if (k.data && k.data.length > 0) {
@@ -115,14 +116,8 @@ export default function DashboardPage() {
     loadData();
   }, [company, last13Months, supabase]);
 
-  const getSimulatedIndex = (deptName: string) => {
-    if (deptName.includes("営業")) return 0; // sales
-    if (deptName.includes("マーケ")) return 1; // mktg
-    if (deptName.includes("開発") || deptName.includes("エンジニア")) return 2; // dev
-    if (deptName.includes("CS") || deptName.includes("カスタマー")) return 3; // cs
-    if (deptName.includes("人事") || deptName.includes("HR")) return 4; // hr
-    return -1;
-  };
+  const latestAi = realAiInsights[0];
+  const aiContent = latestAi?.content;
 
   const currentSurveyData = useMemo(() => {
     let filtered = realResponses;
@@ -183,8 +178,8 @@ export default function DashboardPage() {
       return monthAnswers.reduce((sum: number, a: any) => sum + a.score, 0) / monthAnswers.length;
     });
 
-    let comment = "回答データが蓄積されていません。";
-    if (avgPulse > 0) {
+    let comment = aiContent?.summary || "回答データが蓄積されていません。";
+    if (!aiContent && avgPulse > 0) {
       const lowScoreQ = qScores.map((s, i) => ({ s, i })).filter(x => x.s > 0 && x.s < 3.0).sort((a, b) => a.s - b.s)[0];
       if (lowScoreQ) {
         comment = `${questions[lowScoreQ.i].text} のスコアが低迷しています。環境改善の検討が必要です。`;
@@ -194,7 +189,8 @@ export default function DashboardPage() {
     }
 
     return { viewName, scores: qScores, prevScores: prevQScores, pulse: avgPulse, pulseHistory, aiComment: comment, responseCount, responseRate };
-  }, [orgView, realResponses, realDepts, realAxes, last13Months]);
+  }, [orgView, realResponses, realDepts, realAxes, last13Months, aiContent]);
+
 
   const displayDepts = useMemo(() => {
     return realDepts.map((d, i) => {
@@ -422,24 +418,38 @@ export default function DashboardPage() {
   ], [realDepts]);
 
   const ins = useMemo(() => {
+    const pulse = currentSurveyData.pulse;
+    const prevPulse = currentSurveyData.pulseHistory[11] || 0;
+    const weather = pulse >= 4.0 ? "sun" : pulse >= 3.0 ? "cloud" : pulse > 0 ? "rain" : "cloud";
+    const trend = pulse > prevPulse ? "up" : pulse < prevPulse ? "down" : "flat";
+
     if (tab === "all") {
       return {
         icon: "",
         title: "全社",
         tone: "戦略的分析",
-        text: "組織方針に基づき、各部署の体温スコアとKPI達成状況を俯瞰的に分析します。現在、実データの蓄積を開始した段階です。"
+        text: aiContent?.summary || (currentSurveyData.pulse > 0 ? currentSurveyData.aiComment : "組織方針に基づき、各部署の体温スコアとKPI達成状況を俯瞰的に分析します。現在、実データの蓄積を開始した段階です。"),
+        weather,
+        trend
       };
     }
     const deptIdx = realDepts.findIndex(d => d.id === tab);
     const dept = realDepts[deptIdx];
-    if (!dept) return { icon: "", title: "全社", tone: "戦略的分析", text: "" };
+    if (!dept) return { icon: "", title: "全社", tone: "戦略的分析", text: "", weather, trend };
+    
+    // AIインサイトの反映
+    const deptInsight = aiContent?.insights_by_dept?.[dept.id];
+    
     return {
       icon: "",
       title: dept.name,
-      tone: ["前向き・行動喚起", "冷静・品質重視", "共感・伴走", "構造的・警告的"][deptIdx % 4],
-      text: `「${dept.name}」の直近の体温とKPI達成状況に基づく分析です。AIエンジン接続後、ここに${dept.name}専用の診断テキストが自動生成されます。`
+      tone: deptInsight?.tone || ["前向き・行動喚起", "冷静・品質重視", "共感・伴走", "構造的・警告的"][deptIdx % 4],
+      text: deptInsight?.text || `「${dept.name}」の直近の体温とKPI達成状況に基づく分析です。AIによる分析を実行すると専用の診断テキストが表示されます。`,
+      weather,
+      trend
     };
-  }, [tab, realDepts]);
+  }, [tab, realDepts, currentSurveyData, aiContent]);
+
   const selectedKpiDef = displayKpis.find(k => k.id === selKpi) || displayKpis[0];
   const achRate = (() => {
     if (!selectedKpiDef || !selectedKpiDef.target) return null;
@@ -497,6 +507,30 @@ export default function DashboardPage() {
       };
     });
   }, [matView, month, displayAxes, displayDepts]);
+
+  const handleRunAnalyze = async () => {
+    if (!company) return;
+    try {
+      setIsAnalyzing(true);
+      const res = await fetch('/api/ai/analyze', { method: 'POST' });
+      const result = await res.json();
+      if (res.ok) {
+        // データの再取得
+        const { data: newAi } = await supabase.from('ai_insights').select('*').eq('company_id', company.id).order('created_at', { ascending: false }).limit(1);
+        const { data: newAct } = await supabase.from('action_items').select('*').eq('company_id', company.id).eq('is_archived', false).order('created_at', { ascending: false });
+        if (newAi) setRealAiInsights(newAi);
+        if (newAct) setRealActionItems(newAct);
+        alert("AI分析が完了しました。");
+      } else {
+        alert("AI分析に失敗しました: " + result.error);
+      }
+    } catch (err) {
+      console.error("AI分析実行エラー:", err);
+      alert("AI分析の実行中にエラーが発生しました。");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const handleSaveSemantic = async (txt: string) => {
     const supabase = createClient();
@@ -567,14 +601,31 @@ export default function DashboardPage() {
         {/* Main AI Insight */}
         <div className="space-y-4">
           <MainInsightCard
-            icon={ins.icon}
             title={ins.title}
             tone={ins.tone}
             text={ins.text}
-            weather="cloud"
-            trend="down"
+            weather={ins.weather as any}
+            trend={ins.trend as any}
             onOpenDeepReport={tab === "all" ? () => setShowDeepReport(true) : undefined}
           />
+
+          {tab === "all" && (
+            <div className="flex justify-end">
+              <button
+                onClick={handleRunAnalyze}
+                disabled={isAnalyzing}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-bold transition-all",
+                  isAnalyzing 
+                    ? "bg-slate-50 text-slate-400 border-slate-100 cursor-not-allowed"
+                    : "bg-white text-teal border-teal/20 hover:bg-teal/5 hover:border-teal/30 shadow-sm"
+                )}
+              >
+                {isAnalyzing ? "分析を生成中..." : "最新の分析を生成"}
+                {!isAnalyzing && <Rocket className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          )}
 
           {/* 部署別AI方針翻訳プレビュー（部署タブ選択時のみ表示） */}
           {tab !== "all" && (() => {
@@ -584,7 +635,6 @@ export default function DashboardPage() {
             return (
               <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="text-base">🤖</span>
                   <h5 className="text-xs font-bold text-slate-700">AI方針翻訳 — {dept.name}</h5>
                   <span className="text-[9px] text-white font-bold px-2 py-0.5 bg-teal/80 rounded-full">最新の通知</span>
                 </div>
@@ -627,6 +677,7 @@ export default function DashboardPage() {
               month={month}
               setMonth={setMonth}
               currentMatData={currentMatData}
+              aiContent={aiContent}
             />
           )}
 
@@ -649,6 +700,7 @@ export default function DashboardPage() {
               setOrgView={setOrgView}
               displayDepts={displayDepts}
               displayAxes={displayAxes}
+              aiContent={aiContent}
             />
           )}
 
@@ -668,7 +720,7 @@ export default function DashboardPage() {
           )}
 
           {sec === "action" && (
-            <ActionSection actions={actions} />
+            <ActionSection actions={realActionItems} depts={realDepts} />
           )}
 
           {sec === "semantic" && (
@@ -679,6 +731,7 @@ export default function DashboardPage() {
               actions={actions}
               onSave={handleSaveSemantic}
               onDelete={handleDeleteSemantic}
+              aiContent={aiContent}
             />
           )}
         </div>
@@ -700,57 +753,39 @@ export default function DashboardPage() {
       <DeepReport
         isOpen={showDeepReport}
         onClose={() => setShowDeepReport(false)}
-        generatedAt="2026年3月度"
+        generatedAt={latestAi ? new Date(latestAi.created_at).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : ""}
         sections={[
           {
             id: "executive-summary",
             icon: <Target className="w-5 h-5 text-teal" />,
             title: "総評：組織の健全性と戦略進捗",
             subtitle: "Executive Summary",
-            highlights: [
-              { label: "全社体温", value: "3.2", trend: "down", color: "text-amber-500" },
-              { label: "月次売上達成率", value: "108%", trend: "up", color: "text-emerald-500" },
-              { label: "重点アラート", value: "3件", color: "text-rose-500" },
-              { label: "改善傾向KPI", value: "2", trend: "up", color: "text-teal" }
-            ],
-            content: "今月の組織全体は「売上は達成しているが、現場が身を削っている」状態です。\n\nKPI上は月次売上108%、有効リード112%と好調に見えますが、その裏側で営業部の体温は2.1、開発部は2.4と危険水域にあります。特に営業部は「トップ営業1人に全体の42%の売上が集中」という構造的な脆弱性を抱えており、この人物の離職・休職が発生した場合のインパクトは売上の40%減という極めて高いリスクです。\n\n一方、マーケティング部は体温4.2と全社で最も健全な状態を維持しており、「自律駆動型チーム」の理想的なモデルとなっています。この成功パターンの全社展開が、今後の組織改善の鍵となります。"
+            content: aiContent?.deep_report?.executive_summary || "データに基づいた総評を生成するには、最新の分析を実行してください。"
           },
           {
             id: "correlation",
             icon: <Thermometer className="w-5 h-5 text-teal" />,
             title: "組織力とKPIの相関解析",
             subtitle: "Organizational Health × KPI Correlation",
-            highlights: [
-              { label: "体温↓×KPI↑", value: "営業部", color: "text-rose-500" },
-              { label: "体温↑×KPI↑", value: "マーケ", color: "text-emerald-500" },
-              { label: "体温↓×KPI↓", value: "開発部", color: "text-amber-500" },
-              { label: "体温→×KPI→", value: "CS部", color: "text-slate-500" }
-            ],
-            content: "組織体温とKPI達成率の相関を分析した結果、以下の構造が見えてきます。\n\n■ 営業部（体温2.1 / KPI達成108%）\n「数字は出ているが、現場が悲鳴を上げている」典型的なパターンです。ボイスチェックでは「社内調整の多さ」「言いたいことが言えない」という声が突出しており、これは属人化された業務フローが「特定個人の忍耐」で回っていることを示しています。この状態が続くと、2〜3ヶ月以内にKPIの急落が発生する確率が高いと予測されます。\n\n■ 開発部（体温2.4 / KPI達成85%）\n体温とKPIが共に低迷する「消耗スパイラル」に陥っています。「意思決定待ち」が最大のボトルネックであり、承認フローの簡素化が生産性と体温の両方を改善するレバレッジポイントです。\n\n■ マーケティング部（体温4.2 / KPI達成112%）\n体温とKPIが共に高い「好循環」の状態です。「自律的に動ける」「挑戦できる」というボイスが多く、これは少人数体制での権限委譲の成功と、明確な目標設定が生み出した結果です。"
+            content: aiContent?.deep_report?.correlation || "組織体温とKPI達成率の相関分析データがありません。"
           },
           {
             id: "strategic-alignment",
             icon: <Shield className="w-5 h-5 text-teal" />,
             title: "組織方針との整合性チェック",
             subtitle: "Strategic Alignment Analysis",
-            content: "現在の組織方針（v1.5）では「ユニットエコノミクス改善期」として「収益の質向上」を最優先としています。この方針と現場の現実を照らし合わせます。\n\n✅ 整合している点\n・マーケティング部の「量より質」への転換は、方針通りに機能しており、有効リードの質向上が営業現場でも好評価を得ています。\n・CS部の解約率改善（2.8%→3.2%）は、「能動的に動く」という方針が徐々に浸透しつつある兆候です。\n\n⚠️ 乖離が見られる点\n・営業部の属人化状態は、「自律駆動型組織への転換」という組織目標と正反対の状態です。特定一人への依存が、他メンバーの成長機会を奪っています。\n・開発部の「承認フロー3段階」は、方針に記載の「事務工数の排除」と矛盾しており、組織方針が現場に届いていないことが伺えます。\n\n📝 方針への提言\n次回の組織方針更新では、「営業プロセスの標準化」を明記し、属人化解消を組織全体の方針として位置づけることを推奨します。"
+            content: aiContent?.deep_report?.strategic_alignment || "組織方針（Semantic Layer）との整合性分析データがありません。"
           },
           {
             id: "risks-opportunities",
             icon: <Rocket className="w-5 h-5 text-teal" />,
             title: "中長期リスクと成長機会",
             subtitle: "Mid-term Risks & Growth Opportunities",
-            content: "■ リスク（放置した場合の予測）\n\n🚨 営業部の崩壊リスク：高\nトップ営業の体温が継続的に低下しており、このまま3ヶ月以内に離職リスクが約45%あります。その場合、月次売上の約40%（約1,680万円）をまかなう手段が失われます。\n\n⚠️ 開発部の生産性低下：中\n業務過多が改善されない場合、ベロシティはさらに10〜15%低下する可能性があります。リリース遅延が顧客体験に直結し、解約率を押し上げる可能性があります。\n\n■ 成長機会（テコ入れした場合の上振れ）\n\n🚀 マーケティングの成功パターン全社展開\nマーケティング部の「少人数×自律駆動×明確目標」という成功パターンを、営業部に展開できれば、全社の生産性を1.3倍に引き上げるポテンシャルがあります。\n\n💰 CS部のアップセルノウハウ活用\nCS部の既存顧客フォローノウハウをセールスイネーブルメントに変換できれば、平均客単価を現在の1.2倍に引き上げる可能性があります。"
-          },
-          {
-            id: "actionable-insights",
-            icon: <Lightbulb className="w-5 h-5 text-teal" />,
-            title: "具体的提言：経営層が打つべき「次の一手」",
-            subtitle: "Actionable Insights for Leadership",
-            content: "① 【即日】営業部の属人化解消プロジェクトの発足\nトップ営業のナレッジを「商談フェーズ定義」「テンプレート化」「同行訓練」の3ステップで標準化する。期限3週間。これのみで離職リスクを大幅に低減できます。\n\n② 【1週間以内】承認フローの2段階への圧縮\nCEO直轄で、現在の3段階承認フローを2段階に圧縮。ボイスチェックで最も多くの部署から挙げられている「意思決定待ち」を解消し、開発部の体温回復に直結させます。\n\n③ 【今月中】マーケ×営業のリード品質基準の再定義\n現在の「有効リード」の定義を、営業現場の期待値と整合させる。BANTなどのスコアリング条件を実態に合わせてアップデートすることで、営業部の不満と無駄な工数を同時に削減できます。\n\n④ 【継続】部署間フィードバックループの制度化\n毎月のボイスチェック結果を、部署間で「読み合う」場を作る。現在の「他部署の状況が見えない」というサイロ化の解消が、中長期的な組織力の底上げに繋がります。"
+            content: aiContent?.deep_report?.risks || "データに基づいたリスク・機会の分析がありません。"
           }
         ]}
       />
     </div>
   );
 }
+

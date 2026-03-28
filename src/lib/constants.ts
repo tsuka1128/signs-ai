@@ -54,7 +54,3 @@ export const DEFAULT_SURVEY_QUESTIONS = [
     { id: 11, text: "KPI達成に向けて、準備周到に活動できていますか？", hint: "道筋が見えているだけで、体温は上がります。" },
 ];
 
-/**
- * 部署タブ用のアイコンリスト
- */
-export const DEPT_ICONS = ['💼', '💻', '📣', '🤝', '⚙️', '📈', '🏢', '📋'];

@@ -143,8 +143,10 @@ export function Header() {
                 {/* Mobile Hamburger Button */}
                 <div className="sm:hidden flex items-center gap-3">
                     <div className="text-right mr-2">
-                        <p className="text-[8px] text-slate-400 font-bold uppercase tracking-tight">サンプルSaaS</p>
-                        <p className="text-[10px] font-black text-slate-800 tabular-nums">2026.02</p>
+                        <p className="text-[8px] text-slate-400 font-bold uppercase tracking-tight">{companyName}</p>
+                        <p className="text-[10px] font-black text-slate-800 tabular-nums">
+                            {new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit' }).replace(/\//g, '.')}
+                        </p>
                     </div>
                     <button
                         onClick={() => setIsMenuOpen(!isMenuOpen)}

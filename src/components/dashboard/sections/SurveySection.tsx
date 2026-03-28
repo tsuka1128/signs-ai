@@ -140,7 +140,7 @@ export function SurveySection({
                         <div className="absolute top-0 right-0 w-32 h-32 bg-teal/5 rounded-full -mr-16 -mt-16 blur-3xl" />
                         <div className="relative space-y-4">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-2xl bg-teal/10 flex items-center justify-center text-xl shadow-inner shadow-teal/5">🧠</div>
+                                <div className="w-10 h-10 rounded-2xl bg-teal/10 flex items-center justify-center shadow-inner shadow-teal/5"></div>
                                 <div>
                                     <h3 className="text-sm font-bold text-slate-800">AI組織分析レポート</h3>
                                     <p className="text-[10px] text-teal font-black uppercase tracking-widest">{data.viewName}</p>

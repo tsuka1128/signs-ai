@@ -1,5 +1,6 @@
 "use client";
 
+import { Sun, Cloud, CloudRain } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface WeatherIconProps {
@@ -9,13 +10,14 @@ interface WeatherIconProps {
 }
 
 export function WeatherIcon({ type, size = 40, className }: WeatherIconProps) {
-    const emoji = type === "sun" ? "☀️" : type === "cloud" ? "☁️" : "☔️";
+    const Icon = type === "sun" ? Sun : type === "cloud" ? Cloud : CloudRain;
+    const color = type === "sun" ? "text-amber-400" : type === "cloud" ? "text-slate-400" : "text-indigo-400";
+    
     return (
-        <span
-            style={{ fontSize: size }}
-            className={cn("inline-block animate-float leading-none", className)}
-        >
-            {emoji}
-        </span>
+        <Icon 
+            size={size} 
+            className={cn("animate-float leading-none", color, className)} 
+        />
     );
 }
+

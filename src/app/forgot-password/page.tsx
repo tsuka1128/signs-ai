@@ -31,8 +31,10 @@ export default function ForgotPasswordPage() {
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50 flex items-center justify-center p-4">
             <div className="relative w-full max-w-md">
                 <div className="text-center mb-10">
-                    <div className="inline-flex items-center gap-2 mb-6">
-                        <span className="text-2xl">🌡️</span>
+                    <div className="inline-flex items-center gap-3 mb-6">
+                        <div className="w-8 h-8 bg-teal-500 rounded-xl flex items-center justify-center shadow-md shadow-teal-200">
+                            <span className="text-white font-black text-base italic">S</span>
+                        </div>
                         <span className="text-xl font-black text-slate-800 tracking-tight">
                             Signs AI
                         </span>

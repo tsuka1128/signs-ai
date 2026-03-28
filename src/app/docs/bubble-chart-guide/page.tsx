@@ -386,7 +386,6 @@ export default function BubbleChartGuidePage() {
                             <Building2 className="w-12 h-12 text-slate-400" />
                         </div>
                         <h3 id="mode-dept" className="text-lg font-black text-slate-900 flex items-center gap-2">
-                            <span className="text-2xl">📋</span>
                             部署別（標準表示）
                         </h3>
                         <p className="text-sm text-slate-600 font-medium leading-relaxed">
@@ -408,7 +407,7 @@ export default function BubbleChartGuidePage() {
                             <Sparkles className="w-12 h-12 text-teal" />
                         </div>
                         <h3 id="mode-secondary" className="text-lg font-black text-slate-900 flex items-center gap-3">
-                            <span className="text-2xl">🏷️</span>
+                            <span className="text-2xl font-black text-amber-500">2nd</span>
                             第2軸（担当領域）別分析
                             <span className="text-[10px] font-black bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full uppercase tracking-tighter border border-amber-200">Standard〜</span>
                         </h3>

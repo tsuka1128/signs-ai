@@ -12,6 +12,7 @@ interface SemanticLayerProps {
     onDelete?: (id: string) => Promise<void>;
     departments?: any[];
     actions?: any[];
+    aiContent?: any;
 }
 
 const VERSION_CONTENTS: Record<string, string> = {
@@ -56,11 +57,12 @@ const VERSION_CONTENTS: Record<string, string> = {
 - 採用数: 全職種で大量採用。カルチャーよりもまずは実行力を重視。
 
 ## 組織の注意点
-- 立ち上げ期のため、現場の負荷（体温☔️）はある程度「成長痛」として許容する。
+- 立ち上げ期のため、現場の負荷はある程度「成長痛」として許容する。
 - 全員が全プロダクトの売上に責任を持つ。`
+
 };
 
-export function SemanticLayer({ initialText, history = [], onSave, onDelete, departments, actions = [] }: SemanticLayerProps) {
+export function SemanticLayer({ initialText, history = [], onSave, onDelete, departments, actions = [], aiContent }: SemanticLayerProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [currentText, setCurrentText] = useState(initialText);
     const [viewingId, setViewingId] = useState<string | null>(null);
@@ -71,6 +73,37 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
     const [showPreviewModal, setShowPreviewModal] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const [isSent, setIsSent] = useState(false);
+
+    // AI翻訳のステート
+    const [translations, setTranslations] = useState<Record<string, string>>({});
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    // モーダルが開いた時にAI翻訳を生成する
+    useEffect(() => {
+        if (showPreviewModal && Object.keys(translations).length === 0) {
+            handleGenerateTranslations();
+        }
+    }, [showPreviewModal]);
+
+    const handleGenerateTranslations = async () => {
+        if (isGenerating) return;
+        setIsGenerating(true);
+        try {
+            const res = await fetch("/api/ai/translate-policy", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ policyText: currentText })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setTranslations(data.translations || {});
+            }
+        } catch (err) {
+            console.error("Translation Generation Error:", err);
+        } finally {
+            setIsGenerating(false);
+        }
+    };
 
     // Sync latest text
     useEffect(() => {
@@ -105,7 +138,10 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
             const res = await fetch("/api/notifications/slack/policy", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: currentText })
+                body: JSON.stringify({ 
+                    text: currentText,
+                    translations: translations 
+                })
             });
 
             if (!res.ok) {
@@ -152,7 +188,6 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
                 <div className="flex justify-between items-start mb-6">
                     <div>
                         <div className="flex items-center gap-2 mb-2">
-                            <span className="text-lg">🧬</span>
                             <h4 className="text-sm font-bold text-slate-800">組織方針</h4>
                             <Badge className="bg-teal/10 text-teal border-none text-[10px]">AIの判断基準</Badge>
                         </div>
@@ -165,17 +200,17 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="p-4 rounded-xl bg-mint-light/50 border border-mint/20">
                         <div className="text-[10px] text-teal font-bold mb-1 uppercase tracking-wider">現在のフェーズ</div>
-                        <div className="text-sm font-bold text-slate-800">未設定 / 分析待ち</div>
+                        <div className="text-sm font-bold text-slate-800">{aiContent?.semantic_summary?.phase || "未設定 / 分析待ち"}</div>
                         <div className="text-[10px] text-slate-400 mt-1">AIが方針から抽出します</div>
                     </div>
                     <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-100">
                         <div className="text-[10px] text-blue-600 font-bold mb-1 uppercase tracking-wider">最重要KPI</div>
-                        <div className="text-sm font-bold text-slate-800">分析待ち</div>
+                        <div className="text-sm font-bold text-slate-800">{aiContent?.semantic_summary?.key_kpi || "分析待ち"}</div>
                         <div className="text-[10px] text-slate-400 mt-1">方針に基づく重要指標を特定中</div>
                     </div>
                     <div className="p-4 rounded-xl bg-rose-50/50 border border-rose-100">
                         <div className="text-[10px] text-rose-600 font-bold mb-1 uppercase tracking-wider">最優先アジェンダ</div>
-                        <div className="text-sm font-bold text-slate-800">分析待ち</div>
+                        <div className="text-sm font-bold text-slate-800">{aiContent?.semantic_summary?.top_agenda || "分析待ち"}</div>
                         <div className="text-[10px] text-slate-400 mt-1">直近のアクションを生成中</div>
                     </div>
                 </div>
@@ -185,7 +220,6 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
             <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-teal/5 to-transparent rounded-bl-full pointer-events-none" />
                 <div className="flex items-center gap-2 mb-5">
-                    <span className="text-base">🤖</span>
                     <h5 className="text-sm font-bold text-slate-800">各部署へのAI方針翻訳（最新の通知）</h5>
                     <Badge className="bg-blue-50 text-blue-600 border-none text-[10px] ml-2">Beta Preview</Badge>
                 </div>
@@ -193,19 +227,23 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
                     {departments && departments.length > 0 ? (
                         departments.map((dept, idx) => (
                             <div key={dept.id || idx} className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex gap-4 transition-all hover:bg-white hover:shadow-md hover:border-slate-200">
-                                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-lg shadow-sm border border-slate-100 shrink-0">
-                                    {['💼', '💻', '📣', '🤝', '⚙️', '📈', '🏢', '📋'][idx % 8]}
+                                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm border border-slate-100 shrink-0">
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-1.5">
                                         <h6 className="text-xs font-bold text-slate-700">{dept.name}</h6>
                                         <span className="text-[9px] text-slate-400 font-bold px-2 py-0.5 bg-slate-200/50 rounded-full">
-                                            トーン: {['前向き・行動喚起', '冷静・品質重視', '共感・伴走', '構造的・警告的'][idx % 4]}
+                                            トーン: {aiContent?.insights_by_dept?.[dept.id]?.tone || ['前向き・行動喚起', '冷静・品質重視', '共感・伴走', '構造的・警告的'][idx % 4]}
                                         </span>
                                     </div>
                                     <div className="text-[11px] text-slate-600 leading-relaxed font-medium">
                                         {/* アクション連携のシミュレーション */}
                                         {(() => {
+                                            const deptInsight = aiContent?.insights_by_dept?.[dept.id];
+                                            if (deptInsight?.text) {
+                                                return <p>{deptInsight.text}</p>;
+                                            }
+                                            
                                             const deptAction = actions.find(a => a.dept.toLowerCase() === dept.name.toLowerCase() || a.dept === 'All' || a.dept === '全社');
                                             if (deptAction) {
                                                 const priorityLabel = deptAction.priority === 'urgent' ? '【最優先】' : deptAction.priority === 'high' ? '【重要】' : '';
@@ -224,7 +262,7 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
                                                 );
                                             }
                                             return (
-                                                <p>※現在AIエンジン未接続です。フェーズ7以降、ここに「{dept.name}」の状況に寄り添った専用の翻訳メッセージが自動生成されます。</p>
+                                                <p>※現在AIエンジン未接続です。定期分析が行われると、ここに「{dept.name}」の状況に寄り添った専用の翻訳メッセージが自動生成されます。</p>
                                             );
                                         })()}
                                     </div>
@@ -238,7 +276,7 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
                     )}
                 </div>
                 <div className="mt-4 p-3 bg-teal/5 border border-teal/10 rounded-xl flex items-start gap-3">
-                    <div className="text-teal pt-0.5">💡</div>
+                    <div className="text-teal pt-0.5" />
                     <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
                         フェーズ7のAI実装完了後、ここでは登録された「組織方針」と直近の「アンケート内容（体温）」を掛け合わせ、部署ごとの状況に寄り添った個別の翻訳テキストが毎月自動生成されるようになります。
                     </p>
@@ -249,7 +287,6 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
             {/* Policy Change Log */}
             <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
                 <div className="flex items-center gap-2 mb-4">
-                    <span className="text-base">📜</span>
                     <h5 className="text-sm font-bold text-slate-800 uppercase tracking-tight">方針変遷ログ</h5>
                 </div>
                 <div className="space-y-2">
@@ -328,7 +365,6 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
             <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
                 <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-2">
-                        <span className="text-base">✏️</span>
                         <h5 className="text-sm font-bold text-slate-800">組織方針メモ <span className="text-slate-400 ml-1">{updateDate} 更新</span></h5>
                         {!isLatest && <Badge className="bg-slate-100 text-slate-400 border-none text-[9px] font-bold">アーカイブ表示中（編集不可）</Badge>}
                     </div>
@@ -417,16 +453,34 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
                         {/* Modal Body / Previews */}
                         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white custom-scrollbar">
                             <div className="p-8 text-center border-2 border-dashed border-teal/10 bg-teal/5 rounded-3xl space-y-3">
-                                <div className="text-3xl mb-2">🔔</div>
-                                <p className="text-sm font-bold text-slate-700">Slack通知の準備が整いました</p>
+                                <p className="text-sm font-bold text-slate-700">各部署へのAI翻訳メッセージを生成しました</p>
                                 <p className="text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
-                                    「保存・送信」をクリックすると、入力された方針の抜粋と共に、<br />
-                                    <span className="text-teal font-bold text-[11px]">各部署の担当メンバー（Slack ID登録済み）へメンション付き</span>で通知が送信されます。
+                                    組織方針を読み込み、AIが各部署の状況に合わせた通知文を作成しました。<br />
+                                    <span className="text-teal font-bold text-[11px]">「保存・送信」をクリックするとSlackへ通知されます。</span>
                                 </p>
                             </div>
-                            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 italic text-[10px] text-slate-400">
-                                ※ AIによる高度な状況分析とトーン調整（Phase 7）が有効になるまでは、今回の方針内容をベースとした標準通知フォーマットで送信されます。
-                            </div>
+
+                            {isGenerating ? (
+                                <div className="space-y-4 animate-pulse">
+                                    {[1, 2, 3].map(i => (
+                                        <div key={i} className="h-20 bg-slate-50 rounded-2xl border border-slate-100" />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {departments?.map((dept) => (
+                                        <div key={dept.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <h6 className="text-[11px] font-black text-slate-800 uppercase tracking-tight">{dept.name} メンバーへの通知</h6>
+                                                <Badge className="bg-blue-50 text-blue-500 border-none text-[9px]">AI要約済</Badge>
+                                            </div>
+                                            <p className="text-[11px] leading-relaxed text-slate-600 font-medium">
+                                                {translations[dept.id] || "方針変更の要約を生成中..."}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         {/* Modal Footer */}

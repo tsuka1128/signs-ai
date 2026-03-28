@@ -60,8 +60,10 @@ export default function RegisterPage() {
             <div className="relative w-full max-w-md">
                 {/* ロゴ・コピー */}
                 <div className="text-center mb-10">
-                    <div className="inline-flex items-center gap-2 mb-6">
-                        <span className="text-2xl">🌡️</span>
+                    <div className="inline-flex items-center gap-3 mb-6">
+                        <div className="w-8 h-8 bg-teal-500 rounded-xl flex items-center justify-center shadow-md shadow-teal-200">
+                            <span className="text-white font-black text-base italic">S</span>
+                        </div>
                         <span className="text-xl font-black text-slate-800 tracking-tight">
                             Signs AI
                         </span>
@@ -90,8 +92,8 @@ export default function RegisterPage() {
                                 </p>
                             </div>
                             <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 text-left">
-                                <p className="text-xs text-amber-700 font-bold mb-1 flex items-center gap-1.5">
-                                    <span className="text-sm">⚠️</span> 重要
+                                <p className="text-xs text-amber-700 font-bold mb-1 flex items-center gap-1.5 grayscale">
+                                    重要
                                 </p>
                                 <p className="text-[11px] text-amber-600 leading-relaxed font-medium">
                                     メール内のリンクをクリックして確認を完了するまで、ログインすることはできません。

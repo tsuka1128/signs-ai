@@ -12,14 +12,14 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. リクエストボディ解析
-    let body: { text: string };
+    let body: { text: string; translations?: Record<string, string> };
     try {
         body = await request.json();
     } catch {
         return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
 
-    const { text: policyText } = body;
+    const { text: policyText, translations } = body;
     if (!policyText) {
         return NextResponse.json({ error: "Policy text is required" }, { status: 400 });
     }
@@ -83,11 +83,15 @@ export async function POST(request: NextRequest) {
 
         const mentions = deptUsers.map(u => `<@${u.slack_user_id}>`).join(' ');
         
+        const aiDeptMessage = translations && translations[dept.id] 
+            ? translations[dept.id] 
+            : "今月の全社方針に基づき、各担当指標の再確認をお願いします。分析結果は SignsAI ダッシュボードにてご確認いただけます。";
+        
         blocks.push({
             type: "section",
             text: {
                 type: "mrkdwn",
-                text: `*🏢 ${dept.name} メンバーへの通知*\n${mentions}\n今月の全社方針に基づき、各担当指標の再確認をお願いします。分析結果は SignsAI ダッシュボードにてご確認いただけます。`
+                text: `*🏢 ${dept.name} メンバーへの通知*\n${mentions}\n${aiDeptMessage}`
             }
         });
     }

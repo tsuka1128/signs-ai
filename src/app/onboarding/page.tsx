@@ -380,8 +380,10 @@ function OnboardingContent() {
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50 flex flex-col items-center py-12 px-4">
             {/* ヘッダー */}
             <div className="text-center mb-8">
-                <div className="inline-flex items-center gap-2 mb-2">
-                    <span className="text-xl">🌡️</span>
+                <div className="inline-flex items-center gap-3 mb-2">
+                    <div className="w-8 h-8 bg-teal-500 rounded-xl flex items-center justify-center shadow-md shadow-teal-200">
+                        <span className="text-white font-black text-base italic">S</span>
+                    </div>
                     <span className="text-lg font-black text-slate-800 tracking-tight">Signs AI <span className="text-teal-500 text-[10px] ml-1">v1.1</span></span>
                 </div>
                 <h1 className="text-2xl font-black text-slate-800 tracking-tighter">初期設定</h1>
