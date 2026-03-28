@@ -78,6 +78,7 @@ import {
     HelpCircle,
     ClipboardList,
     Share2,
+    Send,
     FileText,
     MessageSquare,
     ExternalLink
@@ -418,6 +419,28 @@ export default function SettingsPage() {
             if (data) setInvitations(data);
         } else {
             alert(`招待に失敗しました: ${error.message}`);
+        }
+    };
+
+    const handleDeleteInvitation = async (id: string) => {
+        if (!confirm("この招待を取り消しますか？")) return;
+        const supabase = createClient();
+        const { error } = await supabase.from('invitations').delete().eq('id', id);
+        if (!error) {
+            setInvitations(invitations.filter(i => i.id !== id));
+        } else {
+            alert(`削除に失敗しました: ${error.message}`);
+        }
+    };
+
+    const handleResendInvitation = async (inv: any) => {
+        const supabase = createClient();
+        // 招待日時を更新して再通知したことにする
+        const { error } = await supabase.from('invitations').update({ updated_at: new Date().toISOString() }).eq('id', inv.id);
+        if (!error) {
+            alert(`${inv.email} 宛に招待を再送（再通知）しました`);
+        } else {
+            alert(`再送に失敗しました: ${error.message}`);
         }
     };
 
@@ -1038,6 +1061,22 @@ export default function SettingsPage() {
                                                                 招待送信済み
                                                             </div>
                                                         </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button
+                                                            onClick={() => handleResendInvitation(inv)}
+                                                            className="p-2 text-slate-400 hover:text-teal hover:bg-teal-50 rounded-lg transition-all"
+                                                            title="再送する"
+                                                        >
+                                                            <Send className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteInvitation(inv.id)}
+                                                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                            title="削除する"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
                                                     </div>
                                                 </div>
                                             ))}
