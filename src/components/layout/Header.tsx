@@ -3,7 +3,6 @@
 import { Badge } from "@/components/ui/Badge";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Settings, LogOut, HelpCircle } from "lucide-react";
 import { signOut } from "@/lib/auth";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
@@ -94,10 +93,13 @@ export function Header() {
                     <div className="flex items-center gap-3">
 
                         <Link href="/marketing" className="text-[10px] font-bold bg-slate-800 text-white px-3 py-1.5 rounded-full hover:bg-teal transition-colors shadow-sm flex items-center gap-1">
-                            🚀 マーケティングLP
+                            マーケティングLP
                         </Link>
                         <Link href="/form" className="text-[10px] font-bold bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-1">
-                            💬 アンケート
+                            アンケート回答
+                        </Link>
+                        <Link href="/voice-check" className="text-[10px] font-bold bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-1">
+                            ボイスチェック運用
                         </Link>
                         <div className="relative">
                             <button
@@ -117,21 +119,21 @@ export function Header() {
                                         </div>
 
                                         <Link href="/kpi" onClick={() => setIsProfileOpen(false)} className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-teal transition-colors flex items-center gap-2">
-                                            📊 Monthly KPI Input
+                                            KPI入力
                                         </Link>
 
                                         <Link href="/docs" onClick={() => setIsProfileOpen(false)} className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-teal transition-colors flex items-center gap-2">
-                                            <HelpCircle className="w-4 h-4 text-slate-400" /> Help / Documentation
+                                            ヘルプ・ドキュメント
                                         </Link>
 
                                         <Link href="/settings" onClick={() => setIsProfileOpen(false)} className="px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-teal transition-colors flex items-center gap-2">
-                                            <Settings className="w-4 h-4 text-slate-400" /> Settings
+                                            設定
                                         </Link>
 
                                         <div className="h-px bg-slate-100 my-2"></div>
 
                                         <button onClick={handleSignOut} className="w-full text-left px-4 py-2 text-sm text-rose-600 font-bold hover:bg-rose-50 transition-colors flex items-center gap-2">
-                                            <LogOut className="w-3.5 h-3.5" /> Sign out
+                                            ログアウト
                                         </button>
                                     </div>
                                 </>
@@ -164,19 +166,22 @@ export function Header() {
                 <div className="sm:hidden absolute top-full left-0 right-0 bg-white border-b border-slate-200 shadow-xl py-4 px-5 flex flex-col gap-3 animate-in slide-in-from-top-2 duration-200 z-[100]">
                     <div className="grid grid-cols-2 gap-3 mb-2">
                         <Link href="/" onClick={() => setIsMenuOpen(false)} className="col-span-2 text-sm font-bold bg-white border-2 border-slate-100 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:border-slate-300 flex items-center justify-center gap-2">
-                            <span className="text-lg">📈</span> ダッシュボード
+                            ダッシュボード
                         </Link>
                         <Link href="/form" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:bg-slate-50 flex items-center justify-center gap-1.5">
-                            <span className="text-lg">💬</span> 調査
+                            アンケート回答
                         </Link>
                         <Link href="/marketing" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold bg-slate-800 text-white px-4 py-3 rounded-xl shadow-md flex items-center justify-center gap-1.5 hover:bg-teal-600 transition-colors">
-                            <span className="text-lg">🚀</span> LP
+                            LP
+                        </Link>
+                        <Link href="/voice-check" onClick={() => setIsMenuOpen(false)} className="col-span-2 text-sm font-bold bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:bg-slate-50 flex items-center justify-center gap-1.5">
+                            ボイスチェック運用
                         </Link>
                         <Link href="/kpi" onClick={() => setIsMenuOpen(false)} className="col-span-2 text-sm font-bold bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:bg-slate-50 flex items-center justify-center gap-1.5">
-                            <span className="text-lg">📊</span> KPI入力
+                            KPI入力
                         </Link>
                         <Link href="/settings" onClick={() => setIsMenuOpen(false)} className="col-span-2 text-sm font-bold bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl shadow-sm hover:bg-slate-50 flex items-center justify-center gap-1.5">
-                            <Settings className="w-5 h-5 text-slate-400" /> 設定
+                            設定
                         </Link>
                     </div>
                 </div>
