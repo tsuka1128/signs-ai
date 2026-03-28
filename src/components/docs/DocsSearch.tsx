@@ -47,9 +47,9 @@ export function DocsSearch() {
                 { name: 'title', weight: 0.7 },
                 { name: 'content', weight: 0.3 }
             ],
-            threshold: 0.4,
+            threshold: 0.3,
             includeMatches: true,
-            minMatchCharLength: 2
+            minMatchCharLength: 1
         });
     }, []);
 
@@ -105,6 +105,7 @@ export function DocsSearch() {
             <Command.Dialog
                 open={open}
                 onOpenChange={setOpen}
+                shouldFilter={false}
                 label="Full-text Documentation Search"
                 className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200"
             >
