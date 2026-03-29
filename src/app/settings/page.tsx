@@ -320,8 +320,14 @@ export default function SettingsPage() {
                     sort_order: k.sort_order
                 }).eq('id', k.id)),
                 toCreate.length > 0 ? supabase.from('kpi_definitions').insert(toCreate.map(k => ({
-                    ...k,
-                    target_default: k.target_default ?? 0
+                    company_id: k.company_id,
+                    name: k.name,
+                    unit: k.unit,
+                    target_default: k.target_default ?? 0,
+                    is_main: k.is_main,
+                    owner_dept_id: k.owner_dept_id,
+                    is_higher_better: k.is_higher_better ?? true,
+                    sort_order: k.sort_order
                 }))) : Promise.resolve({ error: null })
             ]);
 
@@ -828,28 +834,12 @@ export default function SettingsPage() {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">評価基準</label>
-                                                    <div className="relative">
-                                                        <select
-                                                            value={k.is_higher_better ? "true" : "false"}
-                                                            onChange={(e) => setKpis(kpis.map(x => x.id === k.id ? { ...x, is_higher_better: e.target.value === "true" } : x))}
-                                                            className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-xs font-bold text-slate-800 outline-none focus:border-teal appearance-none transition-all pr-10"
-                                                        >
-                                                            <option value="true">数値が大きいほど良い(売上等)</option>
-                                                            <option value="false">数値が小さいほど良い(離職等)</option>
-                                                        </select>
-                                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                                            <ArrowRight className="w-3.5 h-3.5 rotate-90" />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div>
                                                     <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">単位</label>
                                                     <div className="relative">
                                                         <select
                                                             value={k.unit}
                                                             onChange={(e) => setKpis(kpis.map(x => x.id === k.id ? { ...x, unit: e.target.value } : x))}
-                                                            className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-800 outline-none focus:border-teal appearance-none transition-all"
+                                                            className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-800 outline-none focus:border-teal appearance-none transition-all pr-10"
                                                         >
                                                             <option value="">単位を選択</option>
                                                             {KPI_UNIT_OPTIONS.map(opt => (
@@ -863,9 +853,9 @@ export default function SettingsPage() {
                                                 </div>
                                             </div>
 
-                                            {/* Row 2: Dept, Main Toggle, Save, Delete */}
+                                            {/* Row 2: Dept, Polarity, Rep KPI, Delete */}
                                             <div className="grid grid-cols-1 md:grid-cols-10 gap-5 items-end">
-                                                <div className="md:col-span-5">
+                                                <div className="md:col-span-4">
                                                     <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">主担当部署（任意）</label>
                                                     <div className="relative">
                                                         <select
@@ -884,8 +874,25 @@ export default function SettingsPage() {
                                                     </div>
                                                 </div>
 
-                                                <div className="md:col-span-4">
-                                                    <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">部署代表KPI設定</label>
+                                                <div className="md:col-span-2">
+                                                    <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">評価基準</label>
+                                                    <div className="relative">
+                                                        <select
+                                                            value={k.is_higher_better ? "true" : "false"}
+                                                            onChange={(e) => setKpis(kpis.map(x => x.id === k.id ? { ...x, is_higher_better: e.target.value === "true" } : x))}
+                                                            className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3.5 text-[10px] font-bold text-slate-800 outline-none focus:border-teal appearance-none transition-all pr-8"
+                                                        >
+                                                            <option value="true">高いほど良い</option>
+                                                            <option value="false">低いほど良い</option>
+                                                        </select>
+                                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                                            <ArrowRight className="w-3.5 h-3.5 rotate-90" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="md:col-span-3">
+                                                    <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">部署代表KPI</label>
                                                     <button
                                                         onClick={() => {
                                                             const isCurrentlyMain = k.is_main;
@@ -897,14 +904,14 @@ export default function SettingsPage() {
                                                             }));
                                                         }}
                                                         className={cn(
-                                                            "w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl border-2 transition-all font-bold text-sm",
+                                                            "w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl border-2 transition-all font-bold text-[10px] uppercase tracking-widest",
                                                             k.is_main
                                                                 ? "bg-teal/5 border-teal text-teal"
                                                                 : "bg-white border-slate-100 text-slate-400 hover:border-slate-200"
                                                         )}
                                                     >
-                                                        <Star className={cn("w-4 h-4", k.is_main ? "fill-teal" : "text-slate-300")} />
-                                                        <span>{k.is_main ? "設定済み" : "設定する"}</span>
+                                                        <Star className={cn("w-3.5 h-3.5", k.is_main ? "fill-teal" : "text-slate-300")} />
+                                                        <span>{k.is_main ? "設定済み" : "代表設定"}</span>
                                                     </button>
                                                 </div>
 
