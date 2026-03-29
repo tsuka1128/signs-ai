@@ -297,7 +297,7 @@ export default function SettingsPage() {
     };
 
     const handleAddKpi = () => {
-        setKpis([...kpis, { id: `new_${Date.now()}`, name: "", unit: "", target_default: 0, is_main: false, is_new: true }]);
+        setKpis([...kpis, { id: `new_${Date.now()}`, name: "", unit: "", target_default: 0, is_main: false, is_higher_better: true, is_new: true }]);
     };
 
     const handleSaveAllKpis = async () => {
@@ -874,7 +874,7 @@ export default function SettingsPage() {
                                                     </div>
                                                 </div>
 
-                                                <div className="md:col-span-2">
+                                                <div className="md:col-span-3">
                                                     <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">評価基準</label>
                                                     <div className="relative">
                                                         <select
@@ -891,7 +891,7 @@ export default function SettingsPage() {
                                                     </div>
                                                 </div>
 
-                                                <div className="md:col-span-3">
+                                                <div className="md:col-span-2">
                                                     <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">部署代表KPI</label>
                                                     <button
                                                         onClick={() => {
