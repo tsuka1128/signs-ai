@@ -81,7 +81,8 @@ import {
     Send,
     FileText,
     MessageSquare,
-    ExternalLink
+    ExternalLink,
+    TrendingUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Reorder, useDragControls } from "framer-motion";
@@ -109,6 +110,13 @@ export default function SettingsPage() {
     const [inviteDeptId, setInviteDeptId] = useState("");
     const [inviteAxisId, setInviteAxisId] = useState("");
     const [inviteSlackUserId, setInviteSlackUserId] = useState("");
+    const [resources, setResources] = useState<any[]>([]);
+
+    // History Modal State
+    const [historyModalOpen, setHistoryModalOpen] = useState(false);
+    const [historyTarget, setHistoryTarget] = useState<{ type: 'dept' | 'axis', id: string, name: string } | null>(null);
+    const [tempHistory, setTempHistory] = useState<any[]>([]);
+    const [isSavingHistory, setIsSavingHistory] = useState(false);
 
     // Editing user state
     const [editingUser, setEditingUser] = useState<any>(null);
@@ -142,13 +150,14 @@ export default function SettingsPage() {
             if (!userData?.company_id) return;
 
             // Load data in parallel
-            const [comp, d, k, a, u, i] = await Promise.all([
+            const [comp, d, k, a, u, i, res] = await Promise.all([
                 supabase.from('companies').select('*, plans(name)').eq('id', userData.company_id).single(),
                 supabase.from('departments').select('*').eq('company_id', userData.company_id).order('sort_order', { ascending: true }),
                 supabase.from('kpi_definitions').select('*').eq('company_id', userData.company_id).order('sort_order', { ascending: true }),
                 supabase.from('kpi_axes').select('*').eq('company_id', userData.company_id).order('sort_order', { ascending: true }),
                 supabase.from('users').select('*').eq('company_id', userData.company_id),
-                supabase.from('invitations').select('*').eq('company_id', userData.company_id).eq('status', 'pending')
+                supabase.from('invitations').select('*').eq('company_id', userData.company_id).eq('status', 'pending'),
+                supabase.from('resource_records').select('*').eq('company_id', userData.company_id)
             ]);
 
             if (comp.data) {
@@ -161,6 +170,7 @@ export default function SettingsPage() {
             if (a.data) setAxes(a.data);
             if (u.data) setUsers(u.data);
             if (i.data) setInvitations(i.data);
+            if (res.data) setResources(res.data);
 
             setLoading(false);
         }
@@ -455,6 +465,85 @@ export default function SettingsPage() {
         }
     };
 
+    // --- History Handlers ---
+    const handleOpenHistory = (type: 'dept' | 'axis', id: string, name: string) => {
+        setHistoryTarget({ type, id, name });
+        
+        // 過去12ヶ月（今月含む）の月リストを作成
+        const months = [];
+        const now = new Date();
+        for (let i = 11; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            
+            // 既存データを探す
+            const existing = resources.find(r => 
+                r.recorded_month === m && 
+                (type === 'dept' ? r.department_id === id : r.axis_id === id)
+            );
+            
+            months.push({
+                month: m,
+                head_count: existing?.head_count || 0,
+                labor_cost: existing?.labor_cost || 0
+            });
+        }
+        
+        setTempHistory(months);
+        setHistoryModalOpen(true);
+    };
+
+    const handleSaveHistory = async () => {
+        if (!historyTarget || !company?.id) return;
+        setIsSavingHistory(true);
+        const supabase = createClient();
+
+        try {
+            const upserts = tempHistory.map(h => ({
+                company_id: company.id,
+                department_id: historyTarget.type === 'dept' ? historyTarget.id : null,
+                axis_id: historyTarget.type === 'axis' ? historyTarget.id : null,
+                recorded_month: h.month,
+                head_count: h.head_count,
+                labor_cost: h.labor_cost || null
+            }));
+
+            const { error } = await supabase.from('resource_records').upsert(upserts, {
+                onConflict: 'company_id, department_id, axis_id, recorded_month'
+            });
+
+            if (error) throw error;
+
+            alert("履歴を保存しました");
+            
+            // 再ロード
+            const { data } = await supabase.from('resource_records').select('*').eq('company_id', company.id);
+            if (data) setResources(data);
+            
+            setHistoryModalOpen(false);
+        } catch (err: any) {
+            console.error("History save error:", err);
+            alert(`保存に失敗しました: ${err.message}`);
+        } finally {
+            setIsSavingHistory(false);
+        }
+    };
+
+    const getHistoryTrend = (id: string, type: 'dept' | 'axis') => {
+        const now = new Date();
+        const trend = [];
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            const existing = resources.find(r => 
+                r.recorded_month === m && 
+                (type === 'dept' ? r.department_id === id : r.axis_id === id)
+            );
+            trend.push(existing?.head_count || 0);
+        }
+        return trend;
+    };
+
     const handleStartEditUser = (u: any) => {
         setEditingUser(u);
         setEditForm({
@@ -642,6 +731,23 @@ export default function SettingsPage() {
                                                         />
                                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">名</span>
                                                     </div>
+                                                </div>
+                                                <div className="flex flex-col items-center gap-1.5 min-w-[70px] pt-2 sm:pt-0">
+                                                    <div className="flex items-end gap-1 h-6 px-1">
+                                                        {getHistoryTrend(d.id, 'dept').map((val, idx) => (
+                                                            <div 
+                                                                key={idx} 
+                                                                className="w-1.5 bg-teal/20 rounded-full transition-all group-hover:bg-teal/40"
+                                                                style={{ height: `${Math.max(15, Math.min(100, (val / (d.headcount || 10)) * 100))}%` }}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleOpenHistory('dept', d.id, d.name)}
+                                                        className="flex items-center gap-1 text-[9px] font-black text-teal hover:text-teal/70 transition-colors uppercase tracking-widest bg-teal/5 px-2 py-1 rounded-lg"
+                                                    >
+                                                        <TrendingUp className="w-2.5 h-2.5" /> 履歴
+                                                    </button>
                                                 </div>
                                                 <div className="flex justify-end pt-2 sm:pt-0">
                                                     <button
@@ -866,6 +972,23 @@ export default function SettingsPage() {
                                                         />
                                                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">名</span>
                                                     </div>
+                                                </div>
+                                                <div className="flex flex-col items-center gap-1.5 min-w-[70px] pt-2 sm:pt-0">
+                                                    <div className="flex items-end gap-1 h-6 px-1">
+                                                        {getHistoryTrend(a.id, 'axis').map((val, idx) => (
+                                                            <div 
+                                                                key={idx} 
+                                                                className="w-1.5 bg-teal/20 rounded-full transition-all group-hover:bg-teal/40"
+                                                                style={{ height: `${Math.max(15, Math.min(100, (val / (a.headcount || 10)) * 100))}%` }}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleOpenHistory('axis', a.id, a.name)}
+                                                        className="flex items-center gap-1 text-[9px] font-black text-teal hover:text-teal/70 transition-colors uppercase tracking-widest bg-teal/5 px-2 py-1 rounded-lg"
+                                                    >
+                                                        <TrendingUp className="w-2.5 h-2.5" /> 履歴
+                                                    </button>
                                                 </div>
                                                 <div className="flex justify-end pt-2 sm:pt-0">
                                                     <button
@@ -1153,6 +1276,94 @@ export default function SettingsPage() {
             </main>
 
             {/* Member Edit Modal */}
+            {/* History Edit Modal */}
+            {historyModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setHistoryModalOpen(false)} />
+                    <div className="relative bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-10 space-y-8">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h3 className="text-2xl font-black text-slate-800 tracking-tighter flex items-center gap-3">
+                                        <TrendingUp className="w-7 h-7 text-teal" />
+                                        {historyTarget?.name} の推移
+                                    </h3>
+                                    <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-widest">月別の人数と人件費（任意）の実績を入力</p>
+                                </div>
+                                <button onClick={() => setHistoryModalOpen(false)} className="p-3 hover:bg-slate-50 rounded-2xl transition-all">
+                                    <X className="w-6 h-6 text-slate-400" />
+                                </button>
+                            </div>
+
+                            <div className="max-h-[400px] overflow-y-auto pr-4 -mr-4 custom-scrollbar">
+                                <div className="space-y-3">
+                                    <div className="grid grid-cols-12 gap-4 px-2 mb-2 text-center">
+                                        <div className="col-span-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-left">対象月</div>
+                                        <div className="col-span-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">所属人数</div>
+                                        <div className="col-span-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">人件費 (任意)</div>
+                                    </div>
+                                    {tempHistory.map((h, idx) => (
+                                        <div key={h.month} className="grid grid-cols-12 gap-4 items-center p-3 bg-slate-50/50 rounded-2xl border border-slate-100/50">
+                                            <div className="col-span-3">
+                                                <span className="text-sm font-black text-slate-700">{h.month}</span>
+                                            </div>
+                                            <div className="col-span-4 relative">
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    value={h.head_count === 0 ? "" : h.head_count}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value === "" ? 0 : parseInt(e.target.value);
+                                                        setTempHistory(tempHistory.map((x, i) => i === idx ? { ...x, head_count: val } : x));
+                                                    }}
+                                                    className="w-full bg-white border border-slate-100 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:border-teal text-center outline-none transition-all pr-8"
+                                                />
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">名</span>
+                                            </div>
+                                            <div className="col-span-5 relative">
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    placeholder="未入力"
+                                                    value={h.labor_cost === 0 ? "" : h.labor_cost}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                                                        setTempHistory(tempHistory.map((x, i) => i === idx ? { ...x, labor_cost: val } : x));
+                                                    }}
+                                                    className="w-full bg-white border border-slate-100 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-800 focus:border-teal text-center outline-none transition-all pr-12"
+                                                />
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">万円</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex gap-4 pt-4">
+                                <button
+                                    onClick={() => setHistoryModalOpen(false)}
+                                    className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all text-sm"
+                                >
+                                    キャンセル
+                                </button>
+                                <button
+                                    onClick={handleSaveHistory}
+                                    disabled={isSavingHistory}
+                                    className="flex-[2] py-4 bg-slate-800 text-white rounded-2xl font-bold hover:bg-slate-700 transition-all shadow-lg flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                                >
+                                    {isSavingHistory ? (
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    ) : (
+                                        <Save className="w-4 h-4" />
+                                    )}
+                                    履歴を保存
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {editingUser && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
