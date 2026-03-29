@@ -474,7 +474,7 @@ export default function SettingsPage() {
         const now = new Date();
         for (let i = 11; i >= 0; i--) {
             const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
             
             // 既存データを探す
             const existing = resources.find(r => 
@@ -534,7 +534,7 @@ export default function SettingsPage() {
         const trend = [];
         for (let i = 5; i >= 0; i--) {
             const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
             const existing = resources.find(r => 
                 r.recorded_month === m && 
                 (type === 'dept' ? r.department_id === id : r.axis_id === id)
@@ -1305,7 +1305,7 @@ export default function SettingsPage() {
                                     {tempHistory.map((h, idx) => (
                                         <div key={h.month} className="grid grid-cols-12 gap-4 items-center p-3 bg-slate-50/50 rounded-2xl border border-slate-100/50">
                                             <div className="col-span-3">
-                                                <span className="text-sm font-black text-slate-700">{h.month}</span>
+                                                <span className="text-sm font-black text-slate-700">{h.month.substring(0, 7)}</span>
                                             </div>
                                             <div className="col-span-4 relative">
                                                 <input
