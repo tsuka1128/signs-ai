@@ -733,14 +733,30 @@ export default function SettingsPage() {
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col items-center gap-1.5 min-w-[70px] pt-2 sm:pt-0">
-                                                    <div className="flex items-end gap-1 h-6 px-1">
-                                                        {getHistoryTrend(d.id, 'dept').map((val, idx) => (
-                                                            <div 
-                                                                key={idx} 
-                                                                className="w-1.5 bg-teal/20 rounded-full transition-all group-hover:bg-teal/40"
-                                                                style={{ height: `${Math.max(15, Math.min(100, (val / (d.headcount || 10)) * 100))}%` }}
-                                                            />
-                                                        ))}
+                                                    <div className="h-6 w-full flex items-center justify-center px-1">
+                                                        <svg className="w-full h-full overflow-visible" viewBox="0 0 60 20">
+                                                            <defs>
+                                                                <linearGradient id={`gradient-${d.id}`} x1="0" y1="0" x2="0" y2="1">
+                                                                    <stop offset="0%" stopColor="rgb(20, 184, 166)" stopOpacity="0.4" />
+                                                                    <stop offset="100%" stopColor="rgb(20, 184, 166)" stopOpacity="0" />
+                                                                </linearGradient>
+                                                            </defs>
+                                                            {(() => {
+                                                                const trend = getHistoryTrend(d.id, 'dept');
+                                                                const max = Math.max(...trend, d.headcount || 1);
+                                                                const min = Math.min(...trend);
+                                                                const range = max - min || 1;
+                                                                const points = trend.map((v, i) => `${(i / (trend.length - 1)) * 60},${20 - ((v - min) / range) * 16 - 2}`);
+                                                                const pathData = `M ${points.join(' L ')}`;
+                                                                const areaData = `${pathData} L 60,20 L 0,20 Z`;
+                                                                return (
+                                                                    <>
+                                                                        <path d={areaData} fill={`url(#gradient-${d.id})`} className="opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                                                        <path d={pathData} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-teal/40 group-hover:text-teal transition-colors" />
+                                                                    </>
+                                                                );
+                                                            })()}
+                                                        </svg>
                                                     </div>
                                                     <button
                                                         onClick={() => handleOpenHistory('dept', d.id, d.name)}
@@ -974,14 +990,30 @@ export default function SettingsPage() {
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col items-center gap-1.5 min-w-[70px] pt-2 sm:pt-0">
-                                                    <div className="flex items-end gap-1 h-6 px-1">
-                                                        {getHistoryTrend(a.id, 'axis').map((val, idx) => (
-                                                            <div 
-                                                                key={idx} 
-                                                                className="w-1.5 bg-teal/20 rounded-full transition-all group-hover:bg-teal/40"
-                                                                style={{ height: `${Math.max(15, Math.min(100, (val / (a.headcount || 10)) * 100))}%` }}
-                                                            />
-                                                        ))}
+                                                    <div className="h-6 w-full flex items-center justify-center px-1">
+                                                        <svg className="w-full h-full overflow-visible" viewBox="0 0 60 20">
+                                                            <defs>
+                                                                <linearGradient id={`gradient-axis-${a.id}`} x1="0" y1="0" x2="0" y2="1">
+                                                                    <stop offset="0%" stopColor="rgb(20, 184, 166)" stopOpacity="0.4" />
+                                                                    <stop offset="100%" stopColor="rgb(20, 184, 166)" stopOpacity="0" />
+                                                                </linearGradient>
+                                                            </defs>
+                                                            {(() => {
+                                                                const trend = getHistoryTrend(a.id, 'axis');
+                                                                const max = Math.max(...trend, a.headcount || 1);
+                                                                const min = Math.min(...trend);
+                                                                const range = max - min || 1;
+                                                                const points = trend.map((v, i) => `${(i / (trend.length - 1)) * 60},${20 - ((v - min) / range) * 16 - 2}`);
+                                                                const pathData = `M ${points.join(' L ')}`;
+                                                                const areaData = `${pathData} L 60,20 L 0,20 Z`;
+                                                                return (
+                                                                    <>
+                                                                        <path d={areaData} fill={`url(#gradient-axis-${a.id})`} className="opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                                                        <path d={pathData} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-teal/40 group-hover:text-teal transition-colors" />
+                                                                    </>
+                                                                );
+                                                            })()}
+                                                        </svg>
                                                     </div>
                                                     <button
                                                         onClick={() => handleOpenHistory('axis', a.id, a.name)}
