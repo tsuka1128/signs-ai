@@ -882,8 +882,8 @@ export default function SettingsPage() {
                                                             onChange={(e) => setKpis(kpis.map(x => x.id === k.id ? { ...x, is_higher_better: e.target.value === "true" } : x))}
                                                             className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3.5 text-[10px] font-bold text-slate-800 outline-none focus:border-teal appearance-none transition-all pr-8"
                                                         >
-                                                            <option value="true">高いほど良い</option>
-                                                            <option value="false">低いほど良い</option>
+                                                            <option value="true">最大化目標</option>
+                                                            <option value="false">最小化目標</option>
                                                         </select>
                                                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                                                             <ArrowRight className="w-3.5 h-3.5 rotate-90" />
