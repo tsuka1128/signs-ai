@@ -82,7 +82,8 @@ export async function POST(req: Request) {
                 kpi_count: monthKpis.length,
                 kpi_summary: monthKpis.map(r => {
                     const def = kpiDefs.data?.find(d => d.id === r.kpi_definition_id);
-                    return `${def?.name || 'KPI'}: ${r.value}${def?.unit || ''} (目標: ${r.target_value}${def?.unit || ''})`;
+                    const polarity = def?.is_higher_better !== false ? "高いほど良い" : "低いほど良い";
+                    return `${def?.name || 'KPI'}: ${r.value}${def?.unit || ''} (目標: ${r.target_value}${def?.unit || ''}, 評価基準: ${polarity})`;
                 })
             };
         };

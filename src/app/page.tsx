@@ -243,9 +243,29 @@ export default function DashboardPage() {
           let count = 0;
           mKpis.forEach(def => {
             const rec = mRecs.find(r => r.kpi_definition_id === def.id && r.axis_id === null);
-            if (rec && rec.target_value > 0) {
-              totalAch += (rec.value / rec.target_value) * 100;
-              count++;
+            if (rec && rec.target_value !== null) {
+                const target = rec.target_value;
+                const actual = rec.value;
+                
+                if (def.is_higher_better !== false) {
+                    // 高いほど良い (通常)
+                    if (target > 0) {
+                        totalAch += (actual / target) * 100;
+                        count++;
+                    }
+                } else {
+                    // 低いほど良い (離職率など)
+                    if (actual === 0) {
+                        totalAch += 100; // 0なら最高評価
+                    } else if (target > 0) {
+                        // 目標5%に対して実績2%なら 5/2 * 100 = 250%
+                        totalAch += (target / actual) * 100;
+                    } else {
+                        // 目標が0で実績が正なら 0%
+                        totalAch += 0;
+                    }
+                    count++;
+                }
             }
           });
           return count > 0 ? Math.round(totalAch / count) : 0;

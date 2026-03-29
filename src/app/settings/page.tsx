@@ -316,6 +316,7 @@ export default function SettingsPage() {
                     target_default: k.target_default,
                     is_main: k.is_main,
                     owner_dept_id: k.owner_dept_id,
+                    is_higher_better: k.is_higher_better ?? true,
                     sort_order: k.sort_order
                 }).eq('id', k.id)),
                 toCreate.length > 0 ? supabase.from('kpi_definitions').insert(toCreate.map(k => ({
@@ -817,7 +818,6 @@ export default function SettingsPage() {
                                                     <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">目標値</label>
                                                     <input
                                                         type="number"
-                                                        min="0"
                                                         value={k.target_default ?? 0}
                                                         placeholder="目標額/数"
                                                         onChange={(e) => {
@@ -826,6 +826,22 @@ export default function SettingsPage() {
                                                         }}
                                                         className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-800 outline-none focus:border-teal transition-all"
                                                     />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">評価基準</label>
+                                                    <div className="relative">
+                                                        <select
+                                                            value={k.is_higher_better ? "true" : "false"}
+                                                            onChange={(e) => setKpis(kpis.map(x => x.id === k.id ? { ...x, is_higher_better: e.target.value === "true" } : x))}
+                                                            className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-xs font-bold text-slate-800 outline-none focus:border-teal appearance-none transition-all pr-10"
+                                                        >
+                                                            <option value="true">数値が大きいほど良い(売上等)</option>
+                                                            <option value="false">数値が小さいほど良い(離職等)</option>
+                                                        </select>
+                                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                                            <ArrowRight className="w-3.5 h-3.5 rotate-90" />
+                                                        </div>
+                                                    </div>
                                                 </div>
                                                 <div>
                                                     <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-tighter">単位</label>
