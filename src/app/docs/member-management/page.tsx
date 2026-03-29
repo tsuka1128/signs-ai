@@ -8,7 +8,10 @@ import {
     Building2,
     Mail,
     ChevronDown,
-    Building
+    Building,
+    Copy,
+    Trash2,
+    HelpCircle
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -193,6 +196,49 @@ export default function MemberManagementPage() {
                         </div>
                     </div>
                 </div>
+
+                {/* 招待管理の新機能 */}
+                <div className="bg-slate-50 border border-slate-100 rounded-3xl p-8 space-y-6">
+                    <div className="flex items-center gap-3">
+                        <ShieldCheck className="w-5 h-5 text-indigo-500" />
+                        <h3 className="text-lg font-black text-slate-800 tracking-tight">送信済み招待の管理</h3>
+                    </div>
+                    <p className="text-[14.5px] text-slate-600 leading-relaxed font-medium">
+                        招待を送信すると、下部の「招待中のメンバー」リストに表示されます。各メンバーのカードをホバーする（マウスを乗せる）と、以下の管理アクションが利用可能です。
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm">
+                            <div className="flex items-center gap-2 text-blue-600 font-bold text-xs mb-2 uppercase tracking-widest">
+                                <Copy className="w-3.5 h-3.5" /> リンクをコピー
+                            </div>
+                            <p className="text-[13px] text-slate-500 font-medium leading-relaxed">招待URLを直接コピーしてSlackやチャット等で共有できます。</p>
+                        </div>
+                        <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm">
+                            <div className="flex items-center gap-2 text-teal-600 font-bold text-xs mb-2 uppercase tracking-widest">
+                                <Mail className="w-3.5 h-3.5" /> 再送
+                            </div>
+                            <p className="text-[13px] text-slate-500 font-medium leading-relaxed">招待を再定義し、メンバーに通知を促します。</p>
+                        </div>
+                        <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm">
+                            <div className="flex items-center gap-2 text-rose-500 font-bold text-xs mb-2 uppercase tracking-widest">
+                                <Trash2 className="w-3.5 h-3.5" /> 削除
+                            </div>
+                            <p className="text-[13px] text-slate-500 font-medium leading-relaxed">誤って送信した招待や期限切れの招待を個別に取り消します。</p>
+                        </div>
+                    </div>
+
+                    <div className="bg-amber-50 border border-amber-100 rounded-2xl p-5 flex gap-4 mt-4">
+                        <div className="p-2 bg-amber-100 rounded-lg h-fit text-amber-700">
+                            <HelpCircle className="w-4 h-4" />
+                        </div>
+                        <div className="space-y-1">
+                            <h4 className="text-[13px] font-black text-amber-900 leading-none">メールが届かない場合</h4>
+                            <p className="text-[12px] text-amber-800 leading-relaxed font-bold">
+                                相手先のセキュリティ設定等により招待メールが届かない場合は、<strong>[リンクをコピー]</strong> ボタンから発行されるURLを、対象者に直接Slackやメッセージ等で送付してください。
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </section>
 
             {/* Section 3: Join Mode Onboarding */}
@@ -206,7 +252,12 @@ export default function MemberManagementPage() {
                     </div>
                     <div className="text-[15px] text-slate-600 font-medium leading-loose pt-2">
                         管理者が招待メールを送信すると、対象のメンバーにリンクが記載されたメールが届きます。<br className="hidden lg:block"/>
-                        メンバーがそのリンクからログインを完了すると、<strong>参加モード</strong>のオンボーディング画面が表示されます。
+                        メンバーがそのリンク（またはコピーされたURL）からログインを完了すると、<strong>参加モード</strong>のオンボーディング画面が表示されます。
+                    </div>
+                    <div className="bg-blue-50/50 border border-blue-100/50 rounded-2xl p-4 mt-2">
+                        <p className="text-[11px] text-blue-700 font-bold leading-relaxed">
+                            💡 招待URL経由でアクセスした場合、ログイン・新規登録画面で「招待トークン」が自動的に引き継がれるため、メンバーは迷わずに正しい組織へ参加できます。
+                        </p>
                     </div>
                 </div>
 
