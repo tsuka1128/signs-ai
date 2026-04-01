@@ -13,7 +13,8 @@ export function ImpersonationBanner() {
 
     const isAdminPage = pathname?.startsWith('/admin');
 
-    if (!isSuperAdmin || !isImpersonating || !company || isAdminPage) return null;
+    // 管理者ではない、または代理ログイン中でない場合は表示しない
+    if (!isSuperAdmin || !isImpersonating || isAdminPage) return null;
 
     return (
         <div className="fixed top-0 left-0 right-0 z-[9999] animate-slideDown">
@@ -31,7 +32,12 @@ export function ImpersonationBanner() {
                             <Building2 className="w-4 h-4 text-slate-400" />
                             <p className="text-sm font-bold text-white">
                                 <span className="text-slate-400 font-medium">現在は</span>
-                                <span className="mx-1.5 text-amber-50 px-1 rounded bg-amber-500/10"> {company.name} </span>
+                                <span className={cn(
+                                    "mx-1.5 text-amber-50 px-1 rounded bg-amber-500/10",
+                                    !company && "animate-pulse bg-slate-700 text-transparent"
+                                )}> 
+                                    {company ? company.name : "Loading..."} 
+                                </span>
                                 <span className="text-slate-400 font-medium">の視点でログインしています</span>
                             </p>
                         </div>
