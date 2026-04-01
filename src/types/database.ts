@@ -164,6 +164,32 @@ export interface Database {
           created_at: string
         }
       }
+      admin_activity_logs: {
+        Row: {
+          id: string
+          admin_id: string | null
+          target_company_id: string | null
+          action_type: string
+          details: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          admin_id?: string | null
+          target_company_id?: string | null
+          action_type: string
+          details?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          admin_id?: string | null
+          target_company_id?: string | null
+          action_type?: string
+          details?: Json | null
+          created_at?: string
+        }
+      }
     }
   }
 }
@@ -182,3 +208,4 @@ export type AiInsight = Database['public']['Tables']['ai_insights']['Row']
 export type ActionItem = Database['public']['Tables']['action_items']['Row']
 export type ResourceRecord = Database['public']['Tables']['resource_records']['Row']
 export type Invitation = Database['public']['Tables']['invitations']['Row']
+export type AdminActivityLog = Database['public']['Tables']['admin_activity_logs']['Row']

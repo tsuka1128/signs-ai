@@ -22,6 +22,7 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { CopyButton } from "@/components/ui/CopyButton";
+import { HistoryModal } from "@/components/admin/HistoryModal";
 
 export default function AdminCompanyDetailPage() {
     const params = useParams();
@@ -34,6 +35,7 @@ export default function AdminCompanyDetailPage() {
     const [kpis, setKpis] = useState<any[]>([]);
     const [stats, setStats] = useState({ users: 0, responses: 0 });
     const [loading, setLoading] = useState(true);
+    const [showHistory, setShowHistory] = useState(false);
 
     useEffect(() => {
         async function fetchCompanyDetails() {
@@ -144,6 +146,13 @@ export default function AdminCompanyDetailPage() {
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
+                        <button 
+                            onClick={() => setShowHistory(true)}
+                            className="px-6 py-3 bg-slate-100 border border-transparent rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-all flex items-center gap-2 group"
+                        >
+                            <Calendar className="w-4 h-4 text-slate-400" />
+                            操作履歴
+                        </button>
                         <button
                             onClick={() => impersonate(company.id)}
                             className="px-6 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2 group"
@@ -157,6 +166,15 @@ export default function AdminCompanyDetailPage() {
                     </div>
                 </div>
             </header>
+
+            {/* Impersonation History Modal */}
+            {showHistory && (
+                <HistoryModal 
+                    companyId={company.id} 
+                    companyName={company.name} 
+                    onClose={() => setShowHistory(false)} 
+                />
+            )}
 
             {/* Quick Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
