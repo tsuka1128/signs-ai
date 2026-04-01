@@ -4,12 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 
-export interface Company {
-    id: string;
-    name: string;
-    secondary_axis_name: string;
-    secondary_axis_size_kpi_id: string;
-}
+import { Company } from "@/types/database";
+
+export type { Company };
 
 export function useCompany() {
     const router = useRouter();
