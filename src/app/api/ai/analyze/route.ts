@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { generateAIInsight } from "@/lib/claude";
+import { getSystemSettings } from "@/lib/settings-server";
 import { NextResponse } from "next/server";
 import { normalizeMonth, getLastNMonths } from "@/lib/utils/date";
 
@@ -201,11 +202,15 @@ ${JSON.stringify(historicalContext, null, 2)}
 
 JSONの構造に従い詳細な分析結果を出力してください。`;
 
+        // 4.1 システム設定の取得
+        const sysSettings = await getSystemSettings();
+
         const aiResultRaw = await generateAIInsight(prompt, {
             systemPrompt,
-            temperature: 0.2, // 決定論的で堅いアウトプットにするため低め
-            maxTokens: 3000,  // 出力が増えるためMaxTokensを増やす
-            model: "claude-3-7-sonnet-20250219"
+            temperature: sysSettings['temperature'] ?? 0.2,
+            maxTokens: sysSettings['max_tokens'] ?? 3000,
+            model: sysSettings['default_model'] ?? "claude-3-7-sonnet-20250219",
+            apiKey: sysSettings['anthropic_api_key']
         });
 
         const cleanJson = aiResultRaw.replace(/```json\n?|\n?```/g, "").trim();

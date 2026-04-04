@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { generateAIInsight } from "@/lib/claude";
+import { getSystemSettings } from "@/lib/settings-server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -59,11 +60,15 @@ ${JSON.stringify(depts.map(d => ({ id: d.id, name: d.name })))}
 上記方針を、各部署のメンバーが明日から何を意識すべきか分かるように「翻訳」してください。
 専門用語は避け、現場視点での言葉に変換してください。`;
 
+        // 5.1 システム設定の取得
+        const sysSettings = await getSystemSettings();
+
         const aiResultRaw = await generateAIInsight(prompt, {
             systemPrompt,
-            temperature: 0.7,
-            maxTokens: 2000,
-            model: "claude-3-7-sonnet-20250219"
+            temperature: sysSettings['temperature'] ?? 0.7,
+            maxTokens: sysSettings['max_tokens'] ?? 2000,
+            model: sysSettings['default_model'] ?? "claude-3-7-sonnet-20250219",
+            apiKey: sysSettings['anthropic_api_key']
         });
 
         const cleanJson = aiResultRaw.replace(/```json\n?|\n?```/g, "").trim();

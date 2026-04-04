@@ -19,6 +19,8 @@ interface GenerateOptions {
     model?: string;
     /** Temperature（0.0〜1.0、低いほど安定した出力） */
     temperature?: number;
+    /** APIキー（DBから取得した値を渡す用） */
+    apiKey?: string;
 }
 
 /**
@@ -30,18 +32,19 @@ interface GenerateOptions {
  * @throws CLAUDE_API_KEY未設定時、またはAPI呼び出し失敗時にエラーをスロー
  */
 export async function generateAIInsight(prompt: string, options?: GenerateOptions) {
-    const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
-
-    if (!apiKey) {
-        throw new Error("ANTHROPIC_API_KEY or CLAUDE_API_KEY is not set");
-    }
-
     const {
         systemPrompt,
         maxTokens = DEFAULT_MAX_TOKENS,
         model = DEFAULT_MODEL,
         temperature = DEFAULT_TEMPERATURE,
+        apiKey: explicitKey,
     } = options || {};
+
+    const apiKey = explicitKey || process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
+
+    if (!apiKey) {
+        throw new Error("ANTHROPIC_API_KEY or CLAUDE_API_KEY is not set");
+    }
 
     const requestBody: any = {
         model,
