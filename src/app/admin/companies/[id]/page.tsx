@@ -17,7 +17,8 @@ import {
     Calendar,
     Mail,
     ChevronRight,
-    Search
+    Search,
+    Zap
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -37,9 +38,31 @@ export default function AdminCompanyDetailPage() {
     const [kpis, setKpis] = useState<any[]>([]);
     const [stats, setStats] = useState({ users: 0, responses: 0 });
     const [loading, setLoading] = useState(true);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
     const [showDeptModal, setShowDeptModal] = useState(false);
     const [showKpiModal, setShowKpiModal] = useState(false);
+
+    const handleRunAI = async () => {
+        if (!companyId || isAnalyzing) return;
+        setIsAnalyzing(true);
+        try {
+            const resp = await fetch('/api/ai/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ targetCompanyId: companyId })
+            });
+            const result = await resp.json();
+            if (!resp.ok) throw new Error(result.error || 'AI分析に失敗しました');
+            alert('AI分析が完了しました。');
+            router.refresh();
+        } catch (error: any) {
+            console.error("AI Analysis Error:", error);
+            alert(error.message);
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
 
     const fetchCompanyDetails = async () => {
         if (authLoading || !companyId) return;
@@ -156,6 +179,19 @@ export default function AdminCompanyDetailPage() {
                         >
                             <Calendar className="w-4 h-4 text-slate-400" />
                             代理操作履歴
+                        </button>
+                        <button
+                            onClick={handleRunAI}
+                            disabled={isAnalyzing}
+                            className={cn(
+                                "px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-sm flex items-center gap-2 group whitespace-nowrap",
+                                isAnalyzing 
+                                    ? "bg-slate-50 text-slate-400 border border-slate-100 cursor-not-allowed"
+                                    : "bg-white border border-teal/20 text-teal hover:bg-teal/5 hover:border-teal/30"
+                            )}
+                        >
+                            {isAnalyzing ? "分析を生成中..." : "AI分析を実行"}
+                            {!isAnalyzing && <Zap className="w-4 h-4" />}
                         </button>
                         <button
                             onClick={() => impersonate(company.id)}

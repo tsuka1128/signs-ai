@@ -13,19 +13,29 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // 2. ユーザーの企業ID取得
+        // 2. ユーザーのプロフィール取得（ロール確認含む）
         const { data: profile } = await supabase
             .from("users")
-            .select("company_id, companies(*)")
+            .select("company_id, role")
             .eq("id", user.id)
             .single();
 
-        if (!profile?.company_id) {
-            return NextResponse.json({ error: "No company associated" }, { status: 400 });
+        let companyId = profile?.company_id;
+
+        // 3. 管理者による企業指定の処理（リクエストボディから取得）
+        try {
+            const clonedReq = req.clone();
+            const body = await clonedReq.json();
+            if (body.targetCompanyId && profile?.role === 'super_admin') {
+                companyId = body.targetCompanyId;
+            }
+        } catch (e) {
+            // ボディがない場合やパース失敗時はスキップ
         }
 
-        const company = (profile as any).companies;
-        const companyId = profile.company_id;
+        if (!companyId) {
+            return NextResponse.json({ error: "No company associated" }, { status: 400 });
+        }
 
         // 3. 分析に必要なデータの取得
         const last13Months = getLastNMonths(13);
