@@ -104,8 +104,13 @@ export default function AdminHelpPage() {
                 },
                 {
                     name: "AIモデル選択",
-                    effect: "Claude 3.7 (最新・最高精度) / 3.5 Haiku (高速・低コスト) などを選択できます。通常は 3.7 Sonnet が推奨されます。",
-                    tip: "コストを抑えたいテキスト抽出などは Haiku、深い洞察が必要なレポートは Sonnet と使い分けることができます。"
+                    effect: "Claude (Anthropic) の各種モデルを選択できます。高度な分析には Sonnet 3.7 / 3.5、最高知能には Opus、高速処理には Haiku が推奨されます。",
+                    tip: "モデルごとにコストと精度が異なります。検証時は Opus を使い、実運用は Sonnet にするといった運用が可能です。"
+                },
+                {
+                    name: "API 接続設定 (超重要)",
+                    effect: "AIを稼働させるための Anthropic API キーを設定します。これが設定されていない場合、全社のAI分析機能が停止します。",
+                    tip: "キーは管理者画面でいつでも更新可能です。設定するとサーバーの環境変数よりも優先されます。"
                 }
             ]
         },
