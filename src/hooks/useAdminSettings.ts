@@ -56,6 +56,21 @@ export function useAdminSettings(companyId: string) {
             const results = await Promise.all(prompts);
             const firstError = results.find(r => r.error)?.error;
             if (firstError) throw firstError;
+
+            // ログ記録
+            const { data: { user: authUser } } = await supabase.auth.getUser();
+            if (authUser) {
+                await supabase.from('admin_activity_logs').insert({
+                    admin_id: authUser.id,
+                    target_company_id: companyId,
+                    action_type: 'update_departments',
+                    details: {
+                        count: depts.length,
+                        deleted_count: idsToDelete.length,
+                        timestamp: new Date().toISOString()
+                    }
+                });
+            }
         } finally {
             setLoading(false);
         }

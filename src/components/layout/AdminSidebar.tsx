@@ -22,6 +22,7 @@ const MENU_ITEMS = [
     { name: "プラン・請求", href: "/admin/billing", icon: CreditCard },
     { name: "システムアラート", href: "/admin/alerts", icon: ShieldAlert },
     { name: "設定", href: "/admin/settings", icon: Settings },
+    { name: "操作ログ", href: "/admin/logs", icon: ShieldAlert },
     { name: "操作マニュアル", href: "/admin/help", icon: HelpCircle },
 ];
 

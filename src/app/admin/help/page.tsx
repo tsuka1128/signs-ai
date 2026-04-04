@@ -18,7 +18,10 @@ import {
     ClipboardList,
     AlertTriangle,
     CheckCircle2,
-    Lock
+    Lock,
+    Target,
+    LineChart,
+    MessageSquare
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
@@ -181,6 +184,82 @@ export default function AdminHelpPage() {
                     </div>
                 ))}
             </div>
+            
+            {/* AI Setup Roadmap */}
+            <section className="space-y-8 py-8">
+                <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-teal/10 rounded-lg">
+                            <Zap className="w-5 h-5 text-teal" />
+                        </div>
+                        <h2 className="text-2xl font-black text-slate-800 tracking-tight">AI活用ロードマップ</h2>
+                        <Badge className="bg-teal/10 text-teal border-none text-[10px] font-black uppercase">Start Here</Badge>
+                    </div>
+                    <p className="text-sm text-slate-500 font-medium">導入企業が AI 分析から最大限の価値を得るための4つのステップです。</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {[
+                        {
+                            step: "01",
+                            title: "基盤の整理",
+                            icon: Building2,
+                            desc: "部署構成と主要なKPI（売上、離職率等）を定義します。分析の「分母」と「分子」を定めるフェーズです。",
+                            color: "bg-blue-500"
+                        },
+                        {
+                            step: "02",
+                            title: "組織方針の言語化",
+                            icon: Target,
+                            desc: "「組織方針設定」から今期の戦略や想いを入力します。AIが分析する際の「評価基準」になります。",
+                            color: "bg-purple-500"
+                        },
+                        {
+                            step: "03",
+                            title: "データの蓄積",
+                            icon: LineChart,
+                            desc: "月次のボイスチェック（社員サーベイ）とKPIの実数値を入力します。継続的な入力が精度の源泉です。",
+                            color: "bg-emerald-500"
+                        },
+                        {
+                            step: "04",
+                            title: "分析の実行",
+                            icon: Brain,
+                            desc: "ダッシュボードの「最新の分析を生成」をクリック。数値と方針が掛け合わされ、深い洞察と提案が生まれます。",
+                            color: "bg-teal-500"
+                        }
+                    ].map((item, i) => (
+                        <div key={i} className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm relative overflow-hidden group hover:border-teal/30 transition-all">
+                            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                <item.icon className="w-16 h-16" />
+                            </div>
+                            <div className={cn("inline-flex items-center justify-center px-2 py-0.5 rounded-lg text-[10px] font-black text-white mb-4 shadow-sm", item.color)}>
+                                STEP {item.step}
+                            </div>
+                            <h3 className="text-base font-black text-slate-800 mb-2 truncate">{item.title}</h3>
+                            <p className="text-xs text-slate-500 font-medium leading-relaxed mb-4">{item.desc}</p>
+                            <div className="pt-4 border-t border-slate-50 flex items-center justify-between">
+                                <span className={cn("text-[9px] font-black uppercase tracking-widest", item.color.replace('bg-', 'text-'))}>In Progress</span>
+                                <div className="w-6 h-6 rounded-full bg-slate-50 flex items-center justify-center">
+                                    <ArrowRight className="w-3 h-3 text-slate-300" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="bg-teal-500/5 rounded-3xl p-8 border border-teal-500/10 flex items-start gap-6">
+                    <div className="p-3 bg-teal rounded-2xl shadow-lg shadow-teal/20">
+                        <MessageSquare className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                        <h4 className="text-sm font-black text-slate-800 mb-2">AIを賢くするコツ（PRO TIP）</h4>
+                        <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                            AI分析は、経営方針（セマンティック層）が具体的であればあるほど、現場へのアドバイスも鋭くなります。単なる目標数値だけでなく、「なぜ今この活動が必要なのか」といった背景情報を入力することをお勧めします。
+                        </p>
+                    </div>
+                </div>
+            </section>
 
             {/* Detailed Settings Guide */}
             <section className="space-y-8">
