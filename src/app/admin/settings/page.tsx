@@ -391,7 +391,7 @@ export default function AdminSettingsPage() {
                                         <textarea 
                                             value={localSettings['base_system_prompt'] || ""}
                                             onChange={(e) => handleChange('base_system_prompt', e.target.value)}
-                                            rows={8}
+                                            rows={28}
                                             className="w-full px-5 py-4 bg-slate-950 border-none rounded-[24px] text-xs font-medium text-emerald-400 focus:ring-2 focus:ring-teal/40 transition-all font-mono leading-relaxed shadow-xl ring-1 ring-white/5"
                                             placeholder="AIに対する基本的な役割分担や禁止事項を入力してください..."
                                         />
