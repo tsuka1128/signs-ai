@@ -148,19 +148,19 @@ export default function AdminCompanyDetailPage() {
                     <div className="flex items-center gap-3">
                         <button 
                             onClick={() => setShowHistory(true)}
-                            className="px-6 py-3 bg-slate-100 border border-transparent rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-all flex items-center gap-2 group"
+                            className="px-6 py-3 bg-slate-100 border border-transparent rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-all flex items-center gap-2 group whitespace-nowrap"
                         >
                             <Calendar className="w-4 h-4 text-slate-400" />
-                            操作履歴
+                            代理操作履歴
                         </button>
                         <button
                             onClick={() => impersonate(company.id)}
-                            className="px-6 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2 group"
+                            className="px-6 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2 group whitespace-nowrap"
                         >
                             <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-teal transition-colors" />
                             代理ログイン
                         </button>
-                        <button className="px-6 py-3 bg-slate-800 text-white rounded-2xl text-sm font-bold hover:bg-slate-700 transition-all shadow-lg shadow-slate-200">
+                        <button className="px-6 py-3 bg-slate-800 text-white rounded-2xl text-sm font-bold hover:bg-slate-700 transition-all shadow-lg shadow-slate-200 whitespace-nowrap">
                             企業設定を編集
                         </button>
                     </div>
