@@ -28,16 +28,32 @@ export function useAdminSettings(companyId: string) {
     const updateDepartments = async (depts: any[]) => {
         setLoading(true);
         try {
-            // 新規・更新・削除をまとめて処理
-            // 現状は既存の ID があるものは Update、ないものは Insert とみなす簡易実装
-            const toUpdate = depts.filter(d => !d.is_new);
-            const toCreate = depts.filter(d => d.is_new).map(({ id, is_new, ...rest }) => ({ ...rest, company_id: companyId }));
+            // 1. 削除処理: 現在のDBにあるIDのうち、引数のリストに含まれないものを削除
+            const { data: existing } = await supabase.from('departments').select('id').eq('company_id', companyId);
+            const existingIds = existing?.map(e => e.id) || [];
+            const currentIds = depts.filter(d => !d.is_new).map(d => d.id);
+            const idsToDelete = existingIds.filter(id => !currentIds.includes(id));
 
-            const results = await Promise.all([
-                ...toUpdate.map(d => supabase.from('departments').update({ name: d.name, headcount: d.headcount, sort_order: d.sort_order }).eq('id', d.id)),
-                toCreate.length > 0 ? supabase.from('departments').insert(toCreate) : Promise.resolve({ error: null })
-            ]);
+            if (idsToDelete.length > 0) {
+                const { error: delErr } = await supabase.from('departments').delete().in('id', idsToDelete);
+                if (delErr) throw delErr;
+            }
 
+            // 2. 更新・作成処理 (sort_order をインデックスに基づいて再設定)
+            const prompts = depts.map((d, index) => {
+                const payload = { 
+                    name: d.name, 
+                    headcount: d.headcount, 
+                    sort_order: index 
+                };
+                if (d.is_new) {
+                    return supabase.from('departments').insert({ ...payload, company_id: companyId });
+                } else {
+                    return supabase.from('departments').update(payload).eq('id', d.id);
+                }
+            });
+
+            const results = await Promise.all(prompts);
             const firstError = results.find(r => r.error)?.error;
             if (firstError) throw firstError;
         } finally {
@@ -53,19 +69,33 @@ export function useAdminSettings(companyId: string) {
     const updateKpis = async (kpis: any[]) => {
         setLoading(true);
         try {
-            const toUpdate = kpis.filter(k => !k.is_new);
-            const toCreate = kpis.filter(k => k.is_new).map(({ id, is_new, ...rest }) => ({ ...rest, company_id: companyId }));
+            // 1. 削除処理
+            const { data: existing } = await supabase.from('kpi_definitions').select('id').eq('company_id', companyId);
+            const existingIds = existing?.map(e => e.id) || [];
+            const currentIds = kpis.filter(k => !k.is_new).map(k => k.id);
+            const idsToDelete = existingIds.filter(id => !currentIds.includes(id));
 
-            const results = await Promise.all([
-                ...toUpdate.map(k => supabase.from('kpi_definitions').update({
+            if (idsToDelete.length > 0) {
+                const { error: delErr } = await supabase.from('kpi_definitions').delete().in('id', idsToDelete);
+                if (delErr) throw delErr;
+            }
+
+            // 2. 更新・作成処理
+            const prompts = kpis.map((k, index) => {
+                const payload = {
                     name: k.name,
                     unit: k.unit,
-                    sort_order: k.sort_order,
-                    is_main: k.is_main
-                }).eq('id', k.id)),
-                toCreate.length > 0 ? supabase.from('kpi_definitions').insert(toCreate) : Promise.resolve({ error: null })
-            ]);
+                    is_main: k.is_main,
+                    sort_order: index
+                };
+                if (k.is_new) {
+                    return supabase.from('kpi_definitions').insert({ ...payload, company_id: companyId });
+                } else {
+                    return supabase.from('kpi_definitions').update(payload).eq('id', k.id);
+                }
+            });
 
+            const results = await Promise.all(prompts);
             const firstError = results.find(r => r.error)?.error;
             if (firstError) throw firstError;
         } finally {

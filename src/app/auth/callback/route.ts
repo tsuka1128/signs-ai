@@ -27,7 +27,12 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(`${origin}/login?error=auth_failed`);
     }
 
-    // 認証成功後：users テーブルにプロフィールがない場合はオンボーディングへ
+    // 認証成功後：リカバリーフローの場合は最優先でパスワード更新画面へ
+    if (type === "recovery") {
+        return NextResponse.redirect(`${origin}/password-update`);
+    }
+    
+    // users テーブルにプロフィールがない場合はオンボーディングへ
     const {
         data: { user },
     } = await supabase.auth.getUser();
@@ -48,10 +53,6 @@ export async function GET(request: NextRequest) {
                 : `${origin}/onboarding`;
             return NextResponse.redirect(onboardingUrl);
         }
-    }
-
-    if (type === "recovery") {
-        return NextResponse.redirect(`${origin}/password-update`);
     }
 
     return NextResponse.redirect(`${origin}${next}`);

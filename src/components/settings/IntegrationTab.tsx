@@ -1,6 +1,7 @@
 "use client";
 
 import { Link2, Save } from "lucide-react";
+import { SlackHelpTooltip } from "@/components/ui/SlackHelpTooltip";
 
 interface IntegrationTabProps {
     company: any;
@@ -23,7 +24,10 @@ export const IntegrationTab = ({
                 </h2>
                 <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 space-y-6">
                     <div className="max-w-xl">
-                        <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase">Slack Webhook URL</label>
+                        <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase flex items-center">
+                            Slack Webhook URL
+                            <SlackHelpTooltip mode="webhook" />
+                        </label>
                         <p className="text-xs text-slate-500 mb-4 ml-1">
                             ここにSlackのIncoming Webhook URLを設定すると、AI分析の完了時やアンケートのリマインドが指定チャンネルに自動通知されます。（連携機能）
                         </p>
