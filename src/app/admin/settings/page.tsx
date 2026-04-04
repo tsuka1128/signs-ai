@@ -381,49 +381,6 @@ export default function AdminSettingsPage() {
                                 </div>
                             </div>
 
-                            {/* API接続設定 – 新規追加 */}
-                            <div className="p-6 bg-slate-900 rounded-[32px] text-white space-y-6 shadow-xl relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none group-hover:scale-110 transition-transform duration-700">
-                                    <Lock className="w-32 h-32" />
-                                </div>
-                                <div className="relative z-10">
-                                    <div className="flex items-center gap-3 mb-6">
-                                        <div className="p-2 bg-white/10 rounded-xl backdrop-blur-sm ring-1 ring-white/20">
-                                            <Zap className="w-5 h-5 text-teal" />
-                                        </div>
-                                        <div>
-                                            <h4 className="text-base font-black tracking-tight">API 接続設定</h4>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Global Authentication Keys</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <label className="block">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <span className="text-xs font-black text-slate-300">Anthropic API Key (Claude)</span>
-                                                <Badge className="bg-teal/20 text-teal border border-teal/30 font-black text-[9px] px-2 py-0">SECURE_STORE</Badge>
-                                            </div>
-                                            <div className="relative group/key">
-                                                <input 
-                                                    type="password"
-                                                    value={localSettings['anthropic_api_key'] || ""}
-                                                    onChange={(e) => handleChange('anthropic_api_key', e.target.value)}
-                                                    className="w-full pl-5 pr-12 py-4 bg-white/5 border border-white/10 rounded-2xl text-xs font-mono text-teal focus:ring-2 focus:ring-teal/30 focus:border-teal/30 transition-all group-hover/key:bg-white/10"
-                                                    placeholder="sk-ant-api..."
-                                                />
-                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500">
-                                                    <Lock className="w-4 h-4" />
-                                                </div>
-                                            </div>
-                                            <p className="text-[10px] text-slate-500 mt-2 ml-1 leading-relaxed">
-                                                ※ このキーを設定すると、Vercel の環境変数よりも優先して使用されます。<br />
-                                                設定しない場合は、システムのデフォルト（環境変数）が使用されます。
-                                            </p>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-6">
                                     <label className="block">
@@ -637,6 +594,48 @@ export default function AdminSettingsPage() {
                             </div>
                         </div>
 
+                        {/* API接続設定 – ページ下部へ移動 */}
+                        <div className="p-6 bg-slate-900 rounded-[32px] text-white space-y-6 shadow-xl relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none group-hover:scale-110 transition-transform duration-700">
+                                <Lock className="w-32 h-32" />
+                            </div>
+                            <div className="relative z-10">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="p-2 bg-white/10 rounded-xl backdrop-blur-sm ring-1 ring-white/20">
+                                        <Zap className="w-5 h-5 text-teal" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-base font-black tracking-tight">API 接続設定</h4>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Global Authentication Keys</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <label className="block">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-xs font-black text-slate-300">Anthropic API Key (Claude)</span>
+                                            <Badge className="bg-teal/20 text-teal border border-teal/30 font-black text-[9px] px-2 py-0">SECURE_STORE</Badge>
+                                        </div>
+                                        <div className="relative group/key">
+                                            <input 
+                                                type="password"
+                                                value={localSettings['anthropic_api_key'] || ""}
+                                                onChange={(e) => handleChange('anthropic_api_key', e.target.value)}
+                                                className="w-full pl-5 pr-12 py-4 bg-white/5 border border-white/10 rounded-2xl text-xs font-mono text-teal focus:ring-2 focus:ring-teal/30 focus:border-teal/30 transition-all group-hover/key:bg-white/10"
+                                                placeholder="sk-ant-api..."
+                                            />
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500">
+                                                <Lock className="w-4 h-4" />
+                                            </div>
+                                        </div>
+                                        <p className="text-[10px] text-slate-500 mt-2 ml-1 leading-relaxed">
+                                            ※ このキーを設定すると、Vercel の環境変数よりも優先して使用されます。<br />
+                                            設定しない場合は、システムのデフォルト（環境変数）が使用されます。
+                                        </p>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                     </section>
                 )}
 
