@@ -63,7 +63,7 @@ export default function DashboardGuidePage() {
                     <div className="space-y-3">
                         <h3 id="deep-report" className="text-base font-black text-slate-800">Deep Report（深層レポート）</h3>
                         <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                            全社タブ選択時に表示される「🔍 詳細分析を見る」ボタンをタップすると、経営向けの<strong>5つの観点からの分析レポート</strong>がフルスクリーンで展開されます。
+                            全社タブ選択時に表示される「詳細分析を見る」ボタンをタップすると、経営向けの<strong>5つの観点からの分析レポート</strong>がフルスクリーンで展開されます。
                         </p>
                         <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-1">
                             <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">レポートの構成</div>

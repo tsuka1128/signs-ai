@@ -127,12 +127,12 @@ export default function VoiceCheckPage() {
                     <div className="flex flex-col md:flex-row gap-5 p-6 bg-white border border-slate-200 rounded-[28px] shadow-sm">
                         <div className="w-12 h-12 shrink-0 bg-slate-100 text-slate-600 rounded-2xl flex items-center justify-center text-xl font-black border border-slate-200">3</div>
                         <div className="space-y-3 w-full">
-                            <h3 id="flow-step3" className="text-lg font-black text-slate-800">KPI改善に関する記述（100文字以上）</h3>
+                            <h3 id="flow-step3" className="text-lg font-black text-slate-800">KPI改善に関する記述（管理者が設定した文字数以上）</h3>
                             <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                                「KPI達成・成長のために、改善すると良さそうな点」を<strong>100文字以上</strong>の自由記述で回答します。
+                                「KPI達成・成長のために、改善すると良さそうな点」を<strong>所定の文字数以上</strong>の自由記述で回答します。最低文字数は管理者がシステム設定から変更できます（デフォルト: 20文字）。
                             </p>
                             <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 text-xs font-bold text-amber-800">
-                                ⚠️ この欄は必須です。100文字を超えないと送信ボタンが有効になりません。
+                                ⚠️ この欄は必須です。設定された最低文字数を超えないと送信ボタンが有効になりません。
                             </div>
                             <p className="text-xs text-slate-500 font-medium leading-relaxed">
                                 例：「マーケ部が集めてくれるリードの質が上がり、商談はしやすくなっています。ただ、開発部への依頼フローが複雑で、お客様への提案スピードが落ちている場面があります。」
@@ -163,10 +163,26 @@ export default function VoiceCheckPage() {
                     ボイスチェックのURLをメンバーに配布する方法です。用途に合わせて2種類のURLを使い分けることができます。
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white border border-teal-100 rounded-[28px] p-6 space-y-4 shadow-sm relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8 bg-teal-50 rounded-full blur-2xl -mr-4 -mt-4" />
+                        <div className="relative z-10 space-y-2">
+                            <div className="flex items-center justify-between">
+                                <div className="text-[10px] font-black text-teal-500 uppercase tracking-widest">① ログイン不要URL（推奨）</div>
+                                <span className="px-2 py-0.5 bg-teal-500 text-white text-[9px] font-bold rounded shadow-sm">ログイン不要</span>
+                            </div>
+                            <code className="block bg-teal-50/50 border border-teal-100 rounded-xl px-4 py-3 text-xs font-bold text-teal-700 break-all">
+                                https://signs-ai.vercel.app/form?c=YOUR_ID
+                            </code>
+                            <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                                パラメータに<strong>SignsAI ID</strong>を含めることで、ユーザーはログインせずに即座に回答できます。<strong>回答率を最大化したい場合に最適です。</strong>
+                            </p>
+                        </div>
+                    </div>
+
                     <div className="bg-white border border-slate-200 rounded-[28px] p-6 space-y-4 shadow-sm">
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">① ログイン用（基本）</div>
+                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">② ログインURL（アカウント所有者向け）</div>
                                 <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[9px] font-bold rounded">アカウント必須</span>
                             </div>
                             <code className="block bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-xs font-bold text-slate-700 break-all">
@@ -174,22 +190,6 @@ export default function VoiceCheckPage() {
                             </code>
                             <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
                                 ログイン済みのユーザー向けです。自分のアカウントとして回答を残したい場合に適しています。
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="bg-white border border-teal-100 rounded-[28px] p-6 space-y-4 shadow-sm relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-8 bg-teal-50 rounded-full blur-2xl -mr-4 -mt-4" />
-                        <div className="relative z-10 space-y-2">
-                            <div className="flex items-center justify-between">
-                                <div className="text-[10px] font-black text-teal-500 uppercase tracking-widest">② ログイン不要用（推奨）</div>
-                                <span className="px-2 py-0.5 bg-teal-500 text-white text-[9px] font-bold rounded shadow-sm">ログイン不要</span>
-                            </div>
-                            <code className="block bg-teal-50/50 border border-teal-100 rounded-xl px-4 py-3 text-xs font-bold text-teal-700 break-all">
-                                https://signs-ai.vercel.app/form?c=YOUR_ID
-                            </code>
-                            <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
-                                パラメータに<strong>SignsAI ID</strong>を含めることで、ユーザーはログインせずに即座に回答できます。回答率を最大化したい場合に最適です。
                             </p>
                         </div>
                     </div>

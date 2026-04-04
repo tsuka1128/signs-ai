@@ -76,8 +76,8 @@ export default function IntroductionPage() {
 
             {/* Next buttons */}
             <div className="pt-10 border-t border-slate-100 flex items-center justify-end">
-                <Link href="/docs/slack-integration" className="flex items-center gap-2 text-teal hover:text-teal-600 transition-all font-bold group">
-                    Slack連携の手順
+                <Link href="/docs/getting-started" className="flex items-center gap-2 text-teal hover:text-teal-600 transition-all font-bold group">
+                    初回セットアップガイド
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
             </div>
