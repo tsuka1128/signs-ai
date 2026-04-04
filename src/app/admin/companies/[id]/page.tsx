@@ -23,6 +23,8 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { HistoryModal } from "@/components/admin/HistoryModal";
+import { AdminDepartmentsModal, AdminKpisModal } from "@/components/admin/QuickEditModals";
+import { AnimatePresence } from "framer-motion";
 
 export default function AdminCompanyDetailPage() {
     const params = useParams();
@@ -36,56 +38,58 @@ export default function AdminCompanyDetailPage() {
     const [stats, setStats] = useState({ users: 0, responses: 0 });
     const [loading, setLoading] = useState(true);
     const [showHistory, setShowHistory] = useState(false);
+    const [showDeptModal, setShowDeptModal] = useState(false);
+    const [showKpiModal, setShowKpiModal] = useState(false);
+
+    const fetchCompanyDetails = async () => {
+        if (authLoading || !companyId) return;
+        try {
+            // 1. 企業基本情報
+            const { data: comp, error: compErr } = await supabase
+                .from('companies')
+                .select('*, plans(*)')
+                .eq('id', companyId)
+                .single();
+            if (compErr) throw compErr;
+            setCompany(comp);
+
+            // 2. 部署一覧
+            const { data: depts } = await supabase
+                .from('departments')
+                .select('*')
+                .eq('company_id', companyId)
+                .order('sort_order', { ascending: true }); // sort_order 順に修正
+            setDepartments(depts || []);
+
+            // 3. KPI定義一覧
+            const { data: kpiData } = await supabase
+                .from('kpi_definitions')
+                .select('*')
+                .eq('company_id', companyId)
+                .order('sort_order', { ascending: true });
+            setKpis(kpiData || []);
+
+            // 4. 統計 (ユーザー数、回答数)
+            const { count: userCount } = await supabase
+                .from('users')
+                .select('*', { count: 'exact', head: true })
+                .eq('company_id', companyId);
+
+            const { count: respCount } = await supabase
+                .from('survey_responses')
+                .select('*', { count: 'exact', head: true })
+                .eq('company_id', companyId);
+
+            setStats({ users: userCount || 0, responses: respCount || 0 });
+
+        } catch (error) {
+            console.error("Error fetching company details:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        async function fetchCompanyDetails() {
-            if (authLoading || !companyId) return;
-            try {
-                // 1. 企業基本情報
-                const { data: comp, error: compErr } = await supabase
-                    .from('companies')
-                    .select('*, plans(*)')
-                    .eq('id', companyId)
-                    .single();
-                if (compErr) throw compErr;
-                setCompany(comp);
-
-                // 2. 部署一覧
-                const { data: depts } = await supabase
-                    .from('departments')
-                    .select('*')
-                    .eq('company_id', companyId)
-                    .order('name');
-                setDepartments(depts || []);
-
-                // 3. KPI定義一覧
-                const { data: kpiData } = await supabase
-                    .from('kpi_definitions')
-                    .select('*')
-                    .eq('company_id', companyId)
-                    .order('sort_order');
-                setKpis(kpiData || []);
-
-                // 4. 統計 (ユーザー数、回答数)
-                const { count: userCount } = await supabase
-                    .from('users')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('company_id', companyId);
-
-                const { count: respCount } = await supabase
-                    .from('survey_responses')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('company_id', companyId);
-
-                setStats({ users: userCount || 0, responses: respCount || 0 });
-
-            } catch (error) {
-                console.error("Error fetching company details:", error);
-            } finally {
-                setLoading(false);
-            }
-        }
-
         fetchCompanyDetails();
     }, [supabase, authLoading, companyId]);
 
@@ -205,7 +209,10 @@ export default function AdminCompanyDetailPage() {
                             <h2 className="text-lg font-black text-slate-800 tracking-tight">部署・拠点構成</h2>
                             <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Departments ({departments.length})</p>
                         </div>
-                        <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
+                        <button 
+                            onClick={() => setShowDeptModal(true)}
+                            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
+                        >
                             <Settings className="w-5 h-5" />
                         </button>
                     </header>
@@ -237,7 +244,10 @@ export default function AdminCompanyDetailPage() {
                             <h2 className="text-lg font-black text-slate-800 tracking-tight">KPI定義</h2>
                             <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">KPI Definitions ({kpis.length})</p>
                         </div>
-                        <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
+                        <button 
+                            onClick={() => setShowKpiModal(true)}
+                            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
+                        >
                             <Settings className="w-5 h-5" />
                         </button>
                     </header>
@@ -258,6 +268,26 @@ export default function AdminCompanyDetailPage() {
                     </div>
                 </section>
             </div>
+
+            {/* Admin Quick Edit Modals */}
+            <AnimatePresence>
+                {showDeptModal && (
+                    <AdminDepartmentsModal 
+                        companyId={company.id}
+                        companyName={company.name}
+                        onClose={() => setShowDeptModal(false)}
+                        onSuccess={fetchCompanyDetails}
+                    />
+                )}
+                {showKpiModal && (
+                    <AdminKpisModal 
+                        companyId={company.id}
+                        companyName={company.name}
+                        onClose={() => setShowKpiModal(false)}
+                        onSuccess={fetchCompanyDetails}
+                    />
+                )}
+            </AnimatePresence>
         </main>
     );
 }
