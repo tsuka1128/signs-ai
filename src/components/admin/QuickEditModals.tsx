@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Users, Tag, Plus, Trash2, Save, GripVertical, AlertTriangle, Building2, BarChart3 } from "lucide-react";
+import { X, Users, Tag, Plus, Trash2, Save, GripVertical, AlertTriangle, Building2, BarChart3, MessageSquare, ShieldCheck, Zap } from "lucide-react";
 import { useAdminSettings } from "@/hooks/useAdminSettings";
 import { createClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -323,6 +323,36 @@ export function AdminKpisModal({ companyId, companyName, onClose, onSuccess }: M
     );
 }
 
+
+/**
+ * アドオン（オプション機能）の定義
+ * 将来的にオプションが増えた際も、ここに追加するだけでUIに反映されます。
+ */
+const AVAILABLE_ADDONS = [
+    {
+        id: "addon_labor_analytics",
+        name: "人件費分析・ROIダッシュボード",
+        description: "人件費データを用いたKPI分析と、施策の投資対効果（ROI）を可視化します。",
+        icon: BarChart3,
+        includedInPlans: ["pro"] // Proプランには標準搭載
+    },
+    // サンプルの追加オプション（現在はUIのみ）
+    {
+        id: "addon_ai_weekly",
+        name: "AI 週次分析レポート",
+        description: "月次ではなく週単位でのAIサマリーとアクション改善提案を生成します。",
+        icon: Zap,
+        includedInPlans: ["pro"]
+    },
+    {
+        id: "addon_security_sso",
+        name: "SSO / セキュリティ強化",
+        description: "SAML認証によるSSOログインや、詳細な監査ログの書き出し制限を解除します。",
+        icon: ShieldCheck,
+        includedInPlans: []
+    }
+];
+
 export function AdminCompanySettingsModal({ companyId, companyName, onClose, onSuccess }: ModalProps) {
     const { fetchCompany, updateCompany, loading } = useAdminSettings(companyId);
     const [form, setForm] = useState({
@@ -497,26 +527,63 @@ export function AdminCompanySettingsModal({ companyId, companyName, onClose, onS
                         </div>
                     </div>
 
-                    {/* オプション設定 */}
-                    <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-3 ml-1">付随オプション設定（アドオン）</label>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-teal/10 flex items-center justify-center text-teal">
-                                    <BarChart3 className="w-5 h-5" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-bold text-slate-800">人件費分析・ROIダッシュボード</p>
-                                    <p className="text-[10px] text-slate-400 font-bold">Proプラン以外でも個別に有効化可能です</p>
-                                </div>
-                            </div>
-                            <input 
-                                type="checkbox"
-                                checked={form.addon_labor_analytics || form.plan_id === 'pro'}
-                                disabled={form.plan_id === 'pro'}
-                                onChange={e => setForm({ ...form, addon_labor_analytics: e.target.checked })}
-                                className="w-5 h-5 rounded border-slate-200 text-teal focus:ring-teal disabled:opacity-50"
-                            />
+                    {/* オプション設定（アドオン） */}
+                    <div>
+                        <div className="flex items-center justify-between mb-4 ml-1">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">付随オプション設定（アドオン）</label>
+                            <span className="text-[10px] font-bold text-slate-300 italic">追加された機能は即座にダッシュボードに反映されます</span>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {AVAILABLE_ADDONS.map(addon => {
+                                const isIncluded = addon.includedInPlans.includes(form.plan_id);
+                                const isEnabled = isIncluded || (form as any)[addon.id];
+
+                                return (
+                                    <button
+                                        key={addon.id}
+                                        disabled={isIncluded}
+                                        onClick={() => setForm({ ...form, [addon.id]: !(form as any)[addon.id] })}
+                                        className={cn(
+                                            "flex flex-col p-4 rounded-2xl border-2 text-left transition-all relative overflow-hidden group",
+                                            isIncluded 
+                                                ? "bg-slate-50 border-slate-100 opacity-80 cursor-default" 
+                                                : isEnabled
+                                                    ? "bg-white border-teal shadow-md ring-4 ring-teal/5"
+                                                    : "bg-white border-slate-100 hover:border-slate-200"
+                                        )}
+                                    >
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className={cn(
+                                                "w-10 h-10 rounded-xl flex items-center justify-center transition-colors shadow-sm",
+                                                isEnabled ? "bg-teal/10 text-teal" : "bg-slate-100 text-slate-400"
+                                            )}>
+                                                <addon.icon className="w-5 h-5" />
+                                            </div>
+                                            {isIncluded ? (
+                                                <span className="text-[9px] font-black text-teal bg-teal/5 px-2 py-1 rounded-lg uppercase">Included</span>
+                                            ) : (
+                                                <div className={cn(
+                                                    "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
+                                                    isEnabled ? "bg-teal border-teal" : "bg-white border-slate-200"
+                                                )}>
+                                                    {isEnabled && <div className="w-2 h-2 bg-white rounded-full shadow-sm" />}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="space-y-1 relative z-10">
+                                            <p className={cn("text-xs font-black", isEnabled ? "text-slate-800" : "text-slate-500")}>{addon.name}</p>
+                                            <p className="text-[10px] text-slate-400 font-bold leading-relaxed pr-2 line-clamp-2">
+                                                {addon.description}
+                                            </p>
+                                        </div>
+                                        {/* Hover Effect */}
+                                        {!isIncluded && (
+                                            <div className="absolute inset-0 bg-teal/[0.02] opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
