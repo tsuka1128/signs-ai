@@ -57,6 +57,7 @@ export function TrialGuard({ children }: { children: React.ReactNode }) {
                         <Rocket className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         プラン契約の詳細を確認する
                     </Link>
+                    {/* TODO: 本番用の問い合わせリンク（またはフォーム）を後で設定する */}
                     <button 
                         className="w-full py-4 bg-white border-2 border-slate-100 text-slate-600 rounded-2xl font-black hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
                         onClick={() => window.open('/marketing#contact', '_blank')}

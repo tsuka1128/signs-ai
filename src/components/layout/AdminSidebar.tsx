@@ -10,7 +10,8 @@ import {
     LogOut,
     ShieldAlert,
     CreditCard,
-    HelpCircle
+    HelpCircle,
+    Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/auth";
@@ -20,6 +21,7 @@ const MENU_ITEMS = [
     { name: "契約企業管理", href: "/admin/companies", icon: Building2 },
     { name: "管理者アカウント", href: "/admin/users", icon: Users },
     { name: "プラン・請求", href: "/admin/billing", icon: CreditCard },
+    { name: "プラン仕様・機能定義", href: "/admin/plans", icon: Info },
     { name: "システムアラート", href: "/admin/alerts", icon: ShieldAlert },
     { name: "設定", href: "/admin/settings", icon: Settings },
     { name: "操作ログ", href: "/admin/logs", icon: ShieldAlert },
