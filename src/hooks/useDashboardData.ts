@@ -175,13 +175,24 @@ export function useDashboardData(company: Company | null, supabase: any) {
                 }
             }
 
-            const mockVoiceTopics = [
-                { id: "v1", topic: "評価への透明性", sentiment: "negative", abstractedVoice: "「目標設定のプロセスが不透明で納得感が薄い」という声が若手層を中心に寄せられています。", persona: "若手〜中堅層" },
-                { id: "v2", topic: "業務効率化", sentiment: "neutral", abstractedVoice: "「社内申請のフローにおいて一部ツールの使い勝手に課題がある」との指摘があります。", persona: "全部門" },
-                { id: "v3", topic: "チームワーク", sentiment: "positive", abstractedVoice: "「定期的な1on1や共有会の実施により、相談がしやすい環境になった」と評価する声が多くあがっています。", persona: "営業・企画部門" }
+            const defaultVoiceTopics = [
+                { id: "v_empty", topic: "データ収集中", sentiment: "neutral", abstractedVoice: "まだ現場の声が集まっていないか、AIによるトピック抽出がおこなわれていません。アンケート配信とAI分析を実行してください。", persona: "システム" }
             ];
 
-            return { viewName, scores: qScores, prevScores: prevQScores, pulse: avgPulse, pulseHistory, aiComment: comment, responseCount, responseRate, voiceTopics: mockVoiceTopics as any[] };
+            const topicsRaw = aiContent?.voice_topics;
+            let finalVoiceTopics = defaultVoiceTopics;
+            
+            if (Array.isArray(topicsRaw) && topicsRaw.length > 0) {
+                finalVoiceTopics = topicsRaw.map((t: any, idx: number) => ({
+                    id: t.id || `ai_voice_${idx}`,
+                    topic: t.topic || "トピック不明",
+                    sentiment: t.sentiment || "neutral",
+                    abstractedVoice: t.abstractedVoice || "詳細なし",
+                    persona: t.persona || "全社"
+                }));
+            }
+
+            return { viewName, scores: qScores, prevScores: prevQScores, pulse: avgPulse, pulseHistory, aiComment: comment, responseCount, responseRate, voiceTopics: finalVoiceTopics as any[] };
         };
     }, [state.realResponses, state.realDepts, state.realAxes, last13Months, aiContent]);
 

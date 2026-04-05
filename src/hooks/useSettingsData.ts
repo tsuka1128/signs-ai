@@ -491,7 +491,7 @@ export function useSettingsData() {
         if (!confirm("AI分析を実行しますか？現在設定されているKPIや部署情報などをもとに、組織状態の推測とドキュメント生成を行います。")) return;
         setIsAnalyzing(true);
         try {
-            const res = await fetch("/api/dashboard/run-analyze", { method: "POST" });
+            const res = await fetch("/api/ai/analyze", { method: "POST" });
             if (!res.ok) throw new Error("API Request Failed");
             alert("AIの分析処理が完了しました。ダッシュボードをご確認ください。");
             

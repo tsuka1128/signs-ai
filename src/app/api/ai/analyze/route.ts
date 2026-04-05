@@ -133,6 +133,14 @@ export async function POST(req: Request) {
       "text": "該当部署の現在のコンディションや組織方針を受けた専用の診断・応援メッセージ（100文字程度）"
     }
   },
+  "voice_topics": [
+    {
+      "topic": "話題（例：評価の透明性、業務効率化、チームワークなど）",
+      "sentiment": "positive|neutral|negative",
+      "abstractedVoice": "生声（フリーコメント）から抽出・意訳した、ペルソナごとの代弁コメント（1〜2文程度）。個人が特定されない表現にすること。",
+      "persona": "どのような層からの声か（例：営業部門の若手、全社の管理職など）"
+    }
+  ],
   "matrix_analysis": {
     "1m": {
       "past_record": "【1ヶ月前の記録】過去の業績と体温について",
@@ -181,12 +189,13 @@ ${JSON.stringify(historicalContext, null, 2)}
 
 現在の詳細データ:
 - 部署別統計: ${JSON.stringify(depts.data?.map(d => {
-            const deptSurveys = surveys.data?.filter(s => s.department_id === d.id);
+            const deptSurveys = surveys.data?.filter(s => s.department_id === d.id && normalizeMonth(s.recorded_month) === normalizeMonth(latestMonth));
             const deptKpis = kpiRecs.data?.filter(r => r.department_id === d.id && normalizeMonth(r.recorded_month) === normalizeMonth(latestMonth));
             const deptResource = resources.data?.find(r => r.department_id === d.id && normalizeMonth(r.recorded_month) === normalizeMonth(latestMonth));
             const avgPulse = deptSurveys && deptSurveys.length > 0 
-                ? deptSurveys.filter(s => normalizeMonth(s.recorded_month) === normalizeMonth(latestMonth)).flatMap(s => s.survey_answers || []).reduce((acc, a) => acc + a.score, 0) / (deptSurveys.filter(s => normalizeMonth(s.recorded_month) === normalizeMonth(latestMonth)).flatMap(s => s.survey_answers || []).length || 1)
+                ? deptSurveys.flatMap(s => s.survey_answers || []).reduce((acc, a) => acc + a.score, 0) / (deptSurveys.flatMap(s => s.survey_answers || []).length || 1)
                 : 0;
+            const comments = deptSurveys?.map(s => s.free_comment).filter(Boolean) || [];
             return {
                 id: d.id,
                 name: d.name,
@@ -198,16 +207,18 @@ ${JSON.stringify(historicalContext, null, 2)}
                 kpi_details: deptKpis?.map(r => {
                     const def = kpiDefs.data?.find(def => def.id === r.kpi_definition_id);
                     return `${def?.name}: ${r.value}${def?.unit} (目標: ${r.target_value}${def?.unit})`;
-                })
+                }),
+                voice_comments: comments
             };
         }))}
 - KPI定義: ${JSON.stringify(kpiDefs.data?.map(k => ({ name: k.name, unit: k.unit })))}
 
 分析の要件:
 1. 全社的な傾向をサマリーしてください。
-2. insights_by_dept には、提供された全ての部署IDに対して、その部署の状況と組織方針を掛け合わせた具体的なアドバイスを記述してください。
-3. matrix_analysis には、過去（1m/3m/6m/12m）の推移データと現在を比較した洞察を、各時点ごとに記述してください。
-4. suggested_actions は、即実行可能な具体的なアクションを少なくとも3つ提案してください。
+2. insights_by_dept には、全ての部署に対する診断テキストを含めてください。
+3. voice_topics には、各部署から集まった「voice_comments（定性コメント）」を分析し、共通する課題や喜びを3〜5つのトピックに抽象化して抽出してください（※個人名や具体的すぎる業務内容は伏せること）。
+4. matrix_analysis には、過去と現在の推移データに基づく洞察を記述してください。
+5. suggested_actions は、即実行可能な具体的なアクションを少なくとも3つ提案してください。
 
 JSONの構造に従い詳細な分析結果を出力してください。`;
 
