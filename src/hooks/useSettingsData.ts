@@ -494,6 +494,14 @@ export function useSettingsData() {
             const res = await fetch("/api/dashboard/run-analyze", { method: "POST" });
             if (!res.ok) throw new Error("API Request Failed");
             alert("AIの分析処理が完了しました。ダッシュボードをご確認ください。");
+            
+            // Mock: 実行回数のローカルインクリメント
+            if (company) {
+                setCompany({
+                    ...company,
+                    manual_ai_runs_used_this_month: (company.manual_ai_runs_used_this_month || 0) + 1
+                });
+            }
         } catch (error: any) {
             alert(`分析の実行中にエラーが発生しました: ${error.message}`);
         } finally {

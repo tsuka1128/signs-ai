@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/Header";
 import { cn } from "@/lib/utils";
 import { useSettingsData } from "@/hooks/useSettingsData";
 import { PlanGate } from "@/components/ui/PlanGate";
+import { usePlanFeatures } from "@/hooks/usePlanFeatures";
 import { TrialGuard } from "@/components/layout/TrialGuard";
 
 // Tab Components
@@ -24,6 +25,7 @@ import { MemberEditModal } from "@/components/settings/MemberEditModal";
 export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState("company");
     const { state, handlers } = useSettingsData();
+    const { plan, limits } = usePlanFeatures();
 
     if (state.loading) {
         return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
@@ -126,23 +128,9 @@ export default function SettingsPage() {
                         <AITab 
                             isAnalyzing={state.isAnalyzing}
                             handleRunAnalyze={handlers.handleRunAnalyze}
-                            planFeatureComponent={
-                                <PlanGate feature="manual_ai_runs" showOverlay={false}>
-                                    <button
-                                        onClick={handlers.handleRunAnalyze}
-                                        disabled={state.isAnalyzing}
-                                        className={cn(
-                                            "w-full flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-black transition-all shadow-lg",
-                                            state.isAnalyzing
-                                                ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
-                                                : "bg-teal text-white hover:bg-teal/90 shadow-teal/20"
-                                        )}
-                                    >
-                                        {state.isAnalyzing ? "最新の分析を生成中..." : "最新の分析を生成する"}
-                                        {!state.isAnalyzing && <Sparkles className="w-5 h-5" />}
-                                    </button>
-                                </PlanGate>
-                            }
+                            company={state.company}
+                            plan={plan}
+                            limits={limits}
                         />
                     )}
 

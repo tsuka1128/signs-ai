@@ -20,6 +20,7 @@ export interface Database {
           secondary_axis_name: string | null
           secondary_axis_size_kpi_id: string | null
           addon_labor_analytics: boolean
+          manual_ai_runs_used_this_month: number
           created_at: string
           updated_at: string
         }
