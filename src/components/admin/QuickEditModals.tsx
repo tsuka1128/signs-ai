@@ -334,7 +334,9 @@ export function AdminCompanySettingsModal({ companyId, companyName, onClose, onS
         survey_deadline_day: 25,
         status: "active",
         plan_id: "",
-        addon_labor_analytics: false
+        addon_labor_analytics: false,
+        addon_ai_weekly: false,
+        addon_security_sso: false
     });
     const [plans, setPlans] = useState<any[]>([]);
     const [showConfirm, setShowConfirm] = useState(false);
@@ -356,7 +358,9 @@ export function AdminCompanySettingsModal({ companyId, companyName, onClose, onS
                         survey_deadline_day: companyData.survey_deadline_day || 25,
                         status: companyData.status || "active",
                         plan_id: companyData.plan_id || "free",
-                        addon_labor_analytics: companyData.addon_labor_analytics || false
+                        addon_labor_analytics: companyData.addon_labor_analytics || false,
+                        addon_ai_weekly: companyData.addon_ai_weekly || false,
+                        addon_security_sso: companyData.addon_security_sso || false
                     });
                 }
                 if (plansData.data) {
