@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { X, Users, Tag, Plus, Trash2, Save, GripVertical, AlertTriangle, Building2, BarChart3, MessageSquare, ShieldCheck, Zap } from "lucide-react";
 import { useAdminSettings } from "@/hooks/useAdminSettings";
+import { AVAILABLE_ADDONS } from "@/lib/addons";
 import { createClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { Reorder, AnimatePresence, motion } from "framer-motion";
@@ -323,35 +324,6 @@ export function AdminKpisModal({ companyId, companyName, onClose, onSuccess }: M
     );
 }
 
-
-/**
- * アドオン（オプション機能）の定義
- * 将来的にオプションが増えた際も、ここに追加するだけでUIに反映されます。
- */
-const AVAILABLE_ADDONS = [
-    {
-        id: "addon_labor_analytics",
-        name: "人件費分析・ROIダッシュボード",
-        description: "人件費データを用いたKPI分析と、施策の投資対効果（ROI）を可視化します。",
-        icon: BarChart3,
-        includedInPlans: ["pro"] // Proプランには標準搭載
-    },
-    // サンプルの追加オプション（現在はUIのみ）
-    {
-        id: "addon_ai_weekly",
-        name: "AI 週次分析レポート",
-        description: "月次ではなく週単位でのAIサマリーとアクション改善提案を生成します。",
-        icon: Zap,
-        includedInPlans: ["pro"]
-    },
-    {
-        id: "addon_security_sso",
-        name: "SSO / セキュリティ強化",
-        description: "SAML認証によるSSOログインや、詳細な監査ログの書き出し制限を解除します。",
-        icon: ShieldCheck,
-        includedInPlans: []
-    }
-];
 
 export function AdminCompanySettingsModal({ companyId, companyName, onClose, onSuccess }: ModalProps) {
     const { fetchCompany, updateCompany, loading } = useAdminSettings(companyId);

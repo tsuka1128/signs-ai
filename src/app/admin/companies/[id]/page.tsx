@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { HistoryModal } from "@/components/admin/HistoryModal";
 import { AdminDepartmentsModal, AdminKpisModal, AdminCompanySettingsModal } from "@/components/admin/QuickEditModals";
+import { AVAILABLE_ADDONS } from "@/lib/addons";
 import { AnimatePresence } from "framer-motion";
 
 export default function AdminCompanyDetailPage() {
@@ -131,6 +132,10 @@ export default function AdminCompanyDetailPage() {
         );
     }
 
+
+    const trialEndTime = company ? new Date(company.created_at).getTime() + 70 * 24 * 60 * 60 * 1000 : 0;
+    const isExpired = company?.status === 'trial' && Date.now() > trialEndTime;
+
     return (
         <main className="p-8 space-y-8 animate-fadeIn">
             <header className="flex flex-col gap-6">
@@ -150,13 +155,15 @@ export default function AdminCompanyDetailPage() {
                         <div className="space-y-1">
                             <div className="flex items-center gap-3">
                                 <h1 className="text-3xl font-black text-slate-800 tracking-tighter">{company.name}</h1>
+
                                 <Badge className={cn(
                                     "border-none font-bold text-[10px] px-2.5 py-0.5 rounded-full uppercase",
+                                    isExpired ? "bg-rose-50 text-rose-600" :
                                     company.status === 'active' ? "bg-emerald-50 text-emerald-600" :
                                         company.status === 'trial' ? "bg-amber-50 text-amber-600" :
                                             "bg-slate-100 text-slate-500"
                                 )}>
-                                    {company.status}
+                                    {isExpired ? "Expired" : company.status}
                                 </Badge>
                             </div>
                             <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-xs font-bold text-slate-400">
@@ -166,10 +173,11 @@ export default function AdminCompanyDetailPage() {
                                 </span>
                                 {company.status === 'trial' && (
                                     <div className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-50 text-amber-600 rounded-md border border-amber-100">
-                                        <AlertCircle className="w-3 h-3" />
+
+                                        <AlertCircle className={cn("w-3 h-3", isExpired && "animate-pulse")} />
                                         <span>トライアル終了予定: {
-                                            new Date(new Date(company.created_at).getTime() + 70 * 24 * 60 * 60 * 1000).toLocaleDateString('ja-JP')
-                                        }</span>
+                                            new Date(trialEndTime).toLocaleDateString('ja-JP')
+                                        } {isExpired && "(期限切れ)"}</span>
                                     </div>
                                 )}
                                 <div className="flex items-center gap-2 px-2.5 py-1 bg-slate-50 rounded-lg border border-slate-100 group/id">
@@ -233,31 +241,61 @@ export default function AdminCompanyDetailPage() {
             )}
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                 {[
                     { label: "契約プラン", value: company.plans?.name || "---", icon: Building2, color: "text-blue-500", bg: "bg-blue-50" },
-                    { 
-                        label: "オプション構成", 
-                        value: company.addon_labor_analytics ? "分析アドオン込" : "標準機能のみ", 
-                        icon: Zap, 
-                        color: company.addon_labor_analytics ? "text-emerald-500" : "text-slate-400", 
-                        bg: company.addon_labor_analytics ? "bg-emerald-50" : "bg-slate-50" 
-                    },
                     { label: "登録ユーザー", value: stats.users, unit: "名", icon: Users, color: "text-purple-500", bg: "bg-purple-50" },
                     { label: "分析部署数", value: departments.length, unit: "拠点", icon: Layers, color: "text-amber-500", bg: "bg-amber-50" },
                     { label: "累計回答数", value: stats.responses, unit: "件", icon: BarChart3, color: "text-teal", bg: "bg-teal/5" },
                 ].map((stat, i) => (
-                    <div key={i} className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
-                        <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center mb-4", stat.bg, stat.color)}>
-                            <stat.icon className="w-5 h-5" />
-                        </div>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-2xl font-black text-slate-800 tabular-nums">{stat.value}</span>
-                            {stat.unit && <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{stat.unit}</span>}
+                    <div key={i} className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center mb-4", stat.bg, stat.color)}>
+                                <stat.icon className="w-5 h-5" />
+                            </div>
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-2xl font-black text-slate-800 tabular-nums">{stat.value}</span>
+                                {stat.unit && <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{stat.unit}</span>}
+                            </div>
                         </div>
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">{stat.label}</p>
                     </div>
                 ))}
+                
+                {/* Options List Card */}
+                <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div className="w-10 h-10 rounded-2xl bg-teal/5 text-teal flex items-center justify-center mb-4">
+                            <Zap className="w-5 h-5" />
+                        </div>
+                        <div className="space-y-2.5">
+                            {AVAILABLE_ADDONS.map(addon => {
+                                const isIncluded = addon.includedInPlans.includes(company.plan_id);
+                                const isEnabled = isIncluded || company[addon.id];
+                                if (!isEnabled) return null;
+
+                                return (
+                                    <div key={addon.id} className="flex items-center justify-between group/addon">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-teal" />
+                                            <span className="text-[11px] font-black text-slate-700 tracking-tight">{addon.shortName}</span>
+                                        </div>
+                                        <Badge className={cn(
+                                            "bg-transparent border-none font-black text-[8px] p-0 uppercase tracking-tighter",
+                                            isIncluded ? "text-slate-300" : "text-teal/60"
+                                        )}>
+                                            {isIncluded ? "Incl." : "Active"}
+                                        </Badge>
+                                    </div>
+                                );
+                            })}
+                            {!AVAILABLE_ADDONS.some(a => a.includedInPlans.includes(company.plan_id) || company[a.id]) && (
+                                <p className="text-[11px] font-bold text-slate-300 italic">標準機能のみ</p>
+                            )}
+                        </div>
+                    </div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 pt-4">オプション構成</p>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
