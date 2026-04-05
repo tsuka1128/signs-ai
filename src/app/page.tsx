@@ -140,25 +140,6 @@ export default function DashboardPage() {
             onOpenDeepReport={tab === "all" ? () => setShowDeepReport(true) : undefined}
           />
 
-          {tab === "all" && (
-            <div className="flex justify-end">
-              <PlanGate feature="manual_ai_runs" showOverlay={false}>
-                <button
-                  onClick={handlers.handleRunAnalyze}
-                  disabled={state.isAnalyzing}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-bold transition-all",
-                    state.isAnalyzing 
-                      ? "bg-slate-50 text-slate-400 border-slate-100 cursor-not-allowed"
-                      : "bg-white text-teal border-teal/20 hover:bg-teal/5 hover:border-teal/30 shadow-sm"
-                  )}
-                >
-                  {state.isAnalyzing ? "分析を生成中..." : "最新の分析を生成"}
-                  {!state.isAnalyzing && <Rocket className="w-3.5 h-3.5" />}
-                </button>
-              </PlanGate>
-            </div>
-          )}
 
           {tab !== "all" && (() => {
             const dept = state.realDepts.find(d => d.id === tab);

@@ -8,6 +8,7 @@ import { Company, Department, KpiDefinition, KpiAxis, User, Invitation, Resource
 export function useSettingsData() {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
 
     // State
     const [company, setCompany] = useState<Company | any>(null);
@@ -486,9 +487,23 @@ export function useSettingsData() {
         } else alert(`削除に失敗しました: ${error.message}`);
     };
 
+    const handleRunAnalyze = async () => {
+        if (!confirm("AI分析を実行しますか？現在設定されているKPIや部署情報などをもとに、組織状態の推測とドキュメント生成を行います。")) return;
+        setIsAnalyzing(true);
+        try {
+            const res = await fetch("/api/dashboard/run-analyze", { method: "POST" });
+            if (!res.ok) throw new Error("API Request Failed");
+            alert("AIの分析処理が完了しました。ダッシュボードをご確認ください。");
+        } catch (error: any) {
+            alert(`分析の実行中にエラーが発生しました: ${error.message}`);
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
     return {
         state: {
-            loading, company, depts, kpis, axes, secondaryAxisName, users, invitations, inviteEmail,
+            loading, isAnalyzing, company, depts, kpis, axes, secondaryAxisName, users, invitations, inviteEmail,
             copied, inviteDeptId, inviteAxisId, inviteSlackUserId, resources, historyModalOpen,
             historyTarget, tempHistory, isSavingHistory, editingUser, editForm
         },
@@ -500,7 +515,7 @@ export function useSettingsData() {
             handleSaveAllKpis, handleDeleteKpi, handleAddAxis, handleSaveAllAxes, handleDeleteAxis,
             handleInvite, handleDeleteInvitation, handleResendInvitation, handleCopyInviteLink,
             handleOpenHistory, handleSaveHistory, getHistoryTrend, handleStartEditUser,
-            handleSaveUserDetail, handleDeleteUser
+            handleSaveUserDetail, handleDeleteUser, handleRunAnalyze
         }
     };
 }

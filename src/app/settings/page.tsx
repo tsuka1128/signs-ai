@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Settings2 } from "lucide-react";
+import { Settings2, Sparkles } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { cn } from "@/lib/utils";
 import { useSettingsData } from "@/hooks/useSettingsData";
@@ -15,6 +15,7 @@ import { KpiTab } from "@/components/settings/KpiTab";
 import { AxesTab } from "@/components/settings/AxesTab";
 import { MembersTab } from "@/components/settings/MembersTab";
 import { IntegrationTab } from "@/components/settings/IntegrationTab";
+import { AITab } from "@/components/settings/AITab";
 
 // Modals
 import { HistoryModal } from "@/components/settings/HistoryModal";
@@ -50,6 +51,7 @@ export default function SettingsPage() {
                         { id: "dept", label: "部署" },
                         { id: "kpi", label: "KPI" },
                         { id: "axis", label: "担当領域" },
+                        { id: "ai", label: "AI分析" },
                         { id: "users", label: "メンバー" },
                         { id: "integration", label: "外部連携" }
                     ].map(t => (
@@ -118,6 +120,30 @@ export default function SettingsPage() {
                                 handleSaveAllAxes={handlers.handleSaveAllAxes}
                             />
                         </PlanGate>
+                    )}
+
+                    {activeTab === "ai" && (
+                        <AITab 
+                            isAnalyzing={state.isAnalyzing}
+                            handleRunAnalyze={handlers.handleRunAnalyze}
+                            planFeatureComponent={
+                                <PlanGate feature="manual_ai_runs" showOverlay={false}>
+                                    <button
+                                        onClick={handlers.handleRunAnalyze}
+                                        disabled={state.isAnalyzing}
+                                        className={cn(
+                                            "w-full flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-black transition-all shadow-lg",
+                                            state.isAnalyzing
+                                                ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+                                                : "bg-teal text-white hover:bg-teal/90 shadow-teal/20"
+                                        )}
+                                    >
+                                        {state.isAnalyzing ? "最新の分析を生成中..." : "最新の分析を生成する"}
+                                        {!state.isAnalyzing && <Sparkles className="w-5 h-5" />}
+                                    </button>
+                                </PlanGate>
+                            }
+                        />
                     )}
 
                     {activeTab === "users" && (
