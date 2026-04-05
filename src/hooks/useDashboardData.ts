@@ -175,7 +175,13 @@ export function useDashboardData(company: Company | null, supabase: any) {
                 }
             }
 
-            return { viewName, scores: qScores, prevScores: prevQScores, pulse: avgPulse, pulseHistory, aiComment: comment, responseCount, responseRate };
+            const mockVoiceTopics = [
+                { id: "v1", topic: "評価への透明性", sentiment: "negative", abstractedVoice: "「目標設定のプロセスが不透明で納得感が薄い」という声が若手層を中心に寄せられています。", persona: "若手〜中堅層" },
+                { id: "v2", topic: "業務効率化", sentiment: "neutral", abstractedVoice: "「社内申請のフローにおいて一部ツールの使い勝手に課題がある」との指摘があります。", persona: "全部門" },
+                { id: "v3", topic: "チームワーク", sentiment: "positive", abstractedVoice: "「定期的な1on1や共有会の実施により、相談がしやすい環境になった」と評価する声が多くあがっています。", persona: "営業・企画部門" }
+            ];
+
+            return { viewName, scores: qScores, prevScores: prevQScores, pulse: avgPulse, pulseHistory, aiComment: comment, responseCount, responseRate, voiceTopics: mockVoiceTopics as any[] };
         };
     }, [state.realResponses, state.realDepts, state.realAxes, last13Months, aiContent]);
 

@@ -6,7 +6,8 @@ import { DetailLineChart } from "@/components/dashboard/DetailLineChart";
 import { SurveyQuestionCard } from "@/components/dashboard/SurveyQuestionCard";
 import { SurveyHistoryData } from "@/types/dashboard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { FileQuestion } from "lucide-react";
+import { Badge } from "@/components/ui/Badge";
+import { FileQuestion, Lock, MessageCircle, TrendingUp, TrendingDown, MinusCircle, Sparkles } from "lucide-react";
 
 interface SurveySectionProps {
     data: SurveyHistoryData;
@@ -152,6 +153,74 @@ export function SurveySection({
                                 </p>
                             </div>
                         </div>
+                    </div>
+
+                    {/* AI Voices (Abstracted Qualitative Comments) */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between px-1">
+                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                <MessageCircle className="w-4 h-4 text-slate-300" />
+                                現場の声（AI分析）
+                            </h3>
+                            {data.responseCount >= 5 && (
+                                <Badge className="bg-teal/10 text-teal font-black text-[9px] border-none px-2 uppercase tracking-widest">
+                                    {data.voiceTopics?.length || 0} Topics Extracted
+                                </Badge>
+                            )}
+                        </div>
+
+                        {data.responseCount < 5 ? (
+                            <div className="bg-slate-50 rounded-3xl p-8 border border-slate-100 flex flex-col items-center justify-center text-center space-y-4 shadow-inner">
+                                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm">
+                                    <Lock className="w-6 h-6 text-slate-300" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-black text-slate-700 mb-1">生データの閲覧が制限されています</p>
+                                    <p className="text-[11px] text-slate-400 font-medium leading-relaxed max-w-sm mx-auto">
+                                        個人の特定を防ぐ（心理的安全性を担保する）ため、対象グループの回答者が <b>5名以上</b> になるまで定性コメントおよびトピック抽出は表示されません。<br />
+                                        現在の回答者：<span className="font-black text-rose-500">{data.responseCount} 名</span>
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {data.voiceTopics?.map((v, i) => (
+                                    <div key={v.id || i} className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm relative overflow-hidden group hover:border-slate-200 transition-all">
+                                        <div className={cn(
+                                            "absolute top-0 left-0 w-1 h-full",
+                                            v.sentiment === 'positive' ? "bg-emerald-400" :
+                                            v.sentiment === 'negative' ? "bg-rose-400" : "bg-slate-300"
+                                        )} />
+                                        <div className="flex items-start justify-between mb-3 pl-3">
+                                            <div className="flex items-center gap-2">
+                                                {v.sentiment === 'positive' ? <TrendingUp className="w-4 h-4 text-emerald-500" /> :
+                                                 v.sentiment === 'negative' ? <TrendingDown className="w-4 h-4 text-rose-500" /> :
+                                                 <MinusCircle className="w-4 h-4 text-slate-400" />}
+                                                <span className="text-xs font-black text-slate-700">{v.topic}</span>
+                                            </div>
+                                            {v.persona && (
+                                                <span className="text-[9px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full whitespace-nowrap">
+                                                    {v.persona} の傾向
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="bg-slate-50/50 rounded-xl p-4 ml-3 border border-slate-50 relative">
+                                            <div className="absolute -top-2 left-4 px-2 bg-slate-50">
+                                                <Sparkles className="w-3 h-3 text-amber-400" />
+                                            </div>
+                                            <p className="text-[11px] text-slate-600 font-bold leading-relaxed tracking-wide">
+                                                {v.abstractedVoice}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                                {(!data.voiceTopics || data.voiceTopics.length === 0) && (
+                                    <div className="col-span-1 md:col-span-2 text-center py-8">
+                                        <p className="text-[11px] font-black text-slate-400 tracking-widest text-center">トピックを抽出中です...</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Question Grid */}

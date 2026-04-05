@@ -39,6 +39,14 @@ export interface DepartmentDisplayData {
     mrr?: number;
 }
 
+export interface VoiceTopic {
+    id: string;
+    topic: string; // 例: "評価制度", "コミュニケーション"
+    sentiment: "positive" | "negative" | "neutral";
+    abstractedVoice: string; // 例: "「評価のフィードバックが丁寧で納得感がある」という声が複数上がっています。"
+    persona?: string; // 例: "入社2〜3年目層", "営業部門メンバー" (特定されない抽象的な表現)
+}
+
 export interface SurveyHistoryData {
     viewName: string;
     scores: number[];
@@ -48,6 +56,7 @@ export interface SurveyHistoryData {
     aiComment: string;
     responseCount: number;
     responseRate: number;
+    voiceTopics?: VoiceTopic[];
 }
 
 export interface MatrixItemData extends DepartmentDisplayData {
