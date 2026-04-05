@@ -14,6 +14,7 @@ import {
     Settings,
     ExternalLink,
     ShieldAlert,
+    AlertCircle,
     Calendar,
     Mail,
     ChevronRight,
@@ -24,7 +25,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { HistoryModal } from "@/components/admin/HistoryModal";
-import { AdminDepartmentsModal, AdminKpisModal } from "@/components/admin/QuickEditModals";
+import { AdminDepartmentsModal, AdminKpisModal, AdminCompanySettingsModal } from "@/components/admin/QuickEditModals";
 import { AnimatePresence } from "framer-motion";
 
 export default function AdminCompanyDetailPage() {
@@ -42,6 +43,7 @@ export default function AdminCompanyDetailPage() {
     const [showHistory, setShowHistory] = useState(false);
     const [showDeptModal, setShowDeptModal] = useState(false);
     const [showKpiModal, setShowKpiModal] = useState(false);
+    const [showCompanyModal, setShowCompanyModal] = useState(false);
 
     const handleRunAI = async () => {
         if (!companyId || isAnalyzing) return;
@@ -158,7 +160,18 @@ export default function AdminCompanyDetailPage() {
                                 </Badge>
                             </div>
                             <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-xs font-bold text-slate-400">
-                                <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> 2026/03/01 契約開始</span>
+                                <span className="flex items-center gap-1.5">
+                                    <Calendar className="w-3.5 h-3.5" /> 
+                                    {new Date(company.created_at).toLocaleDateString('ja-JP')} 契約開始
+                                </span>
+                                {company.status === 'trial' && (
+                                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-50 text-amber-600 rounded-md border border-amber-100">
+                                        <AlertCircle className="w-3 h-3" />
+                                        <span>トライアル終了予定: {
+                                            new Date(new Date(company.created_at).getTime() + 70 * 24 * 60 * 60 * 1000).toLocaleDateString('ja-JP')
+                                        }</span>
+                                    </div>
+                                )}
                                 <div className="flex items-center gap-2 px-2.5 py-1 bg-slate-50 rounded-lg border border-slate-100 group/id">
                                     <span className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">Signs ID:</span>
                                     <span className="text-slate-600 font-bold tracking-widest">{company.short_id || "---"}</span>
@@ -200,7 +213,10 @@ export default function AdminCompanyDetailPage() {
                             <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-teal transition-colors" />
                             代理ログイン
                         </button>
-                        <button className="px-6 py-3 bg-slate-800 text-white rounded-2xl text-sm font-bold hover:bg-slate-700 transition-all shadow-lg shadow-slate-200 whitespace-nowrap">
+                        <button 
+                            onClick={() => setShowCompanyModal(true)}
+                            className="px-6 py-3 bg-slate-800 text-white rounded-2xl text-sm font-bold hover:bg-slate-700 transition-all shadow-lg shadow-slate-200 whitespace-nowrap"
+                        >
                             企業設定を編集
                         </button>
                     </div>
@@ -220,6 +236,13 @@ export default function AdminCompanyDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {[
                     { label: "契約プラン", value: company.plans?.name || "---", icon: Building2, color: "text-blue-500", bg: "bg-blue-50" },
+                    { 
+                        label: "オプション構成", 
+                        value: company.addon_labor_analytics ? "分析アドオン込" : "標準機能のみ", 
+                        icon: Zap, 
+                        color: company.addon_labor_analytics ? "text-emerald-500" : "text-slate-400", 
+                        bg: company.addon_labor_analytics ? "bg-emerald-50" : "bg-slate-50" 
+                    },
                     { label: "登録ユーザー", value: stats.users, unit: "名", icon: Users, color: "text-purple-500", bg: "bg-purple-50" },
                     { label: "分析部署数", value: departments.length, unit: "拠点", icon: Layers, color: "text-amber-500", bg: "bg-amber-50" },
                     { label: "累計回答数", value: stats.responses, unit: "件", icon: BarChart3, color: "text-teal", bg: "bg-teal/5" },
@@ -320,6 +343,14 @@ export default function AdminCompanyDetailPage() {
                         companyId={company.id}
                         companyName={company.name}
                         onClose={() => setShowKpiModal(false)}
+                        onSuccess={fetchCompanyDetails}
+                    />
+                )}
+                {showCompanyModal && (
+                    <AdminCompanySettingsModal 
+                        companyId={company.id}
+                        companyName={company.name}
+                        onClose={() => setShowCompanyModal(false)}
                         onSuccess={fetchCompanyDetails}
                     />
                 )}

@@ -14,6 +14,8 @@ import {
     PieChart
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PlanDetailsModal } from "@/components/admin/PlanDetailsModal";
+import { AnimatePresence } from "framer-motion";
 
 interface Stats {
     companyCount: number;
@@ -26,6 +28,7 @@ export default function AdminDashboardPage() {
     const { supabase, loading: authLoading } = useAdmin();
     const [stats, setStats] = useState<Stats | null>(null);
     const [loading, setLoading] = useState(true);
+    const [showPlanModal, setShowPlanModal] = useState(false);
 
     useEffect(() => {
         async function fetchStats() {
@@ -119,12 +122,29 @@ export default function AdminDashboardPage() {
     return (
         <main className="p-8 space-y-10 animate-fadeIn">
             <header className="flex flex-col gap-2">
-                <div className="flex items-center gap-3">
-                    <h1 className="text-2xl font-black text-slate-800 tracking-tighter">全体サマリー</h1>
-                    <Badge className="bg-emerald-50 text-emerald-600 border-none font-bold">実データ連携済み</Badge>
+                <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-2xl font-black text-slate-800 tracking-tighter">全体サマリー</h1>
+                            <Badge className="bg-emerald-50 text-emerald-600 border-none font-bold">実データ連携済み</Badge>
+                        </div>
+                        <p className="text-slate-500 font-medium font-sans text-left">全導入企業の利用状況と主要KPIをリアルタイムに把握します。</p>
+                    </div>
+                    <button 
+                        onClick={() => setShowPlanModal(true)}
+                        className="px-6 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-black text-slate-600 hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2 group whitespace-nowrap"
+                    >
+                        <PieChart className="w-4 h-4 text-slate-400 group-hover:text-teal transition-colors" />
+                        料金プラン・機能詳細
+                    </button>
                 </div>
-                <p className="text-slate-500 font-medium font-sans">全導入企業の利用状況と主要KPIをリアルタイムに把握します。</p>
             </header>
+
+            <AnimatePresence>
+                {showPlanModal && (
+                    <PlanDetailsModal onClose={() => setShowPlanModal(false)} />
+                )}
+            </AnimatePresence>
 
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

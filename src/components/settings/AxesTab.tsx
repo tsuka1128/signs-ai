@@ -1,7 +1,8 @@
 "use client";
 
-import { Layers, GripVertical, TrendingUp, Trash2, Plus, Save } from "lucide-react";
+import { Layers, Users, GripVertical, TrendingUp, Trash2, Plus, Save } from "lucide-react";
 import { Reorder } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface AxesTabProps {
     secondaryAxisName: string;
@@ -79,29 +80,24 @@ export const AxesTab = ({
                                 <div className="p-2 cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-400">
                                     <GripVertical className="w-5 h-5" />
                                 </div>
-                                <div className="flex-1 w-full">
-                                    <label className="block text-[9px] font-bold text-slate-400 mb-1 ml-1">{secondaryAxisName}名</label>
-                                    <input
-                                        type="text"
-                                        value={a.name}
-                                        onChange={(e) => setAxes(axes.map(x => x.id === a.id ? { ...x, name: e.target.value } : x))}
-                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-teal"
-                                    />
-                                </div>
-                                <div className="w-full sm:w-32">
-                                    <label className="block text-[9px] font-bold text-slate-400 mb-1 ml-1">所属人数</label>
-                                    <div className="relative">
+                                <div className="flex-1 w-full flex items-center gap-4">
+                                    <div className="flex-1 min-w-[200px]">
+                                        <label className="block text-[9px] font-bold text-slate-400 mb-1 ml-1 uppercase tracking-widest">{secondaryAxisName}名</label>
                                         <input
-                                            type="number"
-                                            min="0"
-                                            value={a.headcount === 0 ? "" : a.headcount}
-                                            onChange={(e) => {
-                                                const val = e.target.value === "" ? 0 : parseInt(e.target.value);
-                                                setAxes(axes.map(x => x.id === a.id ? { ...x, headcount: val } : x));
-                                            }}
-                                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-teal pr-8"
+                                            type="text"
+                                            value={a.name}
+                                            onChange={(e) => setAxes(axes.map(x => x.id === a.id ? { ...x, name: e.target.value } : x))}
+                                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-teal transition-all"
                                         />
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">名</span>
+                                    </div>
+                                    <div className="shrink-0 pt-4 hidden sm:block">
+                                        <div className="px-4 py-2 bg-slate-100/50 rounded-xl border border-slate-200/50 flex items-center gap-1.5 hover:bg-slate-100 transition-colors">
+                                            <Users className="w-3.5 h-3.5 text-slate-400" />
+                                            <div className="flex items-baseline gap-0.5">
+                                                <span className="text-sm font-black text-slate-700 tracking-tighter">{a.headcount || 0}</span>
+                                                <span className="text-[9px] font-bold text-slate-400">名</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex flex-col items-center gap-1.5 min-w-[70px] pt-2 sm:pt-0 group">
@@ -132,9 +128,16 @@ export const AxesTab = ({
                                     </div>
                                     <button
                                         onClick={() => handleOpenHistory('axis', a.id, a.name)}
-                                        className="flex items-center gap-1 text-[9px] font-black text-teal hover:text-teal/70 transition-colors uppercase tracking-widest bg-teal/5 px-2 py-1 rounded-lg"
+                                        className={cn(
+                                            "flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl transition-all shadow-sm",
+                                            a.id.startsWith("new_") 
+                                                ? "bg-slate-50 text-slate-300 cursor-not-allowed border border-slate-100" 
+                                                : "text-teal hover:text-white bg-teal/5 hover:bg-teal border border-teal/20"
+                                        )}
+                                        title={a.id.startsWith("new_") ? "先に「すべて保存」をクリックしてください" : ""}
                                     >
-                                        <TrendingUp className="w-2.5 h-2.5" /> 履歴
+                                        <TrendingUp className="w-3 h-3" />
+                                        詳細・履歴
                                     </button>
                                 </div>
                                 <div className="flex justify-end pt-2 sm:pt-0">

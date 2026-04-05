@@ -55,7 +55,8 @@ export async function POST(req: Request) {
             kpiDefs,
             surveys,
             kpiRecs,
-            semantic
+            semantic,
+            resources
         ] = await Promise.all([
             supabase.from('departments').select('*').eq('company_id', companyId),
             supabase.from('kpi_definitions').select('*').eq('company_id', companyId),
@@ -72,7 +73,11 @@ export async function POST(req: Request) {
                 .eq('company_id', companyId)
                 .order('created_at', { ascending: false })
                 .limit(1)
-                .single()
+                .single(),
+            supabase.from('resource_records')
+                .select('*')
+                .eq('company_id', companyId)
+                .in('recorded_month', targetMonths)
         ]);
 
         // データが足りない場合のフォールバック
@@ -109,7 +114,8 @@ export async function POST(req: Request) {
 
         // 4. Claude へのプロンプト構築
         const systemPrompt = `あなたは組織改善AI「Signs AI」の経営コンサルタントです。
-組織の状態（アンケートスコア）と業績（KPI）を、会社が定めた「組織方針」に照らし合わせ、客観的かつ鋭い洞察を提供してください。
+組織の状態（アンケートスコア）と業績（KPI）、さらにリソース（人数・人件費）を、会社が定めた「組織方針」に照らし合わせ、客観的かつ鋭い洞察を提供してください。
+人件費データが提供されている場合は、一人当たり生産性やコスト効率（ROI）の観点も含めて分析してください。
 
 回答は以下の構造を持ったJSON形式のみで出力してください。Markdown装飾(\`\`\`json等)は不要です。
 {
@@ -176,14 +182,17 @@ ${JSON.stringify(historicalContext, null, 2)}
 現在の詳細データ:
 - 部署別統計: ${JSON.stringify(depts.data?.map(d => {
             const deptSurveys = surveys.data?.filter(s => s.department_id === d.id);
-            const deptKpis = kpiRecs.data?.filter(r => r.department_id === d.id);
+            const deptKpis = kpiRecs.data?.filter(r => r.department_id === d.id && normalizeMonth(r.recorded_month) === normalizeMonth(latestMonth));
+            const deptResource = resources.data?.find(r => r.department_id === d.id && normalizeMonth(r.recorded_month) === normalizeMonth(latestMonth));
             const avgPulse = deptSurveys && deptSurveys.length > 0 
-                ? deptSurveys.flatMap(s => s.survey_answers || []).reduce((acc, a) => acc + a.score, 0) / (deptSurveys.flatMap(s => s.survey_answers || []).length || 1)
+                ? deptSurveys.filter(s => normalizeMonth(s.recorded_month) === normalizeMonth(latestMonth)).flatMap(s => s.survey_answers || []).reduce((acc, a) => acc + a.score, 0) / (deptSurveys.filter(s => normalizeMonth(s.recorded_month) === normalizeMonth(latestMonth)).flatMap(s => s.survey_answers || []).length || 1)
                 : 0;
             return {
                 id: d.id,
                 name: d.name,
-                headcount: d.headcount,
+                master_headcount: d.headcount,
+                actual_headcount: deptResource?.head_count,
+                labor_cost: deptResource?.labor_cost,
                 avg_pulse: avgPulse.toFixed(2),
                 kpi_count: deptKpis?.length,
                 kpi_details: deptKpis?.map(r => {

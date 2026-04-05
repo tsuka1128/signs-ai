@@ -2,6 +2,8 @@
 
 import { Users, GripVertical, TrendingUp, Trash2, Plus, Save } from "lucide-react";
 import { Reorder } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { usePlanFeatures } from "@/hooks/usePlanFeatures";
 
 interface DepartmentsTabProps {
     depts: any[];
@@ -22,6 +24,9 @@ export const DepartmentsTab = ({
     handleAddDept,
     handleSaveAllDepts
 }: DepartmentsTabProps) => {
+    const { limits, planName } = usePlanFeatures();
+    const isAtLimit = depts.length >= limits.maxDepartments;
+
     return (
         <div className="space-y-8 animate-in fade-in">
             <div>
@@ -41,29 +46,24 @@ export const DepartmentsTab = ({
                                 <div className="p-2 cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-400">
                                     <GripVertical className="w-5 h-5" />
                                 </div>
-                                <div className="flex-1 w-full">
-                                    <label className="block text-[9px] font-bold text-slate-400 mb-1 ml-1">部署名</label>
-                                    <input
-                                        type="text"
-                                        value={d.name}
-                                        onChange={(e) => setDepts(depts.map(x => x.id === d.id ? { ...x, name: e.target.value } : x))}
-                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-teal"
-                                    />
-                                </div>
-                                <div className="w-full sm:w-32">
-                                    <label className="block text-[9px] font-bold text-slate-400 mb-1 ml-1">所属人数</label>
-                                    <div className="relative">
+                                <div className="flex-1 w-full flex items-center gap-4">
+                                    <div className="flex-1 min-w-[200px]">
+                                        <label className="block text-[9px] font-bold text-slate-400 mb-1 ml-1 uppercase tracking-widest">部署名</label>
                                         <input
-                                            type="number"
-                                            min="0"
-                                            value={d.headcount === 0 ? "" : d.headcount}
-                                            onChange={(e) => {
-                                                const val = e.target.value === "" ? 0 : parseInt(e.target.value);
-                                                setDepts(depts.map(x => x.id === d.id ? { ...x, headcount: val } : x));
-                                            }}
-                                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-teal pr-8"
+                                            type="text"
+                                            value={d.name}
+                                            onChange={(e) => setDepts(depts.map(x => x.id === d.id ? { ...x, name: e.target.value } : x))}
+                                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-teal transition-all"
                                         />
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">名</span>
+                                    </div>
+                                    <div className="shrink-0 pt-4 hidden sm:block">
+                                        <div className="px-4 py-2 bg-slate-100/50 rounded-xl border border-slate-200/50 flex items-center gap-1.5 hover:bg-slate-100 transition-colors">
+                                            <Users className="w-3.5 h-3.5 text-slate-400" />
+                                            <div className="flex items-baseline gap-0.5">
+                                                <span className="text-sm font-black text-slate-700 tracking-tighter">{d.headcount || 0}</span>
+                                                <span className="text-[9px] font-bold text-slate-400">名</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex flex-col items-center gap-1.5 min-w-[70px] pt-2 sm:pt-0 group">
@@ -94,9 +94,16 @@ export const DepartmentsTab = ({
                                     </div>
                                     <button
                                         onClick={() => handleOpenHistory('dept', d.id, d.name)}
-                                        className="flex items-center gap-1 text-[9px] font-black text-teal hover:text-teal/70 transition-colors uppercase tracking-widest bg-teal/5 px-2 py-1 rounded-lg"
+                                        className={cn(
+                                            "flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl transition-all shadow-sm",
+                                            d.id.startsWith("new_") 
+                                                ? "bg-slate-50 text-slate-300 cursor-not-allowed border border-slate-100" 
+                                                : "text-teal hover:text-white bg-teal/5 hover:bg-teal border border-teal/20"
+                                        )}
+                                        title={d.id.startsWith("new_") ? "先に「すべて保存」をクリックしてください" : ""}
                                     >
-                                        <TrendingUp className="w-2.5 h-2.5" /> 履歴
+                                        <TrendingUp className="w-3 h-3" />
+                                        詳細・履歴
                                     </button>
                                 </div>
                                 <div className="flex justify-end pt-2 sm:pt-0">
@@ -112,8 +119,25 @@ export const DepartmentsTab = ({
                     </Reorder.Group>
 
                     <div className="flex flex-col gap-3 mt-6">
-                        <button onClick={handleAddDept} className="w-full py-4 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-bold hover:border-teal hover:text-teal hover:bg-teal/5 transition-all text-sm flex items-center justify-center gap-2">
-                            <Plus className="w-4 h-4" /> 新しい部署を追加
+                        <button 
+                            onClick={handleAddDept} 
+                            disabled={isAtLimit}
+                            className={cn(
+                                "w-full py-4 border-2 border-dashed rounded-2xl font-bold transition-all text-sm flex flex-col items-center justify-center gap-1",
+                                isAtLimit 
+                                    ? "bg-slate-50 border-slate-200 text-slate-300 cursor-not-allowed" 
+                                    : "border-slate-200 text-slate-400 hover:border-teal hover:text-teal hover:bg-teal/5"
+                            )}
+                        >
+                            <div className="flex items-center gap-2">
+                                <Plus className="w-4 h-4" /> 
+                                {isAtLimit ? "上限に達しました" : "新しい部署を追加"}
+                            </div>
+                            {isAtLimit && (
+                                <span className="text-[10px] font-medium text-slate-400">
+                                    {planName}プランの上限は{limits.maxDepartments}部署です。
+                                </span>
+                            )}
                         </button>
                         <button onClick={handleSaveAllDepts} className="w-full py-4 bg-slate-800 text-white rounded-2xl font-bold hover:bg-slate-700 transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
                             <Save className="w-4 h-4" /> 部署の設定をすべて保存

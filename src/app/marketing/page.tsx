@@ -844,7 +844,7 @@ function HeroVisual() {
 export default function MarketingPage() {
   /* ナビスクロール */
   const [scrolled, setScrolled] = useState(false);
-  const [prices, setPrices] = useState({ team: 30000, standard: 50000, pro: 150000 });
+  const [prices, setPrices] = useState({ team: 30000, standard: 100000, pro: 300000 });
   const [pricesLoaded, setPricesLoaded] = useState(false);
 
   useEffect(() => {
@@ -1247,7 +1247,7 @@ export default function MarketingPage() {
             <Reveal className="text-center mb-20">
               <p className="text-[11px] font-black tracking-widest text-teal-500 mb-5">料金プラン</p>
               <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-4">シンプルな料金プラン</h2>
-              <p className="text-slate-500 font-bold">全プランに1ヶ月間の無料トライアル付き。カード登録不要。</p>
+              <p className="text-slate-500 font-bold">70日間の無料トライアルを全社に。カード登録不要。</p>
             </Reveal>
 
             {/* メイン3プラン横並び */}
@@ -1255,58 +1255,81 @@ export default function MarketingPage() {
               <Reveal direction="left">
                 <PricingCard
                   plan="Team"
-                  sub="20名までの組織に最適"
-                  price={pricesLoaded ? prices.team.toLocaleString() : "..."}
+                  sub="30名までのチーム・小規模組織"
+                  price={pricesLoaded ? prices.team.toLocaleString() : "30,000"}
                   features={[
                     "20名まで",
+                    "3部署まで固定",
                     "KPI 5個まで",
                     "部署別バブルチャート",
                     "ボイスチェック",
-                    "AI組織分析と施策提案",
-                    "各部署へのAI通知文",
+                    "AI組織分析（月1回サマリー）",
+                    "タイムラプス機能",
                     "メールサポート",
                   ]}
                   cta="無料で始める"
-                  note="まず1部署で試して、効果を実感できます"
+                  note="まずスモールスタートで効果を実感できます"
                 />
               </Reveal>
               <Reveal delay={0.05}>
                 <PricingCard
                   plan="Standard"
-                  sub="50名までの組織に最適"
-                  price={pricesLoaded ? prices.standard.toLocaleString() : "..."}
+                  sub="50名までの中規模組織"
+                  price={pricesLoaded ? prices.standard.toLocaleString() : "100,000"}
                   recommended
                   features={[
                     "Team全機能",
                     "50名まで",
                     "KPI 10個まで",
                     "部署 無制限",
-                    "タイムラプス機能",
                     "第2軸バブルチャート解放",
                     "Slack連携",
-                    "組織方針の反映",
-                    "カスタマーサクセス",
+                    "組織方針の反映（AI翻訳）",
+                    "手動AI分析（月3回）",
+                    "優先サポート",
                   ]}
-                  cta="1ヶ月無料トライアル"
+                  cta="70日間無料トライアル"
                 />
               </Reveal>
               <Reveal direction="right" delay={0.1}>
                 <PricingCard
                   plan="Pro"
-                  sub="51名以上の大規模組織向け"
-                  price={pricesLoaded ? `${prices.pro.toLocaleString()}〜` : "..."}
+                  sub="100名以上の大規模組織向け"
+                  price={pricesLoaded ? `${prices.pro.toLocaleString()}〜` : "300,000〜"}
                   features={[
                     "Standard全機能",
-                    "51名以上対応",
-                    "部署間360度クロス分析",
-                    "提案レポートエクスポート（PDF）",
-                    "組織開示レポート出力",
-                    "優先サポート＋専任担当",
+                    "100名以上対応（超過分従量）",
+                    "人件費ROI・生産性分析",
+                    "AI分析バッジ（週次更新）",
+                    "手動AI分析（月4回）",
+                    "詳細提案レポートPDF出力",
+                    "専任担当によるサクセス支援",
                   ]}
                   cta="お問い合わせ"
                 />
               </Reveal>
             </div>
+
+            {/* Free Trial / Trial Plan Note */}
+            <Reveal className="mb-16">
+              <div className="bg-teal-50/50 border border-teal-100 rounded-[32px] p-8 md:p-10 flex flex-col md:flex-row items-center gap-8">
+                <div className="flex-1">
+                  <h4 className="text-xl font-black text-slate-800 mb-3 flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-lg bg-teal-500 text-white flex items-center justify-center text-sm italic font-black">F</span>
+                    Free プラン（70日間トライアル）
+                  </h4>
+                  <p className="text-slate-600 font-bold text-sm leading-relaxed mb-4">
+                    Standardプランの全機能を70日間無料でお試しいただけます。<br />
+                    トライアル期間中は、専門スタッフによるヒアリングと、継続時の導入事例取材へのご協力をお願いしております。
+                  </p>
+                </div>
+                <div className="shrink-0">
+                  <Link href="/dashboard" className="px-8 py-4 bg-teal-500 text-white rounded-2xl font-black shadow-lg shadow-teal-200 hover:scale-[1.05] transition-all flex items-center gap-2 whitespace-nowrap">
+                    トライアルを開始する <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
+            </Reveal>
 
             {/* Partnerプラン 下段 */}
             <Reveal delay={0.15}>

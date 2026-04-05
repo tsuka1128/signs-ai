@@ -203,6 +203,10 @@ export function useDashboardData(company: Company | null, supabase: any) {
                 const res = state.realResources.find(rr => rr.department_id === d.id && normalizeMonth(rr.recorded_month) === month);
                 return res ? res.head_count : 0;
             });
+            const latestResource = state.realResources.find(rr => rr.department_id === d.id && normalizeMonth(rr.recorded_month) === latestMonth);
+            const latestLabor = latestResource?.labor_cost || 0;
+            const latestActualHead = latestResource?.head_count || headHistory[12] || d.headcount || 0;
+            const laborCostPerHead = (latestLabor > 0 && latestActualHead > 0) ? Math.round((latestLabor / latestActualHead) * 10) / 10 : 0;
 
             const respondentsCount = deptResponses.filter(r => normalizeMonth(r.recorded_month) === latestMonth).length;
 
@@ -230,6 +234,8 @@ export function useDashboardData(company: Company | null, supabase: any) {
                 respondentsCount,
                 masterHeadcount: d.headcount || 0,
                 headHistory,
+                laborCostPerHead,
+                totalLaborCost: latestLabor,
                 productivity: calculateProductivity(kpiAch, pulseScore),
                 pulse: Number(pulseScore.toFixed(1)),
                 pulseHistory,
@@ -312,6 +318,10 @@ export function useDashboardData(company: Company | null, supabase: any) {
                 const res = state.realResources.find(rr => rr.axis_id === axis.id && normalizeMonth(rr.recorded_month) === month);
                 return res ? res.head_count : 0;
             });
+            const latestResource = state.realResources.find(rr => rr.axis_id === axis.id && normalizeMonth(rr.recorded_month) === latestMonth);
+            const latestLabor = latestResource?.labor_cost || 0;
+            const latestActualHead = latestResource?.head_count || headHistory[12] || axis.headcount || 0;
+            const laborCostPerHead = (latestLabor > 0 && latestActualHead > 0) ? Math.round((latestLabor / latestActualHead) * 10) / 10 : 0;
 
             const mRecs = state.realKpiRecords.filter(r => r.recorded_month === last13Months[12] && r.axis_id === axis.id);
             let totalAch = 0;
@@ -333,6 +343,8 @@ export function useDashboardData(company: Company | null, supabase: any) {
                 respondentsCount: activeHead,
                 masterHeadcount: axis.headcount || 0,
                 headHistory,
+                laborCostPerHead,
+                totalLaborCost: latestLabor,
                 xAxisHead: axis.headcount || 0,
                 sizeValue: sizeHistory[12],
                 sizeHistory,
@@ -425,13 +437,61 @@ export function useDashboardData(company: Company | null, supabase: any) {
         }
     };
 
+    const financialMetrics = useMemo(() => {
+        const latestMonth = last13Months[12];
+        const deptsLabor = state.realDepts.map(d => {
+            const res = state.realResources.find(rr => rr.department_id === d.id && normalizeMonth(rr.recorded_month) === latestMonth);
+            return res?.labor_cost || 0;
+        });
+        const axesLabor = state.realAxes.map(a => {
+            const res = state.realResources.find(rr => rr.axis_id === a.id && normalizeMonth(rr.recorded_month) === latestMonth);
+            return res?.labor_cost || 0;
+        });
+
+        const totalLaborCost = [...deptsLabor, ...axesLabor].reduce((a, b) => a + b, 0);
+        const hasLaborData = totalLaborCost > 0;
+
+        if (!hasLaborData) return { hasLaborData: false, laborRoi: 0, laborDistRate: 0, totalLaborCost: 0 };
+
+        // ROI = (Avg KPI Achievement) / (Total Labor Cost / 100)  -- Simple Index
+        const allAch = [...displayDepts, ...displayAxes].map(d => d.kpiAch);
+        const avgAch = allAch.length > 0 ? allAch.reduce((a, b) => a + b, 0) / allAch.length : 0;
+        const laborRoi = totalLaborCost > 0 ? Math.round((avgAch / (totalLaborCost / 100)) * 10) / 10 : 0;
+
+        // Distribution Rate = Total Labor / Total Revenue
+        const revenueKpis = state.realKpis.filter(k => k.name.includes("売上") || k.name.includes("利益") || k.unit === "円" || k.unit === "万円");
+        let totalRevenue = 0;
+        revenueKpis.forEach(k => {
+            totalRevenue += (k.val || 0);
+        });
+
+        const laborDistRate = totalRevenue > 0 ? Math.round((totalLaborCost / totalRevenue) * 100) : 0;
+
+        const deptFinanceData = displayDepts.map(d => ({
+            id: d.id,
+            name: d.name,
+            laborCostPerHead: d.laborCostPerHead,
+            totalLaborCost: d.totalLaborCost,
+            kpiAch: d.kpiAch,
+            pulse: d.pulse
+        }));
+
+        const totalActualHead = displayDepts.reduce((sum, d) => {
+            const h = d.headHistory?.[12] || 0;
+            return sum + h;
+        }, 0);
+        const avgLaborCostPerHead = totalActualHead > 0 ? Math.round((totalLaborCost / totalActualHead) * 10) / 10 : 0;
+
+        return { hasLaborData, laborRoi, laborDistRate, totalLaborCost, deptFinanceData, avgLaborCostPerHead };
+    }, [state.realResources, state.realDepts, state.realAxes, state.realKpis, displayDepts, displayAxes, last13Months]);
+
     const deptTabs = useMemo(() => [
         { id: "all", label: "全社" },
         ...state.realDepts.map(d => ({ id: d.id, label: d.name }))
     ], [state.realDepts]);
 
     return {
-        state: { ...state, isAnalyzing, last13Months, monthLabels, fullMonthLabels, aiContent },
+        state: { ...state, isAnalyzing, last13Months, monthLabels, fullMonthLabels, aiContent, ...financialMetrics },
         derived: { currentSurveyData, displayDepts, displayKpis, displayAxes, deptTabs },
         handlers: { handleRunAnalyze, handleSaveSemantic, handleDeleteSemantic }
     };

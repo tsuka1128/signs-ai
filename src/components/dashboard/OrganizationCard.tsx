@@ -19,9 +19,10 @@ interface OrganizationCardProps {
     weather: "sun" | "cloud" | "rain";
     arrow: "up" | "down" | "flat";
     kpis: KpiItem[];
+    laborCostPerHead?: number;
 }
 
-export function OrganizationCard({ name, head, pulse, weather, arrow, kpis }: OrganizationCardProps) {
+export function OrganizationCard({ name, head, pulse, weather, arrow, kpis, laborCostPerHead }: OrganizationCardProps) {
     const isNone = pulse === 0;
     const risk = isNone ? "none" : pulse < 2.5 ? "overheat" : pulse >= 3.5 ? "stable" : "caution";
     const pulseColorClass = isNone ? "text-slate-300" : pulse >= 3.5 ? "text-emerald-500" : pulse >= 2.5 ? "text-amber-500" : "text-rose-500";
@@ -46,9 +47,14 @@ export function OrganizationCard({ name, head, pulse, weather, arrow, kpis }: Or
                 <div className="w-px h-8 bg-slate-100" />
 
                 <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="font-bold text-slate-800 text-sm">{name}</h4>
-                        <span className="text-[10px] font-bold text-slate-400 tracking-tighter">{head}名</span>
+                        <span className="text-[10px] font-bold text-slate-400 tracking-tighter shrink-0">{head}名</span>
+                        {laborCostPerHead && laborCostPerHead > 0 && (
+                            <span className="text-[9px] font-bold text-slate-400/60 tracking-tighter bg-slate-50 border border-slate-100/50 px-1.5 py-0.5 rounded-md leading-none shrink-0">
+                                {laborCostPerHead.toLocaleString()}万円/人
+                            </span>
+                        )}
                         <Arrow direction={arrow} />
                     </div>
                 </div>

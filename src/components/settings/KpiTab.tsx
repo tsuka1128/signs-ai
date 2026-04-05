@@ -3,6 +3,7 @@
 import { Target, ArrowRight, Star, Trash2, Plus, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { KPI_UNIT_OPTIONS } from "@/lib/constants";
+import { usePlanFeatures } from "@/hooks/usePlanFeatures";
 
 interface KpiTabProps {
     kpis: any[];
@@ -21,6 +22,9 @@ export const KpiTab = ({
     handleAddKpi,
     handleSaveAllKpis
 }: KpiTabProps) => {
+    const { limits, planName } = usePlanFeatures();
+    const isAtLimit = kpis.length >= limits.maxKpis;
+
     return (
         <div className="space-y-8 animate-in fade-in">
             <div>
@@ -152,8 +156,25 @@ export const KpiTab = ({
                     ))}
 
                     <div className="flex flex-col gap-3 mt-6">
-                        <button onClick={handleAddKpi} className="w-full py-4 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-bold hover:border-teal hover:text-teal hover:bg-teal/5 transition-all text-sm flex items-center justify-center gap-2">
-                            <Plus className="w-4 h-4" /> 指標を追加
+                        <button 
+                            onClick={handleAddKpi} 
+                            disabled={isAtLimit}
+                            className={cn(
+                                "w-full py-4 border-2 border-dashed rounded-2xl font-bold transition-all text-sm flex flex-col items-center justify-center gap-1",
+                                isAtLimit 
+                                    ? "bg-slate-50 border-slate-200 text-slate-300 cursor-not-allowed" 
+                                    : "border-slate-200 text-slate-400 hover:border-teal hover:text-teal hover:bg-teal/5"
+                            )}
+                        >
+                            <div className="flex items-center gap-2">
+                                <Plus className="w-4 h-4" /> 
+                                {isAtLimit ? "上限に達しました" : "指標を追加"}
+                            </div>
+                            {isAtLimit && (
+                                <span className="text-[10px] font-medium text-slate-400">
+                                    {planName}プランの上限は{limits.maxKpis}個です。
+                                </span>
+                            )}
                         </button>
                         <button onClick={handleSaveAllKpis} className="w-full py-4 bg-slate-800 text-white rounded-2xl font-bold hover:bg-slate-700 transition-all shadow-lg flex items-center justify-center gap-2 text-sm">
                             <Save className="w-4 h-4" /> KPI設定をすべて保存

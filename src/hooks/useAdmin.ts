@@ -82,7 +82,7 @@ export function useAdmin() {
         }
     };
 
-    const impersonate = async (id: string) => {
+    const impersonate = async (id: string, redirectPath: string = '/') => {
         if (!isSuperAdmin) return;
         localStorage.setItem("impersonated_company_id", id);
         setImpersonatedCompanyId(id);
@@ -90,7 +90,7 @@ export function useAdmin() {
         // ログを非同期で記録
         await logAdminActivity('impersonate_start', id);
         
-        router.push("/");
+        router.push(redirectPath);
     };
 
     const stopImpersonating = async () => {

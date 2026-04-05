@@ -5,6 +5,49 @@ export function useAdminSettings(companyId: string) {
     const [loading, setLoading] = useState(false);
     const supabase = createClient();
 
+    /**
+     * 企業基本情報を取得する
+     */
+    const fetchCompany = useCallback(async () => {
+        const { data, error } = await supabase
+            .from('companies')
+            .select('*, plans(name)')
+            .eq('id', companyId)
+            .single();
+        if (error) throw error;
+        return data;
+    }, [supabase, companyId]);
+
+    /**
+     * 企業基本情報を更新する
+     */
+    const updateCompany = async (updates: Record<string, any>) => {
+        setLoading(true);
+        try {
+            const { error } = await supabase
+                .from('companies')
+                .update(updates)
+                .eq('id', companyId);
+            if (error) throw error;
+
+            // ログ記録
+            const { data: { user: authUser } } = await supabase.auth.getUser();
+            if (authUser) {
+                await supabase.from('admin_activity_logs').insert({
+                    admin_id: authUser.id,
+                    target_company_id: companyId,
+                    action_type: 'update_company_settings',
+                    details: {
+                        updated_fields: Object.keys(updates),
+                        timestamp: new Date().toISOString()
+                    }
+                });
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const fetchDepartments = useCallback(async () => {
         const { data, error } = await supabase
             .from('departments')
@@ -125,6 +168,8 @@ export function useAdminSettings(companyId: string) {
 
     return {
         loading,
+        fetchCompany,
+        updateCompany,
         fetchDepartments,
         fetchKpis,
         updateDepartments,

@@ -12,8 +12,11 @@ import { SurveySection } from "@/components/dashboard/sections/SurveySection";
 import { OrganizationSection } from "@/components/dashboard/sections/OrganizationSection";
 import { KpiSection } from "@/components/dashboard/sections/KpiSection";
 import { MatrixSection } from "@/components/dashboard/sections/MatrixSection";
+import { LaborFinanceSection } from "@/components/dashboard/sections/LaborFinanceSection";
+import { TrialGuard } from "@/components/layout/TrialGuard";
 import { cn } from "@/lib/utils";
 import { Target, Thermometer, Shield, AlertTriangle, Lightbulb, Rocket } from "lucide-react";
+import { PlanGate } from "@/components/ui/PlanGate";
 import { DEFAULT_SURVEY_QUESTIONS, DEFAULT_SEMANTIC_POLICY } from "@/lib/constants";
 import { useCompany } from "@/hooks/useCompany";
 import { Loading } from "@/components/ui/Loading";
@@ -125,7 +128,8 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-slate-50/50">
       <Header />
-      <main className="max-w-3xl mx-auto px-5 py-6 space-y-8">
+      <TrialGuard>
+        <main className="max-w-3xl mx-auto px-5 py-6 space-y-8">
         <div className="space-y-4">
           <MainInsightCard
             title={ins.title}
@@ -138,19 +142,21 @@ export default function DashboardPage() {
 
           {tab === "all" && (
             <div className="flex justify-end">
-              <button
-                onClick={handlers.handleRunAnalyze}
-                disabled={state.isAnalyzing}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-bold transition-all",
-                  state.isAnalyzing 
-                    ? "bg-slate-50 text-slate-400 border-slate-100 cursor-not-allowed"
-                    : "bg-white text-teal border-teal/20 hover:bg-teal/5 hover:border-teal/30 shadow-sm"
-                )}
-              >
-                {state.isAnalyzing ? "分析を生成中..." : "最新の分析を生成"}
-                {!state.isAnalyzing && <Rocket className="w-3.5 h-3.5" />}
-              </button>
+              <PlanGate feature="manual_ai_runs" showOverlay={false}>
+                <button
+                  onClick={handlers.handleRunAnalyze}
+                  disabled={state.isAnalyzing}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-bold transition-all",
+                    state.isAnalyzing 
+                      ? "bg-slate-50 text-slate-400 border-slate-100 cursor-not-allowed"
+                      : "bg-white text-teal border-teal/20 hover:bg-teal/5 hover:border-teal/30 shadow-sm"
+                  )}
+                >
+                  {state.isAnalyzing ? "分析を生成中..." : "最新の分析を生成"}
+                  {!state.isAnalyzing && <Rocket className="w-3.5 h-3.5" />}
+                </button>
+              </PlanGate>
             </div>
           )}
 
@@ -178,6 +184,7 @@ export default function DashboardPage() {
             { id: "matrix", label: "マトリックス" },
             { id: "kpi", label: "KPI推移" },
             { id: "org", label: "組織のKPI" },
+            ...(state.hasLaborData ? [{ id: "finance", label: "人件費ROI" }] : []),
             { id: "survey", label: "組織の体温" },
             { id: "action", label: "アクション" },
             { id: "semantic", label: "組織方針" }
@@ -197,7 +204,21 @@ export default function DashboardPage() {
               setMonth={setMonth}
               currentMatData={currentMatData}
               aiContent={aiContent}
+              hasLaborData={state.hasLaborData}
             />
+          )}
+
+          {sec === "finance" && (
+            <PlanGate feature="labor_analytics" requiredPlan="Pro">
+              <LaborFinanceSection
+                laborRoi={state.laborRoi}
+                laborDistRate={state.laborDistRate}
+                totalLaborCost={state.totalLaborCost}
+                deptFinanceData={state.deptFinanceData}
+                avgLaborCostPerHead={state.avgLaborCostPerHead}
+                aiContent={aiContent}
+              />
+            </PlanGate>
           )}
 
           {sec === "kpi" && (
@@ -310,6 +331,7 @@ export default function DashboardPage() {
           }
         ]}
       />
+      </TrialGuard>
     </div>
   );
 }

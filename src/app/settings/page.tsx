@@ -5,6 +5,8 @@ import { Settings2 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { cn } from "@/lib/utils";
 import { useSettingsData } from "@/hooks/useSettingsData";
+import { PlanGate } from "@/components/ui/PlanGate";
+import { TrialGuard } from "@/components/layout/TrialGuard";
 
 // Tab Components
 import { CompanyTab } from "@/components/settings/CompanyTab";
@@ -29,7 +31,8 @@ export default function SettingsPage() {
     return (
         <div className="min-h-screen bg-slate-50 pb-20">
             <Header />
-            <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+            <TrialGuard>
+                <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-black text-slate-800 tracking-tighter flex items-center gap-3">
@@ -99,20 +102,22 @@ export default function SettingsPage() {
                     )}
 
                     {activeTab === "axis" && (
-                        <AxesTab 
-                            secondaryAxisName={state.secondaryAxisName}
-                            setSecondaryAxisName={handlers.setSecondaryAxisName}
-                            company={state.company}
-                            setCompany={handlers.setCompany}
-                            kpis={state.kpis}
-                            axes={state.axes}
-                            setAxes={handlers.setAxes}
-                            getHistoryTrend={handlers.getHistoryTrend}
-                            handleOpenHistory={handlers.handleOpenHistory}
-                            handleDeleteAxis={handlers.handleDeleteAxis}
-                            handleAddAxis={handlers.handleAddAxis}
-                            handleSaveAllAxes={handlers.handleSaveAllAxes}
-                        />
+                        <PlanGate feature="second_axis" requiredPlan="Standard">
+                            <AxesTab 
+                                secondaryAxisName={state.secondaryAxisName}
+                                setSecondaryAxisName={handlers.setSecondaryAxisName}
+                                company={state.company}
+                                setCompany={handlers.setCompany}
+                                kpis={state.kpis}
+                                axes={state.axes}
+                                setAxes={handlers.setAxes}
+                                getHistoryTrend={handlers.getHistoryTrend}
+                                handleOpenHistory={handlers.handleOpenHistory}
+                                handleDeleteAxis={handlers.handleDeleteAxis}
+                                handleAddAxis={handlers.handleAddAxis}
+                                handleSaveAllAxes={handlers.handleSaveAllAxes}
+                            />
+                        </PlanGate>
                     )}
 
                     {activeTab === "users" && (
@@ -141,12 +146,14 @@ export default function SettingsPage() {
                     )}
 
                     {activeTab === "integration" && (
-                        <IntegrationTab 
-                            company={state.company}
-                            setCompany={handlers.setCompany}
-                            handleTestClientSlackWebhook={handlers.handleTestClientSlackWebhook}
-                            handleSaveIntegration={handlers.handleSaveIntegration}
-                        />
+                        <PlanGate feature="slack_integration" requiredPlan="Standard">
+                            <IntegrationTab 
+                                company={state.company}
+                                setCompany={handlers.setCompany}
+                                handleTestClientSlackWebhook={handlers.handleTestClientSlackWebhook}
+                                handleSaveIntegration={handlers.handleSaveIntegration}
+                            />
+                        </PlanGate>
                     )}
                 </div>
             </main>
@@ -177,6 +184,7 @@ export default function SettingsPage() {
                     handleDeleteUser={handlers.handleDeleteUser}
                 />
             )}
+            </TrialGuard>
         </div>
     );
 }

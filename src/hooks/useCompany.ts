@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 
-import { Company } from "@/types/database";
+import { Company, Plan } from "@/types/database";
+import { differenceInDays, addDays } from "date-fns";
 
 export type { Company };
 
@@ -13,6 +14,7 @@ export function useCompany() {
     const pathname = usePathname();
     const supabase = createClient();
     const [company, setCompany] = useState<Company | null>(null);
+    const [plan, setPlan] = useState<Plan | null>(null);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<any>(null);
     const [isImpersonating, setIsImpersonating] = useState(false);
@@ -83,6 +85,19 @@ export function useCompany() {
 
                 if (compInfo) {
                     setCompany(compInfo);
+
+                    // プラン情報も取得
+                    if (compInfo.plan_id) {
+                        const { data: planInfo } = await supabase
+                            .from('plans')
+                            .select('*')
+                            .eq('id', compInfo.plan_id)
+                            .single();
+                        
+                        if (planInfo) {
+                            setPlan(planInfo);
+                        }
+                    }
                 }
             } catch (error) {
                 console.error("Error loading company context:", error);
@@ -94,5 +109,10 @@ export function useCompany() {
         loadCompany();
     }, [supabase, router, pathname, isImpersonating]); // isImpersonating の変化も監視
 
-    return { company, loading, user, supabase, isImpersonating };
+    const isTrial = company?.status === 'trial';
+    const trialDaysRemaining = (company && plan?.trial_duration_days) 
+        ? Math.max(0, plan.trial_duration_days - differenceInDays(new Date(), new Date(company.created_at)))
+        : null;
+
+    return { company, plan, loading, user, supabase, isImpersonating, isTrial, trialDaysRemaining };
 }

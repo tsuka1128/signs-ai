@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Users, Tag, Plus, Trash2, Save, GripVertical, AlertTriangle } from "lucide-react";
+import { X, Users, Tag, Plus, Trash2, Save, GripVertical, AlertTriangle, Building2, BarChart3 } from "lucide-react";
 import { useAdminSettings } from "@/hooks/useAdminSettings";
+import { createClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { Reorder, AnimatePresence, motion } from "framer-motion";
 
@@ -304,6 +305,253 @@ export function AdminKpisModal({ companyId, companyName, onClose, onSuccess }: M
                                 <h3 className="text-lg font-black text-slate-800 mb-2">構成変更の確認</h3>
                                 <p className="text-sm text-slate-500 font-medium leading-relaxed mb-8">
                                     {companyName} のKPI定義を更新します。デモ設定やチャート表示に影響が出る場合がありますが、よろしいですか？
+                                </p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button onClick={() => setShowConfirm(false)} className="py-3 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200">
+                                        戻る
+                                    </button>
+                                    <button onClick={handleSave} className="py-3 bg-slate-800 text-white rounded-xl font-bold text-sm hover:bg-slate-700">
+                                        はい、保存します
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </motion.div>
+        </div>
+    );
+}
+
+export function AdminCompanySettingsModal({ companyId, companyName, onClose, onSuccess }: ModalProps) {
+    const { fetchCompany, updateCompany, loading } = useAdminSettings(companyId);
+    const [form, setForm] = useState({
+        name: "",
+        website_url: "",
+        secondary_axis_name: "",
+        survey_deadline_day: 25,
+        status: "active",
+        plan_id: "",
+        addon_labor_analytics: false
+    });
+    const [plans, setPlans] = useState<any[]>([]);
+    const [showConfirm, setShowConfirm] = useState(false);
+    const supabase = createClient();
+
+    useEffect(() => {
+        const load = async () => {
+            try {
+                const [companyData, plansData] = await Promise.all([
+                    fetchCompany(),
+                    supabase.from('plans').select('id, name').order('id')
+                ]);
+                
+                if (companyData) {
+                    setForm({
+                        name: companyData.name || "",
+                        website_url: companyData.website_url || "",
+                        secondary_axis_name: companyData.secondary_axis_name || "担当領域",
+                        survey_deadline_day: companyData.survey_deadline_day || 25,
+                        status: companyData.status || "active",
+                        plan_id: companyData.plan_id || "free",
+                        addon_labor_analytics: companyData.addon_labor_analytics || false
+                    });
+                }
+                if (plansData.data) {
+                    setPlans(plansData.data);
+                }
+            } catch (err) {
+                console.error("Error loading settings data:", err);
+            }
+        };
+        load();
+    }, [fetchCompany, supabase]);
+
+    const handleSave = async () => {
+        try {
+            await updateCompany(form);
+            onSuccess();
+            onClose();
+            alert("企業設定を更新しました");
+        } catch (err: any) {
+            alert(`エラーが発生しました: ${err.message}`);
+        } finally {
+            setShowConfirm(false);
+        }
+    };
+
+    const statusOptions = [
+        { value: "trial", label: "トライアル", color: "bg-amber-50 text-amber-600 border-amber-200" },
+        { value: "active", label: "アクティブ", color: "bg-emerald-50 text-emerald-600 border-emerald-200" },
+        { value: "suspended", label: "停止中", color: "bg-rose-50 text-rose-600 border-rose-200" },
+        { value: "cancelled", label: "解約済", color: "bg-slate-100 text-slate-500 border-slate-200" },
+    ];
+
+    return (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+            <motion.div 
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" 
+                onClick={onClose} 
+            />
+            
+            <motion.div 
+                layoutId="modal-company"
+                className="bg-white rounded-[32px] w-full max-w-2xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]"
+            >
+                <header className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+                    <div>
+                        <div className="flex items-center gap-3 text-teal mb-1">
+                            <Building2 className="w-5 h-5" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Quick Edit</span>
+                        </div>
+                        <h2 className="text-xl font-black text-slate-800 tracking-tight">{companyName} の企業設定</h2>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-white rounded-xl transition-all shadow-sm">
+                        <X className="w-5 h-5 text-slate-400" />
+                    </button>
+                </header>
+
+                <div className="p-8 overflow-y-auto flex-1 space-y-6">
+                    {/* 企業名 */}
+                    <div>
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">企業名</label>
+                        <input 
+                            type="text" value={form.name}
+                            onChange={e => setForm({ ...form, name: e.target.value })}
+                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-teal transition-all"
+                        />
+                    </div>
+
+                    {/* Webサイト */}
+                    <div>
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Webサイト URL</label>
+                        <input 
+                            type="url" value={form.website_url}
+                            onChange={e => setForm({ ...form, website_url: e.target.value })}
+                            placeholder="https://example.com"
+                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-teal transition-all"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                        {/* 第2軸の名称 */}
+                        <div>
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">第2軸（担当領域）の名称</label>
+                            <input 
+                                type="text" value={form.secondary_axis_name}
+                                onChange={e => setForm({ ...form, secondary_axis_name: e.target.value })}
+                                placeholder="担当領域"
+                                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-teal transition-all"
+                            />
+                        </div>
+
+                        {/* サーベイ締切日 */}
+                        <div>
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">サーベイ締切日（毎月）</label>
+                            <div className="relative">
+                                <input 
+                                    type="number" min={1} max={31}
+                                    value={form.survey_deadline_day}
+                                    onChange={e => setForm({ ...form, survey_deadline_day: parseInt(e.target.value) || 25 })}
+                                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-teal transition-all pr-8"
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">日</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ステータス & プラン */}
+                    <div className="grid grid-cols-2 gap-6">
+                        <div>
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">ステータス</label>
+                            <div className="flex flex-wrap gap-2">
+                                {statusOptions.map(opt => (
+                                    <button
+                                        key={opt.value}
+                                        onClick={() => setForm({ ...form, status: opt.value })}
+                                        className={cn(
+                                            "px-3 py-1.5 rounded-xl text-xs font-bold border-2 transition-all",
+                                            form.status === opt.value 
+                                                ? `${opt.color} shadow-sm` 
+                                                : "bg-white border-slate-100 text-slate-400 hover:border-slate-200"
+                                        )}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">契約プラン</label>
+                            <select 
+                                value={form.plan_id}
+                                onChange={e => setForm({ ...form, plan_id: e.target.value })}
+                                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 outline-none focus:border-teal transition-all"
+                            >
+                                {plans.map(p => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* オプション設定 */}
+                    <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-3 ml-1">付随オプション設定（アドオン）</label>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-teal/10 flex items-center justify-center text-teal">
+                                    <BarChart3 className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-slate-800">人件費分析・ROIダッシュボード</p>
+                                    <p className="text-[10px] text-slate-400 font-bold">Proプラン以外でも個別に有効化可能です</p>
+                                </div>
+                            </div>
+                            <input 
+                                type="checkbox"
+                                checked={form.addon_labor_analytics || form.plan_id === 'pro'}
+                                disabled={form.plan_id === 'pro'}
+                                onChange={e => setForm({ ...form, addon_labor_analytics: e.target.checked })}
+                                className="w-5 h-5 rounded border-slate-200 text-teal focus:ring-teal disabled:opacity-50"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <footer className="p-8 border-t border-slate-50 flex items-center justify-between gap-4">
+                    <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                        保存するとクライアント側の表示に即座に反映されます
+                    </p>
+                    <div className="flex items-center gap-3">
+                        <button onClick={onClose} className="px-6 py-3 text-slate-400 font-bold text-sm hover:text-slate-600">キャンセル</button>
+                        <button 
+                            onClick={() => setShowConfirm(true)}
+                            disabled={loading || !form.name.trim()}
+                            className="px-8 py-3 bg-slate-800 text-white rounded-2xl font-black text-sm hover:bg-slate-700 transition-all shadow-lg flex items-center gap-2 disabled:opacity-50"
+                        >
+                            <Save className="w-4 h-4" /> 設定を保存
+                        </button>
+                    </div>
+                </footer>
+
+                <AnimatePresence>
+                    {showConfirm && (
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+                            className="absolute inset-0 z-50 flex items-center justify-center p-8"
+                        >
+                            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
+                            <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full relative z-10 text-center shadow-2xl border border-slate-100">
+                                <div className="w-16 h-16 bg-amber-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                                    <AlertTriangle className="w-8 h-8 text-amber-500" />
+                                </div>
+                                <h3 className="text-lg font-black text-slate-800 mb-2">設定変更の確認</h3>
+                                <p className="text-sm text-slate-500 font-medium leading-relaxed mb-8">
+                                    {companyName} の企業設定を更新します。クライアント側の表示に即座に反映されますが、よろしいですか？
                                 </p>
                                 <div className="grid grid-cols-2 gap-3">
                                     <button onClick={() => setShowConfirm(false)} className="py-3 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200">

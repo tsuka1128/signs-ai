@@ -12,12 +12,16 @@ export interface Database {
       companies: {
         Row: {
           id: string
+          plan_id: string
           name: string
-          created_at: string
+          status: 'trial' | 'active' | 'suspended'
           domain: string | null
           plan_type: string | null
           secondary_axis_name: string | null
           secondary_axis_size_kpi_id: string | null
+          addon_labor_analytics: boolean
+          created_at: string
+          updated_at: string
         }
         Insert: { /* omit for brevity */ }
         Update: { /* omit for brevity */ }
@@ -190,6 +194,28 @@ export interface Database {
           created_at?: string
         }
       }
+      plans: {
+        Row: {
+          id: string
+          name: string
+          max_departments: number
+          max_kpis: number
+          max_headcount: number
+          ai_analysis_frequency: number
+          ai_insight_depth: string
+          retention_period_months: number
+          enable_second_axis: boolean
+          enable_slack: boolean
+          enable_labor_analytics: boolean
+          enable_pdf_export: boolean
+          ai_badge_frequency: 'monthly' | 'weekly'
+          manual_ai_runs_per_month: number
+          extra_member_unit: number | null
+          extra_member_price: number | null
+          trial_duration_days: number | null
+          created_at: string
+        }
+      }
     }
   }
 }
@@ -209,3 +235,4 @@ export type ActionItem = Database['public']['Tables']['action_items']['Row']
 export type ResourceRecord = Database['public']['Tables']['resource_records']['Row']
 export type Invitation = Database['public']['Tables']['invitations']['Row']
 export type AdminActivityLog = Database['public']['Tables']['admin_activity_logs']['Row']
+export type Plan = Database['public']['Tables']['plans']['Row']

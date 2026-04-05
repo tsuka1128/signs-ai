@@ -355,14 +355,33 @@ export function useSettingsData() {
     };
 
     const handleOpenHistory = (type: 'dept' | 'axis', id: string, name: string) => {
+        if (id.startsWith("new_")) {
+            alert("新規追加した項目です。先に「すべて保存」をクリックして確定させてから、履歴を入力してください。");
+            return;
+        }
         setHistoryTarget({ type, id, name });
+
+        // 現在のマスターデータから人数の初期値を取得
+        const masterItem = type === 'dept' 
+            ? depts.find(d => d.id === id) 
+            : axes.find(a => a.id === id);
+        const currentHeadcount = masterItem?.headcount || 0;
+
         const months = [];
         const now = new Date();
         for (let i = 11; i >= 0; i--) {
             const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
             const existing = resources.find(r => r.recorded_month === m && (type === 'dept' ? r.department_id === id : r.axis_id === id));
-            months.push({ month: m, head_count: existing?.head_count || 0, labor_cost: existing?.labor_cost || 0 });
+            
+            // レコードがない場合、最新月（i=0）であればマスターの値を初期値としてセット
+            const initialHeadcount = existing ? existing.head_count : (i === 0 ? currentHeadcount : 0);
+            
+            months.push({ 
+                month: m, 
+                head_count: initialHeadcount, 
+                labor_cost: existing?.labor_cost || 0 
+            });
         }
         setTempHistory(months);
         setHistoryModalOpen(true);
@@ -385,6 +404,24 @@ export function useSettingsData() {
                 onConflict: 'company_id, department_id, axis_id, recorded_month'
             });
             if (error) throw error;
+
+            // 最新月のデータをマスターテーブル (departments / kpi_axes) に同期
+            const now = new Date();
+            const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+            const latestRecord = upserts.find(u => u.recorded_month === currentMonthStr);
+            
+            if (latestRecord) {
+                if (historyTarget.type === 'dept') {
+                    await supabase.from('departments').update({ headcount: latestRecord.head_count }).eq('id', historyTarget.id);
+                    // ローカルステートを更新してUIを即座に反映
+                    setDepts(prev => prev.map(d => d.id === historyTarget.id ? { ...d, headcount: latestRecord.head_count } : d));
+                } else {
+                    await supabase.from('kpi_axes').update({ headcount: latestRecord.head_count }).eq('id', historyTarget.id);
+                    // ローカルステートを更新してUIを即座に反映
+                    setAxes(prev => prev.map(a => a.id === historyTarget.id ? { ...a, headcount: latestRecord.head_count } : a));
+                }
+            }
+
             alert("履歴を保存しました");
             const { data } = await supabase.from('resource_records').select('*').eq('company_id', company.id);
             if (data) setResources(data);

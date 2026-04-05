@@ -1,9 +1,11 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { TabBar } from "@/components/ui/TabBar";
 import { ScatterPlot } from "@/components/dashboard/ScatterPlot";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AreaChart, Lightbulb, TrendingDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface MatrixSectionProps {
     secondaryAxisName: string;
@@ -14,6 +16,7 @@ interface MatrixSectionProps {
     setMonth: (m: string) => void;
     currentMatData: any[];
     aiContent?: any;
+    hasLaborData?: boolean;
 }
 
 
@@ -26,7 +29,19 @@ export function MatrixSection({
     setMonth,
     currentMatData,
     aiContent,
+    hasLaborData
 }: MatrixSectionProps) {
+    const [sizeBase, setSizeBase] = useState<"kpi" | "labor">("kpi");
+
+    const scatterData = useMemo(() => {
+        return currentMatData.map(d => ({
+            ...d,
+            sizeValue: sizeBase === "labor" ? d.totalLaborCost : d.sizeValue
+        }));
+    }, [currentMatData, sizeBase]);
+
+    const displaySizeKpiName = sizeBase === "labor" ? "人件費の大きさ" : sizeKpiName;
+
     return (
         <div className="space-y-4">
             <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm transition-all">
@@ -51,9 +66,31 @@ export function MatrixSection({
                                         </div>
                                     </div>
                                 </div>
-                                <span>｜ 横軸: {matView === "product" ? "所属人数" : "リソース量"} ｜ 円サイズ: {sizeKpiName}</span>
+                                <span>｜ 横軸: {matView === "product" ? "所属人数" : "リソース量"} ｜ 円サイズ: {displaySizeKpiName}</span>
                             </div>
                         </div>
+                        {hasLaborData && (
+                            <div className="flex bg-slate-100/60 p-0.5 rounded-full self-start md:self-auto">
+                                <button
+                                    onClick={() => setSizeBase("kpi")}
+                                    className={cn(
+                                        "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all",
+                                        sizeBase === "kpi" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-500"
+                                    )}
+                                >
+                                    重視: 達成率
+                                </button>
+                                <button
+                                    onClick={() => setSizeBase("labor")}
+                                    className={cn(
+                                        "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all",
+                                        sizeBase === "labor" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-500"
+                                    )}
+                                >
+                                    重視: 人件費
+                                </button>
+                            </div>
+                        )}
                     </div>
                     <div className="flex items-center gap-3 flex-wrap">
                         <TabBar
@@ -77,9 +114,9 @@ export function MatrixSection({
                 <div className="px-4">
                     {currentMatData.length > 0 ? (
                         <ScatterPlot
-                            data={currentMatData}
+                            data={scatterData}
                             isProduct={matView === "product"}
-                            sizeKpiName={sizeKpiName}
+                            sizeKpiName={displaySizeKpiName}
                             month={month}
                             onMonthChange={setMonth}
                             onProductToggle={(isProd) => setMatView(isProd ? "product" : "dept")}

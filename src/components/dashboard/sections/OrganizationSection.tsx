@@ -42,6 +42,7 @@ export function OrganizationSection({
                             weather={d.weather}
                             arrow={d.arrow || "flat"}
                             kpis={d.kpis}
+                            laborCostPerHead={d.laborCostPerHead}
                         />
                     ))
                 ) : (
