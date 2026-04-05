@@ -110,8 +110,9 @@ export function useCompany() {
     }, [supabase, router, pathname, isImpersonating]); // isImpersonating の変化も監視
 
     const isTrial = company?.status === 'trial';
-    const trialDaysRemaining = (company && plan?.trial_duration_days) 
-        ? Math.max(0, plan.trial_duration_days - differenceInDays(new Date(), new Date(company.created_at)))
+    const defaultTrialDays = 70;
+    const trialDaysRemaining = company
+        ? Math.max(0, (plan?.trial_duration_days || defaultTrialDays) - differenceInDays(new Date(), new Date(company.created_at)))
         : null;
 
     return { company, plan, loading, user, supabase, isImpersonating, isTrial, trialDaysRemaining };
