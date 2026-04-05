@@ -33,7 +33,10 @@ export default function AdminPlansPage() {
                 .order('id', { ascending: true });
             
             if (!error) {
-                setPlans(data || []);
+                // 表示順を Free -> Team -> Standard -> Pro に固定
+                const order = ['Free', 'Team', 'Standard', 'Pro'];
+                const sorted = (data || []).sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name));
+                setPlans(sorted);
             }
             setLoading(false);
         }
@@ -45,7 +48,7 @@ export default function AdminPlansPage() {
         { key: 'max_kpis', label: '最大KPI定義数', description: '追跡可能なKPI（独自指標）の最大数です。', type: 'number' },
         { key: 'max_headcount', label: '最大メンバー登録数', description: 'アカウントに招待可能な全ユーザーの合計上限です。', type: 'number' },
         { key: 'manual_ai_runs_per_month', label: '月間AI分析実行枠', description: '任意のタイミングで実行可能なAIダッシュボード生成の回数です。', type: 'number' },
-        { key: 'ai_analysis_frequency', label: 'AI自動解析 / バッジ更新', description: 'データの自動解析およびダッジボードへの反映頻度です。', type: 'frequency' },
+        { key: 'ai_badge_frequency', label: 'AI自動解析 / バッジ更新', description: 'データの自動解析およびバッジへの反映頻度です。', type: 'frequency' },
         { key: 'enable_second_axis', label: '第2軸（担当領域）表示', description: '部署とは別の切り口（エリア、職種等）で集計・表示する機能です。', type: 'boolean' },
         { key: 'enable_slack', label: 'Slack連携通知', description: '回答のリマインドやAIレポートの通知をSlackへ送信します。', type: 'boolean' },
         { key: 'enable_labor_analytics', label: '人件費ROIダッシュボード', description: '人件費データとKPIを掛け合わせた、投資対効果の可視化機能です。', type: 'boolean' },
@@ -59,10 +62,13 @@ export default function AdminPlansPage() {
             return val ? <Check className="w-5 h-5 text-emerald-500 mx-auto" /> : <Minus className="w-5 h-5 text-slate-200 mx-auto" />;
         }
         if (row.type === 'frequency') {
-            return <span className="font-black text-slate-700">{val === 1 ? "Weekly" : "Monthly"}</span>;
+            const isWeekly = val === 'weekly';
+            return <Badge className={cn("border-none text-xs font-black px-3 py-1", isWeekly ? "bg-teal text-white" : "bg-slate-100 text-slate-400")}>
+                {isWeekly ? "週次 (Weekly)" : "月次 (Monthly)"}
+            </Badge>;
         }
         if (row.type === 'days') {
-            return <span className="font-black text-slate-700">{val} days</span>;
+            return <span className="font-black text-slate-700">{val || 0} 日間</span>;
         }
         if (val === 999 || val === 9999) return <span className="text-teal font-black italic">無制限</span>;
         return <span className="font-black text-slate-700">{val}</span>;
@@ -94,7 +100,7 @@ export default function AdminPlansPage() {
                             p.name === 'Team' ? "bg-blue-500" : "bg-slate-300"
                         )} />
                         <h3 className="text-xl font-black text-slate-800 mb-2">{p.name}</h3>
-                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-6">{p.id} Plan</p>
+                        <div className="mb-6 h-4" /> {/* ID表示列を削除し、間隔を保持 */}
                         
                         <div className="space-y-4">
                             <div className="p-4 bg-slate-50 rounded-2xl">
