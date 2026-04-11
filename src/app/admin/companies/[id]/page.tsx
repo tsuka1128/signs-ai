@@ -28,6 +28,8 @@ import { HistoryModal } from "@/components/admin/HistoryModal";
 import { AdminDepartmentsModal, AdminKpisModal, AdminCompanySettingsModal } from "@/components/admin/QuickEditModals";
 import { AVAILABLE_ADDONS } from "@/lib/addons";
 import { AnimatePresence } from "framer-motion";
+import { CSVImportModal } from "@/components/admin/CSVImportModal";
+import { useAdminSettings } from "@/hooks/useAdminSettings";
 
 export default function AdminCompanyDetailPage() {
     const params = useParams();
@@ -45,6 +47,9 @@ export default function AdminCompanyDetailPage() {
     const [showDeptModal, setShowDeptModal] = useState(false);
     const [showKpiModal, setShowKpiModal] = useState(false);
     const [showCompanyModal, setShowCompanyModal] = useState(false);
+    const [importType, setImportType] = useState<'kpi' | 'resource' | null>(null);
+
+    const { generateKpiCsvTemplate, generateResourceCsvTemplate } = useAdminSettings(companyId);
 
     const handleRunAI = async () => {
         if (!companyId || isAnalyzing) return;
@@ -64,6 +69,25 @@ export default function AdminCompanyDetailPage() {
             alert(error.message);
         } finally {
             setIsAnalyzing(false);
+        }
+    };
+
+    const handleExportCsv = async (type: 'kpi' | 'resource') => {
+        try {
+            const csv = type === 'kpi' ? await generateKpiCsvTemplate() : await generateResourceCsvTemplate();
+            if (!csv) return;
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `${type}_records_template_${company?.name}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error("CSV Export Error:", error);
+            alert("CSVエクスポートに失敗しました。");
         }
     };
 
@@ -366,6 +390,68 @@ export default function AdminCompanyDetailPage() {
                 </section>
             </div>
 
+            {/* CSV Integration Section */}
+            <section className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+                <header className="p-8 border-b border-slate-50">
+                    <div className="flex items-center gap-3 text-teal mb-1">
+                        <BarChart3 className="w-5 h-5" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Data Integration</span>
+                    </div>
+                    <h2 className="text-xl font-black text-slate-800 tracking-tight">データ連携 (CSV)</h2>
+                    <p className="text-xs text-slate-400 font-bold mt-1">実績データの一括エクスポート・インポートを行います。</p>
+                </header>
+                
+                <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* KPI Records */}
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-black text-slate-700 flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-teal" />
+                            KPI実績データ
+                        </h3>
+                        <div className="flex flex-wrap gap-3">
+                            <button 
+                                onClick={() => handleExportCsv('kpi')}
+                                className="px-5 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+                            >
+                                <Calendar className="w-4 h-4" />
+                                記入用フォーマットを書き出す
+                            </button>
+                            <button 
+                                onClick={() => setImportType('kpi')}
+                                className="px-5 py-2.5 bg-teal text-white rounded-xl text-xs font-black hover:bg-teal/90 transition-all shadow-md flex items-center gap-2"
+                            >
+                                <Upload className="w-4 h-4" />
+                                実績をインポート
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Resource Records */}
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-black text-slate-700 flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                            部署・人件費実績データ
+                        </h3>
+                        <div className="flex flex-wrap gap-3">
+                            <button 
+                                onClick={() => handleExportCsv('resource')}
+                                className="px-5 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+                            >
+                                <Calendar className="w-4 h-4" />
+                                記入用フォーマットを書き出す
+                            </button>
+                            <button 
+                                onClick={() => setImportType('resource')}
+                                className="px-5 py-2.5 bg-slate-800 text-white rounded-xl text-xs font-black hover:bg-slate-700 transition-all shadow-md flex items-center gap-2"
+                            >
+                                <Upload className="w-4 h-4" />
+                                実績をインポート
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* Admin Quick Edit Modals */}
             <AnimatePresence>
                 {showDeptModal && (
@@ -390,6 +476,17 @@ export default function AdminCompanyDetailPage() {
                         companyName={company.name}
                         onClose={() => setShowCompanyModal(false)}
                         onSuccess={fetchCompanyDetails}
+                    />
+                )}
+                {importType && (
+                    <CSVImportModal
+                        companyId={company.id}
+                        type={importType}
+                        onClose={() => setImportType(null)}
+                        onSuccess={() => {
+                            setImportType(null);
+                            fetchCompanyDetails();
+                        }}
                     />
                 )}
             </AnimatePresence>
