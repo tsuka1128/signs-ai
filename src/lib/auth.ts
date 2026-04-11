@@ -70,12 +70,20 @@ export async function signOut() {
 /** パスワード再設定メールを送信する */
 export async function sendPasswordResetEmail(email: string, redirectToOption?: string) {
     const supabase = createClient();
+    
+    // getBaseURL() の末尾スラッシュを確実に除去しつつ、パスを結合
+    const baseUrl = getBaseURL().replace(/\/$/, '');
+    const redirectTo = redirectToOption || `${baseUrl}/auth/callback?type=recovery`;
+    
+    // デバッグ用: ブラウザのコンソールで確認できる
+    console.log("Signs AI Auth - Redirecting to:", redirectTo);
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: redirectToOption || `${getBaseURL()}/auth/callback?type=recovery`,
+        redirectTo: redirectTo,
     });
 
     if (error) {
-        console.error("パスワードリセットメール送信エラー:", error.message);
+        console.error("Password Reset Error:", error.message);
         throw error;
     }
 }
