@@ -75,9 +75,6 @@ export async function sendPasswordResetEmail(email: string, redirectToOption?: s
     const baseUrl = getBaseURL().replace(/\/$/, '');
     const redirectTo = redirectToOption || `${baseUrl}/auth/callback?type=recovery`;
     
-    // デバッグ用: ブラウザのコンソールで確認できる
-    console.log("Signs AI Auth - Redirecting to:", redirectTo);
-
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectTo,
     });
