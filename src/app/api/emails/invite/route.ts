@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { sendInvitationEmail } from "@/lib/mail";
 
 export async function POST(req: NextRequest) {
@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
         const { invitationId } = await req.json();
         if (!invitationId) return NextResponse.json({ error: "invitationId is required" }, { status: 400 });
 
-        const supabase = await createClient();
+        const supabase = await createServerSupabaseClient();
         
         // 招待情報の取得 (会社名もJOIN)
         const { data: inv, error: invErr } = await supabase
