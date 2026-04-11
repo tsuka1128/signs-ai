@@ -53,7 +53,7 @@ export function AdminDepartmentsModal({ companyId, companyName, onClose, onSucce
             
             <motion.div 
                 layoutId="modal"
-                className="bg-white rounded-[32px] w-full max-w-2xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]"
+                className="bg-white rounded-[32px] w-full max-w-3xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]"
             >
                 <header className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
                     <div>
@@ -128,15 +128,25 @@ export function AdminDepartmentsModal({ companyId, companyName, onClose, onSucce
                             保存するとクライアント側の表示に即座に反映されます
                         </p>
                         <button 
-                            onClick={async () => {
-                                const csv = await generateResourceCsvTemplate();
-                                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                                const link = document.createElement('a');
-                                link.href = URL.createObjectURL(blob);
-                                link.download = `resource_import_${companyName}_${new Date().toISOString().split('T')[0]}.csv`;
-                                link.click();
+                            onClick={async (e) => {
+                                e.preventDefault();
+                                try {
+                                    const csv = await generateResourceCsvTemplate();
+                                    if (!csv) return;
+                                    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
+                                    const url = URL.createObjectURL(blob);
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    link.download = `resource_import_${companyName}_${new Date().toISOString().split('T')[0]}.csv`;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                    URL.revokeObjectURL(url);
+                                } catch (err) {
+                                    console.error("Export error:", err);
+                                }
                             }}
-                            className="text-[10px] font-black text-teal hover:underline flex items-center gap-1 mt-1 uppercase tracking-widest"
+                            className="text-[10px] font-black text-teal hover:underline flex items-center gap-1 mt-1 uppercase tracking-widest bg-transparent border-none p-0 cursor-pointer"
                         >
                             <Download className="w-3 h-3" /> 記入用フォーマット(CSV)をダウンロード
                         </button>
@@ -243,7 +253,7 @@ export function AdminKpisModal({ companyId, companyName, onClose, onSuccess }: M
             
             <motion.div 
                 layoutId="modal-kpi"
-                className="bg-white rounded-[32px] w-full max-w-2xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]"
+                className="bg-white rounded-[32px] w-full max-w-3xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]"
             >
                 <header className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
                     <div>
@@ -320,15 +330,25 @@ export function AdminKpisModal({ companyId, companyName, onClose, onSuccess }: M
                             KPIの名前や順番を変更すると、過去の入力内容の表示も即座に切り替わります
                         </p>
                         <button 
-                            onClick={async () => {
-                                const csv = await generateKpiCsvTemplate();
-                                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                                const link = document.createElement('a');
-                                link.href = URL.createObjectURL(blob);
-                                link.download = `kpi_import_${companyName}_${new Date().toISOString().split('T')[0]}.csv`;
-                                link.click();
+                            onClick={async (e) => {
+                                e.preventDefault();
+                                try {
+                                    const csv = await generateKpiCsvTemplate();
+                                    if (!csv) return;
+                                    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
+                                    const url = URL.createObjectURL(blob);
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    link.download = `kpi_import_${companyName}_${new Date().toISOString().split('T')[0]}.csv`;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                    URL.revokeObjectURL(url);
+                                } catch (err) {
+                                    console.error("Export error:", err);
+                                }
                             }}
-                            className="text-[10px] font-black text-teal hover:underline flex items-center gap-1 mt-1 uppercase tracking-widest"
+                            className="text-[10px] font-black text-teal hover:underline flex items-center gap-1 mt-1 uppercase tracking-widest bg-transparent border-none p-0 cursor-pointer"
                         >
                             <Download className="w-3 h-3" /> 記入用フォーマット(CSV)をダウンロード
                         </button>
@@ -476,7 +496,7 @@ export function AdminCompanySettingsModal({ companyId, companyName, onClose, onS
             
             <motion.div 
                 layoutId="modal-company"
-                className="bg-white rounded-[32px] w-full max-w-2xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]"
+                className="bg-white rounded-[32px] w-full max-w-3xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]"
             >
                 <header className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
                     <div>
