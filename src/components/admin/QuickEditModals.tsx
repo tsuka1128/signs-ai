@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Users, Tag, Plus, Trash2, Save, GripVertical, AlertTriangle, Building2, BarChart3, MessageSquare, ShieldCheck, Zap } from "lucide-react";
+import { X, Users, Tag, Plus, Trash2, Save, GripVertical, AlertTriangle, Building2, BarChart3, MessageSquare, ShieldCheck, Zap, Download } from "lucide-react";
 import { useAdminSettings } from "@/hooks/useAdminSettings";
 import { AVAILABLE_ADDONS } from "@/lib/addons";
 import { createClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { Reorder, AnimatePresence, motion } from "framer-motion";
+import { CSVImportModal } from "./CSVImportModal";
 
 interface ModalProps {
     companyId: string;
@@ -16,9 +17,10 @@ interface ModalProps {
 }
 
 export function AdminDepartmentsModal({ companyId, companyName, onClose, onSuccess }: ModalProps) {
-    const { fetchDepartments, updateDepartments, loading } = useAdminSettings(companyId);
+    const { fetchDepartments, updateDepartments, generateResourceCsvTemplate, loading } = useAdminSettings(companyId);
     const [depts, setDepts] = useState<any[]>([]);
     const [showConfirm, setShowConfirm] = useState(false);
+    const [showImport, setShowImport] = useState(false);
 
     useEffect(() => {
         fetchDepartments().then(setDepts).catch(console.error);
@@ -120,11 +122,32 @@ export function AdminDepartmentsModal({ companyId, companyName, onClose, onSucce
                 </div>
 
                 <footer className="p-8 border-t border-slate-50 flex items-center justify-between gap-4">
-                    <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5">
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                        保存するとクライアント側の表示に即座に反映されます
-                    </p>
+                    <div className="flex flex-col gap-1">
+                        <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5">
+                            <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                            保存するとクライアント側の表示に即座に反映されます
+                        </p>
+                        <button 
+                            onClick={async () => {
+                                const csv = await generateResourceCsvTemplate();
+                                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                                const link = document.createElement('a');
+                                link.href = URL.createObjectURL(blob);
+                                link.download = `resource_import_${companyName}_${new Date().toISOString().split('T')[0]}.csv`;
+                                link.click();
+                            }}
+                            className="text-[10px] font-black text-teal hover:underline flex items-center gap-1 mt-1 uppercase tracking-widest"
+                        >
+                            <Download className="w-3 h-3" /> 記入用フォーマット(CSV)をダウンロード
+                        </button>
+                    </div>
                     <div className="flex items-center gap-3">
+                        <button 
+                            onClick={() => setShowImport(true)}
+                            className="px-6 py-3 border border-slate-200 text-slate-600 rounded-2xl font-bold text-sm hover:bg-slate-50 transition-all"
+                        >
+                            CSVインポート
+                        </button>
                         <button onClick={onClose} className="px-6 py-3 text-slate-400 font-bold text-sm hover:text-slate-600">キャンセル</button>
                         <button 
                             onClick={() => setShowConfirm(true)}
@@ -164,15 +187,30 @@ export function AdminDepartmentsModal({ companyId, companyName, onClose, onSucce
                         </motion.div>
                     )}
                 </AnimatePresence>
+
+                <AnimatePresence>
+                    {showImport && (
+                        <CSVImportModal 
+                            companyId={companyId} 
+                            type="resource" 
+                            onClose={() => setShowImport(false)} 
+                            onSuccess={() => {
+                                setShowImport(false);
+                                onSuccess();
+                            }}
+                        />
+                    )}
+                </AnimatePresence>
             </motion.div>
         </div>
     );
 }
 
 export function AdminKpisModal({ companyId, companyName, onClose, onSuccess }: ModalProps) {
-    const { fetchKpis, updateKpis, loading } = useAdminSettings(companyId);
+    const { fetchKpis, updateKpis, generateKpiCsvTemplate, loading } = useAdminSettings(companyId);
     const [kpis, setKpis] = useState<any[]>([]);
     const [showConfirm, setShowConfirm] = useState(false);
+    const [showImport, setShowImport] = useState(false);
 
     useEffect(() => {
         fetchKpis().then(setKpis).catch(console.error);
@@ -276,11 +314,32 @@ export function AdminKpisModal({ companyId, companyName, onClose, onSuccess }: M
                 </div>
 
                 <footer className="p-8 border-t border-slate-50 flex items-center justify-between gap-4">
-                    <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5 leading-tight max-w-[240px]">
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                        KPIの名前や順番を変更すると、過去の入力内容の表示も即座に切り替わります
-                    </p>
+                    <div className="flex flex-col gap-1">
+                        <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5 leading-tight max-w-[240px]">
+                            <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                            KPIの名前や順番を変更すると、過去の入力内容の表示も即座に切り替わります
+                        </p>
+                        <button 
+                            onClick={async () => {
+                                const csv = await generateKpiCsvTemplate();
+                                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                                const link = document.createElement('a');
+                                link.href = URL.createObjectURL(blob);
+                                link.download = `kpi_import_${companyName}_${new Date().toISOString().split('T')[0]}.csv`;
+                                link.click();
+                            }}
+                            className="text-[10px] font-black text-teal hover:underline flex items-center gap-1 mt-1 uppercase tracking-widest"
+                        >
+                            <Download className="w-3 h-3" /> 記入用フォーマット(CSV)をダウンロード
+                        </button>
+                    </div>
                     <div className="flex items-center gap-3">
+                        <button 
+                            onClick={() => setShowImport(true)}
+                            className="px-6 py-3 border border-slate-200 text-slate-600 rounded-2xl font-bold text-sm hover:bg-slate-50 transition-all"
+                        >
+                            CSVインポート
+                        </button>
                         <button onClick={onClose} className="px-6 py-3 text-slate-400 font-bold text-sm hover:text-slate-600">キャンセル</button>
                         <button 
                             onClick={() => setShowConfirm(true)}
@@ -317,6 +376,20 @@ export function AdminKpisModal({ companyId, companyName, onClose, onSuccess }: M
                                 </div>
                             </div>
                         </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                    {showImport && (
+                        <CSVImportModal 
+                            companyId={companyId} 
+                            type="kpi" 
+                            onClose={() => setShowImport(false)} 
+                            onSuccess={() => {
+                                setShowImport(false);
+                                onSuccess();
+                            }}
+                        />
                     )}
                 </AnimatePresence>
             </motion.div>

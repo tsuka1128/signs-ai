@@ -307,7 +307,7 @@ export function useSettingsData() {
     const handleInvite = async () => {
         if (!company?.id || !currentUserId) return;
         const supabase = createClient();
-        const { error } = await supabase.from('invitations').insert({
+        const { data: inv, error } = await supabase.from('invitations').insert({
             email: inviteEmail,
             company_id: company.id,
             inviter_id: currentUserId,
@@ -315,10 +315,25 @@ export function useSettingsData() {
             department_id: inviteDeptId || null,
             axis_id: inviteAxisId || null,
             slack_user_id: inviteSlackUserId || null
-        });
+        }).select().single();
 
-        if (!error) {
-            alert("招待を送信しました");
+        if (!error && inv) {
+            // Send actual email via Resend
+            try {
+                const mailRes = await fetch("/api/emails/invite", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ invitationId: inv.id })
+                });
+                if (!mailRes.ok) {
+                    const mailErr = await mailRes.json();
+                    console.warn("Mail sending failed but invite was created:", mailErr);
+                }
+            } catch (e) {
+                console.error("Mail API Error:", e);
+            }
+
+            alert("招待を送信しました（メールが配信されます）");
             setInviteEmail("");
             setInviteDeptId("");
             setInviteAxisId("");
@@ -326,7 +341,7 @@ export function useSettingsData() {
             const { data } = await supabase.from('invitations').select('*').eq('company_id', company.id).eq('status', 'pending');
             if (data) setInvitations(data);
         } else {
-            alert(`招待に失敗しました: ${error.message}`);
+            alert(`招待に失敗しました: ${error?.message}`);
         }
     };
 
@@ -339,10 +354,23 @@ export function useSettingsData() {
     };
 
     const handleResendInvitation = async (inv: Invitation) => {
-        const supabase = createClient();
-        const { error } = await supabase.from('invitations').update({ updated_at: new Date().toISOString() } as any).eq('id', inv.id);
-        if (!error) alert(`${inv.email} 宛に招待を再送（再通知）しました`);
-        else alert(`再送に失敗しました: ${error.message}`);
+        try {
+            const mailRes = await fetch("/api/emails/invite", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ invitationId: inv.id })
+            });
+            if (mailRes.ok) {
+                alert(`${inv.email} 宛に招待メールを再送しました`);
+                // Update local list
+                setInvitations(prev => prev.map(p => p.id === inv.id ? { ...p, updated_at: new Date().toISOString() } : p));
+            } else {
+                const err = await mailRes.json();
+                alert(`再送に失敗しました: ${err.error}`);
+            }
+        } catch (e: any) {
+            alert(`エラーが発生しました: ${e.message}`);
+        }
     };
 
     const handleCopyInviteLink = async (inv: Invitation | any) => {

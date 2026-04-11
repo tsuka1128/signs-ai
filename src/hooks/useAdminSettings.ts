@@ -166,6 +166,98 @@ export function useAdminSettings(companyId: string) {
         if (error) throw error;
     };
 
+    /**
+     * KPI実績・リソース実績の取得およびCSV生成ロジック
+     */
+    
+    const fetchAllKpiRecords = useCallback(async () => {
+        const { data, error } = await supabase
+            .from('kpi_records')
+            .select('*')
+            .eq('company_id', companyId)
+            .order('recorded_month', { ascending: false });
+        if (error) throw error;
+        return data;
+    }, [supabase, companyId]);
+
+    const fetchAllResourceRecords = useCallback(async () => {
+        const { data, error } = await supabase
+            .from('resource_records')
+            .select('*')
+            .eq('company_id', companyId)
+            .order('recorded_month', { ascending: false });
+        if (error) throw error;
+        return data;
+    }, [supabase, companyId]);
+
+    const generateKpiCsvTemplate = async () => {
+        setLoading(true);
+        try {
+            const [depts, kpis, records] = await Promise.all([
+                fetchDepartments(),
+                fetchKpis(),
+                fetchAllKpiRecords()
+            ]);
+
+            const { getLastNMonths } = await import("@/lib/utils/date");
+            const months = getLastNMonths(13); // 直近1年+今月
+            const headers = ['対象月', '部署名', ...kpis.map(k => k.name)];
+            const csvRows = [headers.join(',')];
+
+            for (const month of months) {
+                for (const dept of depts) {
+                    const row = [month, dept.name];
+                    for (const kpi of kpis) {
+                        const rec = records.find(r => 
+                            r.department_id === dept.id && 
+                            r.kpi_definition_id === kpi.id && 
+                            r.recorded_month === month
+                        );
+                        row.push(rec ? rec.value.toString() : "");
+                    }
+                    csvRows.push(row.join(','));
+                }
+            }
+            return csvRows.join('\n');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const generateResourceCsvTemplate = async () => {
+        setLoading(true);
+        try {
+            const [depts, records] = await Promise.all([
+                fetchDepartments(),
+                fetchAllResourceRecords()
+            ]);
+
+            const { getLastNMonths } = await import("@/lib/utils/date");
+            const months = getLastNMonths(13);
+            const headers = ['対象月', '部署名', '人数', '人件費'];
+            const csvRows = [headers.join(',')];
+
+            for (const month of months) {
+                for (const dept of depts) {
+                    const rec = records.find(r => 
+                        r.department_id === dept.id && 
+                        r.recorded_month === month
+                    );
+                    const row = [
+                        month, 
+                        dept.name, 
+                        rec ? rec.head_count.toString() : "", 
+                        rec ? rec.labor_cost.toString() : ""
+                    ];
+                    csvRows.push(row.join(','));
+                }
+            }
+            return csvRows.join('\n');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return {
         loading,
         fetchCompany,
@@ -175,6 +267,8 @@ export function useAdminSettings(companyId: string) {
         updateDepartments,
         deleteDepartment,
         updateKpis,
-        deleteKpi
+        deleteKpi,
+        generateKpiCsvTemplate,
+        generateResourceCsvTemplate
     };
 }

@@ -28,7 +28,8 @@ export async function GET(request: NextRequest) {
     }
 
     // 認証成功後：リカバリーフローの場合は最優先でパスワード更新画面へ
-    if (type === "recovery") {
+    // urlのクエリパラメータ、またはSupabaseが自動付与するnextパラメータに recovery が含まれる場合
+    if (type === "recovery" || next.includes("recovery") || next.includes("type=recovery")) {
         return NextResponse.redirect(`${origin}/password-update`);
     }
     
