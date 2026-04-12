@@ -8,7 +8,6 @@ import { Company, Department, KpiDefinition, KpiAxis, User, Invitation, Resource
 
 export function useSettingsData() {
     const router = useRouter();
-    const router = useRouter();
     const { isSuperAdmin, impersonatedCompanyId, loading: adminLoading } = useAdmin();
     const [loading, setLoading] = useState(true);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
