@@ -203,8 +203,8 @@ export function useAdminSettings(companyId: string) {
             const records = await fetchAllKpiRecords(kpiIds);
 
             const { getLastNMonths } = await import("@/lib/utils/date");
-            const months = getLastNMonths(13); // 直近1年+今月
-            const headers = ['対象月', '部署名', ...kpis.map(k => k.name)];
+            const months = getLastNMonths(13).map(m => m.slice(0, 7)); // YYYY-MM-01 -> YYYY-MM
+            const headers = ['対象月', '部署名', ...kpis.map((k: any) => k.name)];
             const csvRows = [headers.join(',')];
 
             for (const month of months) {
@@ -236,7 +236,7 @@ export function useAdminSettings(companyId: string) {
             ]);
 
             const { getLastNMonths } = await import("@/lib/utils/date");
-            const months = getLastNMonths(13);
+            const months = getLastNMonths(13).map(m => m.slice(0, 7)); // YYYY-MM-01 -> YYYY-MM
             const headers = ['対象月', '部署名', '人数', '人件費'];
             const csvRows = [headers.join(',')];
 
