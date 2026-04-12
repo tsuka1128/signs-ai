@@ -7,18 +7,22 @@ import { ShieldAlert, LogOut, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function ImpersonationBanner() {
-    const { isSuperAdmin, stopImpersonating } = useAdmin();
-    const { company, isImpersonating } = useCompany();
+    const { stopImpersonating } = useAdmin();
+    const { company, isImpersonating, loading } = useCompany();
     const pathname = usePathname();
+
+    // アトミックな判定
+    const directImpersonating = typeof window !== "undefined" ? !!localStorage.getItem("impersonated_company_id") : false;
+    const active = isImpersonating || directImpersonating;
 
     const isAdminPage = pathname?.startsWith('/admin');
 
-    // 管理者ではない、または代理ログイン中でない場合は表示しない
-    if (!isSuperAdmin || !isImpersonating || isAdminPage) return null;
+    // 管理画面、または代理ログイン中でない場合は表示しない
+    if (!active || isAdminPage) return null;
 
     return (
-        <div className="fixed top-0 left-0 right-0 z-[9999] animate-slideDown">
-            <div className="bg-slate-900 border-b border-amber-500/30 px-4 py-2.5 shadow-2xl overflow-hidden relative group">
+        <div className="sticky top-0 w-full z-[10000] animate-slideDown">
+            <div className="bg-slate-900 border-b border-amber-500/30 px-4 py-2 shadow-2xl overflow-hidden relative group">
                 {/* Background Glow */}
                 <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-transparent to-amber-500/5 opacity-50" />
 
@@ -31,14 +35,14 @@ export function ImpersonationBanner() {
                         <div className="flex items-center gap-2 border-l border-slate-700 pl-4">
                             <Building2 className="w-4 h-4 text-slate-400" />
                             <p className="text-sm font-bold text-white">
-                                <span className="text-slate-400 font-medium">現在は</span>
+                                <span className="text-slate-400 font-medium whitespace-nowrap">現在は</span>
                                 <span className={cn(
                                     "mx-1.5 text-amber-50 px-1 rounded bg-amber-500/10",
-                                    !company && "animate-pulse bg-slate-700 text-transparent"
+                                    (loading || !company) && "animate-pulse bg-slate-700 text-transparent"
                                 )}> 
                                     {company ? company.name : "Loading..."} 
                                 </span>
-                                <span className="text-slate-400 font-medium">の視点でログインしています</span>
+                                <span className="text-slate-400 font-medium whitespace-nowrap">の視点でログインしています</span>
                             </p>
                         </div>
                     </div>
@@ -57,17 +61,6 @@ export function ImpersonationBanner() {
                     </div>
                 </div>
             </div>
-            {/* Spacer for content underneath - actually it's fixed so we need to add padding to the body or main layout */}
         </div>
     );
-}
-
-// Layout用のアジャスター（バナー分の高さを確保）
-export function ImpersonationSpacer() {
-    const { isSuperAdmin, impersonatedCompanyId } = useAdmin();
-    const pathname = usePathname();
-    const isAdminPage = pathname?.startsWith('/admin');
-
-    if (!isSuperAdmin || !impersonatedCompanyId || isAdminPage) return null;
-    return <div className="h-[45px]" />;
 }
