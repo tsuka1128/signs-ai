@@ -16,7 +16,9 @@ import {
     Clock,
     Target,
     BookOpen,
-    Save
+    Save,
+    ChevronDown,
+    ChevronUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +30,7 @@ export default function AdminPlansPage() {
     const [editedPlans, setEditedPlans] = useState<any[]>([]);
     const [history, setHistory] = useState<any[]>([]);
     const [saving, setSaving] = useState(false);
+    const [showFullHistory, setShowFullHistory] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -312,8 +315,8 @@ export default function AdminPlansPage() {
                     <h2 className="text-lg font-black text-slate-800">マスタープラン変更履歴</h2>
                 </div>
                 <div className="grid grid-cols-1 gap-4">
-                    {history.length > 0 ? history.map((h) => (
-                        <div key={h.id} className="bg-white border border-slate-100 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-sm transition-all">
+                    {(showFullHistory ? history : history.slice(0, 3)).map((h) => (
+                        <div key={h.id} className="bg-white border border-slate-100 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-sm transition-all animate-fadeIn">
                             <div className="space-y-2">
                                 <div className="flex items-center gap-3">
                                     <Badge className="bg-slate-800 text-white border-none font-bold text-[10px]">
@@ -337,12 +340,32 @@ export default function AdminPlansPage() {
                                 <p className="text-[10px] font-bold text-slate-400 mt-1">{new Date(h.created_at).toLocaleString('ja-JP')}</p>
                             </div>
                         </div>
-                    )) : (
+                    ))}
+                    {history.length === 0 && (
                         <div className="py-12 text-center bg-slate-50 rounded-[32px] border-2 border-dashed border-slate-100">
                             <p className="text-sm font-bold text-slate-400 italic">変更履歴はありません</p>
                         </div>
                     )}
                 </div>
+
+                {history.length > 3 && (
+                    <div className="flex justify-center pt-2">
+                        <button 
+                            onClick={() => setShowFullHistory(!showFullHistory)}
+                            className="flex items-center gap-2 px-6 py-2 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-full text-xs font-black transition-all"
+                        >
+                            {showFullHistory ? (
+                                <>
+                                    <ChevronUp className="w-4 h-4" /> 履歴を折りたたむ
+                                </>
+                            ) : (
+                                <>
+                                    <ChevronDown className="w-4 h-4" /> 残りの {history.length - 3} 件を表示
+                                </>
+                            )}
+                        </button>
+                    </div>
+                )}
             </section>
             
 
