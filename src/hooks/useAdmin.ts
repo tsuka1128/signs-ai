@@ -14,12 +14,12 @@ export function useAdmin() {
     const [impersonatedCompanyId, setImpersonatedCompanyId] = useState<string | null>(null);
 
     useEffect(() => {
-        setImpersonatedCompanyId(localStorage.getItem("impersonated_company_id"));
-    }, []);
-
-    useEffect(() => {
         async function checkAdmin() {
             try {
+                // 1. まず ID を読み込む
+                const storedId = typeof window !== "undefined" ? localStorage.getItem("impersonated_company_id") : null;
+                setImpersonatedCompanyId(storedId);
+
                 const { data: { user: authUser } } = await supabase.auth.getUser();
                 if (!authUser) {
                     // 管理者ページ (/admin) にアクセスしている場合のみログインへ飛ばす
@@ -31,12 +31,13 @@ export function useAdmin() {
                 }
                 setUser(authUser);
 
+                // プロファイルとロールを確認
                 const { data: userData, error } = await supabase
                     .from('users')
                     .select('role')
                     .eq('id', authUser.id)
                     .single();
-
+                
                 if (error || userData?.role !== 'super_admin') {
                     console.error("Access denied: Not a super_admin");
                     // 管理画面へのアクセスかつ権限不足の場合のみリダイレクト
@@ -44,13 +45,11 @@ export function useAdmin() {
                         router.push("/");
                     }
                     setIsSuperAdmin(false);
-                    setLoading(false);
-                    return;
+                } else {
+                    setIsSuperAdmin(true);
                 }
-
-                setIsSuperAdmin(true);
             } catch (error) {
-                console.error("Error in useAdmin:", error);
+                console.error("useAdmin check failed:", error);
                 if (pathname?.startsWith('/admin')) {
                     router.push("/");
                 }

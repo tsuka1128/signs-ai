@@ -63,9 +63,14 @@ export function useSettingsData() {
         
         let effectiveId = userData?.company_id;
 
-        // useAdmin から取得した情報を最優先する
-        if (isSuperAdmin && impersonatedCompanyId) {
-            effectiveId = impersonatedCompanyId;
+        // useAdmin から取得した情報を最優先し、ステートの反映待ちに備えて localStorage も直接確認する
+        if (isSuperAdmin) {
+            const directId = typeof window !== "undefined" ? localStorage.getItem("impersonated_company_id") : null;
+            const finalImpersonatedId = impersonatedCompanyId || directId;
+            
+            if (finalImpersonatedId) {
+                effectiveId = finalImpersonatedId;
+            }
         }
 
         if (!effectiveId) {
