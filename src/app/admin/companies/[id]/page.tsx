@@ -20,7 +20,8 @@ import {
     ChevronRight,
     Search,
     Zap,
-    Upload
+    Upload,
+    ShieldCheck
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
