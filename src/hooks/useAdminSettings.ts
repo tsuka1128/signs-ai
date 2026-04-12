@@ -204,6 +204,10 @@ export function useAdminSettings(companyId: string) {
             const records = await fetchAllKpiRecords(kpiIds);
 
             const months = getLastNMonths(13).map(m => m.slice(0, 7)); // YYYY-MM-01 -> YYYY-MM
+
+            // 部署名のマッピング（KPIの owner_dept_id から部署名を解決）
+            const deptMap = Object.fromEntries(depts.map((d: any) => [d.id, d.name]));
+
             const headers = ['対象月', '部署名', ...kpis.map((k: any) => k.name)];
             const csvRows = [headers.join(',')];
 
@@ -211,10 +215,18 @@ export function useAdminSettings(companyId: string) {
                 for (const dept of depts) {
                     const row = [month, dept.name];
                     for (const kpi of kpis) {
+                        // kpi_records は kpi_definition_id + recorded_month (+ axis_id) で管理されている
+                        // department_id が入っている場合はそれで照合、
+                        // 入っていない場合は KPI の owner_dept_id が一致すれば値を表示
                         const rec = records.find(r => 
-                            r.department_id === dept.id && 
                             r.kpi_definition_id === kpi.id && 
-                            r.recorded_month === month
+                            r.recorded_month === month &&
+                            (
+                                // department_id が明示的にセットされている場合
+                                (r.department_id != null && r.department_id === dept.id) ||
+                                // department_id が NULL の場合、KPI定義の所属部署で照合
+                                (r.department_id == null && !r.axis_id && kpi.owner_dept_id === dept.id)
+                            )
                         );
                         row.push(rec ? rec.value.toString() : "");
                     }
