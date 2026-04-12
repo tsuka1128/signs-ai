@@ -3,10 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
+import { useAdmin } from "@/hooks/useAdmin";
 import { Company, Department, KpiDefinition, KpiAxis, User, Invitation, ResourceRecord } from "@/types/database";
 
 export function useSettingsData() {
     const router = useRouter();
+    const router = useRouter();
+    const { isSuperAdmin, impersonatedCompanyId, loading: adminLoading } = useAdmin();
     const [loading, setLoading] = useState(true);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -44,6 +47,9 @@ export function useSettingsData() {
     });
 
     const loadSettings = useCallback(async () => {
+        // 管理者権限の読み込みを待つ
+        if (adminLoading) return;
+
         setLoading(true);
         const supabase = createClient();
         const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -55,25 +61,20 @@ export function useSettingsData() {
 
         const { data: userData } = await supabase.from('users').select('company_id, role').eq('id', authUser.id).single();
         
-        // 管理者以外で company_id がない場合のみリターン
-        if (!userData?.company_id && userData?.role !== 'super_admin') {
-            setLoading(false);
-            return;
-        }
-
-        // 代理ログイン ID の確認 (super_admin の場合のみ)
         let effectiveId = userData?.company_id;
-        const isSuperAdmin = userData?.role === 'super_admin';
-        
-        if (isSuperAdmin && typeof window !== "undefined") {
-            const impersonatedId = localStorage.getItem("impersonated_company_id");
-            if (impersonatedId) {
-                effectiveId = impersonatedId;
-            }
+
+        // useAdmin から取得した情報を最優先する
+        if (isSuperAdmin && impersonatedCompanyId) {
+            effectiveId = impersonatedCompanyId;
         }
 
         if (!effectiveId) {
-            setLoading(false);
+            // 代理ログイン中でもなく、所属もない、管理画面でもない場合は onboarding へ
+            if (!isSuperAdmin) {
+                router.push("/onboarding");
+            } else {
+                setLoading(false);
+            }
             return;
         }
 
@@ -100,7 +101,7 @@ export function useSettingsData() {
         if (res.data) setResources(res.data);
 
         setLoading(false);
-    }, [router]);
+    }, [router, isSuperAdmin, impersonatedCompanyId, adminLoading]);
 
     useEffect(() => {
         loadSettings();
