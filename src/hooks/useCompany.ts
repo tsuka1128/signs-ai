@@ -48,56 +48,41 @@ export function useCompany() {
                 }
                 setUser(authUser);
 
-                // ロールを確認（代理ログインの可否判定用）
-                const { data: userData } = await supabase
-                    .from('users')
-                    .select('company_id, role')
-                    .eq('id', authUser.id)
-                    .single();
-
-                let effectiveCompanyId = userData?.company_id;
+                // ロールと本来の所属を一括取得（アトミック判定）
+                const { data: userData } = await supabase.from('users').select('company_id, role').eq('id', authUser.id).single();
+                
+                let targetId = userData?.company_id;
                 let usedImpersonation = false;
 
-                // super_admin の場合のみ、代理ログイン ID を確認
-                if (userData?.role === 'super_admin' && typeof window !== "undefined") {
-                    const impersonatedId = localStorage.getItem("impersonated_company_id");
-                    if (impersonatedId) {
-                        effectiveCompanyId = impersonatedId;
+                // 管理者の場合は localStorage を直接確認
+                if (userData?.role === 'super_admin') {
+                    const storedId = typeof window !== "undefined" ? localStorage.getItem("impersonated_company_id") : null;
+                    if (storedId) {
+                        targetId = storedId;
                         usedImpersonation = true;
                     }
                 }
 
                 setIsImpersonating(usedImpersonation);
 
-                if (!effectiveCompanyId) {
+                if (!targetId) {
                     if (!usedImpersonation && !pathname?.startsWith('/onboarding')) {
                         router.push("/onboarding");
                     }
+                    setLoading(false);
                     return;
                 }
 
                 // キャッシュを避け、最新の情報を取得
                 const { data: compInfo } = await supabase
                     .from('companies')
-                    .select('*')
-                    .eq('id', effectiveCompanyId)
+                    .select('*, plans(*)')
+                    .eq('id', targetId)
                     .single();
 
                 if (compInfo) {
                     setCompany(compInfo);
-
-                    // プラン情報も取得
-                    if (compInfo.plan_id) {
-                        const { data: planInfo } = await supabase
-                            .from('plans')
-                            .select('*')
-                            .eq('id', compInfo.plan_id)
-                            .single();
-                        
-                        if (planInfo) {
-                            setPlan(planInfo);
-                        }
-                    }
+                    setPlan(compInfo.plans);
                 }
             } catch (error) {
                 console.error("Error loading company context:", error);
@@ -107,7 +92,7 @@ export function useCompany() {
         }
 
         loadCompany();
-    }, [supabase, router, pathname, isImpersonating]); // isImpersonating の変化も監視
+    }, [supabase, router, pathname]);
 
     const isTrial = company?.status === 'trial';
     const defaultTrialDays = 70;

@@ -3,12 +3,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
-import { useAdmin } from "@/hooks/useAdmin";
 import { Company, Department, KpiDefinition, KpiAxis, User, Invitation, ResourceRecord } from "@/types/database";
 
 export function useSettingsData() {
     const router = useRouter();
-    const { isSuperAdmin, impersonatedCompanyId, loading: adminLoading } = useAdmin();
     const [loading, setLoading] = useState(true);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -46,9 +44,6 @@ export function useSettingsData() {
     });
 
     const loadSettings = useCallback(async () => {
-        // 管理者権限の読み込みを待つ
-        if (adminLoading) return;
-
         setLoading(true);
         const supabase = createClient();
         const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -58,23 +53,22 @@ export function useSettingsData() {
         }
         setCurrentUserId(authUser.id);
 
+        // ロールと本来の所属を一括取得（フックのステートに頼らず、この関数のスコープ内で完結させる）
         const { data: userData } = await supabase.from('users').select('company_id, role').eq('id', authUser.id).single();
         
-        let effectiveId = userData?.company_id;
+        let targetId = userData?.company_id;
 
-        // useAdmin から取得した情報を最優先し、ステートの反映待ちに備えて localStorage も直接確認する
-        if (isSuperAdmin) {
-            const directId = typeof window !== "undefined" ? localStorage.getItem("impersonated_company_id") : null;
-            const finalImpersonatedId = impersonatedCompanyId || directId;
-            
-            if (finalImpersonatedId) {
-                effectiveId = finalImpersonatedId;
+        // 管理者の場合は localStorage を同期的に確認する（アトミックな判定）
+        if (userData?.role === 'super_admin') {
+            const storedId = typeof window !== "undefined" ? localStorage.getItem("impersonated_company_id") : null;
+            if (storedId) {
+                targetId = storedId;
             }
         }
 
-        if (!effectiveId) {
-            // 代理ログイン中でもなく、所属もない、管理画面でもない場合は onboarding へ
-            if (!isSuperAdmin) {
+        if (!targetId) {
+            // 管理者でもなく所属もない場合は onboarding へ
+            if (userData?.role !== 'super_admin') {
                 router.push("/onboarding");
             } else {
                 setLoading(false);
@@ -83,13 +77,13 @@ export function useSettingsData() {
         }
 
         const [comp, d, k, a, u, i, res] = await Promise.all([
-            supabase.from('companies').select('*, plans(name)').eq('id', effectiveId).single(),
-            supabase.from('departments').select('*').eq('company_id', effectiveId).order('sort_order', { ascending: true }),
-            supabase.from('kpi_definitions').select('*').eq('company_id', effectiveId).order('sort_order', { ascending: true }),
-            supabase.from('kpi_axes').select('*').eq('company_id', effectiveId).order('sort_order', { ascending: true }),
-            supabase.from('users').select('*').eq('company_id', effectiveId),
-            supabase.from('invitations').select('*').eq('company_id', effectiveId).eq('status', 'pending'),
-            supabase.from('resource_records').select('*').eq('company_id', effectiveId)
+            supabase.from('companies').select('*, plans(name)').eq('id', targetId).single(),
+            supabase.from('departments').select('*').eq('company_id', targetId).order('sort_order', { ascending: true }),
+            supabase.from('kpi_definitions').select('*').eq('company_id', targetId).order('sort_order', { ascending: true }),
+            supabase.from('kpi_axes').select('*').eq('company_id', targetId).order('sort_order', { ascending: true }),
+            supabase.from('users').select('*').eq('company_id', targetId),
+            supabase.from('invitations').select('*').eq('company_id', targetId).eq('status', 'pending'),
+            supabase.from('resource_records').select('*').eq('company_id', targetId)
         ]);
 
         if (comp.data) {
@@ -105,7 +99,7 @@ export function useSettingsData() {
         if (res.data) setResources(res.data);
 
         setLoading(false);
-    }, [router, isSuperAdmin, impersonatedCompanyId, adminLoading]);
+    }, [router]);
 
     useEffect(() => {
         loadSettings();
