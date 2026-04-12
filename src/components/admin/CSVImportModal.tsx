@@ -21,11 +21,37 @@ export function CSVImportModal({ companyId, type, onClose, onSuccess }: CSVImpor
     const [headers, setHeaders] = useState<string[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [progress, setProgress] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selected = e.target.files?.[0];
         if (selected) parseFile(selected);
     };
+
+    /** ドラッグ＆ドロップハンドラー */
+    const handleDragOver = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    }, []);
+
+    const handleDragLeave = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    }, []);
+
+    const handleDrop = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        const droppedFile = e.dataTransfer.files?.[0];
+        if (droppedFile && droppedFile.name.endsWith('.csv')) {
+            parseFile(droppedFile);
+        } else {
+            setError('CSVファイルのみ対応しています。');
+        }
+    }, []);
 
     const parseFile = (file: File) => {
         const reader = new FileReader();
@@ -233,12 +259,30 @@ export function CSVImportModal({ companyId, type, onClose, onSuccess }: CSVImpor
 
                     {step === 'upload' && (
                         <div className="text-center">
-                            <label className="block w-full border-4 border-dashed border-slate-100 hover:border-teal/30 hover:bg-teal/[0.02] rounded-[2.5rem] p-16 transition-all cursor-pointer group">
+                            <label
+                                className={cn(
+                                    "block w-full border-4 border-dashed rounded-[2.5rem] p-16 transition-all cursor-pointer group",
+                                    isDragging
+                                        ? "border-teal bg-teal/5 scale-[1.02]"
+                                        : "border-slate-100 hover:border-teal/30 hover:bg-teal/[0.02]"
+                                )}
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                            >
                                 <input type="file" accept=".csv" className="hidden" onChange={handleFileChange} />
-                                <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
-                                    <FileText className="w-10 h-10 text-slate-300" />
+                                <div className={cn(
+                                    "w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 transition-all",
+                                    isDragging ? "bg-teal/10 scale-110" : "bg-slate-50 group-hover:scale-110"
+                                )}>
+                                    <Upload className={cn(
+                                        "w-10 h-10 transition-colors",
+                                        isDragging ? "text-teal" : "text-slate-300"
+                                    )} />
                                 </div>
-                                <h3 className="text-lg font-black text-slate-800 mb-2">CSVファイルを選択またはドラッグ</h3>
+                                <h3 className="text-lg font-black text-slate-800 mb-2">
+                                    {isDragging ? 'ここにドロップしてください' : 'CSVファイルを選択またはドラッグ'}
+                                </h3>
                                 <p className="text-sm text-slate-400 font-medium">
                                     記入用フォーマットを編集したファイルをアップロードしてください
                                 </p>
@@ -251,8 +295,8 @@ export function CSVImportModal({ companyId, type, onClose, onSuccess }: CSVImpor
                                 <ul className="space-y-3">
                                     {[
                                         "既存の数値がある場合は、アップロードした内容で上書きされます。",
-                                        "存在しない部署名、KPI名は自動的に新規登録されます。",
-                                        "対象月は YYYY-MM-DD 形式である必要があります。",
+                                        "存在しないKPI名は自動的に新規登録されます。",
+                                        "対象月は YYYY-MM または YYYY-MM-DD 形式で入力してください。",
                                         "文字コードは UTF-8 で保存された CSV ファイルを使用してください。"
                                     ].map((txt, i) => (
                                         <li key={i} className="flex items-start gap-3 text-[13px] text-slate-600 font-bold">
