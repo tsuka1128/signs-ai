@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Users, Tag, Plus, Trash2, Save, GripVertical, AlertTriangle, Building2, BarChart3, MessageSquare, ShieldCheck, Zap, Download, HelpCircle, Layers } from "lucide-react";
+import { X, Users, Tag, Plus, Trash2, Save, GripVertical, AlertTriangle, Building2, BarChart3, MessageSquare, ShieldCheck, Zap, Download, HelpCircle, Layers, ShieldAlert, Info } from "lucide-react";
 import { useAdminSettings } from "@/hooks/useAdminSettings";
 import { AVAILABLE_ADDONS } from "@/lib/addons";
 import { createClient } from "@/lib/supabase";
@@ -595,6 +595,143 @@ export function AdminAxesModal({ companyId, companyName, onClose, onSuccess }: M
                         />
                     )}
                 </AnimatePresence>
+            </motion.div>
+        </div>
+    );
+}
+
+
+export function AdminPlanOverridesModal({ companyId, companyName, onClose, onSuccess }: ModalProps) {
+    const { fetchCompany, updatePlanOverrides, loading } = useAdminSettings(companyId);
+    const [overrides, setOverrides] = useState<Record<string, any>>({});
+    const [plan, setPlan] = useState<any>(null);
+
+    useEffect(() => {
+        fetchCompany().then(c => {
+            setOverrides(c.plan_overrides || {});
+            setPlan(c.plans);
+        });
+    }, [fetchCompany]);
+
+    const handleSave = async () => {
+        try {
+            await updatePlanOverrides(overrides);
+            onSuccess();
+            onClose();
+            alert("個別上書き設定を保存しました");
+        } catch (err: any) {
+            alert(`エラーが発生しました: ${err.message}`);
+        }
+    };
+
+    const toggleOverride = (key: string, value: any) => {
+        const newOverrides = { ...overrides };
+        if (value === undefined || value === null || value === "") {
+            delete newOverrides[key];
+        } else {
+            newOverrides[key] = value;
+        }
+        setOverrides(newOverrides);
+    };
+
+    const fields = [
+        { key: 'max_departments', label: '最大部署・拠点数', type: 'number', placeholder: plan?.max_departments },
+        { key: 'max_kpis', label: '最大KPI定義数', type: 'number', placeholder: plan?.max_kpis },
+        { key: 'max_headcount', label: '最大メンバー登録数', type: 'number', placeholder: plan?.max_headcount },
+        { key: 'manual_ai_runs_per_month', label: '月間AI分析実行枠', type: 'number', placeholder: plan?.manual_ai_runs_per_month },
+    ];
+
+    return (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+            <motion.div layoutId="modal-overrides" className="bg-white rounded-[32px] w-full max-w-2xl overflow-hidden shadow-2xl relative z-10 flex flex-col">
+                <header className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+                    <div>
+                        <div className="flex items-center gap-3 text-amber-500 mb-1">
+                            <ShieldAlert className="w-5 h-5" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Custom Overrides</span>
+                        </div>
+                        <h2 className="text-xl font-black text-slate-800 tracking-tight">{companyName} の個別制限上書き</h2>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-white rounded-xl transition-all shadow-sm">
+                        <X className="w-5 h-5 text-slate-400" />
+                    </button>
+                </header>
+
+                <div className="p-8 space-y-8 max-h-[60vh] overflow-y-auto">
+                    <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex gap-4">
+                        <Info className="w-5 h-5 text-amber-500 shrink-0" />
+                        <p className="text-xs text-amber-700 font-bold leading-relaxed">
+                            個別上書き設定が有効な場合、マスタープランの設定よりも優先されます。空欄にするとマスタープランの設定に戻ります。
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                        {fields.map(f => (
+                            <div key={f.key}>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">{f.label}</label>
+                                <div className="relative">
+                                    <input 
+                                        type="number" 
+                                        value={overrides[f.key] ?? ""} 
+                                        onChange={e => toggleOverride(f.key, e.target.value === "" ? null : parseInt(e.target.value))}
+                                        placeholder={`マスター: ${f.placeholder}`}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-amber-400 focus:bg-white transition-all pr-12"
+                                    />
+                                    {overrides[f.key] !== undefined && overrides[f.key] !== null && (
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 bg-amber-100 text-amber-600 rounded text-[9px] font-black uppercase">Active</div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="space-y-4 pt-4 border-t border-slate-50">
+                        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl group hover:bg-white hover:shadow-sm transition-all border border-transparent hover:border-slate-100">
+                            <div>
+                                <h4 className="text-sm font-black text-slate-800">人件費ROIダッシュボード</h4>
+                                <p className="text-[10px] text-slate-400 font-bold mt-1">
+                                    プランに関わらず、この機能へのアクセスを
+                                    {overrides.enable_labor_analytics !== undefined ? (overrides.enable_labor_analytics ? "強制有効" : "強制無効") : "標準設定"}
+                                     にします
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button 
+                                    onClick={() => toggleOverride('enable_labor_analytics', overrides.enable_labor_analytics !== undefined ? (overrides.enable_labor_analytics ? false : null) : true)}
+                                    className={cn(
+                                        "w-12 h-6 rounded-full transition-all relative",
+                                        overrides.enable_labor_analytics === true ? "bg-emerald-500" : 
+                                        overrides.enable_labor_analytics === false ? "bg-rose-500" : "bg-slate-300"
+                                    )}
+                                >
+                                    <div className={cn(
+                                        "absolute top-1 w-4 h-4 bg-white rounded-full transition-all",
+                                        overrides.enable_labor_analytics === true ? "right-1" : 
+                                        overrides.enable_labor_analytics === false ? "left-1" : "left-4"
+                                    )} />
+                                </button>
+                                <button 
+                                    onClick={() => toggleOverride('enable_labor_analytics', null)}
+                                    className="text-[9px] font-black text-slate-400 hover:text-slate-600 px-2 underline"
+                                >
+                                    リセット
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <footer className="p-8 border-t border-slate-50 flex items-center justify-end gap-3 bg-slate-50/30">
+                    <button onClick={onClose} className="px-6 py-3 text-slate-400 font-bold text-sm hover:text-slate-600">キャンセル</button>
+                    <button 
+                        onClick={handleSave}
+                        disabled={loading}
+                        className="px-8 py-3 bg-slate-800 text-white rounded-2xl font-black text-sm hover:bg-slate-700 transition-all shadow-lg flex items-center gap-2 disabled:opacity-50"
+                    >
+                        <Save className="w-4 h-4" /> 設定を適用
+                    </button>
+                </footer>
             </motion.div>
         </div>
     );

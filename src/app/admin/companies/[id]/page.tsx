@@ -26,7 +26,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { HistoryModal } from "@/components/admin/HistoryModal";
-import { AdminDepartmentsModal, AdminKpisModal, AdminCompanySettingsModal, AdminAxesModal } from "@/components/admin/QuickEditModals";
+import { AdminDepartmentsModal, AdminKpisModal, AdminCompanySettingsModal, AdminAxesModal, AdminPlanOverridesModal } from "@/components/admin/QuickEditModals";
 import { AVAILABLE_ADDONS } from "@/lib/addons";
 import { AnimatePresence } from "framer-motion";
 import { CSVImportModal } from "@/components/admin/CSVImportModal";
@@ -48,6 +48,7 @@ export default function AdminCompanyDetailPage() {
     const [showDeptModal, setShowDeptModal] = useState(false);
     const [showKpiModal, setShowKpiModal] = useState(false);
     const [showAxisModal, setShowAxisModal] = useState(false);
+    const [showOverridesModal, setShowOverridesModal] = useState(false);
     const [showCompanyModal, setShowCompanyModal] = useState(false);
     const [importType, setImportType] = useState<'kpi' | 'resource' | null>(null);
     const [axes, setAxes] = useState<any[]>([]);
@@ -333,6 +334,49 @@ export default function AdminCompanyDetailPage() {
                 </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col gap-4 relative overflow-hidden">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 text-slate-400">
+                            <ShieldCheck className="w-5 h-5" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Current Plan</span>
+                        </div>
+                        <button 
+                            onClick={() => setShowOverridesModal(true)}
+                            className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 transition-all"
+                        >
+                            <Settings className="w-4 h-4" />
+                        </button>
+                    </div>
+                    <div>
+                        <p className="text-2xl font-black text-slate-800 tracking-tight">{company.plans?.name || 'Standard'}</p>
+                        <p className="text-[10px] text-slate-400 font-bold mt-1">マスタープランの設定に準拠</p>
+                    </div>
+                </div>
+
+                {[
+                    { label: 'Max Depts', key: 'max_departments', val: company.plans?.max_departments },
+                    { label: 'Max KPIs', key: 'max_kpis', val: company.plans?.max_kpis },
+                    { label: 'Max Members', key: 'max_headcount', val: company.plans?.max_headcount }
+                ].map(item => {
+                    const override = (company as any).plan_overrides?.[item.key];
+                    const isOverridden = override !== undefined && override !== null;
+                    return (
+                        <div key={item.key} className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.label}</p>
+                            <div className="flex items-baseline gap-2 mt-2">
+                                <p className={cn("text-2xl font-black", isOverridden ? "text-amber-500" : "text-slate-800")}>
+                                    {isOverridden ? override : item.val}
+                                </p>
+                                {isOverridden && (
+                                    <span className="text-[9px] font-black text-amber-400 uppercase">Custom</span>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
             <div className={cn(
                 "grid grid-cols-1 gap-8",
                 axes.length > 0 ? "lg:grid-cols-3" : "lg:grid-cols-2"
@@ -523,6 +567,14 @@ export default function AdminCompanyDetailPage() {
                         companyId={company.id}
                         companyName={company.name}
                         onClose={() => setShowAxisModal(false)}
+                        onSuccess={fetchCompanyDetails}
+                    />
+                )}
+                {showOverridesModal && (
+                    <AdminPlanOverridesModal 
+                        companyId={company.id}
+                        companyName={company.name}
+                        onClose={() => setShowOverridesModal(false)}
                         onSuccess={fetchCompanyDetails}
                     />
                 )}

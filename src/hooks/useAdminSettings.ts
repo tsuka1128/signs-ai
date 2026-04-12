@@ -49,6 +49,33 @@ export function useAdminSettings(companyId: string) {
         }
     };
 
+    const updatePlanOverrides = async (overrides: Record<string, any>) => {
+        setLoading(true);
+        try {
+            const { error } = await supabase
+                .from('companies')
+                .update({ plan_overrides: overrides })
+                .eq('id', companyId);
+            if (error) throw error;
+
+            // ログ記録
+            const { data: { user: authUser } } = await supabase.auth.getUser();
+            if (authUser) {
+                await supabase.from('admin_activity_logs').insert({
+                    admin_id: authUser.id,
+                    target_company_id: companyId,
+                    action_type: 'update_plan_overrides',
+                    details: {
+                        overrides,
+                        timestamp: new Date().toISOString()
+                    }
+                });
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const fetchDepartments = useCallback(async () => {
         const { data, error } = await supabase
             .from('departments')
@@ -385,6 +412,7 @@ export function useAdminSettings(companyId: string) {
         deleteKpi,
         fetchAxes,
         updateAxes,
+        updatePlanOverrides,
         generateKpiCsvTemplate,
         generateResourceCsvTemplate
     };

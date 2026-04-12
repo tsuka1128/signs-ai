@@ -15,7 +15,8 @@ import {
     Layers, 
     Clock,
     Target,
-    BookOpen
+    BookOpen,
+    Save
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,25 +24,44 @@ export default function AdminPlansPage() {
     const { supabase, loading: authLoading } = useAdmin();
     const [plans, setPlans] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedPlans, setEditedPlans] = useState<any[]>([]);
+    const [history, setHistory] = useState<any[]>([]);
+    const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        async function fetchPlans() {
-            if (authLoading) return;
+        fetchData();
+    }, [supabase, authLoading]);
+
+    async function fetchData() {
+        if (authLoading) return;
+        setLoading(true);
+        try {
             const { data, error } = await supabase
                 .from('plans')
                 .select('*')
                 .order('id', { ascending: true });
             
             if (!error) {
-                // 表示順を Free -> Team -> Standard -> Pro に固定
                 const order = ['Free', 'Team', 'Standard', 'Pro'];
                 const sorted = (data || []).sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name));
                 setPlans(sorted);
+                setEditedPlans(JSON.parse(JSON.stringify(sorted)));
             }
+
+            // 履歴取得
+            const { data: histData } = await supabase
+                .from('admin_activity_logs')
+                .select('*, admin:users(display_name)')
+                .eq('action_type', 'update_master_plan')
+                .order('created_at', { ascending: false })
+                .limit(10);
+            setHistory(histData || []);
+
+        } finally {
             setLoading(false);
         }
-        fetchPlans();
-    }, [supabase, authLoading]);
+    }
 
     const featureRows = [
         { key: 'max_departments', label: '最大部署・拠点数', description: '一つの企業アカウント内で作成可能な部署の数です。', type: 'number' },
@@ -56,8 +76,95 @@ export default function AdminPlansPage() {
         { key: 'trial_duration_days', label: '標準トライアル期間', description: '新規登録時に自動付与される無料試用期間です。', type: 'days' },
     ];
 
+    const handleUpdate = (planId: string, key: string, value: any) => {
+        setEditedPlans(prev => prev.map(p => p.id === planId ? { ...p, [key]: value } : p));
+    };
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            const { data: { user: authUser } } = await supabase.auth.getUser();
+            if (!authUser) return;
+
+            for (const edited of editedPlans) {
+                const original = plans.find(p => p.id === edited.id);
+                // 変更があるかチェック
+                const diff: any = {};
+                let hasChange = false;
+                featureRows.forEach(row => {
+                    if (original[row.key] !== edited[row.key]) {
+                        diff[row.key] = { from: original[row.key], to: edited[row.key] };
+                        hasChange = true;
+                    }
+                });
+
+                if (hasChange) {
+                    // 1. Plan更新
+                    const { error: updateErr } = await supabase.from('plans').update(edited).eq('id', edited.id);
+                    if (updateErr) throw updateErr;
+
+                    // 2. ログ記録 (admin_activity_logsテーブルが必要)
+                    await supabase.from('admin_activity_logs').insert({
+                        admin_id: authUser.id,
+                        action_type: 'update_master_plan',
+                        details: {
+                            plan_name: edited.name,
+                            changes: diff,
+                            timestamp: new Date().toISOString()
+                        }
+                    });
+                }
+            }
+            alert("マスタープランの設定を更新しました。");
+            setIsEditing(false);
+            fetchData();
+        } catch (err: any) {
+            alert(`エラーが発生しました: ${err.message}`);
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const renderValue = (plan: any, row: any) => {
         const val = plan[row.key];
+        
+        if (isEditing) {
+            if (row.type === 'boolean') {
+                return (
+                    <button 
+                        onClick={() => handleUpdate(plan.id, row.key, !val)}
+                        className={cn(
+                            "w-12 h-6 rounded-full transition-all relative mx-auto",
+                            val ? "bg-teal" : "bg-slate-200"
+                        )}
+                    >
+                        <div className={cn("absolute top-1 w-4 h-4 bg-white rounded-full transition-all", val ? "right-1" : "left-1")} />
+                    </button>
+                );
+            }
+            if (row.type === 'frequency') {
+                return (
+                    <select 
+                        value={val} 
+                        onChange={e => handleUpdate(plan.id, row.key, e.target.value)}
+                        className="text-xs font-bold bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none"
+                    >
+                        <option value="monthly">Monthly</option>
+                        <option value="weekly">Weekly</option>
+                    </select>
+                );
+            }
+            return (
+                <input 
+                    type="number" 
+                    value={val} 
+                    onChange={e => handleUpdate(plan.id, row.key, parseInt(e.target.value) || 0)}
+                    className="w-20 text-center font-black text-slate-700 bg-slate-50 border border-slate-200 rounded-lg py-1 outline-none"
+                />
+            );
+        }
+
+        // 表示モード
         if (row.type === 'boolean') {
             return val ? <Check className="w-5 h-5 text-emerald-500 mx-auto" /> : <Minus className="w-5 h-5 text-slate-200 mx-auto" />;
         }
@@ -80,13 +187,41 @@ export default function AdminPlansPage() {
 
     return (
         <main className="p-8 space-y-12 animate-fadeIn pb-24">
-            <header className="space-y-2">
-                <div className="flex items-center gap-3 text-teal mb-3">
-                    <BookOpen className="w-5 h-5" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Product Encyclopedia</span>
+            <header className="flex items-end justify-between gap-4">
+                <div className="space-y-2">
+                    <div className="flex items-center gap-3 text-teal mb-3">
+                        <BookOpen className="w-5 h-5" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Product Encyclopedia</span>
+                    </div>
+                    <h1 className="text-3xl font-black text-slate-800 tracking-tighter">マスタープラン管理</h1>
+                    <p className="text-slate-500 font-medium">システムの基本プラン種別の仕様と制限を一括管理します。</p>
                 </div>
-                <h1 className="text-3xl font-black text-slate-800 tracking-tighter">プラン仕様・機能定義マニュアル</h1>
-                <p className="text-slate-500 font-medium">現在システム（DB）に定義されている最新の仕様と、各機能の詳細解説です。</p>
+                <div className="flex items-center gap-3 pb-2">
+                    {isEditing ? (
+                        <>
+                            <button 
+                                onClick={() => { setIsEditing(false); setEditedPlans(JSON.parse(JSON.stringify(plans))); }}
+                                className="px-6 py-2.5 text-slate-400 font-bold text-sm hover:text-slate-600"
+                            >
+                                キャンセル
+                            </button>
+                            <button 
+                                onClick={handleSave}
+                                disabled={saving}
+                                className="px-8 py-2.5 bg-slate-800 text-white rounded-2xl font-black text-sm hover:bg-slate-700 transition-all shadow-lg flex items-center gap-2 disabled:opacity-50"
+                            >
+                                <Save className="w-4 h-4" /> 変更を保存
+                            </button>
+                        </>
+                    ) : (
+                        <button 
+                            onClick={() => setIsEditing(true)}
+                            className="px-8 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl font-black text-sm hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2"
+                        >
+                            <Zap className="w-4 h-4 text-amber-500" /> プラン構成を編集
+                        </button>
+                    )}
+                </div>
             </header>
 
             {/* Plan Overviews */}
@@ -100,7 +235,7 @@ export default function AdminPlansPage() {
                             p.name === 'Team' ? "bg-blue-500" : "bg-slate-300"
                         )} />
                         <h3 className="text-xl font-black text-slate-800 mb-2">{p.name}</h3>
-                        <div className="mb-6 h-4" /> {/* ID表示列を削除し、間隔を保持 */}
+                        <div className="mb-6 h-4" />
                         
                         <div className="space-y-4">
                             <div className="p-4 bg-slate-50 rounded-2xl">
@@ -110,10 +245,6 @@ export default function AdminPlansPage() {
                                     {p.name === 'Standard' && "より高度な分析と、戦略的なKPI管理が必要な企業向け。"}
                                     {p.name === 'Pro' && "エンタープライズ規模の複雑な組織と、費用対効果の最大化に対応。"}
                                 </p>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
-                                <Users className="w-3.5 h-3.5" />
-                                <span>~ {p.max_headcount === 9999 ? "無制限" : `${p.max_headcount}名`} まで推奨</span>
                             </div>
                         </div>
                     </div>
@@ -127,9 +258,11 @@ export default function AdminPlansPage() {
                         <h2 className="text-xl font-black text-slate-800 tracking-tight">機能・制限値 比較マトリクス</h2>
                         <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Full Matrix Overview</p>
                     </div>
-                    <Badge className="bg-teal/5 text-teal border-none font-black text-[10px] tracking-widest px-4 py-1 rounded-full uppercase">
-                        Current System Values
-                    </Badge>
+                    {isEditing && (
+                        <div className="flex items-center gap-2 px-4 py-1.5 bg-amber-50 text-amber-600 rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse">
+                            <Info className="w-3.5 h-3.5" /> Editing Mode
+                        </div>
+                    )}
                 </header>
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
@@ -150,7 +283,7 @@ export default function AdminPlansPage() {
                                         <div className="font-bold text-slate-700 text-sm mb-1">{row.label}</div>
                                         <p className="text-[10px] text-slate-400 font-medium leading-relaxed">{row.description}</p>
                                     </td>
-                                    {plans.map(p => (
+                                    {(isEditing ? editedPlans : plans).map(p => (
                                         <td key={p.id} className="p-6 text-center text-sm">
                                             {renderValue(p, row)}
                                         </td>
@@ -161,6 +294,55 @@ export default function AdminPlansPage() {
                     </table>
                 </div>
             </section>
+
+            {/* Change History */}
+            <section className="space-y-6">
+                <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                    <Clock className="w-5 h-5 text-slate-400" />
+                    <h2 className="text-lg font-black text-slate-800">マスタープラン変更履歴</h2>
+                </div>
+                <div className="grid grid-cols-1 gap-4">
+                    {history.length > 0 ? history.map((h) => (
+                        <div key={h.id} className="bg-white border border-slate-100 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-sm transition-all">
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-3">
+                                    <Badge className="bg-slate-800 text-white border-none font-bold text-[10px]">
+                                        {h.details.plan_name}
+                                    </Badge>
+                                    <span className="text-sm font-bold text-slate-700">による更新</span>
+                                </div>
+                                <div className="space-y-1">
+                                    {Object.entries(h.details.changes).map(([key, diff]: [string, any]) => (
+                                        <div key={key} className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                                            <span className="font-bold text-slate-400 capitalize">{key.replace(/_/g, ' ')}:</span>
+                                            <span className="line-through opacity-50">{String(diff.from)}</span>
+                                            <span className="text-teal font-black">→</span>
+                                            <span className="font-black text-slate-800">{String(diff.to)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                                <p className="text-xs font-black text-slate-800">{h.admin?.display_name || "不明な管理者"}</p>
+                                <p className="text-[10px] font-bold text-slate-400 mt-1">{new Date(h.created_at).toLocaleString('ja-JP')}</p>
+                            </div>
+                        </div>
+                    )) : (
+                        <div className="py-12 text-center bg-slate-50 rounded-[32px] border-2 border-dashed border-slate-100">
+                            <p className="text-sm font-bold text-slate-400 italic">変更履歴はありません</p>
+                        </div>
+                    )}
+                </div>
+            </section>
+            
+            <footer className="text-center pt-8">
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">
+                    Signs AI Administration Framework — v2.0
+                </p>
+            </footer>
+        </main>
+    );
+}
 
             {/* In-depth Manual Sections */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
