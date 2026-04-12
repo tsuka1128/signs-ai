@@ -138,7 +138,6 @@ export function CSVImportModal({ companyId, type, onClose, onSuccess }: CSVImpor
                 const val = row[originalHeader];
                 if (kpiId && val !== "" && val !== undefined) {
                     recordsToUpsert.push({
-                        company_id: companyId,
                         kpi_definition_id: kpiId,
                         recorded_month: normalizedMonth,
                         value: parseFloat(val) || 0
@@ -147,12 +146,25 @@ export function CSVImportModal({ companyId, type, onClose, onSuccess }: CSVImpor
             });
         });
 
-        // 4. Chunked UPSERT
+        // 4. 該当月のレコードをまず削除し、新しいデータを挿入する
+        // （複数のユニーク制約が混在しているため、upsertではなくdelete+insertで確実に処理）
+        const monthsToUpdate = Array.from(new Set(recordsToUpsert.map(r => r.recorded_month)));
+        const kpiIdsToUpdate = Array.from(new Set(recordsToUpsert.map(r => r.kpi_definition_id)));
+
+        if (monthsToUpdate.length > 0 && kpiIdsToUpdate.length > 0) {
+            const { error: delError } = await supabase
+                .from('kpi_records')
+                .delete()
+                .in('kpi_definition_id', kpiIdsToUpdate)
+                .in('recorded_month', monthsToUpdate)
+                .is('axis_id', null);
+            if (delError) console.error("Delete error (non-blocking):", delError);
+        }
+
+        // 一括挿入
         const batchSize = 100;
         for (let i = 0; i < recordsToUpsert.length; i += batchSize) {
-            const { error } = await supabase.from('kpi_records').upsert(recordsToUpsert.slice(i, i + batchSize), {
-                onConflict: 'kpi_definition_id, recorded_month, department_id'
-            });
+            const { error } = await supabase.from('kpi_records').insert(recordsToUpsert.slice(i, i + batchSize));
             if (error) throw error;
             setProgress(Math.round(((i + batchSize) / recordsToUpsert.length) * 100));
         }
