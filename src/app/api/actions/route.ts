@@ -34,6 +34,10 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Title is required" }, { status: 400 });
         }
 
+        if (!profile) {
+            return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+        }
+
         const { data, error } = await supabase
             .from("action_items")
             .insert({
