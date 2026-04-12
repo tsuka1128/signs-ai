@@ -170,15 +170,16 @@ export function useAdminSettings(companyId: string) {
      * KPI実績・リソース実績の取得およびCSV生成ロジック
      */
     
-    const fetchAllKpiRecords = useCallback(async () => {
+    const fetchAllKpiRecords = useCallback(async (kpiIds: string[]) => {
+        if (kpiIds.length === 0) return [];
         const { data, error } = await supabase
             .from('kpi_records')
             .select('*')
-            .eq('company_id', companyId)
+            .in('kpi_definition_id', kpiIds)
             .order('recorded_month', { ascending: false });
         if (error) throw error;
         return data;
-    }, [supabase, companyId]);
+    }, [supabase]);
 
     const fetchAllResourceRecords = useCallback(async () => {
         const { data, error } = await supabase
@@ -193,11 +194,13 @@ export function useAdminSettings(companyId: string) {
     const generateKpiCsvTemplate = async () => {
         setLoading(true);
         try {
-            const [depts, kpis, records] = await Promise.all([
+            const [depts, kpis] = await Promise.all([
                 fetchDepartments(),
-                fetchKpis(),
-                fetchAllKpiRecords()
+                fetchKpis()
             ]);
+
+            const kpiIds = kpis.map((k: any) => k.id);
+            const records = await fetchAllKpiRecords(kpiIds);
 
             const { getLastNMonths } = await import("@/lib/utils/date");
             const months = getLastNMonths(13); // 直近1年+今月
