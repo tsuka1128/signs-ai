@@ -34,7 +34,8 @@ export default function AdminCompaniesPage() {
                         *,
                         plans(name),
                         users(count),
-                        departments(count)
+                        departments(count),
+                        kpi_axes(count)
                     `)
                     .order('created_at', { ascending: false });
 
@@ -149,7 +150,7 @@ export default function AdminCompaniesPage() {
                                 <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ステータス</th>
                                 <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">プラン</th>
                                 <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">ユーザー</th>
-                                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">部署/KPI</th>
+                                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">部署 / 第2軸 / KPI</th>
                                 <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">契約開始日</th>
                                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">操作</th>
                             </tr>
@@ -191,8 +192,12 @@ export default function AdminCompaniesPage() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-5">
-                                        <div className="text-xs font-bold text-slate-600">
-                                            {company.departments?.[0]?.count || 0} <span className="text-slate-300 mx-1">/</span> {company.kpi_count || 0}
+                                        <div className="text-xs font-bold text-slate-600 whitespace-nowrap">
+                                            {company.departments?.[0]?.count || 0}
+                                            <span className="text-slate-300 mx-1.5">/</span>
+                                            {company.kpi_axes?.[0]?.count || 0}
+                                            <span className="text-slate-300 mx-1.5">/</span>
+                                            {company.kpi_count || 0}
                                         </div>
                                     </td>
                                     <td className="px-6 py-5 text-sm font-bold text-slate-500 tabular-nums">
