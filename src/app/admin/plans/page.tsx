@@ -335,14 +335,7 @@ export default function AdminPlansPage() {
                 </div>
             </section>
             
-            <footer className="text-center pt-8">
-                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">
-                    Signs AI Administration Framework — v2.0
-                </p>
-            </footer>
-        </main>
-    );
-}
+
 
             {/* In-depth Manual Sections */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
