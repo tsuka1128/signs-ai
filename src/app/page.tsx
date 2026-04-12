@@ -253,6 +253,7 @@ export default function DashboardPage() {
               onSave={handlers.handleSaveSemantic}
               onDelete={handlers.handleDeleteSemantic}
               aiContent={aiContent}
+              companyId={company.id}
             />
           )}
         </div>

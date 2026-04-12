@@ -405,7 +405,11 @@ export function useDashboardData(company: Company | null, supabase: any) {
         if (!company) return;
         try {
             setIsAnalyzing(true);
-            const res = await fetch('/api/ai/analyze', { method: 'POST' });
+            const res = await fetch('/api/ai/analyze', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ targetCompanyId: company.id })
+            });
             if (res.ok) {
                 await loadData();
                 alert("AI分析が完了しました。");

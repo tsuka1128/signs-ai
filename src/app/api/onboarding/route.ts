@@ -50,6 +50,10 @@ export async function POST(request: NextRequest) {
 
     const { companyName, departments, kpis, semanticContent, invitationToken, selectedDeptId, selectedAxisId, websiteUrl } = payload;
 
+    // ユーザー現在のプロファイルを確認
+    const { data: profile } = await supabase.from('users').select('role, company_id').eq('id', user.id).single();
+    const isSuperAdmin = profile?.role === 'super_admin';
+
     // A. 招待トークンがある場合の処理
     if (invitationToken) {
         // ダミートークン「TAION」の場合はデモデータを作成
@@ -68,15 +72,17 @@ export async function POST(request: NextRequest) {
                 }).select("id").single();
                 if (cErr || !company) throw new Error("デモ企業の作成に失敗しました");
 
-                // 3. ユーザーと紐付け
-                const { error: uErr } = await supabase.from("users").upsert({
-                    id: user.id,
-                    company_id: company.id,
-                    role: "admin",
-                    email: user.email ?? "",
-                    display_name: user.user_metadata?.full_name ?? user.email ?? ""
-                });
-                if (uErr) throw new Error(`ユーザーの紐付けに失敗しました: ${uErr.message}`);
+                // 3. ユーザーと紐付け (管理者以外の場合のみ)
+                if (!isSuperAdmin) {
+                    const { error: uErr } = await supabase.from("users").upsert({
+                        id: user.id,
+                        company_id: company.id,
+                        role: "admin",
+                        email: user.email ?? "",
+                        display_name: user.user_metadata?.full_name ?? user.email ?? ""
+                    });
+                    if (uErr) throw new Error(`ユーザーの紐付けに失敗しました: ${uErr.message}`);
+                }
 
                 // 4. デモ部署作成
                 const depts = ["経営層", "経企・人事", "営業部", "カスタマーサクセス", "開発部"];
@@ -133,20 +139,22 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ message: "無効または期限切れの招待リンクです" }, { status: 400 });
             }
 
-            // ユーザーを招待元の会社とロールに紐付け
-            const { error: userUpdateError } = await supabase.from("users").upsert({
-                id: user.id,
-                company_id: invite.company_id,
-                department_id: selectedDeptId || invite.department_id || null,
-                axis_id: selectedAxisId || invite.axis_id || null,
-                slack_user_id: invite.slack_user_id || null,
-                email: user.email ?? "",
-                display_name: user.user_metadata?.full_name ?? user.email ?? "",
-                role: invite.role,
-            });
+            // ユーザーを招待元の会社とロールに紐付け (管理者以外の場合のみ)
+            if (!isSuperAdmin) {
+                const { error: userUpdateError } = await supabase.from("users").upsert({
+                    id: user.id,
+                    company_id: invite.company_id,
+                    department_id: selectedDeptId || invite.department_id || null,
+                    axis_id: selectedAxisId || invite.axis_id || null,
+                    slack_user_id: invite.slack_user_id || null,
+                    email: user.email ?? "",
+                    display_name: user.user_metadata?.full_name ?? user.email ?? "",
+                    role: invite.role,
+                });
 
-            if (userUpdateError) {
-                throw new Error(`ユーザーの登録に失敗しました: ${userUpdateError.message}`);
+                if (userUpdateError) {
+                    throw new Error(`ユーザーの登録に失敗しました: ${userUpdateError.message}`);
+                }
             }
 
             // 招待を「承諾済み」に更新
@@ -210,17 +218,19 @@ export async function POST(request: NextRequest) {
         const finalShortId = `${planChar}-${dateStr}-${company.id.split('-')[0].toUpperCase().slice(0, 4)}`;
         await supabase.from('companies').update({ short_id: finalShortId }).eq('id', company.id);
 
-        // 2. ユーザープロフィールの更新
-        const { error: userError } = await supabase.from("users").upsert({
-            id: user.id,
-            company_id: company.id,
-            email: user.email ?? "",
-            display_name: user.user_metadata?.full_name ?? user.email ?? "",
-            role: "admin",
-        });
+        // 2. ユーザープロフィールの更新 (管理者以外の場合のみ)
+        if (!isSuperAdmin) {
+            const { error: userError } = await supabase.from("users").upsert({
+                id: user.id,
+                company_id: company.id,
+                email: user.email ?? "",
+                display_name: user.user_metadata?.full_name ?? user.email ?? "",
+                role: "admin",
+            });
 
-        if (userError) {
-            throw new Error(`ユーザープロフィールの更新に失敗しました: ${userError.message}`);
+            if (userError) {
+                throw new Error(`ユーザープロフィールの更新に失敗しました: ${userError.message}`);
+            }
         }
 
         // 3. 部署を一括作成

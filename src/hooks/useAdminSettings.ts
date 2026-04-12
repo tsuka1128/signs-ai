@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase";
+import { getLastNMonths } from "@/lib/utils/date";
 
 export function useAdminSettings(companyId: string) {
     const [loading, setLoading] = useState(false);
@@ -202,7 +203,6 @@ export function useAdminSettings(companyId: string) {
             const kpiIds = kpis.map((k: any) => k.id);
             const records = await fetchAllKpiRecords(kpiIds);
 
-            const { getLastNMonths } = await import("@/lib/utils/date");
             const months = getLastNMonths(13).map(m => m.slice(0, 7)); // YYYY-MM-01 -> YYYY-MM
             const headers = ['対象月', '部署名', ...kpis.map((k: any) => k.name)];
             const csvRows = [headers.join(',')];
@@ -235,7 +235,6 @@ export function useAdminSettings(companyId: string) {
                 fetchAllResourceRecords()
             ]);
 
-            const { getLastNMonths } = await import("@/lib/utils/date");
             const months = getLastNMonths(13).map(m => m.slice(0, 7)); // YYYY-MM-01 -> YYYY-MM
             const headers = ['対象月', '部署名', '人数', '人件費'];
             const csvRows = [headers.join(',')];

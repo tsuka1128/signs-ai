@@ -40,13 +40,34 @@ export default function VoiceCheckPage() {
             }
 
             // Get company_id
-            const { data: userData } = await supabase.from('users').select('company_id').eq('id', user.id).single();
-            if (!userData?.company_id) return;
+            const { data: userData } = await supabase.from('users').select('company_id, role').eq('id', user.id).single();
+            
+            // 管理者以外で会社に所属していない場合は処理中断
+            if (!userData?.company_id && userData?.role !== 'super_admin') {
+                setLoading(false);
+                return;
+            }
+
+            // 代理ログイン ID の調整 (super_admin ロールを最優先)
+            let effectiveId = userData?.company_id;
+            const isSuperAdmin = userData?.role === 'super_admin';
+
+            if (isSuperAdmin && typeof window !== "undefined") {
+                const impersonatedId = localStorage.getItem("impersonated_company_id");
+                if (impersonatedId) {
+                    effectiveId = impersonatedId;
+                }
+            }
+
+            if (!effectiveId) {
+                setLoading(false);
+                return;
+            }
 
             // Load company and departments
             const [comp, d] = await Promise.all([
-                supabase.from('companies').select('*').eq('id', userData.company_id).single(),
-                supabase.from('departments').select('*').eq('company_id', userData.company_id).order('sort_order', { ascending: true })
+                supabase.from('companies').select('*').eq('id', effectiveId).single(),
+                supabase.from('departments').select('*').eq('company_id', effectiveId).order('sort_order', { ascending: true })
             ]);
 
             if (comp.data) setCompany(comp.data);
@@ -58,7 +79,7 @@ export default function VoiceCheckPage() {
             const { data: respData } = await supabase
                 .from('survey_responses')
                 .select('department_id')
-                .eq('company_id', userData.company_id)
+                .eq('company_id', effectiveId)
                 .eq('recorded_month', currentMonth);
 
             if (respData) {

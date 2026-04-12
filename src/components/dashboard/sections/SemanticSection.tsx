@@ -9,6 +9,7 @@ interface SemanticSectionProps {
     actions: any[];
     onSave: (txt: string) => Promise<void>;
     onDelete: (id: string) => Promise<void>;
+    companyId?: string;
     aiContent?: any;
 }
 
@@ -19,6 +20,7 @@ export function SemanticSection({
     actions,
     onSave,
     onDelete,
+    companyId,
     aiContent,
 }: SemanticSectionProps) {
     return (
@@ -31,6 +33,7 @@ export function SemanticSection({
                 onSave={onSave}
                 onDelete={onDelete}
                 aiContent={aiContent}
+                companyId={companyId}
             />
         </div>
     );

@@ -22,8 +22,17 @@ export function Header() {
             if (user) {
                 setUserInitial(user.email?.[0].toUpperCase() || "U");
 
-                // 代理ログイン ID の確認
-                const impersonatedId = typeof window !== "undefined" ? localStorage.getItem("impersonated_company_id") : null;
+                // プロファイル情報を取得（ロール確認用）
+                const { data: profile } = await supabase
+                    .from("users")
+                    .select("display_name, role, companies(id, name, plans(name))")
+                    .eq("id", user.id)
+                    .single();
+
+                // 代理ログイン ID の確認 (super_admin の場合のみ)
+                const impersonatedId = (profile?.role === 'super_admin' && typeof window !== "undefined")
+                    ? localStorage.getItem("impersonated_company_id")
+                    : null;
 
                 if (impersonatedId) {
                     // 代理ログイン中の場合は代理先の企業情報を取得
@@ -40,20 +49,12 @@ export function Header() {
                             : (company.plans as any)?.name;
                         setPlanName(pName || "Standard");
                     }
-                } else {
-                    // 通常ログイン時は自分のプロファイル情報を取得
-                    const { data: profile } = await supabase
-                        .from("users")
-                        .select("display_name, companies(name, plans(name))")
-                        .eq("id", user.id)
-                        .single();
-
-                    if (profile) {
-                        const comp = (profile as any).companies;
-                        setCompanyName(comp?.name || "Signs AI User");
-                        const pName = comp?.plans?.name || "Standard";
-                        setPlanName(pName);
-                    }
+                } else if (profile) {
+                    // 通常ログイン時は自分の企業情報を取得
+                    const comp = (profile as any).companies;
+                    setCompanyName(comp?.name || "Signs AI User");
+                    const pName = comp?.plans?.name || "Standard";
+                    setPlanName(pName);
                 }
             }
         };

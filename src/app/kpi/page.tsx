@@ -218,21 +218,42 @@ export default function KpiInputPage() {
         }
         setAllMonths(months);
 
-        const { data: userData, error: uErr } = await supabase.from('users').select('company_id').eq('id', authUser.id).single();
-        if (uErr || !userData?.company_id) {
+        const { data: userData } = await supabase.from('users').select('company_id, role').eq('id', authUser.id).single();
+        
+        // 管理者以外で会社に所属していない場合はオンボーディングへ
+        if (!userData?.company_id && userData?.role !== 'super_admin') {
             router.push("/onboarding");
             return;
         }
+
+        // 代理ログイン ID の調整 (super_admin ロールを最優先)
+        let effectiveId = userData?.company_id;
+        const isSuperAdmin = userData?.role === 'super_admin';
+
+        if (isSuperAdmin && typeof window !== "undefined") {
+            const impersonatedId = localStorage.getItem("impersonated_company_id");
+            if (impersonatedId) {
+                effectiveId = impersonatedId;
+            }
+        }
+
+        // それでも ID が特定できない場合はオンボーディングへ（管理者の場合は管理画面を奨励、または何もしない）
+        if (!effectiveId) {
+            if (!isSuperAdmin) router.push("/onboarding");
+            setLoading(false);
+            return;
+        }
+
         // 企業設定（第2軸名称）取得
-        const { data: companyData } = await supabase.from('companies').select('kpi_secondary_axis_name').eq('id', userData.company_id).single();
+        const { data: companyData } = await supabase.from('companies').select('kpi_secondary_axis_name').eq('id', effectiveId).single();
         if (companyData) setSecondaryAxisName(companyData.kpi_secondary_axis_name || "第2軸");
 
         // 第2軸項目取得
-        const { data: axisData } = await supabase.from('kpi_axes').select('*').eq('company_id', userData.company_id).order('sort_order', { ascending: true });
+        const { data: axisData } = await supabase.from('kpi_axes').select('*').eq('company_id', effectiveId).order('sort_order', { ascending: true });
         setAxes(axisData || []);
 
         // KPI定義取得
-        const { data: kpis } = await supabase.from('kpi_definitions').select('id, name, unit, owner_dept_id, departments(name)').eq('company_id', userData.company_id).order('sort_order', { ascending: true });
+        const { data: kpis } = await supabase.from('kpi_definitions').select('id, name, unit, owner_dept_id, departments(name)').eq('company_id', effectiveId).order('sort_order', { ascending: true });
         const formattedKpis = (kpis || []).map((k: any) => ({
             id: k.id,
             name: k.name,

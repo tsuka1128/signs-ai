@@ -38,23 +38,22 @@ export function useAdmin() {
                     .single();
 
                 if (error || userData?.role !== 'super_admin') {
-                    // 代理ログイン中の場合は、権限不足エラーを出さずに終了（バナー表示のため）
-                    const currentImpersonatedId = typeof window !== "undefined" ? localStorage.getItem("impersonated_company_id") : null;
-                    if (currentImpersonatedId) {
-                        setIsSuperAdmin(true);
-                        setLoading(false);
-                        return;
-                    }
                     console.error("Access denied: Not a super_admin");
-                    router.push("/");
+                    // 管理画面へのアクセスかつ権限不足の場合のみリダイレクト
+                    if (pathname?.startsWith('/admin')) {
+                        router.push("/");
+                    }
+                    setIsSuperAdmin(false);
+                    setLoading(false);
                     return;
                 }
 
                 setIsSuperAdmin(true);
             } catch (error) {
                 console.error("Error in useAdmin:", error);
-                const currentImpersonatedId = typeof window !== "undefined" ? localStorage.getItem("impersonated_company_id") : null;
-                if (!currentImpersonatedId) router.push("/");
+                if (pathname?.startsWith('/admin')) {
+                    router.push("/");
+                }
             } finally {
                 setLoading(false);
             }

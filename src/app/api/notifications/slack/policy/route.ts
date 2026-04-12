@@ -25,20 +25,34 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. 会社情報（Webhook URL）の取得
-    const { data: userData } = await supabase.from('users').select('company_id').eq('id', user.id).single();
-    if (!userData?.company_id) {
+    // 3. 会社情報（Webhook URL）の取得
+    const { data: userData } = await supabase.from('users').select('company_id, role').eq('id', user.id).single();
+    
+    // 管理者以外で company_id がない場合のみエラー
+    const isSuperAdmin = userData?.role === 'super_admin';
+    if (!userData?.company_id && !isSuperAdmin) {
         return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    const { data: company } = await supabase.from('companies').select('name, slack_webhook_url').eq('id', userData.company_id).single();
+    // 代理ログイン ID の調整 (super_admin の場合のみ targetCompanyId を優先)
+    let effectiveCompanyId = userData?.company_id;
+    if (isSuperAdmin && (body as any).targetCompanyId) {
+        effectiveCompanyId = (body as any).targetCompanyId;
+    }
+
+    if (!effectiveCompanyId) {
+        return NextResponse.json({ error: "Target company ID is required" }, { status: 400 });
+    }
+
+    const { data: company } = await supabase.from('companies').select('name, slack_webhook_url').eq('id', effectiveCompanyId).single();
     if (!company?.slack_webhook_url) {
-        return NextResponse.json({ error: "Slack Webhook URL is not configured" }, { status: 400 });
+        return NextResponse.json({ error: "Slack Webhook URL is not configured for this company" }, { status: 400 });
     }
 
     // 4. 全ユーザーと部署を並列で取得
     const [usersRes, deptsRes] = await Promise.all([
-        supabase.from('users').select('id, display_name, email, slack_user_id, department_id').eq('company_id', userData.company_id),
-        supabase.from('departments').select('id, name').eq('company_id', userData.company_id)
+        supabase.from('users').select('id, display_name, email, slack_user_id, department_id').eq('company_id', effectiveCompanyId),
+        supabase.from('departments').select('id, name').eq('company_id', effectiveCompanyId)
     ]);
 
     const users = usersRes.data || [];

@@ -53,7 +53,7 @@ export function AdminDepartmentsModal({ companyId, companyName, onClose, onSucce
             
             <motion.div 
                 layoutId="modal"
-                className="bg-white rounded-[32px] w-full max-w-4xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]"
+                className="bg-white rounded-[32px] w-full max-w-5xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]"
             >
                 <header className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
                     <div>
@@ -253,7 +253,7 @@ export function AdminKpisModal({ companyId, companyName, onClose, onSuccess }: M
             
             <motion.div 
                 layoutId="modal-kpi"
-                className="bg-white rounded-[32px] w-full max-w-4xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]"
+                className="bg-white rounded-[32px] w-full max-w-5xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]"
             >
                 <header className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
                     <div>
@@ -499,7 +499,7 @@ export function AdminCompanySettingsModal({ companyId, companyName, onClose, onS
             
             <motion.div 
                 layoutId="modal-company"
-                className="bg-white rounded-[32px] w-full max-w-4xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]"
+                className="bg-white rounded-[32px] w-full max-w-5xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]"
             >
                 <header className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
                     <div>

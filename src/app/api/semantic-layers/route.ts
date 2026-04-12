@@ -37,21 +37,23 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // ユーザーの所属企業を取得
+        // ユーザーのプロフィール取得
         const { data: userData } = await supabase
             .from("users")
-            .select("company_id")
+            .select("company_id, role")
             .eq("id", user.id)
             .single();
 
-        if (!userData?.company_id) {
+        const isSuperAdmin = userData?.role === 'super_admin';
+
+        if (!userData?.company_id && !isSuperAdmin) {
             return NextResponse.json(
                 { error: "企業情報が見つかりません" },
                 { status: 403 }
             );
         }
 
-        // 削除対象が該当企業に所属しているか検証
+        // 削除対象の取得
         const { data: target } = await supabase
             .from("semantic_layers")
             .select("id, company_id")
@@ -65,7 +67,8 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        if (target.company_id !== userData.company_id) {
+        // 所有権チェック (管理者の場合はスキップ)
+        if (!isSuperAdmin && target.company_id !== userData?.company_id) {
             return NextResponse.json(
                 { error: "権限がありません" },
                 { status: 403 }
@@ -90,7 +93,7 @@ export async function DELETE(request: NextRequest) {
         const { data: freshHistory } = await supabase
             .from("semantic_layers")
             .select("*")
-            .eq("company_id", userData.company_id)
+            .eq("company_id", target.company_id)
             .order("created_at", { ascending: false });
 
         return NextResponse.json({

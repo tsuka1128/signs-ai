@@ -53,17 +53,38 @@ export function useSettingsData() {
         }
         setCurrentUserId(authUser.id);
 
-        const { data: userData } = await supabase.from('users').select('company_id').eq('id', authUser.id).single();
-        if (!userData?.company_id) return;
+        const { data: userData } = await supabase.from('users').select('company_id, role').eq('id', authUser.id).single();
+        
+        // 管理者以外で company_id がない場合のみリターン
+        if (!userData?.company_id && userData?.role !== 'super_admin') {
+            setLoading(false);
+            return;
+        }
+
+        // 代理ログイン ID の確認 (super_admin の場合のみ)
+        let effectiveId = userData?.company_id;
+        const isSuperAdmin = userData?.role === 'super_admin';
+        
+        if (isSuperAdmin && typeof window !== "undefined") {
+            const impersonatedId = localStorage.getItem("impersonated_company_id");
+            if (impersonatedId) {
+                effectiveId = impersonatedId;
+            }
+        }
+
+        if (!effectiveId) {
+            setLoading(false);
+            return;
+        }
 
         const [comp, d, k, a, u, i, res] = await Promise.all([
-            supabase.from('companies').select('*, plans(name)').eq('id', userData.company_id).single(),
-            supabase.from('departments').select('*').eq('company_id', userData.company_id).order('sort_order', { ascending: true }),
-            supabase.from('kpi_definitions').select('*').eq('company_id', userData.company_id).order('sort_order', { ascending: true }),
-            supabase.from('kpi_axes').select('*').eq('company_id', userData.company_id).order('sort_order', { ascending: true }),
-            supabase.from('users').select('*').eq('company_id', userData.company_id),
-            supabase.from('invitations').select('*').eq('company_id', userData.company_id).eq('status', 'pending'),
-            supabase.from('resource_records').select('*').eq('company_id', userData.company_id)
+            supabase.from('companies').select('*, plans(name)').eq('id', effectiveId).single(),
+            supabase.from('departments').select('*').eq('company_id', effectiveId).order('sort_order', { ascending: true }),
+            supabase.from('kpi_definitions').select('*').eq('company_id', effectiveId).order('sort_order', { ascending: true }),
+            supabase.from('kpi_axes').select('*').eq('company_id', effectiveId).order('sort_order', { ascending: true }),
+            supabase.from('users').select('*').eq('company_id', effectiveId),
+            supabase.from('invitations').select('*').eq('company_id', effectiveId).eq('status', 'pending'),
+            supabase.from('resource_records').select('*').eq('company_id', effectiveId)
         ]);
 
         if (comp.data) {

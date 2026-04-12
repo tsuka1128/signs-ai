@@ -12,16 +12,23 @@ export async function POST(req: Request) {
 
         const { data: profile } = await supabase
             .from("users")
-            .select("company_id")
+            .select("company_id, role")
             .eq("id", user.id)
             .single();
 
-        if (!profile?.company_id) {
-            return NextResponse.json({ error: "No company associated" }, { status: 400 });
+        const body = await req.json();
+        const { title, description, priority, department_id, owner, is_ai_generated, status, targetCompanyId } = body;
+
+        let companyId = profile?.company_id;
+        const isSuperAdmin = profile?.role === 'super_admin';
+
+        if (isSuperAdmin && targetCompanyId) {
+            companyId = targetCompanyId;
         }
 
-        const body = await req.json();
-        const { title, description, priority, department_id, owner, is_ai_generated, status } = body;
+        if (!companyId) {
+            return NextResponse.json({ error: "No company associated" }, { status: 400 });
+        }
 
         if (!title) {
             return NextResponse.json({ error: "Title is required" }, { status: 400 });

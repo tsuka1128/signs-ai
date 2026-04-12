@@ -13,6 +13,7 @@ interface SemanticLayerProps {
     departments?: any[];
     actions?: any[];
     aiContent?: any;
+    companyId?: string;
 }
 
 const VERSION_CONTENTS: Record<string, string> = {
@@ -62,7 +63,7 @@ const VERSION_CONTENTS: Record<string, string> = {
 
 };
 
-export function SemanticLayer({ initialText, history = [], onSave, onDelete, departments, actions = [], aiContent }: SemanticLayerProps) {
+export function SemanticLayer({ initialText, history = [], onSave, onDelete, departments, actions = [], aiContent, companyId }: SemanticLayerProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [currentText, setCurrentText] = useState(initialText);
     const [viewingId, setViewingId] = useState<string | null>(null);
@@ -92,7 +93,10 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
             const res = await fetch("/api/ai/translate-policy", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ policyText: currentText })
+                body: JSON.stringify({
+                    policyText: currentText,
+                    targetCompanyId: companyId
+                })
             });
             if (res.ok) {
                 const data = await res.json();
@@ -140,7 +144,8 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
                     text: currentText,
-                    translations: translations 
+                    translations: translations,
+                    targetCompanyId: companyId
                 })
             });
 

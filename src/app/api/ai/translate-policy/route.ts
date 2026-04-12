@@ -13,19 +13,33 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // 2. ユーザーの企業ID取得
+        // 2. ユーザーの企業ID取得（ロール確認含む）
         const { data: profile } = await supabase
             .from("users")
-            .select("company_id")
+            .select("company_id, role")
             .eq("id", user.id)
             .single();
 
-        if (!profile?.company_id) {
+        const isSuperAdmin = profile?.role === 'super_admin';
+
+        if (!profile?.company_id && !isSuperAdmin) {
             return NextResponse.json({ error: "No company associated" }, { status: 400 });
         }
 
         // 3. リクエストボディ解析
-        const { policyText } = await req.json();
+        const body = await req.json();
+        const { policyText, targetCompanyId } = body;
+
+        // 代理ログイン ID の調整 (super_admin ロールを最優先)
+        let effectiveCompanyId = profile?.company_id;
+        if (isSuperAdmin && targetCompanyId) {
+            effectiveCompanyId = targetCompanyId;
+        }
+
+        if (!effectiveCompanyId) {
+            return NextResponse.json({ error: "Target company ID is required" }, { status: 400 });
+        }
+
         if (!policyText) {
             return NextResponse.json({ error: "Policy text is required" }, { status: 400 });
         }
@@ -34,7 +48,7 @@ export async function POST(req: NextRequest) {
         const { data: depts } = await supabase
             .from('departments')
             .select('id, name')
-            .eq('company_id', profile.company_id);
+            .eq('company_id', effectiveCompanyId);
 
         if (!depts || depts.length === 0) {
             return NextResponse.json({ translations: {} });
