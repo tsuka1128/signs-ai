@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Users, Tag, Plus, Trash2, Save, GripVertical, AlertTriangle, Building2, BarChart3, MessageSquare, ShieldCheck, Zap, Download } from "lucide-react";
+import { X, Users, Tag, Plus, Trash2, Save, GripVertical, AlertTriangle, Building2, BarChart3, MessageSquare, ShieldCheck, Zap, Download, HelpCircle } from "lucide-react";
 import { useAdminSettings } from "@/hooks/useAdminSettings";
 import { AVAILABLE_ADDONS } from "@/lib/addons";
 import { createClient } from "@/lib/supabase";
@@ -297,7 +297,10 @@ export function AdminKpisModal({ companyId, companyName, onClose, onSuccess }: M
                                         />
                                     </div>
                                     <div className="flex flex-col items-center justify-center">
-                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1 ml-1">主要</label>
+                                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-0.5 mb-1 ml-1 cursor-help" title="その部署の代表的な指標として、ダッシュボードのバブルチャート等に優先的に表示されます。">
+                                            主要
+                                            <HelpCircle className="w-2.5 h-2.5 opacity-60" />
+                                        </label>
                                         <input 
                                             type="checkbox" checked={k.is_main} 
                                             onChange={e => setKpis(kpis.map(x => x.id === k.id ? { ...x, is_main: e.target.checked } : x))}
