@@ -101,71 +101,83 @@ export function CSVImportModal({ companyId, type, onClose, onSuccess }: CSVImpor
     };
 
     const importKpiData = async () => {
-        // 1. Get current masters
-        const { data: existingKpis } = await supabase.from('kpi_definitions').select('id, name').eq('company_id', companyId);
+        // 1. マスターデータの取得
+        const [
+            { data: companyData },
+            { data: existingAxes },
+            { data: existingKpis }
+        ] = await Promise.all([
+            supabase.from('companies').select('kpi_secondary_axis_name').eq('id', companyId).single(),
+            supabase.from('kpi_axes').select('*').eq('company_id', companyId),
+            supabase.from('kpi_definitions').select('id, name').eq('company_id', companyId)
+        ]);
 
         const kpiMap = new Map(existingKpis?.map(k => [k.name, k.id]));
+        const axisMap = new Map(existingAxes?.map(a => [a.name, a.id]));
+        const secondaryAxisName = companyData?.kpi_secondary_axis_name || "第2軸";
 
-        // 2. CSVヘッダーからKPI名を解析
-        // 「KPI名(部署名)」→ 実績カラム、「KPI名_目標(部署名)」→ 目標カラム
+        // 2. CSVヘッダーの解析
+        // ['対象月', '区分', '項目', 'KPI_1', 'KPI_1_目標', ...]
         const actualHeaders: { idx: number; kpiName: string; originalHeader: string }[] = [];
         const targetHeaders: { idx: number; kpiName: string; originalHeader: string }[] = [];
 
-        headers.slice(1).forEach((h, i) => {
+        headers.slice(3).forEach((h, i) => {
             const cleaned = h.replace(/\([^)]*\)$/, '').trim();
             if (cleaned.endsWith('_目標')) {
-                targetHeaders.push({ idx: i + 1, kpiName: cleaned.replace(/_目標$/, ''), originalHeader: h });
+                targetHeaders.push({ idx: i + 3, kpiName: cleaned.replace(/_目標$/, ''), originalHeader: h });
             } else {
-                actualHeaders.push({ idx: i + 1, kpiName: cleaned, originalHeader: h });
+                actualHeaders.push({ idx: i + 3, kpiName: cleaned, originalHeader: h });
             }
         });
 
-        // 新規KPIの自動作成（実績カラムのKPI名のみ対象）
-        const kpiNamesInCsv = actualHeaders.map(h => h.kpiName);
-        const newKpiNames = kpiNamesInCsv.filter(name => name && !kpiMap.has(name));
-        if (newKpiNames.length > 0) {
-            const { data: created, error: kErr } = await supabase.from('kpi_definitions').insert(
-                newKpiNames.map(name => ({
-                    company_id: companyId,
-                    name,
-                    unit: name.includes('％') || name.includes('%') ? '%' : (name.includes('円') ? '円' : 'pt'),
-                }))
-            ).select();
-            if (kErr) throw kErr;
-            created?.forEach(k => kpiMap.set(k.name, k.id));
-        }
-
-        // 3. レコードを構築（実績と目標をマージ）
-        // キー: kpiId__month → { kpi_definition_id, recorded_month, value, target_value }
+        // 3. レコードの構築とバリデーション
         const recordMergeMap = new Map<string, any>();
 
-        data.forEach(row => {
+        data.forEach((row, rowIndex) => {
             const month = row['対象月'];
+            const category = row['区分'];
+            const itemName = row['項目'];
             if (!month) return;
+
+            // axis_id の特定
+            let axisId: string | null = null;
+            if (category === 'メイン' || itemName === '全社') {
+                axisId = null;
+            } else if (category === secondaryAxisName) {
+                axisId = axisMap.get(itemName) || null;
+                if (!axisId) {
+                    throw new Error(`第${rowIndex + 2}行目: "${secondaryAxisName}"項目名「${itemName}」は設定されていません。システムの設定画面から追加してください。`);
+                }
+            } else {
+                throw new Error(`第${rowIndex + 2}行目: 不明な区分「${category}」です。「メイン」または「${secondaryAxisName}」を指定してください。`);
+            }
+
             const normalizedMonth = /^\d{4}-\d{2}$/.test(month) ? `${month}-01` : month;
 
-            // 実績値を処理
+            // 実績値の突合
             actualHeaders.forEach(({ kpiName, originalHeader }) => {
                 const kpiId = kpiMap.get(kpiName);
+                if (!kpiId) return; 
                 const val = row[originalHeader];
-                if (!kpiId) return;
-                const key = `${kpiId}__${normalizedMonth}`;
+                const key = `${kpiId}__${normalizedMonth}__${axisId || 'main'}`;
+
                 if (!recordMergeMap.has(key)) {
-                    recordMergeMap.set(key, { kpi_definition_id: kpiId, recorded_month: normalizedMonth, value: 0, target_value: null });
+                    recordMergeMap.set(key, { kpi_definition_id: kpiId, recorded_month: normalizedMonth, axis_id: axisId, value: 0, target_value: null });
                 }
                 if (val !== "" && val !== undefined) {
                     recordMergeMap.get(key).value = parseFloat(val) || 0;
                 }
             });
 
-            // 目標値を処理
+            // 目標値の突合
             targetHeaders.forEach(({ kpiName, originalHeader }) => {
                 const kpiId = kpiMap.get(kpiName);
-                const val = row[originalHeader];
                 if (!kpiId) return;
-                const key = `${kpiId}__${normalizedMonth}`;
+                const val = row[originalHeader];
+                const key = `${kpiId}__${normalizedMonth}__${axisId || 'main'}`;
+
                 if (!recordMergeMap.has(key)) {
-                    recordMergeMap.set(key, { kpi_definition_id: kpiId, recorded_month: normalizedMonth, value: 0, target_value: null });
+                    recordMergeMap.set(key, { kpi_definition_id: kpiId, recorded_month: normalizedMonth, axis_id: axisId, value: 0, target_value: null });
                 }
                 if (val !== "" && val !== undefined) {
                     recordMergeMap.get(key).target_value = parseFloat(val) || 0;
@@ -175,18 +187,30 @@ export function CSVImportModal({ companyId, type, onClose, onSuccess }: CSVImpor
 
         const recordsToInsert = Array.from(recordMergeMap.values());
 
-        // 4. 該当月のレコードを削除して新規挿入
+        // 4. 保存（削除して挿入）
         const monthsToUpdate = Array.from(new Set(recordsToInsert.map(r => r.recorded_month)));
         const kpiIdsToUpdate = Array.from(new Set(recordsToInsert.map(r => r.kpi_definition_id)));
 
         if (monthsToUpdate.length > 0 && kpiIdsToUpdate.length > 0) {
-            const { error: delError } = await supabase
-                .from('kpi_records')
-                .delete()
-                .in('kpi_definition_id', kpiIdsToUpdate)
-                .in('recorded_month', monthsToUpdate)
-                .is('axis_id', null);
-            if (delError) console.error("Delete error (non-blocking):", delError);
+            const axisIdsToUpdate = Array.from(new Set(recordsToInsert.map(r => r.axis_id)));
+
+            for (const m of monthsToUpdate) {
+                const query = supabase.from('kpi_records').delete().eq('recorded_month', m).in('kpi_definition_id', kpiIdsToUpdate);
+                
+                const hasNullAxis = axisIdsToUpdate.includes(null);
+                const nonNullAxisIds = axisIdsToUpdate.filter(id => id !== null);
+
+                if (hasNullAxis && nonNullAxisIds.length > 0) {
+                    const { error } = await query.or(`axis_id.is.null,axis_id.in.(${nonNullAxisIds.join(',')})`);
+                    if (error) console.error("Delete error:", error);
+                } else if (hasNullAxis) {
+                    const { error } = await query.is('axis_id', null);
+                    if (error) console.error("Delete error:", error);
+                } else if (nonNullAxisIds.length > 0) {
+                    const { error } = await query.in('axis_id', nonNullAxisIds);
+                    if (error) console.error("Delete error:", error);
+                }
+            }
         }
 
         // 一括挿入

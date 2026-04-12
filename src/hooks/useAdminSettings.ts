@@ -69,6 +69,16 @@ export function useAdminSettings(companyId: string) {
         return data;
     }, [supabase, companyId]);
 
+    const fetchAxes = useCallback(async () => {
+        const { data, error } = await supabase
+            .from('kpi_axes')
+            .select('*')
+            .eq('company_id', companyId)
+            .order('sort_order', { ascending: true });
+        if (error) throw error;
+        return data;
+    }, [supabase, companyId]);
+
     const updateDepartments = async (depts: any[]) => {
         setLoading(true);
         try {
@@ -195,13 +205,16 @@ export function useAdminSettings(companyId: string) {
     const generateKpiCsvTemplate = async () => {
         setLoading(true);
         try {
-            const [depts, kpis] = await Promise.all([
+            const [company, depts, kpis, axes] = await Promise.all([
+                fetchCompany(),
                 fetchDepartments(),
-                fetchKpis()
+                fetchKpis(),
+                fetchAxes()
             ]);
 
             const kpiIds = kpis.map((k: any) => k.id);
             const records = await fetchAllKpiRecords(kpiIds);
+            const axisName = company.kpi_secondary_axis_name || "第2軸";
 
             // DB側は YYYY-MM-01 形式で保存されている月リスト
             const monthsFull = getLastNMonths(13); // ["2025-04-01", ...]
@@ -216,17 +229,17 @@ export function useAdminSettings(companyId: string) {
                 return m;
             };
 
-            // 高速ルックアップ: kpi_id__month → record（value + target_value）
+            // 高速ルックアップ: kpi_id__month__axis_id → record（value + target_value）
+            // axis_id が null の場合は 'main' をキーにする
             const recordMap = new Map<string, any>();
             records.forEach((r: any) => {
                 const normMonth = normalizeMonth(r.recorded_month);
-                if (!r.axis_id) {
-                    recordMap.set(`${r.kpi_definition_id}__${normMonth}`, r);
-                }
+                const axisKey = r.axis_id || 'main';
+                recordMap.set(`${r.kpi_definition_id}__${normMonth}__${axisKey}`, r);
             });
 
-            // ヘッダー: 対象月, KPI名_実績(部署名), KPI名_目標(部署名), ...
-            const headers = ['対象月'];
+            // ヘッダー: 対象月, 区分, 項目, KPI名_実績(部署名), KPI名_目標(部署名), ...
+            const headers = ['対象月', '区分', '項目'];
             kpis.forEach((k: any) => {
                 const ownerDept = k.owner_dept_id ? deptMap[k.owner_dept_id] : null;
                 const suffix = ownerDept ? `(${ownerDept})` : '';
@@ -235,16 +248,29 @@ export function useAdminSettings(companyId: string) {
             });
             const csvRows = [headers.join(',')];
 
-            // 1行 = 1月
+            // 1ヶ月ごとに [メイン行, 第2軸項目行...] を出力
             for (const monthFull of monthsFull) {
                 const monthDisplay = monthFull.slice(0, 7);
-                const row = [monthDisplay];
+
+                // 1. メイン（全社）行
+                const mainRow = [monthDisplay, 'メイン', '全社'];
                 for (const kpi of kpis) {
-                    const rec = recordMap.get(`${kpi.id}__${monthFull}`);
-                    row.push(rec ? rec.value.toString() : "");
-                    row.push(rec && rec.target_value != null ? rec.target_value.toString() : "");
+                    const rec = recordMap.get(`${kpi.id}__${monthFull}__main`);
+                    mainRow.push(rec ? rec.value.toString() : "");
+                    mainRow.push(rec && rec.target_value != null ? rec.target_value.toString() : "");
                 }
-                csvRows.push(row.join(','));
+                csvRows.push(mainRow.join(','));
+
+                // 2. 第2軸項目行
+                for (const axis of axes) {
+                    const axisRow = [monthDisplay, axisName, axis.name];
+                    for (const kpi of kpis) {
+                        const rec = recordMap.get(`${kpi.id}__${monthFull}__${axis.id}`);
+                        axisRow.push(rec ? rec.value.toString() : "");
+                        axisRow.push(rec && rec.target_value != null ? rec.target_value.toString() : "");
+                    }
+                    csvRows.push(axisRow.join(','));
+                }
             }
             return csvRows.join('\n');
         } finally {
