@@ -99,9 +99,19 @@ export default function AdminPlansPage() {
                 });
 
                 if (hasChange) {
-                    // 1. Plan更新
-                    const { error: updateErr } = await supabase.from('plans').update(edited).eq('id', edited.id);
+                    // 1. Plan更新 (変更があったフィールドのみを送信)
+                    const { data: updateResult, error: updateErr } = await supabase
+                        .from('plans')
+                        .update(Object.fromEntries(Object.entries(edited).filter(([k]) => k in diff || k === 'id')))
+                        .eq('id', edited.id)
+                        .select();
+
                     if (updateErr) throw updateErr;
+                    
+                    // RLSポリシーで弾かれた場合、PostgRESTはエラーではなく空の結果を返すことがある
+                    if (!updateResult || updateResult.length === 0) {
+                        throw new Error(`プラン「${edited.name}」の更新がDBに反映されませんでした。SQLマイグレーション（059）が適用されているか確認してください。`);
+                    }
 
                     // 2. ログ記録 (admin_activity_logsテーブルが必要)
                     await supabase.from('admin_activity_logs').insert({
