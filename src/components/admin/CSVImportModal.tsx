@@ -76,31 +76,15 @@ export function CSVImportModal({ companyId, type, onClose, onSuccess }: CSVImpor
 
     const importKpiData = async () => {
         // 1. Get current masters
-        const { data: existingDepts } = await supabase.from('departments').select('id, name').eq('company_id', companyId);
         const { data: existingKpis } = await supabase.from('kpi_definitions').select('id, name').eq('company_id', companyId);
 
-        const deptMap = new Map(existingDepts?.map(d => [d.name, d.id]));
         const kpiMap = new Map(existingKpis?.map(k => [k.name, k.id]));
 
-        // 2. Identify new items (Option A)
-        const newDeptNames = Array.from(new Set(data.map(row => row['部署名']))).filter(name => name && !deptMap.has(name));
-        const kpiNamesInCsv = headers.slice(2); // '対象月', '部署名' 以降
+        // 2. CSVヘッダーからKPI名を抽出（「KPI名(部署名)」形式の場合、括弧部分を除去）
+        const kpiNamesInCsv = headers.slice(1).map(h => h.replace(/\([^)]*\)$/, '').trim());
+
+        // 新規KPIがあれば自動作成
         const newKpiNames = kpiNamesInCsv.filter(name => name && !kpiMap.has(name));
-
-        // Create new Depts
-        if (newDeptNames.length > 0) {
-            const { data: created, error: dErr } = await supabase.from('departments').insert(
-                newDeptNames.map(name => ({
-                    company_id: companyId,
-                    name,
-                    headcount: 0 // Will update later from newest row
-                }))
-            ).select();
-            if (dErr) throw dErr;
-            created?.forEach(d => deptMap.set(d.name, d.id));
-        }
-
-        // Create new KPIs
         if (newKpiNames.length > 0) {
             const { data: created, error: kErr } = await supabase.from('kpi_definitions').insert(
                 newKpiNames.map(name => ({
@@ -117,25 +101,27 @@ export function CSVImportModal({ companyId, type, onClose, onSuccess }: CSVImpor
         const recordsToUpsert: any[] = [];
         data.forEach(row => {
             const month = row['対象月'];
-            const deptId = deptMap.get(row['部署名']);
-            if (!month || !deptId) return;
+            if (!month) return;
 
-            kpiNamesInCsv.forEach(name => {
-                const kpiId = kpiMap.get(name);
-                const val = row[name];
-                if (kpiId && val !== "") {
+            // 正規化: YYYY-MM → YYYY-MM-01
+            const normalizedMonth = /^\d{4}-\d{2}$/.test(month) ? `${month}-01` : month;
+
+            kpiNamesInCsv.forEach((kpiName, idx) => {
+                const kpiId = kpiMap.get(kpiName);
+                const originalHeader = headers[idx + 1]; // 元のヘッダー名でCSVから値を取得
+                const val = row[originalHeader];
+                if (kpiId && val !== "" && val !== undefined) {
                     recordsToUpsert.push({
                         company_id: companyId,
-                        department_id: deptId,
                         kpi_definition_id: kpiId,
-                        recorded_month: month,
+                        recorded_month: normalizedMonth,
                         value: parseFloat(val) || 0
                     });
                 }
             });
         });
 
-        // 4. Chunked UPSERT (Supabase limit handles well but for safety)
+        // 4. Chunked UPSERT
         const batchSize = 100;
         for (let i = 0; i < recordsToUpsert.length; i += batchSize) {
             const { error } = await supabase.from('kpi_records').upsert(recordsToUpsert.slice(i, i + batchSize), {

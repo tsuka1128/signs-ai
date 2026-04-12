@@ -204,49 +204,44 @@ export function useAdminSettings(companyId: string) {
             const records = await fetchAllKpiRecords(kpiIds);
 
             // DB側は YYYY-MM-01 形式で保存されている月リスト
-            const monthsFull = getLastNMonths(13); // ["2025-04-01", "2025-05-01", ...]
+            const monthsFull = getLastNMonths(13); // ["2025-04-01", ...]
 
-            // レコードの recorded_month を正規化するヘルパー
-            // (DBに "YYYY-MM" と "YYYY-MM-01" が混在する可能性に対応)
+            // 部署名のマッピング
+            const deptMap = Object.fromEntries(depts.map((d: any) => [d.id, d.name]));
+
+            // recorded_month を正規化するヘルパー
             const normalizeMonth = (m: string) => {
                 if (!m) return m;
                 if (/^\d{4}-\d{2}$/.test(m)) return `${m}-01`;
                 return m;
             };
 
-            // レコードの recorded_month を正規化した高速ルックアップを構築
+            // 高速ルックアップ: kpi_id__month → value
             const recordMap = new Map<string, any>();
             records.forEach((r: any) => {
                 const normMonth = normalizeMonth(r.recorded_month);
-                // キー: kpi_id__month__dept_id(またはownerDept)
-                // department_id がある場合はそのまま使う
-                if (r.department_id) {
-                    recordMap.set(`${r.kpi_definition_id}__${normMonth}__${r.department_id}`, r);
-                }
-                // department_id が無い場合、axis_id も無いメインレコードとして登録
-                if (!r.department_id && !r.axis_id) {
-                    recordMap.set(`${r.kpi_definition_id}__${normMonth}__main`, r);
+                // axis_id が無いメインレコードのみ対象
+                if (!r.axis_id) {
+                    recordMap.set(`${r.kpi_definition_id}__${normMonth}`, r);
                 }
             });
 
-            const headers = ['対象月', '部署名', ...kpis.map((k: any) => k.name)];
+            // ヘッダー: 対象月, KPI名(部署名), KPI名(部署名), ...
+            const headers = ['対象月', ...kpis.map((k: any) => {
+                const ownerDept = k.owner_dept_id ? deptMap[k.owner_dept_id] : null;
+                return ownerDept ? `${k.name}(${ownerDept})` : k.name;
+            })];
             const csvRows = [headers.join(',')];
 
+            // 1行 = 1月（部署のループなし）
             for (const monthFull of monthsFull) {
-                const monthDisplay = monthFull.slice(0, 7); // CSV表示用: "2025-04"
-                for (const dept of depts) {
-                    const row = [monthDisplay, dept.name];
-                    for (const kpi of kpis) {
-                        // 1. department_id で直接マッチするレコードを探す
-                        let rec = recordMap.get(`${kpi.id}__${monthFull}__${dept.id}`);
-                        // 2. 見つからなければ、KPI定義の所属部署 (owner_dept_id) でマッチ
-                        if (!rec && kpi.owner_dept_id === dept.id) {
-                            rec = recordMap.get(`${kpi.id}__${monthFull}__main`);
-                        }
-                        row.push(rec ? rec.value.toString() : "");
-                    }
-                    csvRows.push(row.join(','));
+                const monthDisplay = monthFull.slice(0, 7); // "2025-04"
+                const row = [monthDisplay];
+                for (const kpi of kpis) {
+                    const rec = recordMap.get(`${kpi.id}__${monthFull}`);
+                    row.push(rec ? rec.value.toString() : "");
                 }
+                csvRows.push(row.join(','));
             }
             return csvRows.join('\n');
         } finally {
