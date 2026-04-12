@@ -326,11 +326,9 @@ export function useAdminSettings(companyId: string) {
             });
             const csvRows = [headers.join(',')];
 
-            // 1ヶ月ごとに [メイン行, 第2軸項目行...] を出力
+            // 1. メイン（全社）行を時系列で出力
             for (const monthFull of monthsFull) {
                 const monthDisplay = monthFull.slice(0, 7);
-
-                // 1. メイン（全社）行
                 const mainRow = [monthDisplay, 'メイン', '全社'];
                 for (const kpi of kpis) {
                     const rec = recordMap.get(`${kpi.id}__${monthFull}__main`);
@@ -338,9 +336,12 @@ export function useAdminSettings(companyId: string) {
                     mainRow.push(rec && rec.target_value != null ? rec.target_value.toString() : "");
                 }
                 csvRows.push(mainRow.join(','));
+            }
 
-                // 2. 第2軸項目行
-                for (const axis of axes) {
+            // 2. 第2軸項目ごとに出力
+            for (const axis of axes) {
+                for (const monthFull of monthsFull) {
+                    const monthDisplay = monthFull.slice(0, 7);
                     const axisRow = [monthDisplay, axisName, axis.name];
                     for (const kpi of kpis) {
                         const rec = recordMap.get(`${kpi.id}__${monthFull}__${axis.id}`);
@@ -381,9 +382,9 @@ export function useAdminSettings(companyId: string) {
             const headers = ['対象月', '部署名', '人数', '人件費'];
             const csvRows = [headers.join(',')];
 
-            for (const monthFull of monthsFull) {
-                const monthDisplay = monthFull.slice(0, 7);
-                for (const dept of depts) {
+            for (const dept of depts) {
+                for (const monthFull of monthsFull) {
+                    const monthDisplay = monthFull.slice(0, 7);
                     const rec = recordMap.get(`${dept.id}__${monthFull}`);
                     const row = [
                         monthDisplay, 
