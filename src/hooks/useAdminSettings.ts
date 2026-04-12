@@ -216,30 +216,33 @@ export function useAdminSettings(companyId: string) {
                 return m;
             };
 
-            // 高速ルックアップ: kpi_id__month → value
+            // 高速ルックアップ: kpi_id__month → record（value + target_value）
             const recordMap = new Map<string, any>();
             records.forEach((r: any) => {
                 const normMonth = normalizeMonth(r.recorded_month);
-                // axis_id が無いメインレコードのみ対象
                 if (!r.axis_id) {
                     recordMap.set(`${r.kpi_definition_id}__${normMonth}`, r);
                 }
             });
 
-            // ヘッダー: 対象月, KPI名(部署名), KPI名(部署名), ...
-            const headers = ['対象月', ...kpis.map((k: any) => {
+            // ヘッダー: 対象月, KPI名_実績(部署名), KPI名_目標(部署名), ...
+            const headers = ['対象月'];
+            kpis.forEach((k: any) => {
                 const ownerDept = k.owner_dept_id ? deptMap[k.owner_dept_id] : null;
-                return ownerDept ? `${k.name}(${ownerDept})` : k.name;
-            })];
+                const suffix = ownerDept ? `(${ownerDept})` : '';
+                headers.push(`${k.name}${suffix}`);
+                headers.push(`${k.name}_目標${suffix}`);
+            });
             const csvRows = [headers.join(',')];
 
-            // 1行 = 1月（部署のループなし）
+            // 1行 = 1月
             for (const monthFull of monthsFull) {
-                const monthDisplay = monthFull.slice(0, 7); // "2025-04"
+                const monthDisplay = monthFull.slice(0, 7);
                 const row = [monthDisplay];
                 for (const kpi of kpis) {
                     const rec = recordMap.get(`${kpi.id}__${monthFull}`);
                     row.push(rec ? rec.value.toString() : "");
+                    row.push(rec && rec.target_value != null ? rec.target_value.toString() : "");
                 }
                 csvRows.push(row.join(','));
             }

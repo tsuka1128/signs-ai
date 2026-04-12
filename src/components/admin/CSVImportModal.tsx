@@ -106,10 +106,22 @@ export function CSVImportModal({ companyId, type, onClose, onSuccess }: CSVImpor
 
         const kpiMap = new Map(existingKpis?.map(k => [k.name, k.id]));
 
-        // 2. CSVヘッダーからKPI名を抽出（「KPI名(部署名)」形式の場合、括弧部分を除去）
-        const kpiNamesInCsv = headers.slice(1).map(h => h.replace(/\([^)]*\)$/, '').trim());
+        // 2. CSVヘッダーからKPI名を解析
+        // 「KPI名(部署名)」→ 実績カラム、「KPI名_目標(部署名)」→ 目標カラム
+        const actualHeaders: { idx: number; kpiName: string; originalHeader: string }[] = [];
+        const targetHeaders: { idx: number; kpiName: string; originalHeader: string }[] = [];
 
-        // 新規KPIがあれば自動作成
+        headers.slice(1).forEach((h, i) => {
+            const cleaned = h.replace(/\([^)]*\)$/, '').trim();
+            if (cleaned.endsWith('_目標')) {
+                targetHeaders.push({ idx: i + 1, kpiName: cleaned.replace(/_目標$/, ''), originalHeader: h });
+            } else {
+                actualHeaders.push({ idx: i + 1, kpiName: cleaned, originalHeader: h });
+            }
+        });
+
+        // 新規KPIの自動作成（実績カラムのKPI名のみ対象）
+        const kpiNamesInCsv = actualHeaders.map(h => h.kpiName);
         const newKpiNames = kpiNamesInCsv.filter(name => name && !kpiMap.has(name));
         if (newKpiNames.length > 0) {
             const { data: created, error: kErr } = await supabase.from('kpi_definitions').insert(
@@ -123,33 +135,49 @@ export function CSVImportModal({ companyId, type, onClose, onSuccess }: CSVImpor
             created?.forEach(k => kpiMap.set(k.name, k.id));
         }
 
-        // 3. Prepare bulk upsert
-        const recordsToUpsert: any[] = [];
+        // 3. レコードを構築（実績と目標をマージ）
+        // キー: kpiId__month → { kpi_definition_id, recorded_month, value, target_value }
+        const recordMergeMap = new Map<string, any>();
+
         data.forEach(row => {
             const month = row['対象月'];
             if (!month) return;
-
-            // 正規化: YYYY-MM → YYYY-MM-01
             const normalizedMonth = /^\d{4}-\d{2}$/.test(month) ? `${month}-01` : month;
 
-            kpiNamesInCsv.forEach((kpiName, idx) => {
+            // 実績値を処理
+            actualHeaders.forEach(({ kpiName, originalHeader }) => {
                 const kpiId = kpiMap.get(kpiName);
-                const originalHeader = headers[idx + 1]; // 元のヘッダー名でCSVから値を取得
                 const val = row[originalHeader];
-                if (kpiId && val !== "" && val !== undefined) {
-                    recordsToUpsert.push({
-                        kpi_definition_id: kpiId,
-                        recorded_month: normalizedMonth,
-                        value: parseFloat(val) || 0
-                    });
+                if (!kpiId) return;
+                const key = `${kpiId}__${normalizedMonth}`;
+                if (!recordMergeMap.has(key)) {
+                    recordMergeMap.set(key, { kpi_definition_id: kpiId, recorded_month: normalizedMonth, value: 0, target_value: null });
+                }
+                if (val !== "" && val !== undefined) {
+                    recordMergeMap.get(key).value = parseFloat(val) || 0;
+                }
+            });
+
+            // 目標値を処理
+            targetHeaders.forEach(({ kpiName, originalHeader }) => {
+                const kpiId = kpiMap.get(kpiName);
+                const val = row[originalHeader];
+                if (!kpiId) return;
+                const key = `${kpiId}__${normalizedMonth}`;
+                if (!recordMergeMap.has(key)) {
+                    recordMergeMap.set(key, { kpi_definition_id: kpiId, recorded_month: normalizedMonth, value: 0, target_value: null });
+                }
+                if (val !== "" && val !== undefined) {
+                    recordMergeMap.get(key).target_value = parseFloat(val) || 0;
                 }
             });
         });
 
-        // 4. 該当月のレコードをまず削除し、新しいデータを挿入する
-        // （複数のユニーク制約が混在しているため、upsertではなくdelete+insertで確実に処理）
-        const monthsToUpdate = Array.from(new Set(recordsToUpsert.map(r => r.recorded_month)));
-        const kpiIdsToUpdate = Array.from(new Set(recordsToUpsert.map(r => r.kpi_definition_id)));
+        const recordsToInsert = Array.from(recordMergeMap.values());
+
+        // 4. 該当月のレコードを削除して新規挿入
+        const monthsToUpdate = Array.from(new Set(recordsToInsert.map(r => r.recorded_month)));
+        const kpiIdsToUpdate = Array.from(new Set(recordsToInsert.map(r => r.kpi_definition_id)));
 
         if (monthsToUpdate.length > 0 && kpiIdsToUpdate.length > 0) {
             const { error: delError } = await supabase
@@ -163,10 +191,10 @@ export function CSVImportModal({ companyId, type, onClose, onSuccess }: CSVImpor
 
         // 一括挿入
         const batchSize = 100;
-        for (let i = 0; i < recordsToUpsert.length; i += batchSize) {
-            const { error } = await supabase.from('kpi_records').insert(recordsToUpsert.slice(i, i + batchSize));
+        for (let i = 0; i < recordsToInsert.length; i += batchSize) {
+            const { error } = await supabase.from('kpi_records').insert(recordsToInsert.slice(i, i + batchSize));
             if (error) throw error;
-            setProgress(Math.round(((i + batchSize) / recordsToUpsert.length) * 100));
+            setProgress(Math.round(((i + batchSize) / recordsToInsert.length) * 100));
         }
     };
 
