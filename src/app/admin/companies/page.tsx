@@ -34,8 +34,7 @@ export default function AdminCompaniesPage() {
                         *,
                         plans(name),
                         users(count),
-                        departments(count),
-                        kpi_definitions(count)
+                        departments(count)
                     `)
                     .order('created_at', { ascending: false });
 
@@ -169,7 +168,7 @@ export default function AdminCompaniesPage() {
                                     </td>
                                     <td className="px-6 py-5">
                                         <div className="text-xs font-bold text-slate-600">
-                                            {company.departments?.[0]?.count || 0} <span className="text-slate-300 mx-1">/</span> {company.kpi_definitions?.[0]?.count || 0}
+                                            {company.departments?.[0]?.count || 0} <span className="text-slate-300 mx-1">/</span> {company.kpi_definitions_count || 0}
                                         </div>
                                     </td>
                                     <td className="px-6 py-5 text-sm font-bold text-slate-500 tabular-nums">
