@@ -11,8 +11,8 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. リクエストボディの取得
-    const { email, role: targetRole, targetCompanyId } = await req.json();
-    if (!email || !targetRole) {
+    const { email, role, department_id, axis_id, slack_user_id, targetCompanyId } = await req.json();
+    if (!email || !role) {
         return NextResponse.json({ message: "メールアドレスとロールは必須です" }, { status: 400 });
     }
 
@@ -53,6 +53,9 @@ export async function POST(req: NextRequest) {
             inviter_id: user.id,
             email: email.trim(),
             role: role,
+            department_id: department_id || null,
+            axis_id: axis_id || null,
+            slack_user_id: slack_user_id || null,
             status: "pending",
             expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7日間
         })
