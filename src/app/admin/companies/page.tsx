@@ -27,8 +27,8 @@ export default function AdminCompaniesPage() {
         async function fetchCompanies() {
             if (authLoading) return;
             try {
-                // 企業、プラン、ユーザー数、部署数を取得
-                const { data, error } = await supabase
+                // 1. 企業、プラン、ユーザー数、部署数を取得 (メインクエリ)
+                const { data: companiesData, error: compError } = await supabase
                     .from('companies')
                     .select(`
                         *,
@@ -38,8 +38,32 @@ export default function AdminCompaniesPage() {
                     `)
                     .order('created_at', { ascending: false });
 
-                if (error) throw error;
-                setCompanies(data || []);
+                if (compError) throw compError;
+
+                // 2. KPI数を別クエリで安全に取得し、JS側でカウント
+                const { data: kpiData, error: kpiError } = await supabase
+                    .from('kpi_definitions')
+                    .select('company_id');
+
+                if (kpiError) {
+                    console.error("Error fetching KPI counts:", kpiError);
+                    setCompanies(companiesData || []);
+                    return;
+                }
+
+                // IDごとのKPI数を集計
+                const kpiCountMap = (kpiData || []).reduce((acc: any, curr) => {
+                    acc[curr.company_id] = (acc[curr.company_id] || 0) + 1;
+                    return acc;
+                }, {});
+
+                // メインデータにマージ
+                const enrichedCompanies = (companiesData || []).map(comp => ({
+                    ...comp,
+                    kpi_count: kpiCountMap[comp.id] || 0
+                }));
+
+                setCompanies(enrichedCompanies);
             } catch (error) {
                 console.error("Error fetching companies:", error);
             } finally {
@@ -168,7 +192,7 @@ export default function AdminCompaniesPage() {
                                     </td>
                                     <td className="px-6 py-5">
                                         <div className="text-xs font-bold text-slate-600">
-                                            {company.departments?.[0]?.count || 0} <span className="text-slate-300 mx-1">/</span> {company.kpi_definitions_count || 0}
+                                            {company.departments?.[0]?.count || 0} <span className="text-slate-300 mx-1">/</span> {company.kpi_count || 0}
                                         </div>
                                     </td>
                                     <td className="px-6 py-5 text-sm font-bold text-slate-500 tabular-nums">
