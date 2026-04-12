@@ -177,6 +177,57 @@ export function useAdminSettings(companyId: string) {
         if (error) throw error;
     };
 
+    const updateAxes = async (axes: any[]) => {
+        setLoading(true);
+        try {
+            // 1. 削除処理
+            const { data: existing } = await supabase.from('kpi_axes').select('id').eq('company_id', companyId);
+            const existingIds = existing?.map(e => e.id) || [];
+            const currentIds = axes.filter(a => !a.is_new).map(a => a.id);
+            const idsToDelete = existingIds.filter(id => !currentIds.includes(id));
+
+            if (idsToDelete.length > 0) {
+                const { error: delErr } = await supabase.from('kpi_axes').delete().in('id', idsToDelete);
+                if (delErr) throw delErr;
+            }
+
+            // 2. 更新・作成処理
+            const prompts = axes.map((a, index) => {
+                const payload = { 
+                    name: a.name, 
+                    headcount: a.headcount, 
+                    sort_order: index 
+                };
+                if (a.is_new) {
+                    return supabase.from('kpi_axes').insert({ ...payload, company_id: companyId });
+                } else {
+                    return supabase.from('kpi_axes').update(payload).eq('id', a.id);
+                }
+            });
+
+            const results = await Promise.all(prompts);
+            const firstError = results.find(r => r.error)?.error;
+            if (firstError) throw firstError;
+
+            // ログ記録
+            const { data: { user: authUser } } = await supabase.auth.getUser();
+            if (authUser) {
+                await supabase.from('admin_activity_logs').insert({
+                    admin_id: authUser.id,
+                    target_company_id: companyId,
+                    action_type: 'update_kpi_axes',
+                    details: {
+                        count: axes.length,
+                        deleted_count: idsToDelete.length,
+                        timestamp: new Date().toISOString()
+                    }
+                });
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
     /**
      * KPI実績・リソース実績の取得およびCSV生成ロジック
      */
@@ -332,6 +383,8 @@ export function useAdminSettings(companyId: string) {
         deleteDepartment,
         updateKpis,
         deleteKpi,
+        fetchAxes,
+        updateAxes,
         generateKpiCsvTemplate,
         generateResourceCsvTemplate
     };

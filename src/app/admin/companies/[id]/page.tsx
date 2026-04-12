@@ -26,7 +26,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { HistoryModal } from "@/components/admin/HistoryModal";
-import { AdminDepartmentsModal, AdminKpisModal, AdminCompanySettingsModal } from "@/components/admin/QuickEditModals";
+import { AdminDepartmentsModal, AdminKpisModal, AdminCompanySettingsModal, AdminAxesModal } from "@/components/admin/QuickEditModals";
 import { AVAILABLE_ADDONS } from "@/lib/addons";
 import { AnimatePresence } from "framer-motion";
 import { CSVImportModal } from "@/components/admin/CSVImportModal";
@@ -47,8 +47,10 @@ export default function AdminCompanyDetailPage() {
     const [showHistory, setShowHistory] = useState(false);
     const [showDeptModal, setShowDeptModal] = useState(false);
     const [showKpiModal, setShowKpiModal] = useState(false);
+    const [showAxisModal, setShowAxisModal] = useState(false);
     const [showCompanyModal, setShowCompanyModal] = useState(false);
     const [importType, setImportType] = useState<'kpi' | 'resource' | null>(null);
+    const [axes, setAxes] = useState<any[]>([]);
 
     const { generateKpiCsvTemplate, generateResourceCsvTemplate } = useAdminSettings(companyId);
 
@@ -120,7 +122,15 @@ export default function AdminCompanyDetailPage() {
                 .order('sort_order', { ascending: true });
             setKpis(kpiData || []);
 
-            // 4. 統計 (ユーザー数、回答数)
+            // 4. 第2軸
+            const { data: axisData } = await supabase
+                .from('kpi_axes')
+                .select('*')
+                .eq('company_id', companyId)
+                .order('sort_order', { ascending: true });
+            setAxes(axisData || []);
+
+            // 5. 統計 (ユーザー数、回答数)
             const { count: userCount } = await supabase
                 .from('users')
                 .select('*', { count: 'exact', head: true })
@@ -323,7 +333,10 @@ export default function AdminCompanyDetailPage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className={cn(
+                "grid grid-cols-1 gap-8",
+                axes.length > 0 ? "lg:grid-cols-3" : "lg:grid-cols-2"
+            )}>
                 {/* Departments List */}
                 <section className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden flex flex-col">
                     <header className="p-8 border-b border-slate-50 flex items-center justify-between">
@@ -358,6 +371,40 @@ export default function AdminCompanyDetailPage() {
                         ))}
                     </div>
                 </section>
+
+                {/* Second Axis List (Conditional) */}
+                {axes.length > 0 && (
+                    <section className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+                        <header className="p-8 border-b border-slate-50 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-lg font-black text-slate-800 tracking-tight">{company.kpi_secondary_axis_name || "第2軸"}</h2>
+                                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Secondary Axis Items ({axes.length})</p>
+                            </div>
+                            <button 
+                                onClick={() => setShowAxisModal(true)}
+                                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
+                            >
+                                <Settings className="w-5 h-5" />
+                            </button>
+                        </header>
+                        <div className="flex-1 overflow-y-auto max-h-[400px] divide-y divide-slate-50">
+                            {axes.map((axis) => (
+                                <div key={axis.id} className="p-6 flex items-center justify-between hover:bg-slate-50/50 transition-all group">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-300 font-bold italic">
+                                            {axis.name.substring(0, 1)}
+                                        </div>
+                                        <span className="text-sm font-bold text-slate-700">{axis.name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 rounded-full text-[10px] font-black text-slate-400">
+                                        <Users className="w-3 h-3" />
+                                        {axis.headcount}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
 
                 {/* KPI Definitions */}
                 <section className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden flex flex-col">
@@ -468,6 +515,14 @@ export default function AdminCompanyDetailPage() {
                         companyId={company.id}
                         companyName={company.name}
                         onClose={() => setShowKpiModal(false)}
+                        onSuccess={fetchCompanyDetails}
+                    />
+                )}
+                {showAxisModal && (
+                    <AdminAxesModal 
+                        companyId={company.id}
+                        companyName={company.name}
+                        onClose={() => setShowAxisModal(false)}
                         onSuccess={fetchCompanyDetails}
                     />
                 )}
