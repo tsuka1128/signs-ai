@@ -53,7 +53,7 @@ export function AdminDepartmentsModal({ companyId, companyName, onClose, onSucce
             
             <motion.div 
                 layoutId="modal"
-                className="bg-white rounded-[32px] w-full max-w-3xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]"
+                className="bg-white rounded-[32px] w-full max-w-4xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]"
             >
                 <header className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
                     <div>
@@ -146,23 +146,23 @@ export function AdminDepartmentsModal({ companyId, companyName, onClose, onSucce
                                     console.error("Export error:", err);
                                 }
                             }}
-                            className="text-[10px] font-black text-teal hover:underline flex items-center gap-1 mt-1 uppercase tracking-widest bg-transparent border-none p-0 cursor-pointer"
+                            className="text-[10px] font-black text-teal hover:underline flex items-center gap-1 mt-1 uppercase tracking-widest bg-transparent border-none p-0 cursor-pointer whitespace-nowrap"
                         >
                             <Download className="w-3 h-3" /> 記入用フォーマット(CSV)をダウンロード
                         </button>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 shrink-0">
                         <button 
                             onClick={() => setShowImport(true)}
-                            className="px-6 py-3 border border-slate-200 text-slate-600 rounded-2xl font-bold text-sm hover:bg-slate-50 transition-all"
+                            className="px-6 py-3 border border-slate-200 text-slate-600 rounded-2xl font-bold text-sm hover:bg-slate-50 transition-all whitespace-nowrap"
                         >
                             CSVインポート
                         </button>
-                        <button onClick={onClose} className="px-6 py-3 text-slate-400 font-bold text-sm hover:text-slate-600">キャンセル</button>
+                        <button onClick={onClose} className="px-6 py-3 text-slate-400 font-bold text-sm hover:text-slate-600 whitespace-nowrap">キャンセル</button>
                         <button 
                             onClick={() => setShowConfirm(true)}
                             disabled={loading}
-                            className="px-8 py-3 bg-slate-800 text-white rounded-2xl font-black text-sm hover:bg-slate-700 transition-all shadow-lg flex items-center gap-2 disabled:opacity-50"
+                            className="px-8 py-3 bg-slate-800 text-white rounded-2xl font-black text-sm hover:bg-slate-700 transition-all shadow-lg flex items-center gap-2 disabled:opacity-50 whitespace-nowrap"
                         >
                             <Save className="w-4 h-4" /> 構成を保存
                         </button>
@@ -253,7 +253,7 @@ export function AdminKpisModal({ companyId, companyName, onClose, onSuccess }: M
             
             <motion.div 
                 layoutId="modal-kpi"
-                className="bg-white rounded-[32px] w-full max-w-3xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]"
+                className="bg-white rounded-[32px] w-full max-w-4xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]"
             >
                 <header className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
                     <div>
@@ -348,23 +348,23 @@ export function AdminKpisModal({ companyId, companyName, onClose, onSuccess }: M
                                     console.error("Export error:", err);
                                 }
                             }}
-                            className="text-[10px] font-black text-teal hover:underline flex items-center gap-1 mt-1 uppercase tracking-widest bg-transparent border-none p-0 cursor-pointer"
+                            className="text-[10px] font-black text-teal hover:underline flex items-center gap-1 mt-1 uppercase tracking-widest bg-transparent border-none p-0 cursor-pointer whitespace-nowrap"
                         >
                             <Download className="w-3 h-3" /> 記入用フォーマット(CSV)をダウンロード
                         </button>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 shrink-0">
                         <button 
                             onClick={() => setShowImport(true)}
-                            className="px-6 py-3 border border-slate-200 text-slate-600 rounded-2xl font-bold text-sm hover:bg-slate-50 transition-all"
+                            className="px-6 py-3 border border-slate-200 text-slate-600 rounded-2xl font-bold text-sm hover:bg-slate-50 transition-all whitespace-nowrap"
                         >
                             CSVインポート
                         </button>
-                        <button onClick={onClose} className="px-6 py-3 text-slate-400 font-bold text-sm hover:text-slate-600">キャンセル</button>
+                        <button onClick={onClose} className="px-6 py-3 text-slate-400 font-bold text-sm hover:text-slate-600 whitespace-nowrap">キャンセル</button>
                         <button 
                             onClick={() => setShowConfirm(true)}
                             disabled={loading}
-                            className="px-8 py-3 bg-slate-800 text-white rounded-2xl font-black text-sm hover:bg-slate-700 transition-all shadow-lg flex items-center gap-2 disabled:opacity-50"
+                            className="px-8 py-3 bg-slate-800 text-white rounded-2xl font-black text-sm hover:bg-slate-700 transition-all shadow-lg flex items-center gap-2 disabled:opacity-50 whitespace-nowrap"
                         >
                             <Save className="w-4 h-4" /> 定義を保存
                         </button>
@@ -496,7 +496,7 @@ export function AdminCompanySettingsModal({ companyId, companyName, onClose, onS
             
             <motion.div 
                 layoutId="modal-company"
-                className="bg-white rounded-[32px] w-full max-w-3xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]"
+                className="bg-white rounded-[32px] w-full max-w-4xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[90vh]"
             >
                 <header className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
                     <div>
