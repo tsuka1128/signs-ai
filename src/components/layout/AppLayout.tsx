@@ -32,7 +32,7 @@ export function AppLayout({
             />
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col min-w-0">
+            <div className="flex-1 flex flex-col min-w-0 lg:pl-64">
                 {/* Simplified Header */}
                 <Header 
                     isMobile={true} 
