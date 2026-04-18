@@ -145,8 +145,9 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
                         </div>
                     </div>
                 </aside>
+            </div>
 
-                {/* Main Content Area */}
+            {/* Main Content Area */}
                 <main className="flex-1 min-w-0">
                     <div className="p-6 md:p-12 max-w-3xl mx-auto">
                         {children}
