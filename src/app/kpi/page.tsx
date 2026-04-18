@@ -1,16 +1,11 @@
-"use client";
-
-export const dynamic = 'force-dynamic';
-
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/Badge";
-import { Info, Save, ArrowLeft, Building2, Lock, Unlock } from "lucide-react";
+import { Info, Save, ArrowLeft, Building2, Lock, Unlock, BarChart3 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { Loading } from "@/components/ui/Loading";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { BarChart3 } from "lucide-react";
 
 // KPI定義の型
 interface KpiDefinition {
@@ -361,14 +356,10 @@ export default function KpiInputPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans pb-32">
-            <main className="px-4 sm:px-6 py-6 sm:py-10 max-w-[1400px] mx-auto">
+        <AppLayout>
+            <main className="max-w-[1400px] mx-auto">
                 <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8 w-full">
                     <div>
-                        <Link href="/" className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-slate-600 transition-colors mb-3">
-                            <ArrowLeft className="w-3 h-3" />
-                            ダッシュボードに戻る
-                        </Link>
                         <h1 className="text-2xl font-black text-slate-800 tracking-tighter mb-2 flex items-center gap-3">
                             月次KPI一括入力
                             <Badge className="bg-teal/10 text-teal border-none text-[10px] font-bold px-2">管理者向け</Badge>
@@ -452,7 +443,7 @@ export default function KpiInputPage() {
                 <div className="mt-10 flex items-start gap-3 bg-white p-5 rounded-xl border border-slate-200 shadow-sm text-slate-600">
                     <Info className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
                     <p className="text-xs leading-relaxed font-medium">
-                        KPIの基礎項目定義や、{secondaryAxisName}の項目管理は <Link href="/settings" className="text-teal hover:underline font-bold">組織情報設定</Link> から行ってください。
+                        KPIの基礎項目定義や、{secondaryAxisName}の項目管理は設定管理から行ってください。
                     </p>
                 </div>
             </main>
@@ -463,6 +454,6 @@ export default function KpiInputPage() {
                 .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(203, 213, 225, 0.4); border-radius: 10px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: rgba(148, 163, 184, 0.8); }
             `}} />
-        </div>
+        </AppLayout>
     );
 }

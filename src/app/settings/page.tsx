@@ -1,8 +1,6 @@
-"use client";
-
 import { useState } from "react";
 import { Settings2, Sparkles } from "lucide-react";
-import { Header } from "@/components/layout/Header";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { cn } from "@/lib/utils";
 import { useSettingsData } from "@/hooks/useSettingsData";
 import { PlanGate } from "@/components/ui/PlanGate";
@@ -32,10 +30,9 @@ export default function SettingsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-20">
-            <Header />
+        <AppLayout>
             <TrialGuard>
-                <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+                <div className="space-y-8">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-black text-slate-800 tracking-tighter flex items-center gap-3">
@@ -198,7 +195,8 @@ export default function SettingsPage() {
                     handleDeleteUser={handlers.handleDeleteUser}
                 />
             )}
+                </div>
             </TrialGuard>
-        </div>
+        </AppLayout>
     );
 }

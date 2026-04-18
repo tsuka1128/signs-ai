@@ -1,9 +1,7 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
-import { Header } from "@/components/layout/Header";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/Badge";
 import {
     Save,
@@ -110,9 +108,8 @@ export default function VoiceCheckPage() {
     if (loading) return <div className="flex items-center justify-center min-h-screen">読み込み中...</div>;
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-20">
-            <Header />
-            <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+        <AppLayout>
+            <div className="space-y-8">
                 <div>
                     <h1 className="text-2xl font-black text-slate-800 tracking-tighter flex items-center gap-3">
                         <ClipboardList className="w-8 h-8 text-teal" />
@@ -324,7 +321,7 @@ export default function VoiceCheckPage() {
                         </section>
                     </div>
                 </div>
-            </main>
-        </div>
+            </div>
+        </AppLayout>
     );
 }

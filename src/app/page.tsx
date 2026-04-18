@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Header } from "@/components/layout/Header";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { MainInsightCard } from "@/components/dashboard/MainInsightCard";
 import { TabBar } from "@/components/ui/TabBar";
-import { Pills } from "@/components/ui/Pills";
 import { DeepReport } from "@/components/dashboard/DeepReport";
 import { ActionSection } from "@/components/dashboard/sections/ActionSection";
 import { SemanticSection } from "@/components/dashboard/sections/SemanticSection";
@@ -126,55 +125,43 @@ export default function DashboardPage() {
   if (!company) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50/50">
-      <Header />
+    <AppLayout 
+      currentSection={sec} 
+      onSectionChange={setSec} 
+      hasLaborData={state.hasLaborData}
+    >
       <TrialGuard>
-        <main className="max-w-3xl mx-auto px-5 py-6 space-y-8">
-        <div className="space-y-4">
-          <MainInsightCard
-            title={ins.title}
-            tone={ins.tone}
-            text={ins.text}
-            weather={ins.weather as any}
-            trend={ins.trend as any}
-            onOpenDeepReport={tab === "all" ? () => setShowDeepReport(true) : undefined}
-          />
+        <div className="space-y-8">
+          <div className="space-y-4">
+            <MainInsightCard
+              title={ins.title}
+              tone={ins.tone}
+              text={ins.text}
+              weather={ins.weather as any}
+              trend={ins.trend as any}
+              onOpenDeepReport={tab === "all" ? () => setShowDeepReport(true) : undefined}
+            />
 
-
-          {tab !== "all" && (() => {
-            const dept = state.realDepts.find(d => d.id === tab);
-            if (!dept) return null;
-            return (
-              <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
-                <div className="flex items-center gap-2 mb-3">
-                  <h5 className="text-xs font-bold text-slate-700">AI方針翻訳 — {dept.name}</h5>
-                  <span className="text-[9px] text-white font-bold px-2 py-0.5 bg-teal/80 rounded-full">最新の通知</span>
+            {tab !== "all" && (() => {
+              const dept = state.realDepts.find(d => d.id === tab);
+              if (!dept) return null;
+              return (
+                <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <h5 className="text-xs font-bold text-slate-700">AI方針翻訳 — {dept.name}</h5>
+                    <span className="text-[9px] text-white font-bold px-2 py-0.5 bg-teal/80 rounded-full">最新の通知</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                    ※現在AIエンジン未接続です。フェーズ7以降、ここに「{dept.name}」の直近のコンディション（体温）と全社方針を掛け合わせた、専用の翻訳メッセージが毎月自動生成されます。
+                  </p>
                 </div>
-                <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-                  ※現在AIエンジン未接続です。フェーズ7以降、ここに「{dept.name}」の直近のコンディション（体温）と全社方針を掛け合わせた、専用の翻訳メッセージが毎月自動生成されます。
-                </p>
-              </div>
-            );
-          })()}
+              );
+            })()}
 
-          <TabBar tabs={derived.deptTabs} active={tab} onChange={setTab} />
-        </div>
+            <TabBar tabs={derived.deptTabs} active={tab} onChange={setTab} />
+          </div>
 
-        <Pills
-          items={[
-            { id: "matrix", label: "マトリックス" },
-            { id: "kpi", label: "KPI推移" },
-            { id: "org", label: "組織のKPI" },
-            ...(state.hasLaborData ? [{ id: "finance", label: "人件費ROI" }] : []),
-            { id: "survey", label: "組織の体温" },
-            { id: "action", label: "アクション" },
-            { id: "semantic", label: "組織方針" }
-          ]}
-          active={sec}
-          onChange={setSec}
-        />
-
-        <div className="animate-fadeIn">
+          <div className="animate-fadeIn">
           {sec === "matrix" && (
             <MatrixSection
               secondaryAxisName={secondaryAxisName}
@@ -255,21 +242,8 @@ export default function DashboardPage() {
               aiContent={aiContent}
               companyId={company.id}
             />
-          )}
         </div>
-      </main>
-
-      <footer className="max-w-3xl mx-auto px-5 py-20 text-center space-y-4">
-        <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-        <div className="flex items-center justify-center gap-3 mb-2">
-          <div className="w-8 h-8 bg-teal-500 rounded-xl flex items-center justify-center shadow-md shadow-teal-200">
-            <span className="text-white font-black text-base italic">S</span>
-          </div>
-          <h2 className="text-3xl font-black text-slate-300 tracking-tighter">Signs AI</h2>
-        </div>
-        <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">組織に体温を</p>
-        <p className="text-[9px] text-slate-300 font-bold uppercase">by 株式会社 Taion</p>
-      </footer>
+      </TrialGuard>
 
       <DeepReport
         isOpen={showDeepReport}
@@ -313,7 +287,6 @@ export default function DashboardPage() {
           }
         ]}
       />
-      </TrialGuard>
-    </div>
+    </AppLayout>
   );
 }
