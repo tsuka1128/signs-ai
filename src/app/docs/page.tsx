@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { 
     BookOpen, 
