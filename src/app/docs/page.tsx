@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { AppLayout } from "@/components/layout/AppLayout";
 import { 
     BookOpen, 
     MessageSquare, 
@@ -12,8 +11,7 @@ import {
 
 export default function DocsPage() {
     return (
-        <AppLayout>
-            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Hero Section */}
             <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-teal/5 text-teal rounded-full text-[10px] font-black uppercase tracking-widest border border-teal/10">
@@ -118,6 +116,5 @@ export default function DocsPage() {
                 </ul>
             </div>
         </div>
-        </AppLayout>
     );
 }

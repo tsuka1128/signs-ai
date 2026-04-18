@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DocsSearch } from "@/components/docs/DocsSearch";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 /**
  * ドキュメントサイドメニュー定義
@@ -77,30 +78,12 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
     const pathname = usePathname();
 
     return (
-        <div className="min-h-screen bg-white flex flex-col">
-            {/* Top Navigation Bar */}
-            <header className="h-16 border-b border-slate-100 flex items-center justify-between px-6 sticky top-0 bg-white/80 backdrop-blur-md z-50">
-                <div className="flex items-center gap-4">
-                    <Link href="/" className="flex items-center gap-2 group">
-                        <div className="w-8 h-8 bg-teal-500 rounded-lg flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-                            <span className="text-white font-black text-sm italic">S</span>
-                        </div>
-                        <span className="font-black text-slate-800 tracking-tight">Signs AI <span className="text-slate-400 font-medium ml-1">Docs</span></span>
-                    </Link>
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <DocsSearch />
-                    <Link href="/" className="text-xs font-bold text-slate-600 hover:text-teal flex items-center gap-1.5 transition-colors">
-                        <ArrowLeft className="w-3.5 h-3.5" />
-                        Dashboard
-                    </Link>
-                </div>
-            </header>
-
-            <div className="flex-1 flex max-w-7xl mx-auto w-full">
+        <AppLayout>
+            <div className="flex flex-col md:flex-row gap-8">
+                {/* Secondary Sidebar Content for Docs - Not using separate header */}
+                <div className="hidden md:block lg:sticky lg:top-8 h-fit">
                 {/* Sidebar Navigation */}
-                <aside className="w-64 border-r border-slate-100 hidden md:block pt-8 pb-12 sticky top-16 h-[calc(100vh-64px)] overflow-y-auto">
+                <aside className="w-60 border-r border-slate-100 hidden md:block pt-0 pb-12 overflow-y-auto">
                     <div className="px-6 space-y-8">
                         <div>
                             <Link 
@@ -179,6 +162,6 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
                     </div>
                 </main>
             </div>
-        </div>
+        </AppLayout>
     );
 }
