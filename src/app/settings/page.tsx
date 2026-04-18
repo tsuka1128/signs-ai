@@ -167,7 +167,6 @@ export default function SettingsPage() {
                         </PlanGate>
                     )}
                 </div>
-            </main>
 
             {/* Modals outside of main content for better layering */}
             {state.historyModalOpen && (
