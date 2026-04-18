@@ -132,35 +132,41 @@ export default function DashboardPage() {
       hasLaborData={state.hasLaborData}
     >
       <TrialGuard>
-        <div className="space-y-8">
-          <div className="space-y-4">
-            <MainInsightCard
-              title={ins.title}
-              tone={ins.tone}
-              text={ins.text}
-              weather={ins.weather as any}
-              trend={ins.trend as any}
-              onOpenDeepReport={tab === "all" ? () => setSec("report") : undefined}
-            />
+        <div className="space-y-10">
+          {sec !== "report" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between border-b border-slate-50 pb-4">
+                <TabBar tabs={derived.deptTabs} active={tab} onChange={setTab} />
+              </div>
 
-            {tab !== "all" && (() => {
-              const dept = state.realDepts.find(d => d.id === tab);
-              if (!dept) return null;
-              return (
-                <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
-                  <div className="flex items-center gap-2 mb-3">
-                    <h5 className="text-xs font-bold text-slate-700">AI方針翻訳 — {dept.name}</h5>
-                    <span className="text-[9px] text-white font-bold px-2 py-0.5 bg-teal/80 rounded-full">最新の通知</span>
-                  </div>
-                  <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-                    ※現在AIエンジン未接続です。フェーズ7以降、ここに「{dept.name}」の直近のコンディション（体温）と全社方針を掛け合わせた、専用の翻訳メッセージが毎月自動生成されます。
-                  </p>
-                </div>
-              );
-            })()}
+              <div className="space-y-4">
+                <MainInsightCard
+                  title={ins.title}
+                  tone={ins.tone}
+                  text={ins.text}
+                  weather={ins.weather as any}
+                  trend={ins.trend as any}
+                  onOpenDeepReport={tab === "all" ? () => setSec("report") : undefined}
+                />
 
-            <TabBar tabs={derived.deptTabs} active={tab} onChange={setTab} />
-          </div>
+                {tab !== "all" && (() => {
+                  const dept = state.realDepts.find(d => d.id === tab);
+                  if (!dept) return null;
+                  return (
+                    <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm animate-in fade-in slide-in-from-top-2 duration-500">
+                      <div className="flex items-center gap-2 mb-3">
+                        <h5 className="text-xs font-bold text-slate-700">AI方針翻訳 — {dept.name}</h5>
+                        <span className="text-[9px] text-white font-bold px-2 py-0.5 bg-teal/80 rounded-full shadow-sm shadow-teal/20">最新の通知</span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                        ※現在AIエンジン未接続です。フェーズ7以降、ここに「{dept.name}」の直近のコンディション（体温）と全社方針を掛け合わせた、専用の翻訳メッセージが毎月自動生成されます。
+                      </p>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
 
           <div className="animate-fadeIn">
           {sec === "matrix" && (
