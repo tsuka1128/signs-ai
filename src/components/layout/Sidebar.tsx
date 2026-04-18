@@ -35,6 +35,7 @@ interface SidebarProps {
 }
 
 const DASHBOARD_SUB_ITEMS = [
+    { id: "report", label: "AI組織診断", icon: Brain },
     { id: "matrix", label: "マトリックス", icon: AreaChart },
     { id: "kpi", label: "KPI推移", icon: BarChart3 },
     { id: "org", label: "組織のKPI", icon: Target },

@@ -12,6 +12,7 @@ import { OrganizationSection } from "@/components/dashboard/sections/Organizatio
 import { KpiSection } from "@/components/dashboard/sections/KpiSection";
 import { MatrixSection } from "@/components/dashboard/sections/MatrixSection";
 import { LaborFinanceSection } from "@/components/dashboard/sections/LaborFinanceSection";
+import { ReportSection } from "@/components/dashboard/sections/ReportSection";
 import { TrialGuard } from "@/components/layout/TrialGuard";
 import { cn } from "@/lib/utils";
 import { Target, Thermometer, Shield, AlertTriangle, Lightbulb, Rocket } from "lucide-react";
@@ -139,7 +140,7 @@ export default function DashboardPage() {
               text={ins.text}
               weather={ins.weather as any}
               trend={ins.trend as any}
-              onOpenDeepReport={tab === "all" ? () => setShowDeepReport(true) : undefined}
+              onOpenDeepReport={tab === "all" ? () => setSec("report") : undefined}
             />
 
             {tab !== "all" && (() => {
@@ -242,52 +243,53 @@ export default function DashboardPage() {
               aiContent={aiContent}
             />
           )}
+
+          {sec === "report" && (
+            <ReportSection
+              generatedAt={latestAi ? new Date(latestAi.created_at).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : ""}
+              sections={[
+                {
+                  id: "executive-summary",
+                  icon: <Target className="w-5 h-5" />,
+                  title: "総評：組織の健全性と戦略進捗",
+                  subtitle: "Executive Summary",
+                  content: aiContent?.deep_report?.executive_summary || "データに基づいた総評を分析中です..."
+                },
+                {
+                  id: "correlation",
+                  icon: <Thermometer className="w-5 h-5" />,
+                  title: "組織力とKPIの相関解析",
+                  subtitle: "Organizational Health × KPI Correlation",
+                  content: aiContent?.deep_report?.correlation || "相関の分析データを準備中です..."
+                },
+                {
+                  id: "strategic-alignment",
+                  icon: <Shield className="w-5 h-5" />,
+                  title: "組織方針との整合性チェック",
+                  subtitle: "Strategic Alignment",
+                  content: aiContent?.deep_report?.strategic_alignment || "方針との整合性を検証中です..."
+                },
+                {
+                  id: "risks",
+                  icon: <AlertTriangle className="w-5 h-5" />,
+                  title: "リスクと成長機会の特定",
+                  subtitle: "Risks & Opportunities",
+                  content: aiContent?.deep_report?.risks || "リスク項目を抽出中です..."
+                },
+                {
+                  id: "recommendations",
+                  icon: <Lightbulb className="w-5 h-5" />,
+                  title: "経営判断への具体的提言",
+                  subtitle: "Actionable Recommendations",
+                  content: aiContent?.deep_report?.recommendations || "提言を生成中です..."
+                }
+              ]}
+            />
+          )}
         </div>
       </div>
     </TrialGuard>
 
-      <DeepReport
-        isOpen={showDeepReport}
-        onClose={() => setShowDeepReport(false)}
-        generatedAt={latestAi ? new Date(latestAi.created_at).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : ""}
-        sections={[
-          {
-            id: "executive-summary",
-            icon: <Target className="w-5 h-5 text-teal" />,
-            title: "総評：組織の健全性と戦略進捗",
-            subtitle: "Executive Summary",
-            content: aiContent?.deep_report?.executive_summary || "データに基づいた総評を分析中です..."
-          },
-          {
-            id: "correlation",
-            icon: <Thermometer className="w-5 h-5 text-teal" />,
-            title: "組織力とKPIの相関解析",
-            subtitle: "Organizational Health × KPI Correlation",
-            content: aiContent?.deep_report?.correlation || "相関の分析データを準備中です..."
-          },
-          {
-            id: "strategic-alignment",
-            icon: <Shield className="w-5 h-5 text-teal" />,
-            title: "組織方針との整合性チェック",
-            subtitle: "Strategic Alignment",
-            content: aiContent?.deep_report?.strategic_alignment || "方針との整合性を検証中です..."
-          },
-          {
-            id: "risks",
-            icon: <AlertTriangle className="w-5 h-5 text-teal" />,
-            title: "リスクと成長機会の特定",
-            subtitle: "Risks & Opportunities",
-            content: aiContent?.deep_report?.risks || "リスク項目を抽出中です..."
-          },
-          {
-            id: "recommendations",
-            icon: <Lightbulb className="w-5 h-5 text-teal" />,
-            title: "経営判断への具体的提言",
-            subtitle: "Actionable Recommendations",
-            content: aiContent?.deep_report?.recommendations || "提言を生成中です..."
-          }
-        ]}
-      />
     </AppLayout>
   );
 }
