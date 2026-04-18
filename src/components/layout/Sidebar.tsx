@@ -183,18 +183,25 @@ export function Sidebar({
                 </div>
 
                 {/* Main Nav */}
-                <nav className="flex-1 px-4 py-2 space-y-6 overflow-y-auto custom-scrollbar">
+                <nav className="flex-1 px-4 py-2 space-y-8 overflow-y-auto custom-scrollbar">
+                    {/* View Section */}
                     <div className="space-y-1">
-                        <p className="px-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-3">Main View</p>
+                        <p className="px-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.25em] mb-4">View</p>
                         {dashboardNav}
-                        {renderLink("/kpi", "KPI入力", Activity)}
-                        {renderLink("/voice-check", "ボイスチェック", Thermometer)}
                     </div>
 
+                    {/* Admin Section */}
                     <div className="space-y-1">
-                        <p className="px-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-3">System</p>
-                        {renderLink("/docs", "ヘルプ・マニュアル", HelpCircle)}
+                        <p className="px-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.25em] mb-4">Admin</p>
+                        {renderLink("/kpi", "KPI入力", Activity)}
+                        {renderLink("/voice-check", "ボイスチェック", CheckCircle2)}
                         {renderLink("/settings", "設定管理", Settings)}
+                    </div>
+
+                    {/* Support Section */}
+                    <div className="space-y-1">
+                        <p className="px-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.25em] mb-4">Support</p>
+                        {renderLink("/docs", "ヘルプ・マニュアル", HelpCircle)}
                     </div>
                 </nav>
 
