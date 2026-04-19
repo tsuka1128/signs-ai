@@ -262,9 +262,9 @@ export default function LoginPage() {
 
                 <p className="mt-6 text-center text-[11px] text-slate-400 font-medium leading-relaxed">
                     ログインすることで、
-                    <a href="#" className="text-teal-600 hover:underline">利用規約</a>
+                    <Link href="/terms" className="text-teal-600 hover:underline">利用規約</Link>
                     および
-                    <a href="#" className="text-teal-600 hover:underline">プライバシーポリシー</a>
+                    <Link href="/privacy" className="text-teal-600 hover:underline">プライバシーポリシー</Link>
                     に同意したものとみなされます。
                 </p>
 
