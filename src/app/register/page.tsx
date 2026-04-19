@@ -26,8 +26,8 @@ export default function RegisterPage() {
             return;
         }
 
-        if (password.length < 6) {
-            setError("パスワードは6文字以上で入力してください。");
+        if (password.length < 8) {
+            setError("パスワードは8文字以上で入力してください。");
             return;
         }
 
@@ -149,6 +149,7 @@ export default function RegisterPage() {
                                             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                         </button>
                                     </div>
+                                    <p className="text-[10px] text-slate-400 font-bold ml-1">※ 8文字以上（英数字の組み合わせ）を推奨</p>
                                 </div>
 
                                 <div className="space-y-1.5">
