@@ -75,6 +75,43 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(dashboardUrl);
     }
 
+    // ── トライアル期限切れチェック (書き込み操作のみ制限) ──
+    const isMutateRequest = ["POST", "PUT", "PATCH", "DELETE"].includes(request.method);
+    const isDocExport = pathname.includes("/export"); // エクスポートは許可したい場合など
+    
+    if (user && isMutateRequest && !isPublic && !isDocExport) {
+        // ユーザーの所属企業情報を取得
+        const { data: userData } = await supabase
+            .from('users')
+            .select('company_id, role')
+            .eq('id', user.id)
+            .single();
+
+        if (userData?.company_id && userData.role !== 'super_admin') {
+            const { data: company } = await supabase
+                .from('companies')
+                .select('status, trial_expires_at')
+                .eq('id', userData.company_id)
+                .single();
+
+            const now = new Date();
+            const isExpired = company?.status === 'trial' && 
+                             company.trial_expires_at && 
+                             new Date(company.trial_expires_at) < now;
+
+            if (isExpired) {
+                // トライアル期限切れの場合、403を返す（フロントエンドで検知してアラート表示想定）
+                return new NextResponse(
+                    JSON.stringify({ 
+                        error: "Trial period has expired", 
+                        message: "トライアル期間が終了しました。プランのアップグレードをご検討ください。" 
+                    }),
+                    { status: 403, headers: { 'content-type': 'application/json' } }
+                );
+            }
+        }
+    }
+
     return supabaseResponse;
 }
 

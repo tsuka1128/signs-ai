@@ -1,18 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 
 import { Company, Plan } from "@/types/database";
-import { differenceInDays, addDays } from "date-fns";
+import { differenceInDays } from "date-fns";
 
 export type { Company };
 
 export function useCompany() {
     const router = useRouter();
     const pathname = usePathname();
-    const supabase = createClient();
+    
+    // Supabaseクライアントをメモ化して、再レンダリングごとのインスタンス生成を抑制
+    const supabase = useMemo(() => createClient(), []);
+    
     const [company, setCompany] = useState<Company | null>(null);
     const [plan, setPlan] = useState<Plan | null>(null);
     const [loading, setLoading] = useState(true);
@@ -24,8 +27,6 @@ export function useCompany() {
         const handleStorageChange = (e: StorageEvent) => {
             if (e.key === "impersonated_company_id") {
                 setIsImpersonating(!!e.newValue);
-                // 再読み込みを促すために window.location.reload() するか、
-                // あるいは最新の情報を fetch し直す (ここでは後者のパスを通すために loading を戻す)
                 setLoading(true);
             }
         };
@@ -48,13 +49,11 @@ export function useCompany() {
                 }
                 setUser(authUser);
 
-                // ロールと本来の所属を一括取得（アトミック判定）
                 const { data: userData } = await supabase.from('users').select('company_id, role').eq('id', authUser.id).single();
                 
                 let targetId = userData?.company_id;
                 let usedImpersonation = false;
 
-                // 管理者の場合は localStorage を直接確認
                 if (userData?.role === 'super_admin') {
                     const storedId = typeof window !== "undefined" ? localStorage.getItem("impersonated_company_id") : null;
                     if (storedId) {
@@ -66,14 +65,13 @@ export function useCompany() {
                 setIsImpersonating(usedImpersonation);
 
                 if (!targetId) {
-                    if (!usedImpersonation && !pathname?.startsWith('/onboarding')) {
+                    if (!usedImpersonation && !pathname?.startsWith('/onboarding') && !pathname?.startsWith('/form')) {
                         router.push("/onboarding");
                     }
                     setLoading(false);
                     return;
                 }
 
-                // キャッシュを避け、最新の情報を取得
                 const { data: compInfo } = await supabase
                     .from('companies')
                     .select('*, plans(*)')

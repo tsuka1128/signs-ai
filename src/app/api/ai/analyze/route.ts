@@ -38,6 +38,42 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "No company associated" }, { status: 400 });
         }
 
+        // ── レート制限チェック（サーバーサイド強制・月次自動リセット付） ──
+        const now = new Date();
+        const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+        const { data: companyData } = await supabase
+            .from('companies')
+            .select('manual_ai_runs_used_this_month, manual_ai_runs_active_month, plan_id, plan_overrides')
+            .eq('id', companyId)
+            .single();
+
+        const { data: planData } = await supabase
+            .from('plans')
+            .select('manual_ai_runs_per_month')
+            .eq('id', companyData?.plan_id)
+            .single();
+
+        const overrides = (companyData as any)?.plan_overrides || {};
+        const maxRuns = overrides.manual_ai_runs_per_month ?? planData?.manual_ai_runs_per_month ?? 1;
+        
+        // 月が変わっている場合は、カウンターを実質0として扱う（保存は後ほど実行成功時に行う）
+        let usedRuns = companyData?.manual_ai_runs_used_this_month ?? 0;
+        const lastActiveMonth = companyData?.manual_ai_runs_active_month;
+
+        if (lastActiveMonth !== currentMonthStr) {
+            usedRuns = 0;
+        }
+
+        if (usedRuns >= maxRuns && profile?.role !== 'super_admin') {
+            return NextResponse.json({
+                error: `今月のAI分析実行回数の上限（${maxRuns}回）に達しました。来月までお待ちいただくか、プランのアップグレードをご検討ください。`,
+                limit: maxRuns,
+                used: usedRuns,
+                reset_month: currentMonthStr
+            }, { status: 429 });
+        }
+
         // 3. 分析に必要なデータの取得
         const last13Months = getLastNMonths(13);
         const latestMonth = last13Months[12];
@@ -233,8 +269,18 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
             apiKey: sysSettings['anthropic_api_key']
         });
 
-        const cleanJson = aiResultRaw.replace(/```json\n?|\n?```/g, "").trim();
-        const aiResult = JSON.parse(cleanJson);
+        // ── AI回答のJSON解析（堅牢化） ──
+        let aiResult: any;
+        try {
+            const cleanJson = aiResultRaw.replace(/```json\n?|\n?```/g, "").trim();
+            aiResult = JSON.parse(cleanJson);
+        } catch (jsonError) {
+            console.error("[AI JSON Parse Error]:", jsonError, "Raw Data:", aiResultRaw);
+            return NextResponse.json({ 
+                error: "AIの回答を解析できませんでした。再度実行をお試しください。",
+                detail: "Invalid JSON format from AI model" 
+            }, { status: 502 });
+        }
 
         // 5. 結果をDBに保存
         const { error: insertError } = await supabase.from('ai_insights').insert({
@@ -264,7 +310,16 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
             await supabase.from('action_items').insert(actionsToInsert);
         }
 
-        return NextResponse.json({ success: true, data: aiResult });
+        // ── AI実行回数カウンターの更新（インクリメント & 月の同期） ──
+        await supabase
+            .from('companies')
+            .update({ 
+                manual_ai_runs_used_this_month: usedRuns + 1,
+                manual_ai_runs_active_month: currentMonthStr
+            })
+            .eq('id', companyId);
+
+        return NextResponse.json({  success: true, data: aiResult });
 
     } catch (error: any) {
         console.error("[AI Analyze API Error]:", error);

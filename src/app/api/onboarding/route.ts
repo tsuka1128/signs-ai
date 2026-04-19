@@ -9,6 +9,7 @@
 
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
+import { sanitizeText } from "@/lib/utils";
 
 /** リクエストボディの型定義 */
 interface OnboardingPayload {
@@ -48,7 +49,22 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: "リクエストの形式が不正です" }, { status: 400 });
     }
 
-    const { companyName, departments, kpis, semanticContent, invitationToken, selectedDeptId, selectedAxisId, websiteUrl } = payload;
+    const { 
+        companyName: rawCompanyName, 
+        departments: rawDepts, 
+        kpis: rawKPIs, 
+        semanticContent: rawSemanticContent, 
+        invitationToken, 
+        selectedDeptId, 
+        selectedAxisId, 
+        websiteUrl 
+    } = payload;
+
+    // サニタイズ適用
+    const companyName = sanitizeText(rawCompanyName || "");
+    const semanticContent = sanitizeText(rawSemanticContent || "");
+    const departments = rawDepts?.map(d => ({ ...d, name: sanitizeText(d.name) }));
+    const kpis = rawKPIs?.map(k => ({ ...k, name: sanitizeText(k.name), unit: sanitizeText(k.unit) }));
 
     // ユーザー現在のプロファイルを確認
     const { data: profile } = await supabase.from('users').select('role, company_id').eq('id', user.id).single();
@@ -169,13 +185,13 @@ export async function POST(request: NextRequest) {
     }
 
     // B. 新規作成の場合のバリデーション
-    if (!companyName?.trim()) {
+    if (!companyName) {
         return NextResponse.json({ message: "企業名は必須です" }, { status: 400 });
     }
-    if (!departments?.length || departments.some((d) => !d.name?.trim())) {
+    if (!departments?.length || departments.some((d) => !d.name)) {
         return NextResponse.json({ message: "部署名を入力してください" }, { status: 400 });
     }
-    if (!kpis?.length || kpis.some((k) => !k.name?.trim())) {
+    if (!kpis?.length || kpis.some((k) => !k.name)) {
         return NextResponse.json({ message: "KPI名を入力してください" }, { status: 400 });
     }
 
@@ -201,11 +217,12 @@ export async function POST(request: NextRequest) {
         const { data: company, error: companyError } = await supabase
             .from("companies")
             .insert({
-                name: companyName.trim(),
+                name: companyName,
                 plan_id: freePlan.id,
                 status: "trial",
                 website_url: websiteUrl?.trim() || null,
-                short_id: `${planChar}-${dateStr}-${tempId}` // Temporary suffix
+                short_id: `${planChar}-${dateStr}-${tempId}`, // Temporary suffix
+                trial_expires_at: new Date(Date.now() + 70 * 24 * 60 * 60 * 1000).toISOString()
             })
             .select("id")
             .single();
@@ -239,7 +256,7 @@ export async function POST(request: NextRequest) {
             .insert(
                 departments.map((d) => ({
                     company_id: company.id,
-                    name: d.name.trim(),
+                    name: d.name,
                     headcount: d.headcount || 0,
                 }))
             )

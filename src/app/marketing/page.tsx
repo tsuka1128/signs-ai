@@ -889,6 +889,7 @@ export default function MarketingPage() {
             <a href="#how" className="hover:text-teal-600 transition-colors">仕組み</a>
             <a href="#usecase" className="hover:text-teal-600 transition-colors">活用事例</a>
             <a href="#pricing" className="hover:text-teal-600 transition-colors">料金</a>
+            <Link href="/login" className="hover:text-teal-600 transition-colors">ログイン</Link>
             <Link href="/dashboard" className="px-6 py-3 bg-slate-900 text-white rounded-full hover:bg-teal-600 transition-all shadow-xl shadow-slate-200/60 hover:scale-105">
               デモを試す
             </Link>
@@ -925,10 +926,13 @@ export default function MarketingPage() {
             <Link href="/dashboard" className="px-10 py-6 bg-teal-500 text-white rounded-[20px] font-black text-xl shadow-2xl shadow-teal-200 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3">
               デモを体験する <ArrowRight className="w-5 h-5" />
             </Link>
-            <button className="px-10 py-6 bg-white border border-slate-200 hover:border-teal-300 hover:bg-teal-50/40 text-slate-900 rounded-[20px] font-black text-xl transition-all shadow-lg">
-              資料をダウンロード
-            </button>
+            <Link href="/login" className="px-10 py-6 bg-white border border-slate-200 hover:border-teal-300 hover:bg-teal-50/40 text-slate-900 rounded-[20px] font-black text-xl transition-all shadow-lg flex items-center justify-center">
+              ログイン
+            </Link>
           </div>
+          <button className="mt-8 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-teal-600 transition-colors" style={{ animation: "fadeUp 1s 0.35s ease both" }}>
+            資料をダウンロード
+          </button>
 
           {/* ヒーロービジュアル — ダッシュボード画面切替 + フローティングサイン */}
           <HeroVisual />

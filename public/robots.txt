@@ -1,0 +1,22 @@
+User-agent: *
+# アプリケーション内部・管理画面をインデックス対象から除外
+Disallow: /
+Disallow: /admin/
+Disallow: /settings/
+Disallow: /onboarding/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /survey/
+Disallow: /voice-check/
+Disallow: /kpi/
+
+# マーケティング（LP）とドキュメントのみクロールを許可
+Allow: /marketing
+Allow: /marketing/
+Allow: /docs
+Allow: /docs/
+Allow: /form  # アンケート回答用
+Allow: /icon.svg
+Allow: /_next/static/
+
+Sitemap: https://www.signs-ai.jp/sitemap.xml

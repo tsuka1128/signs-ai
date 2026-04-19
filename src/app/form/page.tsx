@@ -180,6 +180,11 @@ function SurveyFormContent() {
             const currentMonthPart = `${now.getFullYear()}_${String(now.getMonth() + 1).padStart(2, '0')}`;
             const dbRecordedMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
+            // ── フィンガープリントの生成（匿名性を保ちつつ端末を識別） ──
+            const fingerprint = typeof window !== "undefined" 
+                ? btoa(unescape(encodeURIComponent(navigator.userAgent + screen.width + (screen.orientation?.type || "")))) 
+                : null;
+
             // 1. response 保存
             const { data: response, error: rErr } = await supabase
                 .from('survey_responses')
@@ -189,12 +194,24 @@ function SurveyFormContent() {
                     axis_id: axisId || null,
                     recorded_month: dbRecordedMonth,
                     free_comment: freeComment,
-                    cross_dept_feedback: kpiImprovement // KPI改善案をこちらに格納
+                    cross_dept_feedback: kpiImprovement, // KPI改善案をこちらに格納
+                    fingerprint: fingerprint
                 })
                 .select()
                 .single();
 
-            if (rErr) throw rErr;
+            if (rErr) {
+                // 重複エラー（UNIQUE制約違反）の判定
+                if (rErr.code === '23505') {
+                    alert("今月は既に回答済みです。ご協力ありがとうございました！");
+                    if (resolvedCompanyId) {
+                        localStorage.setItem(`signs_ai_answered_${resolvedCompanyId}_${currentMonthPart}`, "true");
+                    }
+                    setHasAnswered(true);
+                    return;
+                }
+                throw rErr;
+            }
 
             // 2. answers 保存
             const answerData = Object.entries(answers).map(([qId, score]) => ({

@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { sendInvitationEmail } from "@/lib/mail";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -40,9 +41,20 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ message: "対象の組織を指定してください" }, { status: 400 });
     }
 
-    // 権限チェック (管理者以上のみ招待可能)
-    if (!isSuperAdmin && !["admin", "executive", "owner"].includes(userData?.role || "")) {
-        return NextResponse.json({ message: "招待権限がありません" }, { status: 403 });
+    // ── 招待レート制限（スパム防止） ──
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count: recentInvitesCount, error: countError } = await supabase
+        .from("invitations")
+        .select("*", { count: "exact", head: true })
+        .eq("company_id", effectiveCompanyId)
+        .gt("created_at", oneHourAgo);
+
+    if (countError) {
+        console.error("招待件数チェックエラー:", countError);
+    } else if (recentInvitesCount !== null && recentInvitesCount >= 20 && !isSuperAdmin) {
+        return NextResponse.json({ 
+            message: "1時間あたりの招待上限（20件）に達しました。時間を置いてから再度お試しください。" 
+        }, { status: 429 });
     }
 
     // 3. 招待データの作成
@@ -59,7 +71,7 @@ export async function POST(req: NextRequest) {
             status: "pending",
             expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7日間
         })
-        .select("token")
+        .select("id, token")
         .single();
 
     if (inviteError) {
@@ -67,9 +79,35 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ message: "招待の作成に失敗しました" }, { status: 500 });
     }
 
-    // 4. メール送信 (将来的に Resend 等の API 連携を行う場所)
-    // const resend = new Resend(process.env.RESEND_API_KEY);
-    // await resend.emails.send({ ... });
+    // 4. 招待メールの送信
+    let emailSent = false;
+    try {
+        // 企業名を取得してメールに含める
+        const { data: companyInfo } = await supabase
+            .from("companies")
+            .select("name")
+            .eq("id", effectiveCompanyId)
+            .single();
 
-    return NextResponse.json({ success: true, token: invitation.token });
+        const companyName = companyInfo?.name || "Signs AI";
+        const inviteUrl = `${new URL(req.url).origin}/onboarding?token=${invitation.token}`;
+
+        await sendInvitationEmail(email.trim(), companyName, inviteUrl);
+        emailSent = true;
+
+        // 送信日時を記録
+        await supabase.from('invitations').update({
+            updated_at: new Date().toISOString()
+        } as any).eq('id', invitation.id);
+    } catch (emailError: any) {
+        // メール送信に失敗しても招待自体は作成済みなので、警告付きで成功を返す
+        console.error("招待メール送信エラー:", emailError.message);
+    }
+
+    return NextResponse.json({
+        success: true,
+        token: invitation.token,
+        emailSent,
+        ...(emailSent ? {} : { warning: "招待は作成されましたが、メールの送信に失敗しました。手動でリンクを共有してください。" })
+    });
 }
