@@ -133,7 +133,7 @@ export default function DashboardPage() {
     >
       <TrialGuard>
         <div className="space-y-10">
-          {sec !== "report" && (
+          {sec === "report" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between border-b border-slate-50 pb-4">
                 <TabBar tabs={derived.deptTabs} active={tab} onChange={setTab} />

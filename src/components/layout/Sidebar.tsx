@@ -58,6 +58,7 @@ export function Sidebar({
     const [companyName, setCompanyName] = useState("");
     const [userInitial, setUserInitial] = useState("?");
     const [isDashboardExpanded, setIsDashboardExpanded] = useState(true);
+    const [isManageOpen, setIsManageOpen] = useState(false);
 
     const isDashboardActive = pathname === "/";
 
@@ -190,14 +191,6 @@ export function Sidebar({
                         {dashboardNav}
                     </div>
 
-                    {/* Admin Section */}
-                    <div className="space-y-1">
-                        <p className="px-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.25em] mb-4">Admin</p>
-                        {renderLink("/kpi", "KPI入力", Activity)}
-                        {renderLink("/voice-check", "ボイスチェック", CheckCircle2)}
-                        {renderLink("/settings", "設定管理", Settings)}
-                    </div>
-
                     {/* Support Section */}
                     <div className="space-y-1">
                         <p className="px-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.25em] mb-4">Support</p>
@@ -206,9 +199,56 @@ export function Sidebar({
                 </nav>
 
                 {/* Footer / User Profile */}
-                <div className="p-4 border-t border-slate-50 mt-auto bg-slate-50/30">
+                <div className="p-4 border-t border-slate-50 mt-auto bg-slate-50/30 relative">
+                    {/* Management Popover */}
+                    {isManageOpen && (
+                        <>
+                            <div 
+                                className="fixed inset-0 z-[110]" 
+                                onClick={() => setIsManageOpen(false)} 
+                            />
+                            <div className="absolute bottom-full left-4 right-4 mb-2 bg-white rounded-2xl border border-slate-200 shadow-2xl p-2 z-[120] animate-in slide-in-from-bottom-2 duration-200">
+                                <p className="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1">
+                                    Management
+                                </p>
+                                <div className="space-y-0.5">
+                                    <Link 
+                                        href="/kpi" 
+                                        onClick={() => { setIsManageOpen(false); setIsMobileOpen?.(false); }}
+                                        className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all hover:text-slate-900"
+                                    >
+                                        <Activity className="w-4 h-4 text-slate-400" />
+                                        KPI入力
+                                    </Link>
+                                    <Link 
+                                        href="/voice-check" 
+                                        onClick={() => { setIsManageOpen(false); setIsMobileOpen?.(false); }}
+                                        className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all hover:text-slate-900"
+                                    >
+                                        <CheckCircle2 className="w-4 h-4 text-slate-400" />
+                                        ボイスチェック
+                                    </Link>
+                                    <Link 
+                                        href="/settings" 
+                                        onClick={() => { setIsManageOpen(false); setIsMobileOpen?.(false); }}
+                                        className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all hover:text-slate-900"
+                                    >
+                                        <Settings className="w-4 h-4 text-slate-400" />
+                                        設定管理
+                                    </Link>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
                     <div className="mb-4">
-                         <div className="px-4 py-3 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center gap-3">
+                         <button 
+                            onClick={() => setIsManageOpen(!isManageOpen)}
+                            className={cn(
+                                "w-full text-left px-4 py-3 rounded-2xl bg-white border shadow-sm flex items-center gap-3 transition-all",
+                                isManageOpen ? "border-teal/30 ring-4 ring-teal/5" : "border-slate-100 hover:border-slate-200"
+                            )}
+                         >
                             <div className="w-8 h-8 rounded-full bg-teal-500 text-white flex items-center justify-center font-black text-xs shadow-sm shadow-teal-200">
                                 {userInitial}
                             </div>
@@ -216,7 +256,8 @@ export function Sidebar({
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">{companyName || "COMPANY"}</p>
                                 <p className="text-xs font-bold text-slate-800 truncate">Settings & Profile</p>
                             </div>
-                        </div>
+                            <ChevronDown className={cn("w-3.5 h-3.5 text-slate-300 transition-transform", isManageOpen && "rotate-180")} />
+                        </button>
                     </div>
                     
                     <button 
