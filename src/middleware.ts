@@ -28,7 +28,7 @@ export async function middleware(request: NextRequest) {
     });
 
     // 認証不要のパス（パブリックルート）の判定を簡素化・堅牢化
-    const publicPrefixes = ["/login", "/register", "/marketing", "/survey", "/auth/callback", "/form", "/forgot-password", "/password-update"];
+    const publicPrefixes = ["/login", "/register", "/marketing", "/survey", "/auth/callback", "/form", "/forgot-password", "/password-update", "/terms", "/privacy"];
     const isPublic = publicPrefixes.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`));
 
     // パブリックルートの場合は早期リターンまたは認証チェックをスキップする設定も検討可能ですが、
