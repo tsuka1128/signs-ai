@@ -187,10 +187,13 @@ export default function RegisterPage() {
                                 <span>{loading ? "登録中..." : "アカウントを作成する"}</span>
                             </button>
 
-                            <div className="pt-4 text-center">
+                            <div className="pt-4 text-center space-y-4">
+                                <p className="text-[10px] text-slate-400 font-bold leading-relaxed px-4">
+                                    アカウントを作成することで、<Link href="/terms" className="text-teal-600 hover:underline">利用規約</Link>および<Link href="/privacy" className="text-teal-600 hover:underline">プライバシーポリシー</Link>に同意したものとみなされます。
+                                </p>
                                 <Link
                                     href="/login"
-                                    className="text-xs text-slate-400 hover:text-slate-600 font-bold transition-colors"
+                                    className="text-xs text-slate-400 hover:text-slate-600 font-bold transition-colors block"
                                 >
                                     すでにアカウントをお持ちですか？ ログイン
                                 </Link>

@@ -1417,9 +1417,10 @@ export default function MarketingPage() {
             <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">Give Organization Warmth — Taion Inc.</p>
           </div>
           <div className="flex flex-wrap justify-center gap-8 text-[11px] font-black text-slate-400 uppercase tracking-widest">
-            {["Privacy", "Terms", "Security", "Career", "Contact"].map((l) => (
-              <Link key={l} href="#" className="hover:text-teal-600 transition-colors">{l}</Link>
-            ))}
+            <Link href="/privacy" className="hover:text-teal-600 transition-colors">Privacy</Link>
+            <Link href="/terms" className="hover:text-teal-600 transition-colors">Terms</Link>
+            <Link href="#pricing" className="hover:text-teal-600 transition-colors">Pricing</Link>
+            <Link href="mailto:info@signs-ai.jp" className="hover:text-teal-600 transition-colors">Contact</Link>
           </div>
         </div>
         <div className="mt-12 text-center text-slate-300 text-[9px] font-black uppercase tracking-[0.5em]">
