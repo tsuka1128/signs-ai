@@ -9,11 +9,23 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
+    const { pathname } = request.nextUrl;
+    const hostname = request.headers.get("host");
+
+    // ドメインを www.signs-ai.jp に統一（Canonical Redirect）
+    // 本番環境かつ、プライマリドメイン以外からのアクセスの場合に実施
+    if (
+        process.env.NODE_ENV === "production" && 
+        hostname && 
+        hostname !== "www.signs-ai.jp" &&
+        !hostname.includes("localhost")
+    ) {
+        return NextResponse.redirect(`https://www.signs-ai.jp${pathname}${request.nextUrl.search}`, 301);
+    }
+
     let supabaseResponse = NextResponse.next({
         request,
     });
-
-    const { pathname } = request.nextUrl;
 
     // 認証不要のパス（パブリックルート）の判定を簡素化・堅牢化
     const publicPrefixes = ["/login", "/register", "/marketing", "/survey", "/auth/callback", "/form", "/forgot-password", "/password-update"];
