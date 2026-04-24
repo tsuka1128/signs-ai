@@ -22,8 +22,10 @@ export function AdminDepartmentsModal({ companyId, companyName, onClose, onSucce
     const [depts, setDepts] = useState<any[]>([]);
     const [showConfirm, setShowConfirm] = useState(false);
     const [showImport, setShowImport] = useState(false);
-
+    const [mounted, setMounted] = useState(false);
+ 
     useEffect(() => {
+        setMounted(true);
         fetchDepartments().then(setDepts).catch(console.error);
     }, [fetchDepartments]);
 
@@ -225,8 +227,10 @@ export function AdminKpisModal({ companyId, companyName, onClose, onSuccess }: M
     const [kpis, setKpis] = useState<any[]>([]);
     const [showConfirm, setShowConfirm] = useState(false);
     const [showImport, setShowImport] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         fetchKpis().then(setKpis).catch(console.error);
     }, [fetchKpis]);
 
@@ -434,8 +438,10 @@ export function AdminAxesModal({ companyId, companyName, onClose, onSuccess }: M
     const [secondaryAxisName, setSecondaryAxisName] = useState("第2軸");
     const [showConfirm, setShowConfirm] = useState(false);
     const [showImport, setShowImport] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         fetchCompany().then(c => setSecondaryAxisName(c.secondary_axis_name || "第2軸"));
         fetchAxes().then(setAxes).catch(console.error);
     }, [fetchCompany, fetchAxes]);
@@ -615,8 +621,10 @@ export function AdminPlanOverridesModal({ companyId, companyName, onClose, onSuc
     const { fetchCompany, updatePlanOverrides, loading } = useAdminSettings(companyId);
     const [overrides, setOverrides] = useState<Record<string, any>>({});
     const [plan, setPlan] = useState<any>(null);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         fetchCompany().then(c => {
             setOverrides(c.plan_overrides || {});
             setPlan(c.plans);
@@ -651,7 +659,7 @@ export function AdminPlanOverridesModal({ companyId, companyName, onClose, onSuc
         { key: 'manual_ai_runs_per_month', label: '月間AI分析実行枠', type: 'number', placeholder: plan?.manual_ai_runs_per_month },
     ];
 
-    if (typeof document === "undefined") return null;
+    if (!mounted) return null;
 
     return createPortal(
         <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
@@ -769,9 +777,11 @@ export function AdminCompanySettingsModal({ companyId, companyName, onClose, onS
     });
     const [plans, setPlans] = useState<any[]>([]);
     const [showConfirm, setShowConfirm] = useState(false);
+    const [mounted, setMounted] = useState(false);
     const supabase = createClient();
 
     useEffect(() => {
+        setMounted(true);
         const load = async () => {
             try {
                 const [companyData, plansData] = await Promise.all([
@@ -818,14 +828,14 @@ export function AdminCompanySettingsModal({ companyId, companyName, onClose, onS
         }
     };
 
+    if (!mounted) return null;
+
     const statusOptions = [
         { value: "trial", label: "トライアル", color: "bg-amber-50 text-amber-600 border-amber-200" },
         { value: "active", label: "アクティブ", color: "bg-emerald-50 text-emerald-600 border-emerald-200" },
         { value: "suspended", label: "停止中", color: "bg-rose-50 text-rose-600 border-rose-200" },
         { value: "cancelled", label: "解約済", color: "bg-slate-100 text-slate-500 border-slate-200" },
     ];
-
-    if (typeof document === "undefined") return null;
 
     return createPortal(
         <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4">

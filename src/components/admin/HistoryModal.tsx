@@ -25,6 +25,7 @@ interface HistoryModalProps {
 export function HistoryModal({ companyId, companyName, onClose }: HistoryModalProps) {
     const [logs, setLogs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
     const supabase = createClient();
 
     const formatDate = (dateString: string) => {
@@ -74,7 +75,7 @@ export function HistoryModal({ companyId, companyName, onClose }: HistoryModalPr
         }
     };
 
-    if (typeof document === "undefined") return null;
+    if (!mounted) return null;
 
     return createPortal(
         <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 md:p-8">

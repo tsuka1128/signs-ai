@@ -23,6 +23,11 @@ export function CSVImportModal({ companyId, type, onClose, onSuccess }: CSVImpor
     const [error, setError] = useState<string | null>(null);
     const [progress, setProgress] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
+    const [mounted, setMounted] = useState(false);
+ 
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selected = e.target.files?.[0];
@@ -286,7 +291,7 @@ export function CSVImportModal({ companyId, type, onClose, onSuccess }: CSVImpor
     };
 
     return (
-    if (typeof document === "undefined") return null;
+    if (!mounted) return null;
 
     return createPortal(
         <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
