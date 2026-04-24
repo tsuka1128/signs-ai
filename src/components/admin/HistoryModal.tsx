@@ -15,6 +15,7 @@ import { createClient } from "@/lib/supabase";
 import { Loading } from "@/components/ui/Loading";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
+import { createPortal } from "react-dom";
 interface HistoryModalProps {
     companyId?: string;
     companyName?: string;
@@ -73,8 +74,10 @@ export function HistoryModal({ companyId, companyName, onClose }: HistoryModalPr
         }
     };
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
+    if (typeof document === "undefined") return null;
+
+    return createPortal(
+        <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 md:p-8">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
             
             <div className="bg-white w-full max-w-3xl h-[80vh] rounded-[40px] shadow-2xl flex flex-col relative z-10 overflow-hidden animate-in fade-in zoom-in duration-300">
@@ -174,7 +177,8 @@ export function HistoryModal({ companyId, companyName, onClose }: HistoryModalPr
                     </p>
                 </footer>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 

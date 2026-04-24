@@ -32,7 +32,7 @@ export function AdminSidebar() {
     const pathname = usePathname();
 
     return (
-        <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col h-screen fixed left-0 top-0 z-40 shadow-2xl">
+        <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col h-screen fixed left-0 top-0 z-1 shadow-2xl">
             <div className="p-6 border-b border-slate-800">
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-teal flex items-center justify-center font-black text-white shadow-lg shadow-teal/20">S</div>
