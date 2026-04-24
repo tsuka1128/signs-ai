@@ -7,6 +7,7 @@ import { AVAILABLE_ADDONS } from "@/lib/addons";
 import { createClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { Reorder, AnimatePresence, motion } from "framer-motion";
+import { createPortal } from "react-dom";
 import { CSVImportModal } from "./CSVImportModal";
 
 interface ModalProps {
@@ -43,7 +44,9 @@ export function AdminDepartmentsModal({ companyId, companyName, onClose, onSucce
         }
     };
 
-    return (
+    if (typeof document === "undefined") return null;
+
+    return createPortal(
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
             <motion.div 
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -212,7 +215,8 @@ export function AdminDepartmentsModal({ companyId, companyName, onClose, onSucce
                     )}
                 </AnimatePresence>
             </motion.div>
-        </div>
+        </div>,
+        document.body
     );
 }
 
@@ -243,7 +247,9 @@ export function AdminKpisModal({ companyId, companyName, onClose, onSuccess }: M
         }
     };
 
-    return (
+    if (typeof document === "undefined") return null;
+
+    return createPortal(
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
             <motion.div 
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -416,7 +422,8 @@ export function AdminKpisModal({ companyId, companyName, onClose, onSuccess }: M
                     )}
                 </AnimatePresence>
             </motion.div>
-        </div>
+        </div>,
+        document.body
     );
 }
 
@@ -450,7 +457,9 @@ export function AdminAxesModal({ companyId, companyName, onClose, onSuccess }: M
         }
     };
 
-    return (
+    if (typeof document === "undefined") return null;
+
+    return createPortal(
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
             <motion.div 
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -596,7 +605,8 @@ export function AdminAxesModal({ companyId, companyName, onClose, onSuccess }: M
                     )}
                 </AnimatePresence>
             </motion.div>
-        </div>
+        </div>,
+        document.body
     );
 }
 
@@ -641,7 +651,9 @@ export function AdminPlanOverridesModal({ companyId, companyName, onClose, onSuc
         { key: 'manual_ai_runs_per_month', label: '月間AI分析実行枠', type: 'number', placeholder: plan?.manual_ai_runs_per_month },
     ];
 
-    return (
+    if (typeof document === "undefined") return null;
+
+    return createPortal(
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
             <motion.div layoutId="modal-overrides" className="bg-white rounded-[32px] w-full max-w-2xl overflow-hidden shadow-2xl relative z-10 flex flex-col">
@@ -733,7 +745,8 @@ export function AdminPlanOverridesModal({ companyId, companyName, onClose, onSuc
                     </button>
                 </footer>
             </motion.div>
-        </div>
+        </div>,
+        document.body
     );
 }
 
@@ -812,7 +825,9 @@ export function AdminCompanySettingsModal({ companyId, companyName, onClose, onS
         { value: "cancelled", label: "解約済", color: "bg-slate-100 text-slate-500 border-slate-200" },
     ];
 
-    return (
+    if (typeof document === "undefined") return null;
+
+    return createPortal(
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
             <motion.div 
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -1082,6 +1097,7 @@ export function AdminCompanySettingsModal({ companyId, companyName, onClose, onS
                     )}
                 </AnimatePresence>
             </motion.div>
-        </div>
+        </div>,
+        document.body
     );
 }
