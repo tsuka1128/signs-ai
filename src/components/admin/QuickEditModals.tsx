@@ -749,7 +749,10 @@ export function AdminCompanySettingsModal({ companyId, companyName, onClose, onS
         plan_id: "",
         addon_labor_analytics: false,
         addon_ai_weekly: false,
-        addon_security_sso: false
+        addon_security_sso: false,
+        trial_expires_at: "",
+        manual_ai_runs_used_this_month: 0,
+        manual_ai_runs_active_month: ""
     });
     const [plans, setPlans] = useState<any[]>([]);
     const [showConfirm, setShowConfirm] = useState(false);
@@ -773,7 +776,10 @@ export function AdminCompanySettingsModal({ companyId, companyName, onClose, onS
                         plan_id: companyData.plan_id || "free",
                         addon_labor_analytics: companyData.addon_labor_analytics || false,
                         addon_ai_weekly: companyData.addon_ai_weekly || false,
-                        addon_security_sso: companyData.addon_security_sso || false
+                        addon_security_sso: companyData.addon_security_sso || false,
+                        trial_expires_at: companyData.trial_expires_at ? new Date(companyData.trial_expires_at).toISOString().split('T')[0] : "",
+                        manual_ai_runs_used_this_month: companyData.manual_ai_runs_used_this_month || 0,
+                        manual_ai_runs_active_month: companyData.manual_ai_runs_active_month || ""
                     });
                 }
                 if (plansData.data) {
@@ -913,6 +919,60 @@ export function AdminCompanySettingsModal({ companyId, companyName, onClose, onS
                                     <option key={p.id} value={p.id}>{p.name}</option>
                                 ))}
                             </select>
+                        </div>
+                    </div>
+                    
+                    {/* クォータ・期限管理 (Trial & AI Usage) */}
+                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col gap-6">
+                        <div className="flex items-center gap-2 text-slate-400">
+                            <Zap className="w-4 h-4" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Usage & trial management</span>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {/* トライアル終了日 */}
+                            <div>
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">トライアル終了日</label>
+                                <input 
+                                    type="date" 
+                                    value={form.trial_expires_at}
+                                    onChange={e => setForm({ ...form, trial_expires_at: e.target.value })}
+                                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 outline-none focus:border-teal transition-all"
+                                />
+                                <p className="text-[9px] text-slate-400 mt-1 ml-1 opacity-70">空欄で期限なし（通常契約）</p>
+                            </div>
+
+                            {/* AI実行数 */}
+                            <div>
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">今月のAI実行済数</label>
+                                <div className="relative">
+                                    <input 
+                                        type="number" min={0}
+                                        value={form.manual_ai_runs_used_this_month}
+                                        onChange={e => setForm({ ...form, manual_ai_runs_used_this_month: parseInt(e.target.value) || 0 })}
+                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 outline-none focus:border-teal transition-all"
+                                    />
+                                    <button 
+                                        onClick={() => setForm({ ...form, manual_ai_runs_used_this_month: 0 })}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-black text-teal hover:underline px-2 py-1"
+                                    >
+                                        RESET
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* AI実行月 */}
+                            <div>
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">AI実行カウント月</label>
+                                <input 
+                                    type="text" 
+                                    value={form.manual_ai_runs_active_month}
+                                    onChange={e => setForm({ ...form, manual_ai_runs_active_month: e.target.value })}
+                                    placeholder="YYYY-MM"
+                                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 outline-none focus:border-teal transition-all"
+                                />
+                                <p className="text-[9px] text-slate-400 mt-1 ml-1 opacity-70">例: 2026-04</p>
+                            </div>
                         </div>
                     </div>
 
