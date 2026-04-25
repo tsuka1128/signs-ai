@@ -5,7 +5,7 @@
  */
 
 import { createClient } from "./supabase";
-import { getBaseURL } from "./utils/url";
+import { getBaseURL } from "@/lib/utils/index";
 
 /** Google OAuth ログインを開始する */
 export async function signInWithGoogle(redirectToOption?: string) {
