@@ -593,6 +593,17 @@ export function useSettingsData() {
         }
     };
 
+    const handleRemindKpi = async () => {
+        if (!confirm("前月分のKPI未入力部署に、Slackで入力を催促しますか？")) return;
+        try {
+            const res = await fetch("/api/settings/remind-kpi", { method: "POST" });
+            if (!res.ok) throw new Error("API Request Failed");
+            alert("KPI入力リマインドを送信しました。");
+        } catch (error: any) {
+            alert(`エラーが発生しました: ${error.message}`);
+        }
+    };
+
     return {
         state: {
             loading, isAnalyzing, company, depts, kpis, axes, secondaryAxisName, users, invitations, inviteEmail,
@@ -609,7 +620,7 @@ export function useSettingsData() {
             handleInvite, handleDeleteInvitation, handleResendInvitation, handleCopyInviteLink,
             handleOpenHistory, handleSaveHistory, getHistoryTrend, handleStartEditUser,
             handleSaveUserDetail, handleDeleteUser, handleRunAnalyze, handleRemindVoiceCheck,
-            handlePreviewNotification
+            handlePreviewNotification, handleRemindKpi
         }
     };
 }

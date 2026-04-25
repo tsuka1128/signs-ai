@@ -169,6 +169,7 @@ export default function SettingsPage() {
                                 handleSaveIntegration={handlers.handleSaveIntegration}
                                 handleRemindVoiceCheck={handlers.handleRemindVoiceCheck}
                                 handlePreviewNotification={handlers.handlePreviewNotification}
+                                handleRemindKpi={handlers.handleRemindKpi}
                             />
                         </PlanGate>
                     )}

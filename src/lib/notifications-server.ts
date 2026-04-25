@@ -353,3 +353,106 @@ export async function sendAnomalyAlertNotification(
         console.error("Failed to send anomaly alert notification:", error);
     }
 }
+
+/**
+ * KPI入力リマインドを送信する（前月分）
+ */
+export async function sendKpiReminders(companyId: string): Promise<void> {
+    try {
+        const supabase = await createClient();
+
+        // 1. 前月の recorded_month を算出 (YYYY-MM-01)
+        const now = new Date();
+        const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const prevMonth = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}-01`;
+
+        // 2. 会社情報取得 (Webhook)
+        const { data: company } = await supabase
+            .from('companies')
+            .select('slack_webhook_url')
+            .eq('id', companyId)
+            .single();
+
+        if (!company?.slack_webhook_url) return;
+
+        // 3. KPI定義と実績取得
+        const [kpiDefs, kpiRecs] = await Promise.all([
+            supabase.from('kpi_definitions').select('*').eq('company_id', companyId).order('sort_order', { ascending: true }),
+            supabase.from('kpi_records').select('kpi_definition_id').eq('company_id', companyId).eq('recorded_month', prevMonth)
+        ]);
+
+        if (!kpiDefs.data || kpiDefs.data.length === 0) return;
+
+        // 4. 未入力KPIを特定
+        const filledIds = new Set(kpiRecs.data?.map(r => r.kpi_definition_id) || []);
+        const missingKpis = kpiDefs.data.filter(k => !filledIds.has(k.id));
+
+        if (missingKpis.length === 0) return;
+
+        // 5. 通知対象ユーザー（メンション）の収集
+        const mentionUsers = new Set<string>();
+
+        // 部署担当がある場合: 該当部署のマネージャーを取得
+        const ownerDeptIds = Array.from(new Set(missingKpis.map(k => k.owner_dept_id).filter(Boolean))) as string[];
+        if (ownerDeptIds.length > 0) {
+            const { data: managers } = await supabase
+                .from('users')
+                .select('slack_user_id')
+                .eq('company_id', companyId)
+                .eq('role', 'manager')
+                .in('department_id', ownerDeptIds);
+            
+            managers?.forEach(m => {
+                if (m.slack_user_id) mentionUsers.add(`<@${m.slack_user_id}>`);
+            });
+        }
+
+        // 担当部署がないKPIがある、または担当部署マネージャーがいない場合: admin/executiveを追加
+        const hasKpiWithNoOwner = missingKpis.some(k => !k.owner_dept_id);
+        if (hasKpiWithNoOwner || mentionUsers.size === 0) {
+            const admins = await getNotificationTargets(companyId, 'kpi_reminder');
+            admins.forEach(a => {
+                if (a.slack_user_id) mentionUsers.add(`<@${a.slack_user_id}>`);
+            });
+        }
+
+        const mentions = Array.from(mentionUsers).join(' ');
+
+        // 6. メッセージ構築
+        const kpiList = missingKpis.slice(0, 5).map(k => `・${k.name}`);
+        if (missingKpis.length > 5) {
+            kpiList.push(`他${missingKpis.length - 5}件`);
+        }
+
+        const blocks = [
+            {
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: `${mentions}\n📊 *【KPI入力リマインド】前月分の未入力KPIがあります*\n以下のKPIがまだ入力されていません。数値の入力をお願いします。`
+                }
+            },
+            {
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: kpiList.join('\n')
+                }
+            },
+            {
+                type: "context",
+                elements: [
+                    {
+                        type: "mrkdwn",
+                        text: `対象月: ${lastMonthDate.getFullYear()}年${lastMonthDate.getMonth() + 1}月`
+                    }
+                ]
+            }
+        ];
+
+        await sendSlackNotification(company.slack_webhook_url, "", blocks);
+
+    } catch (error: any) {
+        console.error("[sendKpiReminders Error]:", error);
+    }
+}

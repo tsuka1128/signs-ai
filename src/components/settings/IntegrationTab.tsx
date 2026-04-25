@@ -10,6 +10,7 @@ interface IntegrationTabProps {
     handleSaveIntegration: () => void;
     handleRemindVoiceCheck: () => void;
     handlePreviewNotification: (type: string) => void;
+    handleRemindKpi: () => void;
 }
 
 export const IntegrationTab = ({
@@ -18,7 +19,8 @@ export const IntegrationTab = ({
     handleTestClientSlackWebhook,
     handleSaveIntegration,
     handleRemindVoiceCheck,
-    handlePreviewNotification
+    handlePreviewNotification,
+    handleRemindKpi
 }: IntegrationTabProps) => {
     return (
         <div className="space-y-12 animate-in fade-in pb-12">
@@ -160,18 +162,35 @@ export const IntegrationTab = ({
                         <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                             <BellRing className="w-5 h-5 text-amber-500" /> 手動アクション
                         </h2>
-                        <div className="bg-amber-50 p-8 rounded-3xl border border-amber-100 space-y-4">
-                            <h3 className="text-sm font-black text-amber-800">未回答者への一斉催促</h3>
-                            <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
-                                今月のボイスチェック（アンケート）にまだ回答していないメンバー全員に対して、Slackで一斉に催促メッセージを送信します。
-                            </p>
-                            <div className="pt-2">
-                                <button
-                                    onClick={handleRemindVoiceCheck}
-                                    className="bg-amber-500 text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-amber-600 transition-all shadow-lg shadow-amber-200 flex items-center gap-2 text-sm"
-                                >
-                                    <BellRing className="w-4 h-4" /> 今すぐ催促を送る
-                                </button>
+                        <div className="bg-amber-50 p-8 rounded-3xl border border-amber-100 space-y-6">
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-black text-amber-800">未回答者への一斉催促</h3>
+                                <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
+                                    今月のボイスチェック（アンケート）にまだ回答していないメンバー全員に対して、Slackで一斉に催促メッセージを送信します。
+                                </p>
+                                <div className="pt-2">
+                                    <button
+                                        onClick={handleRemindVoiceCheck}
+                                        className="bg-amber-500 text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-amber-600 transition-all shadow-lg shadow-amber-200 flex items-center gap-2 text-sm"
+                                    >
+                                        <BellRing className="w-4 h-4" /> 今すぐ催促を送る
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="border-t border-amber-200 pt-6 space-y-4">
+                                <h3 className="text-sm font-black text-amber-800">KPI未入力部署へのリマインド</h3>
+                                <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
+                                    前月分のKPIがまだ入力されていない担当部署のマネージャーに対して、Slackで入力を促すメッセージを送信します。
+                                </p>
+                                <div className="pt-2">
+                                    <button
+                                        onClick={handleRemindKpi}
+                                        className="bg-amber-100 text-amber-800 border border-amber-200 px-8 py-3.5 rounded-2xl font-bold hover:bg-amber-200 transition-all flex items-center gap-2 text-sm"
+                                    >
+                                        <Save className="w-4 h-4 text-amber-600" /> KPI入力を催促する
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
