@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { updatePassword } from "@/lib/auth";
-import { Eye, EyeOff } from "lucide-react";
+import { updatePassword, signOut } from "@/lib/auth";
+import { Eye, EyeOff, CheckCircle2 } from "lucide-react";
 
 export default function PasswordUpdatePage() {
     const router = useRouter();
@@ -12,6 +12,7 @@ export default function PasswordUpdatePage() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -30,8 +31,15 @@ export default function PasswordUpdatePage() {
             setLoading(true);
             setError(null);
             await updatePassword(password);
-            alert("パスワードを更新しました。新しいパスワードでログインしてください。");
-            router.push("/login");
+            
+            // セキュリティのため旧セッションを破棄
+            await signOut();
+            
+            setSuccess(true);
+            // 3秒後にログイン画面へリダイレクト
+            setTimeout(() => {
+                router.push("/login");
+            }, 3000);
         } catch (err: any) {
             setError(err.message || "パスワードの更新に失敗しました。");
         } finally {
@@ -61,11 +69,27 @@ export default function PasswordUpdatePage() {
 
                 <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 p-8 space-y-6">
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {error && (
-                            <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 font-medium">
-                                {error}
+                        {success ? (
+                            <div className="p-6 bg-emerald-50 border border-emerald-100 rounded-2xl flex flex-col items-center text-center space-y-3 animate-fadeIn">
+                                <CheckCircle2 className="text-emerald-500 w-10 h-10" />
+                                <div className="space-y-1">
+                                    <h3 className="text-emerald-900 font-black text-sm">パスワードを更新しました</h3>
+                                    <p className="text-emerald-700/70 text-[11px] font-bold">
+                                        安全のため一度ログアウトしました。<br />
+                                        新しいパスワードでログインしてください。
+                                    </p>
+                                </div>
+                                <div className="text-[10px] text-emerald-400 font-bold animate-pulse">
+                                    自動的にログイン画面へ移動します...
+                                </div>
                             </div>
-                        )}
+                        ) : (
+                            <>
+                                {error && (
+                                    <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 font-medium">
+                                        {error}
+                                    </div>
+                                )}
 
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
@@ -105,16 +129,18 @@ export default function PasswordUpdatePage() {
                             />
                         </div>
 
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full bg-slate-800 hover:bg-slate-900 active:scale-[0.98] text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-slate-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {loading ? (
-                                <span className="w-5 h-5 border-2 border-slate-600 border-t-white rounded-full animate-spin inline-block align-middle mr-2" />
-                            ) : null}
-                            <span>パスワードを更新</span>
-                        </button>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full bg-slate-800 hover:bg-slate-900 active:scale-[0.98] text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-slate-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {loading ? (
+                                        <span className="w-5 h-5 border-2 border-slate-600 border-t-white rounded-full animate-spin inline-block align-middle mr-2" />
+                                    ) : null}
+                                    <span>パスワードを更新</span>
+                                </button>
+                            </>
+                        )}
                     </form>
                 </div>
             </div>
