@@ -40,7 +40,11 @@ export default function RegisterPage() {
 
             setSuccess(true);
         } catch (err: any) {
-            setError(err.message || "登録に失敗しました。もう一度お試しください。");
+            if (err.message === "ALREADY_REGISTERED") {
+                setError("このメールアドレスはすでに登録されています。ログインするか、Googleアカウントで続行してください。");
+            } else {
+                setError(err.message || "登録に失敗しました。もう一度お試しください。");
+            }
             setLoading(false);
         }
     };
@@ -112,8 +116,13 @@ export default function RegisterPage() {
                     ) : (
                         <form onSubmit={handleRegister} className="space-y-5">
                             {error && (
-                                <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 font-medium">
-                                    {error}
+                                <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 font-medium flex flex-col gap-2">
+                                    <span>{error}</span>
+                                    {error.includes("すでに登録") && (
+                                        <Link href="/login" className="text-[11px] text-teal-600 underline font-black hover:text-teal-700 transition-colors">
+                                            ログイン画面へ
+                                        </Link>
+                                    )}
                                 </div>
                             )}
 

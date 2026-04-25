@@ -38,6 +38,12 @@ export async function signUpWithEmail(email: string, password: string, redirectT
         console.error("サインアップエラー:", error.message);
         throw error;
     }
+
+    // 重複登録のチェック（メール確認有効時、Identities が空なら登録済み）
+    if (data.user && data.user.identities?.length === 0) {
+        throw new Error("ALREADY_REGISTERED");
+    }
+
     return data;
 }
 
