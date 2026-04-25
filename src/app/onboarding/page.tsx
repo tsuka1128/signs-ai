@@ -200,10 +200,13 @@ function OnboardingContent() {
             }
 
             try {
+                const now = new Date().toISOString();
                 const { data: invite, error: inviteError } = await supabase
                     .from("invitations")
                     .select("*, companies(name, kpi_secondary_axis_name, departments(id, name), kpi_definitions(id, name), kpi_axes(id, name))")
                     .eq("token", token)
+                    .eq("status", "pending")
+                    .gt("expires_at", now)
                     .single();
 
                 if (inviteError || !invite) {

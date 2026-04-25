@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { sendInvitationEmail } from "@/lib/mail";
 import { NextRequest, NextResponse } from "next/server";
+import { getBaseURL } from "@/lib/utils/url";
 
 export async function POST(req: NextRequest) {
     const supabase = await createServerSupabaseClient();
@@ -90,7 +91,7 @@ export async function POST(req: NextRequest) {
             .single();
 
         const companyName = companyInfo?.name || "Signs AI";
-        const inviteUrl = `${new URL(req.url).origin}/onboarding?token=${invitation.token}`;
+        const inviteUrl = `${getBaseURL()}/onboarding#token=${invitation.token}`;
 
         await sendInvitationEmail(email.trim(), companyName, inviteUrl);
         emailSent = true;
