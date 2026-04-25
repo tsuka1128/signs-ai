@@ -20,7 +20,7 @@ interface DashboardState {
     realActionItems: ActionItem[];
 }
 
-export function useDashboardData(company: Company | null, supabase: any) {
+export function useDashboardData(company: Company | null, supabase: any, isImpersonating?: boolean) {
     const [state, setState] = useState<DashboardState>({
         realDepts: [],
         realKpis: [],
@@ -403,6 +403,13 @@ export function useDashboardData(company: Company | null, supabase: any) {
 
     const handleRunAnalyze = async () => {
         if (!company) return;
+
+        const msg = isImpersonating 
+            ? "【注意】現在は代理ログイン中です。他社の本番データを書き換えますが、本当にAI分析を実行しますか？"
+            : "AI分析を実行しますか？現在のデータに基づきインサイトを生成します。";
+        
+        if (typeof window !== "undefined" && !confirm(msg)) return;
+
         try {
             setIsAnalyzing(true);
             const res = await fetch('/api/ai/analyze', { 
