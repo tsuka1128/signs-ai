@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/Badge";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import { CheckCircle2, PlayCircle, XCircle, Clock, Info, Bot, User, RefreshCcw } from "lucide-react";
 
 interface ActionItemProps {

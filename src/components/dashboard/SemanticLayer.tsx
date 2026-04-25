@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/Badge";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import { Bot, Send, CheckCircle2, X, Trash2 } from "lucide-react";
 
 interface SemanticLayerProps {

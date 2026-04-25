@@ -5,7 +5,7 @@ import { X, Users, Tag, Plus, Trash2, Save, GripVertical, AlertTriangle, Buildin
 import { useAdminSettings } from "@/hooks/useAdminSettings";
 import { AVAILABLE_ADDONS } from "@/lib/addons";
 import { createClient } from "@/lib/supabase";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import { Reorder, AnimatePresence, motion } from "framer-motion";
 import { createPortal } from "react-dom";
 import { CSVImportModal } from "./CSVImportModal";

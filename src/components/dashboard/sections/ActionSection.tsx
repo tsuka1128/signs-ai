@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { ActionItem } from "@/components/dashboard/ActionItem";
 import { Plus, X, Check, RefreshCcw, Target } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 
 interface ActionSectionProps {
     actions: any[];

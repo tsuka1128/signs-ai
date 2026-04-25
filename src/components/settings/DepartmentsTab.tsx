@@ -2,7 +2,7 @@
 
 import { Users, GripVertical, TrendingUp, Trash2, Plus, Save } from "lucide-react";
 import { Reorder } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import { usePlanFeatures } from "@/hooks/usePlanFeatures";
 
 interface DepartmentsTabProps {

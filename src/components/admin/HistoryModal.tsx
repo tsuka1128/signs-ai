@@ -14,7 +14,7 @@ import {
 import { createClient } from "@/lib/supabase";
 import { Loading } from "@/components/ui/Loading";
 import { Badge } from "@/components/ui/Badge";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import { createPortal } from "react-dom";
 interface HistoryModalProps {
     companyId?: string;

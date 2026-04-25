@@ -9,7 +9,7 @@
 
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
-import { sanitizeText } from "@/lib/utils";
+import { sanitizeText } from "@/lib/utils/index";
 
 /** リクエストボディの型定義 */
 interface OnboardingPayload {

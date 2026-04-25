@@ -7,7 +7,7 @@
 
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
-import { getBaseURL } from "@/lib/utils";
+import { getBaseURL } from "@/lib/utils/index";
 
 export async function GET(request: NextRequest) {
     const { searchParams, origin } = request.nextUrl;

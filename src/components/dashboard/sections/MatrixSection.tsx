@@ -5,7 +5,7 @@ import { TabBar } from "@/components/ui/TabBar";
 import { ScatterPlot } from "@/components/dashboard/ScatterPlot";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AreaChart, Lightbulb, TrendingDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 
 interface MatrixSectionProps {
     secondaryAxisName: string;

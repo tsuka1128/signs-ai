@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Settings2, Sparkles } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import { useSettingsData } from "@/hooks/useSettingsData";
 import { PlanGate } from "@/components/ui/PlanGate";
 import { usePlanFeatures } from "@/hooks/usePlanFeatures";

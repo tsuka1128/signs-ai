@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import { Badge } from "@/components/ui/Badge";
 import { KpiSummaryCard } from "@/components/dashboard/KpiSummaryCard";
 import { DetailLineChart } from "@/components/dashboard/DetailLineChart";

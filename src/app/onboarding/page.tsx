@@ -14,7 +14,7 @@
 
 import { useState, useRef, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import { createClient } from "@/lib/supabase";
 import { Sun, Cloud, CloudRain, Check } from "lucide-react";
 import { KPI_UNIT_OPTIONS, DEFAULT_SEMANTIC_POLICY } from "@/lib/constants";

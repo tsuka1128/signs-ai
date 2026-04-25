@@ -3,7 +3,7 @@
 import React from "react";
 import { usePlanFeatures, FeatureKey } from "@/hooks/usePlanFeatures";
 import { Lock, Crown, ArrowRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 
 interface PlanGateProps {
   children: React.ReactNode;

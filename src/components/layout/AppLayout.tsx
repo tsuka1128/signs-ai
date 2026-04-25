@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 
 interface AppLayoutProps {
     children: React.ReactNode;

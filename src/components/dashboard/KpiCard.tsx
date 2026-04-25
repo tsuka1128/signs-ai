@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/Badge";
 import { SparkLine } from "@/components/dashboard/SparkLine";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 
 interface KpiCardProps {
     name: string;

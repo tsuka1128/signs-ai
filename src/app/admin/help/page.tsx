@@ -24,7 +24,7 @@ import {
     MessageSquare
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 
 export default function AdminHelpPage() {
     const mainSections = [

@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Loading } from "@/components/ui/Loading";
 import { Badge } from "@/components/ui/Badge";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 
 export default function AdminUsersPage() {
     const { supabase, loading: authLoading } = useAdmin();

@@ -1,7 +1,7 @@
 "use client";
 
 import { Sun, Cloud, CloudRain } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 
 interface WeatherIconProps {
     type: "sun" | "cloud" | "rain";

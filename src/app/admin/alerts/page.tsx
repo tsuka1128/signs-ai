@@ -12,7 +12,7 @@ import {
     ArrowRight,
     ExternalLink
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import Link from "next/link";
 
 interface AdminAlert {

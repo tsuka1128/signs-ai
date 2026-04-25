@@ -13,7 +13,7 @@ import {
     HelpCircle,
     Info
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import { signOut } from "@/lib/auth";
 
 const MENU_ITEMS = [

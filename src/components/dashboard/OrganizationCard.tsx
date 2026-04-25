@@ -3,7 +3,7 @@
 import { WeatherIcon } from "@/components/ui/WeatherIcon";
 import { Arrow } from "@/components/ui/Arrow";
 import { Badge } from "@/components/ui/Badge";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 
 interface KpiItem {
     name: string;

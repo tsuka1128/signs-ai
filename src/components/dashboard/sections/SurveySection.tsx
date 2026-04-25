@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import { TabBar } from "@/components/ui/TabBar";
 import { DetailLineChart } from "@/components/dashboard/DetailLineChart";
 import { SurveyQuestionCard } from "@/components/dashboard/SurveyQuestionCard";

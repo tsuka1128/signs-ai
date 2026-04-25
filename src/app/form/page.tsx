@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { createClient } from "@/lib/supabase";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 
 // 型定義
 interface Question {

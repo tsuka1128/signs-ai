@@ -1,7 +1,7 @@
 "use client";
 
 import { TrendingUp, PieChart, Info, ArrowUpRight, Target, Coins } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 
 interface LaborFinanceSectionProps {
     laborRoi: number;

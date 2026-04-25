@@ -2,7 +2,7 @@
 
 import { X, TrendingUp, TrendingDown, AlertTriangle, Lightbulb, Target, Thermometer, Shield, Rocket, Brain } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import { Badge } from "@/components/ui/Badge";
 
 /**

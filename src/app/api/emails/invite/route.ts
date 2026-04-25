@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { sendInvitationEmail } from "@/lib/mail";
-import { getBaseURL } from "@/lib/utils";
+import { getBaseURL } from "@/lib/utils/index";
 
 export async function POST(req: NextRequest) {
     try {

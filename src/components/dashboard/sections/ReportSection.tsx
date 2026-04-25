@@ -1,7 +1,7 @@
 "use client";
 
 import { TrendingUp, TrendingDown, Brain, Target, Thermometer, Shield, AlertTriangle, Lightbulb } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import { Badge } from "@/components/ui/Badge";
 
 interface DeepReportSection {

@@ -21,7 +21,7 @@ import {
     Save,
     Plus
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import {
     AreaChart,
     Area,

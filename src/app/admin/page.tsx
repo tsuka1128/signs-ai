@@ -13,7 +13,7 @@ import {
     ArrowDownRight,
     PieChart
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import { PlanDetailsModal } from "@/components/admin/PlanDetailsModal";
 import { AnimatePresence } from "framer-motion";
 

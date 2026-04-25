@@ -14,7 +14,7 @@ import {
     ChevronRight,
     Info
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 
 export default function AdminLogsPage() {
     const { isSuperAdmin, loading: authLoading } = useAdmin();

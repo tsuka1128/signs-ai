@@ -14,7 +14,7 @@ import {
     MessageSquare,
     ClipboardList
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 
 /**
  * ボイスチェック運用ページ

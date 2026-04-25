@@ -4,7 +4,7 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { useCompany } from "@/hooks/useCompany";
 import { usePathname } from "next/navigation";
 import { ShieldAlert, LogOut, Building2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 
 export function ImpersonationBanner() {
     const { stopImpersonating } = useAdmin();

@@ -24,7 +24,7 @@ import {
     ShieldCheck
 } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { HistoryModal } from "@/components/admin/HistoryModal";
 import { AdminDepartmentsModal, AdminKpisModal, AdminCompanySettingsModal, AdminAxesModal, AdminPlanOverridesModal } from "@/components/admin/QuickEditModals";

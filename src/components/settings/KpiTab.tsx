@@ -1,7 +1,7 @@
 "use client";
 
 import { Target, ArrowRight, Star, Trash2, Plus, Save } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import { KPI_UNIT_OPTIONS } from "@/lib/constants";
 import { usePlanFeatures } from "@/hooks/usePlanFeatures";
 

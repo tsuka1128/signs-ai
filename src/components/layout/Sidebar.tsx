@@ -21,7 +21,7 @@ import {
     Search,
     Brain
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { Badge } from "@/components/ui/Badge";

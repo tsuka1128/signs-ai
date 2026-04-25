@@ -14,7 +14,7 @@ import { MatrixSection } from "@/components/dashboard/sections/MatrixSection";
 import { LaborFinanceSection } from "@/components/dashboard/sections/LaborFinanceSection";
 import { ReportSection } from "@/components/dashboard/sections/ReportSection";
 import { TrialGuard } from "@/components/layout/TrialGuard";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import { Target, Thermometer, Shield, AlertTriangle, Lightbulb, Rocket } from "lucide-react";
 import { PlanGate } from "@/components/ui/PlanGate";
 import { DEFAULT_SURVEY_QUESTIONS, DEFAULT_SEMANTIC_POLICY } from "@/lib/constants";

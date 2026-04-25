@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { X, Check, Minus, Info } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 
 interface PlanDetailsModalProps {
     onClose: () => void;

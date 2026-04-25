@@ -1,7 +1,7 @@
 "use client";
 
 import { TrendingUp, X, Save } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 
 interface HistoryModalProps {
     historyTarget: { name: string } | null;

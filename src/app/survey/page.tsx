@@ -7,7 +7,7 @@ import { SurveyQuestionCard } from "@/components/dashboard/SurveyQuestionCard";
 import { DetailLineChart } from "@/components/dashboard/DetailLineChart";
 import { TabBar } from "@/components/ui/TabBar";
 import { Badge } from "@/components/ui/Badge";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import { DEFAULT_SURVEY_QUESTIONS } from "@/lib/constants";

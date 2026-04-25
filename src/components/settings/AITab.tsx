@@ -1,7 +1,7 @@
 "use client";
 
 import { Sparkles, Activity, ShieldCheck, Rocket, Calendar, CheckCircle2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import { addMonths, nextMonday, startOfMonth, format } from "date-fns";
 import { PlanGate } from "@/components/ui/PlanGate";
 

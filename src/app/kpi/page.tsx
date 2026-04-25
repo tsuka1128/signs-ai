@@ -9,7 +9,7 @@ import { Info, Save, ArrowLeft, Building2, Lock, Unlock, BarChart3, AlertTriangl
 import { createClient } from "@/lib/supabase";
 import { Loading } from "@/components/ui/Loading";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/index";
 import { Maximize2, Minimize2 } from "lucide-react";
 
 // KPI定義の型
