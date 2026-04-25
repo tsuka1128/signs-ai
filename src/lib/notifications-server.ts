@@ -264,23 +264,37 @@ export async function sendAnomalyAlertNotification(
     riskReason: string | null
 ): Promise<void> {
     try {
+        const supabase = await createClient();
+        const { data: company } = await supabase
+            .from('companies')
+            .select('slack_webhook_url, anomaly_threshold_absolute, anomaly_threshold_drop, anomaly_threshold_gap')
+            .eq('id', companyId)
+            .single();
+
+        if (!company?.slack_webhook_url) return;
+
+        // 閾値の設定（DBになければデフォルト値、または0の場合も考慮）
+        const threshAbs = company.anomaly_threshold_absolute ?? 60;
+        const threshDrop = company.anomaly_threshold_drop ?? 10;
+        const threshGap = company.anomaly_threshold_gap ?? 20;
+
         const anomalies: string[] = [];
 
-        // 条件A: スコア絶対値 (60以下)
-        if (currentAvgPulse <= 60) {
-            anomalies.push(`・*全社平均スコアの低下*: ${currentAvgPulse.toFixed(1)}点（基準: 60点以下）`);
+        // 条件A: スコア絶対値
+        if (currentAvgPulse <= threshAbs) {
+            anomalies.push(`・*全社平均スコアの低下*: ${currentAvgPulse.toFixed(1)}点（基準: ${threshAbs}点以下）`);
         }
 
-        // 条件B: 前月比下落 (10pt以上)
-        if (previousAvgPulse !== null && (previousAvgPulse - currentAvgPulse) >= 10) {
-            anomalies.push(`・*急激なスコア下落*: 前月比 -${(previousAvgPulse - currentAvgPulse).toFixed(1)}pt`);
+        // 条件B: 前月比下落
+        if (previousAvgPulse !== null && (previousAvgPulse - currentAvgPulse) >= threshDrop) {
+            anomalies.push(`・*急激なスコア下落*: 前月比 -${(previousAvgPulse - currentAvgPulse).toFixed(1)}pt（基準: ${threshDrop}pt以上）`);
         }
 
-        // 条件C: 部門スコア乖離 (全社平均より 20pt以上下回る部署)
-        const lowDepts = deptScores.filter(d => (currentAvgPulse - d.avgScore) >= 20);
+        // 条件C: 部門スコア乖離
+        const lowDepts = deptScores.filter(d => (currentAvgPulse - d.avgScore) >= threshGap);
         if (lowDepts.length > 0) {
             const names = lowDepts.map(d => `${d.deptName}(${d.avgScore.toFixed(1)}点)`).join(', ');
-            anomalies.push(`・*部門間の大きな乖離*: 全社平均より20pt以上低い部署があります（${names}）`);
+            anomalies.push(`・*部門間の大きな乖離*: 全社平均より${threshGap}pt以上低い部署があります（${names}）`);
         }
 
         // 条件D: AI危険フラグ
@@ -290,15 +304,6 @@ export async function sendAnomalyAlertNotification(
 
         // 1つも該当しなければ送信しない
         if (anomalies.length === 0) return;
-
-        const supabase = await createClient();
-        const { data: company } = await supabase
-            .from('companies')
-            .select('slack_webhook_url')
-            .eq('id', companyId)
-            .single();
-
-        if (!company?.slack_webhook_url) return;
 
         const targets = await getNotificationTargets(companyId, 'anomaly_alert');
         const mentions = targets.length > 0 ? targets.map(t => `<@${t.slack_user_id}>`).join(' ') : '';

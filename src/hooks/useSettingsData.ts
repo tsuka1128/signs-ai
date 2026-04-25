@@ -130,11 +130,38 @@ export function useSettingsData() {
     const handleSaveIntegration = async () => {
         const supabase = createClient();
         const { error } = await supabase.from('companies').update({
-            slack_webhook_url: company.slack_webhook_url
+            slack_webhook_url: company.slack_webhook_url,
+            anomaly_threshold_absolute: company.anomaly_threshold_absolute,
+            anomaly_threshold_drop: company.anomaly_threshold_drop,
+            anomaly_threshold_gap: company.anomaly_threshold_gap
         }).eq('id', company.id);
 
-        if (!error) alert("連携設定を保存しました");
+        if (!error) alert("連携・通知設定を保存しました");
         else alert(`保存に失敗しました: ${error.message}`);
+    };
+
+    const handlePreviewNotification = async (type: string) => {
+        const webhookUrl = company?.slack_webhook_url;
+        if (!webhookUrl) {
+            alert("Webhook URLを入力・保存してからプレビューしてください。");
+            return;
+        }
+
+        try {
+            const res = await fetch("/api/settings/test-slack", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ webhookUrl, previewType: type })
+            });
+            if (res.ok) {
+                alert("プレビュー通知を送信しました。Slackをご確認ください");
+            } else {
+                const data = await res.json();
+                alert(`送信失敗: ${data.error || "詳細不明"}`);
+            }
+        } catch (e: any) {
+            alert(`エラーが発生しました: ${e.message}`);
+        }
     };
 
     const handleTestClientSlackWebhook = async () => {
@@ -581,7 +608,8 @@ export function useSettingsData() {
             handleSaveAllKpis, handleDeleteKpi, handleAddAxis, handleSaveAllAxes, handleDeleteAxis,
             handleInvite, handleDeleteInvitation, handleResendInvitation, handleCopyInviteLink,
             handleOpenHistory, handleSaveHistory, getHistoryTrend, handleStartEditUser,
-            handleSaveUserDetail, handleDeleteUser, handleRunAnalyze, handleRemindVoiceCheck
+            handleSaveUserDetail, handleDeleteUser, handleRunAnalyze, handleRemindVoiceCheck,
+            handlePreviewNotification
         }
     };
 }
