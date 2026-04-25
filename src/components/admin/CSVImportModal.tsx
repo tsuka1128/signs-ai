@@ -290,7 +290,7 @@ export function CSVImportModal({ companyId, type, onClose, onSuccess }: CSVImpor
         }
     };
 
-    return (
+
     if (!mounted) return null;
 
     return createPortal(
