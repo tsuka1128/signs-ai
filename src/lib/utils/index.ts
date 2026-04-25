@@ -44,3 +44,16 @@ export const getBaseURL = () => {
     // 末尾の記号をトリミング
     return url.replace(/\/$/, '');
 };
+
+/**
+ * パスワードの強度バリデーション
+ * @param password 検証対象のパスワード
+ * @returns エラーメッセージ（問題ない場合は null）
+ */
+export function validatePassword(password: string): string | null {
+    if (password.length < 8) return "パスワードは8文字以上で入力してください。";
+    if (!/[A-Z]/.test(password)) return "大文字を1文字以上含めてください。";
+    if (!/[a-z]/.test(password)) return "小文字を1文字以上含めてください。";
+    if (!/[0-9]/.test(password)) return "数字を1文字以上含めてください。";
+    return null;
+}

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signUpWithEmail } from "@/lib/auth";
-import { getBaseURL } from "@/lib/utils/index";
+import { getBaseURL, validatePassword } from "@/lib/utils/index";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function RegisterPage() {
@@ -26,8 +26,9 @@ export default function RegisterPage() {
             return;
         }
 
-        if (password.length < 8) {
-            setError("パスワードは8文字以上で入力してください。");
+        const passwordError = validatePassword(password);
+        if (passwordError) {
+            setError(passwordError);
             return;
         }
 
@@ -162,7 +163,28 @@ export default function RegisterPage() {
                                             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                         </button>
                                     </div>
-                                    <p className="text-[10px] text-slate-400 font-bold ml-1">※ 8文字以上（英数字の組み合わせ）を推奨</p>
+                                    {password && (
+                                        <div className="mt-1.5 space-y-1">
+                                            <div className="flex gap-1">
+                                                {[
+                                                    password.length >= 8,
+                                                    /[A-Z]/.test(password),
+                                                    /[a-z]/.test(password),
+                                                    /[0-9]/.test(password),
+                                                ].map((met, i) => (
+                                                    <div
+                                                        key={i}
+                                                        className={`h-1 flex-1 rounded-full transition-colors ${
+                                                            met ? "bg-teal-400" : "bg-slate-200"
+                                                        }`}
+                                                    />
+                                                ))}
+                                            </div>
+                                            <p className="text-[10px] text-slate-400 font-medium">
+                                                大文字・小文字・数字をそれぞれ1文字以上含む8文字以上
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="space-y-1.5">
