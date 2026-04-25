@@ -156,8 +156,8 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
                         <footer className="mt-20 pt-10 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4 text-slate-400">
                             <p className="text-xs font-medium">© 2026 Signs AI Inc. All rights reserved.</p>
                             <div className="flex items-center gap-6">
-                                <Link href="#" className="text-xs hover:text-slate-600 transition-colors font-medium">Privacy Policy</Link>
-                                <Link href="#" className="text-xs hover:text-slate-600 transition-colors font-medium">Terms of Service</Link>
+                                <Link href="/privacy" className="text-xs hover:text-slate-600 transition-colors font-medium">Privacy Policy</Link>
+                                <Link href="/terms" className="text-xs hover:text-slate-600 transition-colors font-medium">Terms of Service</Link>
                             </div>
                         </footer>
                     </div>
