@@ -16,11 +16,14 @@ export interface Database {
           name: string
           status: 'trial' | 'active' | 'suspended'
           domain: string | null
-          plan_type: string | null
-          secondary_axis_name: string | null
+          website_url: string | null
+          short_id: string | null
+          kpi_secondary_axis_name: string | null
           secondary_axis_size_kpi_id: string | null
           addon_labor_analytics: boolean
           manual_ai_runs_used_this_month: number
+          trial_expires_at: string | null
+          survey_deadline_day: number | null
           created_at: string
           updated_at: string
         }
@@ -161,11 +164,15 @@ export interface Database {
         Row: {
           id: string
           company_id: string | null
+          inviter_id: string | null
           email: string
           role: string | null
           department_id: string | null
+          axis_id: string | null
+          slack_user_id: string | null
           token: string
           status: string | null
+          deleted_at: string | null
           created_at: string
         }
       }
