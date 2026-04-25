@@ -366,9 +366,8 @@ export default function AdminHelpPage() {
             <footer className="pt-10 border-t border-slate-100 flex flex-col md:flex-row justify-between gap-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 <p>© 2024 SignsAI Admin Portal Master Guide</p>
                 <div className="flex items-center gap-8">
-                    <a href="#" className="hover:text-slate-600 transition-colors">利用規約</a>
-                    <a href="#" className="hover:text-slate-600 transition-colors">セキュリティポリシー</a>
-                    <a href="#" className="hover:text-slate-600 transition-colors">システム稼働状況</a>
+                    <a href="/terms" className="hover:text-slate-600 transition-colors">利用規約</a>
+                    <a href="/privacy" className="hover:text-slate-600 transition-colors">プライバシーポリシー</a>
                 </div>
             </footer>
         </main>
