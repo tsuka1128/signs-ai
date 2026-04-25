@@ -94,7 +94,9 @@ export function useCompany() {
 
     const isTrial = company?.status === 'trial';
     const defaultTrialDays = 70;
-    const trialDaysRemaining = company
+    const trialDaysRemaining = company?.trial_expires_at
+        ? Math.max(0, differenceInDays(new Date(company.trial_expires_at), new Date()))
+        : company
         ? Math.max(0, (plan?.trial_duration_days || defaultTrialDays) - differenceInDays(new Date(), new Date(company.created_at)))
         : null;
 
