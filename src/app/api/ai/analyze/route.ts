@@ -320,8 +320,8 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
             })
             .eq('id', companyId);
 
-        // ※ Slack通知（内部にtry/catchを内包しておりメインフローを止めない）
-        await sendAiSummaryNotification(companyId);
+        // ※ Slack通知（内部にtry/catchを内包しておりメインフローを止めない。レスポンスをブロックしないよう非同期実行）
+        void sendAiSummaryNotification(companyId);
 
         return NextResponse.json({  success: true, data: aiResult });
 

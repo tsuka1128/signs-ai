@@ -54,10 +54,12 @@ export async function getNotificationTargets(
     }
 
     // 2. 通知設定を取得してフィルタリング
+    const userIds = users.map(u => u.id);
     const { data: settings, error: settingsError } = await supabase
         .from('notification_settings')
         .select('user_id, slack_enabled')
-        .eq('notification_type', type);
+        .eq('notification_type', type)
+        .in('user_id', userIds);
 
     if (settingsError) {
         console.error(`Error fetching notification settings: ${settingsError.message}`);
