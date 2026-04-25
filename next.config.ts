@@ -12,15 +12,9 @@ export default withSentryConfig(nextConfig, {
   // ビルド時のログを抑制
   silent: !process.env.CI,
 
-  // クライアントサイドのエラーをより詳細に追跡するための設定
+  // ソースマップ関連の設定（必要に応じて調整）
   widenClientFileUpload: true,
-
-  // ソースマップをアップロードした後に削除（公開されないようにする）
-  hideSourceMaps: true,
 
   // ログ出力を無効化
   disableLogger: true,
-
-  // Vercel の Cron Jobs などを監視対象に含める設定
-  automaticVercelMonitors: true,
 });
