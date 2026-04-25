@@ -11,6 +11,7 @@ import { Loading } from "@/components/ui/Loading";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils/index";
 import { Maximize2, Minimize2 } from "lucide-react";
+import { HelpLink } from "@/components/ui/HelpLink";
 
 // KPI定義の型
 interface KpiDefinition {
@@ -417,7 +418,10 @@ export default function KpiInputPage() {
                     <div>
                         <h1 className="text-2xl font-black text-slate-800 tracking-tighter mb-2 flex items-center gap-3">
                             月次KPI一括入力
-                            <Badge className="bg-teal/10 text-teal border-none text-[10px] font-bold px-2">管理者向け</Badge>
+                            <div className="flex items-center gap-2">
+                                <Badge className="bg-teal/10 text-teal border-none text-[10px] font-bold px-2">管理者向け</Badge>
+                                <HelpLink href="/docs/kpi-input" label="入力方法を確認" />
+                            </div>
                         </h1>
                         <p className="text-slate-500 text-base mt-2 max-w-2xl font-medium">全社のKPIの実績と目標を入力します。直近1年分の推移を確認しながら、入力・編集が可能です。</p>
                     </div>

@@ -51,7 +51,10 @@ export function KpiSection({
                             <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-8">
                                 <div className="flex justify-between items-start">
                                     <div className="space-y-4">
-                                        <h3 className="text-xl font-bold text-slate-800">{selectedKpiDef.name}</h3>
+                                        <div className="flex items-center gap-3">
+                                            <h3 className="text-xl font-bold text-slate-800">{selectedKpiDef.name}</h3>
+                                            <HelpLink href="/docs/kpi-setup" label="KPI設定・入力ガイド" />
+                                        </div>
                                         <div className="flex flex-wrap items-center gap-3">
                                             <Badge className="bg-slate-100 text-slate-500 font-bold border-none">担当: {selectedKpiDef.dept}</Badge>
                                             {selectedKpiDef.target && (

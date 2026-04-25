@@ -3,7 +3,6 @@ import {
     BookOpen, 
     MessageSquare, 
     BarChart3, 
-    Users, 
     ChevronRight,
     Sparkles,
     Zap
@@ -28,6 +27,25 @@ export default function DocsPage() {
 
             {/* Quick Start Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Link 
+                    href="/docs/getting-started"
+                    className="group p-6 bg-white border-2 border-teal/20 rounded-[32px] shadow-sm hover:shadow-xl hover:border-teal/50 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
+                >
+                    <div className="absolute top-4 right-4 px-2 py-0.5 bg-teal text-white text-[10px] font-black rounded-full tracking-wider animate-pulse">
+                        START HERE
+                    </div>
+                    <div className="w-12 h-12 bg-teal rounded-2xl flex items-center justify-center mb-4 text-white">
+                        <Zap className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-lg font-black text-slate-900 mb-2">初回セットアップガイド</h3>
+                    <p className="text-sm text-slate-500 leading-relaxed mb-4">
+                        Signs AIを使い始めるための最短ルート。アカウント作成から組織情報の登録まで。
+                    </p>
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-teal">
+                        まずはここから <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                </Link>
+
                 <Link 
                     href="/docs/introduction"
                     className="group p-6 bg-white border border-slate-100 rounded-[32px] shadow-sm hover:shadow-xl hover:border-teal/30 hover:-translate-y-1 transition-all duration-300"
@@ -75,22 +93,6 @@ export default function DocsPage() {
                         詳しく見る <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                     </div>
                 </Link>
-
-                <Link 
-                    href="/docs/member-management"
-                    className="group p-6 bg-white border border-slate-100 rounded-[32px] shadow-sm hover:shadow-xl hover:border-teal/30 hover:-translate-y-1 transition-all duration-300"
-                >
-                    <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-teal group-hover:text-white transition-colors">
-                        <Users className="w-6 h-6" />
-                    </div>
-                    <h3 className="text-lg font-black text-slate-900 mb-2">メンバー管理</h3>
-                    <p className="text-sm text-slate-500 leading-relaxed mb-4">
-                        チームメンバーの招待、権限設定、Slack User IDの確認方法を説明します。
-                    </p>
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-teal">
-                        詳しく見る <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                    </div>
-                </Link>
             </div>
 
             {/* Popular Topics section */}
@@ -101,14 +103,14 @@ export default function DocsPage() {
                 </h2>
                 <ul className="space-y-4">
                     {[
-                        "SlackとのWebhook連携がうまくいかない",
-                        "メンバーごとのメンションIDを確認する方法",
-                        "組織方針（Semantic Layer）をAIに正しく伝えるコツ",
-                        "部署別マトリックスでの分析の読み解き方"
+                        { title: "SlackとのWebhook連携がうまくいかない", href: "/docs/slack-integration" },
+                        { title: "メンバーごとのメンションIDを確認する方法", href: "/docs/member-management" },
+                        { title: "組織方針（Semantic Layer）をAIに正しく伝えるコツ", href: "/docs/policy-guide" },
+                        { title: "部署別マトリックスでの分析の読み解き方", href: "/docs/bubble-chart-guide" }
                     ].map((topic, i) => (
                         <li key={i}>
-                            <Link href="#" className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 hover:bg-white border border-transparent hover:border-slate-200 transition-all font-bold text-sm text-slate-700">
-                                {topic}
+                            <Link href={topic.href} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 hover:bg-white border border-transparent hover:border-slate-200 transition-all font-bold text-sm text-slate-700">
+                                {topic.title}
                                 <ChevronRight className="w-4 h-4 text-slate-300" />
                             </Link>
                         </li>

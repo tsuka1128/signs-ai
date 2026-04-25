@@ -6,6 +6,7 @@ import { ScatterPlot } from "@/components/dashboard/ScatterPlot";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AreaChart, Lightbulb, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils/index";
+import { HelpLink } from "@/components/ui/HelpLink";
 
 interface MatrixSectionProps {
     secondaryAxisName: string;
@@ -47,8 +48,11 @@ export function MatrixSection({
             <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm transition-all">
                 <div className="flex flex-col gap-4 mb-6">
                     <div className="flex justify-between items-start md:items-center flex-col md:flex-row gap-2">
-                        <div>
-                            <h3 className="text-sm font-bold text-slate-800 tracking-tight">部署 / {secondaryAxisName} マトリックス</h3>
+                        <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-3">
+                                <h3 className="text-sm font-bold text-slate-800 tracking-tight">部署 / {secondaryAxisName} マトリックス</h3>
+                                <HelpLink href="/docs/bubble-chart-guide" label="見方を確認" />
+                            </div>
                             <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-tight">
                                 <div className="flex items-center gap-1">
                                     <span>縦軸: 一人当たり生産性</span>

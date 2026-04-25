@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { ActionItem } from "@/components/dashboard/ActionItem";
 import { Plus, X, Check, RefreshCcw, Target } from "lucide-react";
 import { cn } from "@/lib/utils/index";
+import { HelpLink } from "@/components/ui/HelpLink";
 
 interface ActionSectionProps {
     actions: any[];
@@ -187,7 +188,8 @@ export function ActionSection({ actions: initialActions, depts = [] }: ActionSec
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                 <div className="flex flex-wrap items-center gap-3">
                     <Target className="text-teal" size={20} />
-                    <h3 className="text-base font-bold text-slate-800 font-display">今月のアクション提案</h3>
+                    <h3 className="text-base font-bold text-slate-800 font-display text-nowrap">今月のアクション提案</h3>
+                    <HelpLink href="/docs/action-guide" label="活用のコツ" />
                 </div>
                 <div className="flex items-center gap-2">
                     <button 
