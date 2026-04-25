@@ -362,13 +362,13 @@ export default function KpiInputPage() {
         }
 
         const { error } = await supabase.from('kpi_records').upsert(upsertData, {
-            onConflict: 'kpi_definition_id, recorded_month, department_id, axis_id'
+            onConflict: 'kpi_definition_id,recorded_month,department_id,axis_id'
         });
 
         if (error) {
-            console.error("Save error:", error);
-            setSaveError("保存に失敗しました。再度お試しください。");
-            setTimeout(() => setSaveError(null), 5000);
+            console.error("Save error details:", error);
+            setSaveError(`保存に失敗しました: ${error.message} (${error.code})`);
+            setTimeout(() => setSaveError(null), 8000);
             setIsSaved(false);
         } else {
             setIsSaved(true);
