@@ -14,7 +14,12 @@ import {
     Layers,
     FileSearch,
     History,
-    Zap
+    Zap,
+    Database,
+    ArrowRight,
+    Lightbulb,
+    TrendingUp,
+    Workflow
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils/index";
@@ -214,8 +219,84 @@ export default function AdminSchemaPage() {
                 </div>
             </section>
 
+            {/* Solution Flow Section */}
+            <section className="space-y-8 pt-12">
+                <div className="flex flex-col gap-2">
+                    <h2 className="text-sm font-black text-slate-500 uppercase tracking-widest">
+                        ソリューション・データフロー
+                    </h2>
+                    <p className="text-xs text-slate-400 font-bold">
+                        データが Signs AI 内でどのように処理・変換されるかの論理プロセスを示します。
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                    {[
+                        {
+                            stage: "01. INPUT",
+                            title: "データの蓄積",
+                            icon: Database,
+                            color: "bg-emerald-500",
+                            desc: "現場の事実と感情を収集",
+                            items: ["KpiRecord", "SurveyAnswer", "ResourceRecord"]
+                        },
+                        {
+                            stage: "02. CONTEXT",
+                            title: "文脈の定義",
+                            icon: Lightbulb,
+                            color: "bg-violet-500",
+                            desc: "組織の価値基準を定義",
+                            items: ["SemanticLayer", "KpiDefinition", "Plan"]
+                        },
+                        {
+                            stage: "03. ANALYSIS",
+                            title: "AI 構造化",
+                            icon: Brain,
+                            color: "bg-amber-500",
+                            desc: "データと文脈を掛け合わせ、知恵へ昇華",
+                            items: ["AiInsight", "Anomaly Detection"]
+                        },
+                        {
+                            stage: "04. ACTION",
+                            title: "価値提供",
+                            icon: TrendingUp,
+                            color: "bg-sky-500",
+                            desc: "具体的な改善行動を促す",
+                            items: ["ActionItem", "Slack Notifications"]
+                        }
+                    ].map((step, i) => (
+                        <div key={i} className="relative group">
+                            <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm group-hover:shadow-md transition-all h-full flex flex-col">
+                                <div className={cn("inline-flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black text-white mb-4 shadow-sm", step.color)}>
+                                    {step.stage}
+                                </div>
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="p-2 bg-slate-50 rounded-xl text-slate-400">
+                                        <step.icon className="w-5 h-5" />
+                                    </div>
+                                    <h3 className="text-base font-black text-slate-800">{step.title}</h3>
+                                </div>
+                                <p className="text-[11px] text-slate-500 font-medium leading-relaxed mb-4">{step.desc}</p>
+                                <div className="mt-auto flex flex-wrap gap-1.5 border-t border-slate-50 pt-4">
+                                    {step.items.map((item, j) => (
+                                        <span key={j} className="text-[9px] font-mono bg-slate-50 text-slate-400 px-2 py-0.5 rounded border border-slate-100">
+                                            {item}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                            {i < 3 && (
+                                <div className="hidden lg:flex absolute top-1/2 -right-4 -translate-y-1/2 z-10 w-8 h-8 bg-white border border-slate-100 rounded-full items-center justify-center shadow-sm">
+                                    <ArrowRight className="w-4 h-4 text-slate-300" />
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </section>
+
             <footer className="pt-10 border-t border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">
-                SignsAI Object Model Schema Diagram v1.1 - Detailed View
+                SignsAI Object Model Schema Diagram v1.1 - Detailed & Solution Flow
             </footer>
         </main>
     );
