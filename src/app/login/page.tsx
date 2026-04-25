@@ -25,6 +25,7 @@ function LoginForm() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isRegistered, setIsRegistered] = useState(false);
+    const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null);
 
     useEffect(() => {
         if (searchParams.get("registered")) {
@@ -81,7 +82,11 @@ function LoginForm() {
         } catch (err: any) {
             let message = err.message || "ログインに失敗しました。";
             if (message === "Email not confirmed") {
-                message = "メールアドレスの確認が完了していません。\n届いたメール内のリンクをクリックして確認を完了してください。";
+                setUnconfirmedEmail(email);
+                message = "メールアドレスの確認が完了していません。届いたメール内のリンクをクリックしてください。";
+                setError(message);
+                setLoading(false);
+                return;
             }
             setError(message);
             setLoading(false);
@@ -97,8 +102,25 @@ function LoginForm() {
             )}
 
             {error && (
-                <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 font-medium whitespace-pre-wrap leading-relaxed">
-                    {error}
+                <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 font-medium whitespace-pre-wrap leading-relaxed flex flex-col items-center">
+                    <span>{error}</span>
+                    {unconfirmedEmail && (
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                const { createClient } = await import("@/lib/supabase");
+                                const supabase = createClient();
+                                await supabase.auth.resend({
+                                    type: "signup",
+                                    email: unconfirmedEmail,
+                                });
+                                alert("確認メールを再送しました。");
+                            }}
+                            className="text-xs text-teal-600 underline font-bold mt-2 hover:text-teal-700 transition-colors"
+                        >
+                            確認メールを再送する
+                        </button>
+                    )}
                 </div>
             )}
 

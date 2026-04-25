@@ -39,10 +39,6 @@ export default function RegisterPage() {
             await signUpWithEmail(email, password);
 
             setSuccess(true);
-            // 数秒後にログイン画面へ誘導、または自動リダイレクト
-            setTimeout(() => {
-                router.push("/login?registered=true");
-            }, 5000);
         } catch (err: any) {
             setError(err.message || "登録に失敗しました。もう一度お試しください。");
             setLoading(false);
@@ -81,28 +77,36 @@ export default function RegisterPage() {
                 {/* 登録カード */}
                 <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 p-8">
                     {success ? (
-                        <div className="text-center py-6 space-y-5">
-                            <div className="w-16 h-16 bg-teal-50 text-teal-500 rounded-full flex items-center justify-center mx-auto text-2xl shadow-inner animate-bounce">
+                        <div className="text-center py-6 space-y-6 animate-fadeIn">
+                            <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-3xl shadow-inner shadow-emerald-100/50">
                                 ✓
                             </div>
-                            <div className="space-y-2">
-                                <h2 className="text-xl font-bold text-slate-800">仮登録が完了しました！</h2>
-                                <p className="text-sm text-slate-500 font-medium leading-relaxed px-4">
-                                    ご入力いただいたメールアドレスに確認メールを送信しました。
-                                </p>
+                            <div className="space-y-3">
+                                <h2 className="text-2xl font-black text-slate-800 tracking-tight">メールを確認してください</h2>
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <p className="text-sm text-slate-600 font-bold leading-relaxed mb-2">
+                                        <span className="text-teal-600 underline underline-offset-4">{email}</span>
+                                        <br />
+                                        へ確認リンクを送信しました。
+                                    </p>
+                                    <p className="text-[11px] text-slate-400 font-medium">
+                                        メール内のリンクをクリックすると、<br />
+                                        自動的にダッシュボードへログインします。
+                                    </p>
+                                </div>
                             </div>
-                            <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 text-left">
-                                <p className="text-xs text-amber-700 font-bold mb-1 flex items-center gap-1.5 grayscale">
-                                    重要
+                            <div className="space-y-4 pt-2">
+                                <p className="text-[10px] text-slate-300 font-black uppercase tracking-[0.2em] animate-pulse">
+                                    Waiting for confirmation...
                                 </p>
-                                <p className="text-[11px] text-amber-600 leading-relaxed font-medium">
-                                    メール内のリンクをクリックして確認を完了するまで、ログインすることはできません。
-                                </p>
-                            </div>
-                            <div className="pt-2">
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest animate-pulse">
-                                    ログイン画面へ移動しています...
-                                </p>
+                                <div className="flex flex-col gap-3">
+                                    <Link
+                                        href="/login"
+                                        className="text-xs text-slate-400 hover:text-slate-600 font-bold transition-colors"
+                                    >
+                                        ログイン画面に戻る
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     ) : (
