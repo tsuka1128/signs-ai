@@ -3,7 +3,7 @@ import { generateAIInsight } from "@/lib/claude";
 import { getSystemSettings } from "@/lib/settings-server";
 import { NextResponse } from "next/server";
 import { normalizeMonth, getLastNMonths } from "@/lib/utils/date";
-import { sendAiSummaryNotification } from "@/lib/notifications-server";
+import { sendAiSummaryNotification, sendAnomalyAlertNotification } from "@/lib/notifications-server";
 
 export async function POST(req: Request) {
     try {
