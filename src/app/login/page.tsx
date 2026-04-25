@@ -25,11 +25,15 @@ function LoginForm() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isRegistered, setIsRegistered] = useState(false);
+    const [sessionExpired, setSessionExpired] = useState(false);
     const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null);
 
     useEffect(() => {
         if (searchParams.get("registered")) {
             setIsRegistered(true);
+        }
+        if (searchParams.get("reason") === "session_expired") {
+            setSessionExpired(true);
         }
         const token = searchParams.get("token");
         if (token) {
@@ -98,6 +102,12 @@ function LoginForm() {
             {isRegistered && (
                 <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-sm text-emerald-600 font-bold text-center">
                     アカウント登録が完了しました。
+                </div>
+            )}
+            
+            {sessionExpired && (
+                <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl text-sm text-amber-700 font-medium text-center">
+                    セッションの有効期限が切れました。再度ログインしてください。
                 </div>
             )}
 

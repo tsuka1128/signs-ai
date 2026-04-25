@@ -67,6 +67,7 @@ export async function middleware(request: NextRequest) {
         const loginUrl = request.nextUrl.clone();
         loginUrl.pathname = "/login";
         loginUrl.searchParams.set("redirect", pathname);
+        loginUrl.searchParams.set("reason", "session_expired");
         return NextResponse.redirect(loginUrl);
     }
 
