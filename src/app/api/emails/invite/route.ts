@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { sendInvitationEmail } from "@/lib/mail";
+import { getBaseURL } from "@/lib/utils/url";
 
 export async function POST(req: NextRequest) {
     try {
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
         if (invErr || !inv) throw new Error("招待情報が見つかりません");
         if (inv.status !== 'pending') throw new Error("この招待は既に使用されているか、無効です");
 
-        const inviteUrl = `${new URL(req.url).origin}/onboarding?token=${inv.token}`;
+        const inviteUrl = `${getBaseURL()}/onboarding?token=${inv.token}`;
         const companyName = inv.companies?.name || "Signs AI";
 
         console.log(`Sending invite email to ${inv.email} for ${companyName}`);
