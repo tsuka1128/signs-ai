@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
         if (invErr || !inv) throw new Error("招待情報が見つかりません");
         if (inv.status !== 'pending') throw new Error("この招待は既に使用されているか、無効です");
 
-        const inviteUrl = `${getBaseURL()}/onboarding?token=${inv.token}`;
+        const inviteUrl = `${getBaseURL()}/onboarding#token=${inv.token}`;
         const companyName = inv.companies?.name || "Signs AI";
 
         console.log(`Sending invite email to ${inv.email} for ${companyName}`);

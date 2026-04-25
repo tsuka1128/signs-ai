@@ -88,19 +88,14 @@ function OnboardingContent() {
         console.log("Onboarding Page Loaded - Refinement: Sync with existing profile");
     }, []);
 
-    const tokenParam = searchParams.get("token");
-
     const [step, setStep] = useState(1);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // 招待リンク経由かどうかの初期判定
-    const initialMode = tokenParam ? "join" : "create";
-
     const [state, setState] = useState<OnboardingState>({
-        mode: initialMode,
+        mode: "create", // ハッシュ取得のため、初期値は create としマウント時に更新します
         companyName: "",
-        invitationToken: tokenParam || "",
+        invitationToken: "",
         departments: [{ name: "", headcount: 0 }],
         kpis: [{ name: "", unit: "件", target_default: "", owner_dept_index: null, sort_order: 0 }],
         semanticContent: DEFAULT_SEMANTIC_POLICY,
@@ -143,6 +138,24 @@ function OnboardingContent() {
         issues: "",
         triggerWords: "",
     });
+
+    /* ハッシュフラグメントからトークンを取得する処理 */
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        
+        const hash = window.location.hash.slice(1);
+        const params = new URLSearchParams(hash);
+        // 新しいハッシュ指定に加え、既存メールリンク互換のためにクエリパラメータも確認
+        const token = params.get("token") || searchParams.get("token");
+
+        if (token && !state.invitationToken) {
+            setState(prev => ({
+                ...prev,
+                mode: "join",
+                invitationToken: token
+            }));
+        }
+    }, [searchParams, state.invitationToken]);
 
     /* 招待情報のフェッチ */
     useEffect(() => {
