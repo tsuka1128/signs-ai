@@ -74,6 +74,7 @@ CREATE POLICY "super_admins_all_notification_settings" ON public.notification_se
     );
 
 -- updated_at トリガー
+DROP TRIGGER IF EXISTS notification_settings_updated_at ON public.notification_settings;
 CREATE TRIGGER notification_settings_updated_at BEFORE UPDATE ON public.notification_settings
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
