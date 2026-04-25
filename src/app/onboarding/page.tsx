@@ -380,6 +380,10 @@ function OnboardingContent() {
                 router.refresh();
                 router.push("/");
             } else {
+                if (res.status === 403) {
+                    const { message } = await res.json();
+                    throw new Error(message || "この招待リンクは別のメールアドレス宛です。招待されたメールアドレスでログインし直してください。");
+                }
                 const { message, detail } = await res.json();
                 const fullError = detail ? `${message} (${detail})` : message;
                 throw new Error(fullError || "保存に失敗しました");

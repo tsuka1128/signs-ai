@@ -155,6 +155,13 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ message: "無効または期限切れの招待リンクです" }, { status: 400 });
             }
 
+            // 招待メールとログイン中ユーザーの一致チェック
+            if (!isSuperAdmin && invite.email !== user.email) {
+                return NextResponse.json({
+                    message: "この招待リンクは別のメールアドレス宛です。招待されたメールアドレスでログインし直してください。"
+                }, { status: 403 });
+            }
+
             // ユーザーを招待元の会社とロールに紐付け (管理者以外の場合のみ)
             if (!isSuperAdmin) {
                 const { error: userUpdateError } = await supabase.from("users").upsert({
