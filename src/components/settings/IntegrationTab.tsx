@@ -188,7 +188,7 @@ export const IntegrationTab = ({
                                         onClick={handleRemindKpi}
                                         className="bg-amber-100 text-amber-800 border border-amber-200 px-8 py-3.5 rounded-2xl font-bold hover:bg-amber-200 transition-all flex items-center gap-2 text-sm"
                                     >
-                                        <Save className="w-4 h-4 text-amber-600" /> KPI入力を催促する
+                                        <BellRing className="w-4 h-4 text-amber-600" /> KPI入力を催促する
                                     </button>
                                 </div>
                             </div>
