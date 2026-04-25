@@ -15,13 +15,7 @@ export function TrialGuard({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         if (!isExpired || loading) return;
-
-        // 60秒後に表示
-        const timer = setTimeout(() => {
-            setIsVisible(true);
-        }, 60000);
-
-        return () => clearTimeout(timer);
+        setIsVisible(true);
     }, [isExpired, loading]);
 
     // 常時 children を表示（その上にガードを被せる）
