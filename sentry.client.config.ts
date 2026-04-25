@@ -3,9 +3,8 @@ import * as Sentry from "@sentry/nextjs";
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
-  // 1.0 に設定するとすべてのトランザクションをキャプチャします。
-  // 本番環境ではパフォーマンス向上のため、この値を調整することを推奨します。
-  tracesSampleRate: 1.0,
+  // 本番環境ではパフォーマンス向上のためサンプリング率を下げます（10%）
+  tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
 
   // セッションリプレイの設定
   replaysSessionSampleRate: 0.1,
