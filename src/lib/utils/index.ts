@@ -1,6 +1,30 @@
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+export * from './date';
+
+/**
+ * Tailwind クラス結合ユーティリティ
+ */
+export function cn(...inputs: ClassValue[]) {
+    return twMerge(clsx(inputs));
+}
+
+/**
+ * ユーザー入力テキストの単純なサニタイジング
+ * HTMLタグを無害化（エスケープ）します。
+ */
+export function sanitizeText(text: string): string {
+    if (!text) return "";
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 /**
  * ベースURLを取得するユーティリティ
- * 
  * 本番、プレビュー、ローカル開発環境のそれぞれで適切なURLを返します。
  */
 export const getBaseURL = () => {

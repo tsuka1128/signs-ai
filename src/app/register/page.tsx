@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signUpWithEmail } from "@/lib/auth";
-import { getBaseURL } from "@/lib/utils/url";
+import { getBaseURL } from "@/lib/utils";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function RegisterPage() {

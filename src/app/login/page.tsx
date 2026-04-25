@@ -11,7 +11,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signInWithGoogle, signInWithEmail } from "@/lib/auth";
-import { getBaseURL } from "@/lib/utils/url";
+import { getBaseURL } from "@/lib/utils";
 
 import { Eye, EyeOff } from "lucide-react";
 
