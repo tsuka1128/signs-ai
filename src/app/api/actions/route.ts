@@ -60,7 +60,7 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error("Action Create Error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
 
@@ -97,6 +97,6 @@ export async function PATCH(req: Request) {
 
     } catch (error: any) {
         console.error("Action Update Error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

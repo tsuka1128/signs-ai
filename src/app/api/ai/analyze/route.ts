@@ -322,7 +322,7 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
         return NextResponse.json({  success: true, data: aiResult });
 
     } catch (error: any) {
-        console.error("[AI Analyze API Error]:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error("AI Analysis API Error:", error);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
