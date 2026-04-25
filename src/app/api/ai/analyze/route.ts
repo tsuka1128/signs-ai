@@ -3,6 +3,7 @@ import { generateAIInsight } from "@/lib/claude";
 import { getSystemSettings } from "@/lib/settings-server";
 import { NextResponse } from "next/server";
 import { normalizeMonth, getLastNMonths } from "@/lib/utils/date";
+import { sendAiSummaryNotification } from "@/lib/notifications-server";
 
 export async function POST(req: Request) {
     try {
@@ -318,6 +319,9 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
                 manual_ai_runs_active_month: currentMonthStr
             })
             .eq('id', companyId);
+
+        // ※ Slack通知（内部にtry/catchを内包しておりメインフローを止めない）
+        await sendAiSummaryNotification(companyId);
 
         return NextResponse.json({  success: true, data: aiResult });
 
