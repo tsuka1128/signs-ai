@@ -57,58 +57,55 @@ function SurveyFormContent() {
             setLoading(true);
             setError(null);
 
-            let effectiveCompanyId = companyId;
-
             try {
                 const now = new Date();
                 const currentMonthPart = `${now.getFullYear()}_${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-                // 1. SignsAI ID (short_id) が指定されている場合、company_id を解決する
-                if (!effectiveCompanyId && shortId) {
-                    const { data: companyData, error: cErr } = await supabase
-                        .from('companies')
-                        .select('id')
-                        .eq('short_id', shortId)
-                        .single();
-                    
-                    if (companyData) {
-                        effectiveCompanyId = companyData.id;
-                    } else if (cErr) {
-                        console.error("ShortID resolution error:", cErr);
-                    }
-                }
+                let targetCompanyId = companyId;
 
-                // 2. それでもない場合、ログインユーザーから取得を試みる
-                if (!effectiveCompanyId) {
+                // 1. 直指定も short_id もない場合は、ログインユーザーから取得試行
+                if (!targetCompanyId && !shortId) {
                     const { data: { user: authUser } } = await supabase.auth.getUser();
                     if (authUser) {
                         const { data: userData } = await supabase
                             .from('users')
                             .select('company_id')
                             .eq('id', authUser.id)
-                            .single();
+                            .maybeSingle();
                         if (userData?.company_id) {
-                            effectiveCompanyId = userData.company_id;
+                            targetCompanyId = userData.company_id;
                         }
                     }
                 }
 
-                // 安全のため、自動フォールバック（最初の企業を取得）は削除しました
-                
-                if (!effectiveCompanyId) {
+                // 2. RPC を叩いて企業情報・部署・軸情報を一括取得
+                const { data: surveyInfo, error: sErr } = await supabase.rpc('get_survey_info', {
+                    p_short_id: shortId,
+                    p_company_id: targetCompanyId
+                });
+
+                if (sErr || !surveyInfo) {
+                    console.error("Survey info fetch error:", sErr);
                     setError("対象の企業を特定できませんでした。正しいリンクからアクセスしてください。");
                     setLoading(false);
                     return;
                 }
 
-                // 1. 重複回答チェック (LocalStorage)
-                const storageKey = `signs_ai_answered_${effectiveCompanyId}_${currentMonthPart}`;
+                // 取得した情報をセット
+                const finalCompanyId = surveyInfo.company_id;
+                setResolvedCompanyId(finalCompanyId);
+                setDepartments(surveyInfo.departments || []);
+                setAxes(surveyInfo.axes || []);
+                setSecondaryAxisName(surveyInfo.kpi_secondary_axis_name || "第2軸");
+                setDeadlineDay(surveyInfo.survey_deadline_day);
+
+                // 3. 重複回答チェック (LocalStorage)
+                const storageKey = `signs_ai_answered_${finalCompanyId}_${currentMonthPart}`;
                 if (localStorage.getItem(storageKey) === "true") {
                     setHasAnswered(true);
                 }
 
-
-                // 2. 設問取得
+                // 4. 設問取得 (これは public 許可されているためそのまま)
                 const { data: qData, error: qErr } = await supabase
                     .from('survey_questions')
                     .select('id, text, hint, sort_order')
@@ -117,32 +114,7 @@ function SurveyFormContent() {
                 if (qErr) throw qErr;
                 setQuestions(qData || []);
 
-                // 3. 部署取得
-                const { data: dData, error: dErr } = await supabase
-                    .from('departments')
-                    .select('id, name')
-                    .eq('company_id', effectiveCompanyId);
-
-                if (dErr) throw dErr;
-                setDepartments(dData || []);
-                setResolvedCompanyId(effectiveCompanyId);
-
-                // 4. 第2軸情報と回答期限の取得
-                const { data: cData } = await supabase
-                    .from('companies')
-                    .select('kpi_secondary_axis_name, survey_deadline_day')
-                    .eq('id', effectiveCompanyId)
-                    .single();
-                
-                if (cData) {
-                    setSecondaryAxisName(cData.kpi_secondary_axis_name);
-                    setDeadlineDay(cData.survey_deadline_day);
-                }
-
-                const { data: aData } = await supabase.from('kpi_axes').select('id, name').eq('company_id', effectiveCompanyId).order('sort_order', { ascending: true });
-                setAxes(aData || []);
-
-                if (!dData || dData.length === 0) {
+                if (!surveyInfo.departments || surveyInfo.departments.length === 0) {
                     setError("該当する企業の部署情報が見つかりません。");
                 }
             } catch (err: any) {
