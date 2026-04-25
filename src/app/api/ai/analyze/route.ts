@@ -155,68 +155,48 @@ export async function POST(req: Request) {
 人件費データが提供されている場合は、一人当たり生産性やコスト効率（ROI）の観点も含めて分析してください。
 
 回答は以下の構造を持ったJSON形式のみで出力してください。Markdown装飾(\`\`\`json等)は不要です。
-{
-  "summary": "140文字程度の全体サマリー",
-  "deep_report": {
-    "executive_summary": "詳細な全社分析テキスト（経営への総評・戦略進捗）",
-    "correlation": "体温とKPIの相関分析（組織の健全性が成果にどう影響しているか）",
-    "strategic_alignment": "直近の組織方針との整合性評価（現場の動きと経営方針の乖離）",
-    "risks": "潜在的な中長期リスクと機会の指摘",
-    "recommendations": "経営層が明日から打つべき具体的な一手（経営判断の材料）"
-  },
-  "insights_by_dept": {
-    "部署ID": {
-      "tone": "前向き・行動喚起|冷静・品質重視|共感・伴走|構造的・警告的",
-      "text": "該当部署の現在のコンディションや組織方針を受けた専用の診断・応援メッセージ（100文字程度）"
-    }
-  },
-  "voice_topics": [
-    {
-      "topic": "話題（例：評価の透明性、業務効率化、チームワークなど）",
-      "sentiment": "positive|neutral|negative",
-      "abstractedVoice": "生声（フリーコメント）から抽出・意訳した、ペルソナごとの代弁コメント（1〜2文程度）。個人が特定されない表現にすること。",
-      "persona": "どのような層からの声か（例：営業部門の若手、全社の管理職など）"
-    }
-  ],
-  "matrix_analysis": {
-    "1m": {
-      "past_record": "【1ヶ月前の記録】過去の業績と体温について",
-      "change": "【当時と今の比較】1ヶ月間での変化・推移",
-      "retrospective": "振り返り: アラート発生時の分析"
-    },
-    "3m": {
-      "past_record": "【3ヶ月前の記録】過去の業績と体温について",
-      "change": "【当時と今の比較】3ヶ月間での変化・推移",
-      "retrospective": "振り返り: 成果または課題の原因分析"
-    },
-    "6m": {
-      "past_record": "【6ヶ月前の記録】過去の業績と体温について",
-      "change": "【当時と今の比較】半年間での変化・推移",
-      "retrospective": "振り返り: 長期的なマネジメントの良し悪しに関する考察"
-    },
-    "12m": {
-      "past_record": "【1年前の記録】過去の業績と体温について",
-      "change": "【当時と今の比較】1年間での変化・推移",
-      "retrospective": "振り返り: 組織の成長痛や文化変容に関する深い考察"
-    }
-  },
-  "department_feedback": [
-    {
-      "from_dept": "部署名",
-      "to_dept": "部署名",
-      "type": "positive|warning|alert|info",
-      "text": "部署間の連携に関するフィードバックテキスト"
-    }
-  ],
-  "suggested_actions": [
-    { "title": "施策名", "description": "具体的な指示内容", "priority": "urgent|high|normal", "dept_name": "部署名または全社" }
-  ],
-  "semantic_summary": {
+    "semantic_summary": {
     "phase": "現在の組織フェーズ（例：スケール期、再構築期など）",
     "key_kpi": "最重要KPI",
     "top_agenda": "最優先アジェンダ"
-  }
-}`;
+  },
+  "risk_level": "low|medium|high",
+  "risk_reason": "highの場合のみ、異常の理由を1文で記載"
+}
+
+注: risk_level は以下の基準で判定してください。
+- high: 組織に緊急対応が必要な兆候がある（スコアの急落、複数部門での同時悪化、戦略との深刻な乖離など）。
+- medium: 注視が必要な兆候がある。
+- low: 正常範囲内。`;
+
+        // 部署別データの集約とスコア集計（通知にも再利用）
+        const deptScores: { deptId: string; deptName: string; avgScore: number }[] = [];
+        const deptDetails = depts.data?.map(d => {
+            const deptSurveys = surveys.data?.filter(s => s.department_id === d.id && normalizeMonth(s.recorded_month) === normalizeMonth(latestMonth));
+            const deptKpis = kpiRecs.data?.filter(r => r.department_id === d.id && normalizeMonth(r.recorded_month) === normalizeMonth(latestMonth));
+            const deptResource = resources.data?.find(r => r.department_id === d.id && normalizeMonth(r.recorded_month) === normalizeMonth(latestMonth));
+            const avgScore = deptSurveys && deptSurveys.length > 0 
+                ? deptSurveys.flatMap(s => s.survey_answers || []).reduce((acc, a) => acc + a.score, 0) / (deptSurveys.flatMap(s => s.survey_answers || []).length || 1)
+                : 0;
+            
+            deptScores.push({ deptId: d.id, deptName: d.name, avgScore });
+
+            const comments = deptSurveys?.map(s => s.free_comment).filter(Boolean) || [];
+            return {
+                id: d.id,
+                name: d.name,
+                master_headcount: d.headcount,
+                actual_headcount: deptResource?.head_count,
+                labor_cost: deptResource?.labor_cost,
+                avg_pulse: avgScore.toFixed(2),
+                kpi_count: deptKpis?.length,
+                kpi_details: deptKpis?.map(r => {
+                    const def = kpiDefs.data?.find(def => def.id === r.kpi_definition_id);
+                    return `${def?.name}: ${r.value}${def?.unit} (目標: ${r.target_value}${def?.unit})`;
+                }),
+                voice_comments: comments
+            };
+        });
 
         const prompt = `対象月: ${latestMonth}
 組織方針: ${policy}
@@ -225,29 +205,7 @@ export async function POST(req: Request) {
 ${JSON.stringify(historicalContext, null, 2)}
 
 現在の詳細データ:
-- 部署別統計: ${JSON.stringify(depts.data?.map(d => {
-            const deptSurveys = surveys.data?.filter(s => s.department_id === d.id && normalizeMonth(s.recorded_month) === normalizeMonth(latestMonth));
-            const deptKpis = kpiRecs.data?.filter(r => r.department_id === d.id && normalizeMonth(r.recorded_month) === normalizeMonth(latestMonth));
-            const deptResource = resources.data?.find(r => r.department_id === d.id && normalizeMonth(r.recorded_month) === normalizeMonth(latestMonth));
-            const avgPulse = deptSurveys && deptSurveys.length > 0 
-                ? deptSurveys.flatMap(s => s.survey_answers || []).reduce((acc, a) => acc + a.score, 0) / (deptSurveys.flatMap(s => s.survey_answers || []).length || 1)
-                : 0;
-            const comments = deptSurveys?.map(s => s.free_comment).filter(Boolean) || [];
-            return {
-                id: d.id,
-                name: d.name,
-                master_headcount: d.headcount,
-                actual_headcount: deptResource?.head_count,
-                labor_cost: deptResource?.labor_cost,
-                avg_pulse: avgPulse.toFixed(2),
-                kpi_count: deptKpis?.length,
-                kpi_details: deptKpis?.map(r => {
-                    const def = kpiDefs.data?.find(def => def.id === r.kpi_definition_id);
-                    return `${def?.name}: ${r.value}${def?.unit} (目標: ${r.target_value}${def?.unit})`;
-                }),
-                voice_comments: comments
-            };
-        }))}
+- 部署別統計: ${JSON.stringify(deptDetails)}
 - KPI定義: ${JSON.stringify(kpiDefs.data?.map(k => ({ name: k.name, unit: k.unit })))}
 
 分析の要件:
@@ -322,6 +280,25 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
 
         // ※ Slack通知（内部にtry/catchを内包しておりメインフローを止めない。レスポンスをブロックしないよう非同期実行）
         void sendAiSummaryNotification(companyId);
+
+        // 異常検知アラート
+        const currentAvgPulse = historicalContext.current.avg_pulse
+            ? parseFloat(historicalContext.current.avg_pulse as string)
+            : 0;
+        const previousAvgPulse = historicalContext["1m"]?.avg_pulse
+            ? parseFloat(historicalContext["1m"].avg_pulse as string)
+            : null;
+
+        if (currentAvgPulse > 0) {
+            void sendAnomalyAlertNotification(
+                companyId,
+                currentAvgPulse,
+                previousAvgPulse,
+                deptScores,
+                aiResult.risk_level ?? 'low',
+                aiResult.risk_reason ?? null
+            );
+        }
 
         return NextResponse.json({  success: true, data: aiResult });
 

@@ -251,3 +251,100 @@ export async function sendVoiceCheckReminders(companyId: string) {
         console.error("Failed to send voice check reminders:", error);
     }
 }
+
+/**
+ * 異常検知アラート通知を送信する
+ */
+export async function sendAnomalyAlertNotification(
+    companyId: string,
+    currentAvgPulse: number,
+    previousAvgPulse: number | null,
+    deptScores: { deptId: string; deptName: string; avgScore: number }[],
+    riskLevel: 'low' | 'medium' | 'high',
+    riskReason: string | null
+): Promise<void> {
+    try {
+        const anomalies: string[] = [];
+
+        // 条件A: スコア絶対値 (60以下)
+        if (currentAvgPulse <= 60) {
+            anomalies.push(`・*全社平均スコアの低下*: ${currentAvgPulse.toFixed(1)}点（基準: 60点以下）`);
+        }
+
+        // 条件B: 前月比下落 (10pt以上)
+        if (previousAvgPulse !== null && (previousAvgPulse - currentAvgPulse) >= 10) {
+            anomalies.push(`・*急激なスコア下落*: 前月比 -${(previousAvgPulse - currentAvgPulse).toFixed(1)}pt`);
+        }
+
+        // 条件C: 部門スコア乖離 (全社平均より 20pt以上下回る部署)
+        const lowDepts = deptScores.filter(d => (currentAvgPulse - d.avgScore) >= 20);
+        if (lowDepts.length > 0) {
+            const names = lowDepts.map(d => `${d.deptName}(${d.avgScore.toFixed(1)}点)`).join(', ');
+            anomalies.push(`・*部門間の大きな乖離*: 全社平均より20pt以上低い部署があります（${names}）`);
+        }
+
+        // 条件D: AI危険フラグ
+        if (riskLevel === 'high') {
+            anomalies.push(`・*AIによるリスク検知*: ${riskReason || '組織に緊急対応が必要な兆候があります'}`);
+        }
+
+        // 1つも該当しなければ送信しない
+        if (anomalies.length === 0) return;
+
+        const supabase = await createClient();
+        const { data: company } = await supabase
+            .from('companies')
+            .select('slack_webhook_url')
+            .eq('id', companyId)
+            .single();
+
+        if (!company?.slack_webhook_url) return;
+
+        const targets = await getNotificationTargets(companyId, 'anomaly_alert');
+        const mentions = targets.length > 0 ? targets.map(t => `<@${t.slack_user_id}>`).join(' ') : '';
+        
+        const isUrgent = riskLevel === 'high' || currentAvgPulse <= 50;
+        const icon = isUrgent ? '⚠️' : '🚨';
+        const title = isUrgent ? '*【緊急】組織異常検知アラート*' : '*組織異常検知アラート*';
+        
+        const dashboardUrl = `${getBaseURL()}/dashboard`;
+        const text = `${mentions}\n組織状態に異常が検知されました。\n${anomalies.join('\n')}`;
+
+        const blocks = [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": `${mentions}\n${icon} ${title}\nAI分析により、以下の異常またはリスクが検知されました。至急状況を確認してください。`
+                }
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": anomalies.join('\n')
+                }
+            },
+            {
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "詳細を確認する"
+                        },
+                        "url": dashboardUrl,
+                        "style": "danger"
+                    }
+                ]
+            }
+        ];
+
+        await sendSlackNotification(company.slack_webhook_url, text, blocks);
+        console.log(`Anomaly alert notification sent for company ${companyId}`);
+
+    } catch (error) {
+        console.error("Failed to send anomaly alert notification:", error);
+    }
+}
