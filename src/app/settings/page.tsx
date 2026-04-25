@@ -155,6 +155,8 @@ export default function SettingsPage() {
                             handleCopyInviteLink={handlers.handleCopyInviteLink}
                             handleResendInvitation={handlers.handleResendInvitation}
                             handleDeleteInvitation={handlers.handleDeleteInvitation}
+                            inviteRole={state.inviteRole}
+                            setInviteRole={handlers.setInviteRole}
                         />
                     )}
 
