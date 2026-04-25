@@ -65,6 +65,8 @@ export const IntegrationTab = ({
                                         <div className="relative">
                                             <input
                                                 type="number"
+                                                min="1"
+                                                max="100"
                                                 value={company?.anomaly_threshold_absolute ?? 60}
                                                 onChange={(e) => setCompany({ ...company, anomaly_threshold_absolute: parseInt(e.target.value) })}
                                                 className="w-full bg-white border border-slate-200 rounded-xl pl-4 pr-10 py-3 text-sm font-bold text-slate-700 outline-none focus:border-teal"
@@ -77,6 +79,8 @@ export const IntegrationTab = ({
                                         <div className="relative">
                                             <input
                                                 type="number"
+                                                min="1"
+                                                max="50"
                                                 value={company?.anomaly_threshold_drop ?? 10}
                                                 onChange={(e) => setCompany({ ...company, anomaly_threshold_drop: parseInt(e.target.value) })}
                                                 className="w-full bg-white border border-slate-200 rounded-xl pl-4 pr-10 py-3 text-sm font-bold text-slate-700 outline-none focus:border-teal"
@@ -89,6 +93,8 @@ export const IntegrationTab = ({
                                         <div className="relative">
                                             <input
                                                 type="number"
+                                                min="1"
+                                                max="100"
                                                 value={company?.anomaly_threshold_gap ?? 20}
                                                 onChange={(e) => setCompany({ ...company, anomaly_threshold_gap: parseInt(e.target.value) })}
                                                 className="w-full bg-white border border-slate-200 rounded-xl pl-4 pr-10 py-3 text-sm font-bold text-slate-700 outline-none focus:border-teal"

@@ -26,6 +26,9 @@ export interface Database {
           manual_ai_runs_used_this_month: number
           trial_expires_at: string | null
           survey_deadline_day: number | null
+          anomaly_threshold_absolute: number | null
+          anomaly_threshold_drop: number | null
+          anomaly_threshold_gap: number | null
           created_at: string
           updated_at: string
         }
