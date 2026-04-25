@@ -2,7 +2,7 @@
 
 import { UserPlus, Mail, ArrowRight, ShieldCheck, Edit3, Copy, Send, Trash2 } from "lucide-react";
 import { SlackHelpTooltip } from "@/components/ui/SlackHelpTooltip";
-import { USER_ROLES } from "@/lib/constants";
+import { USER_ROLES, UserRole } from "@/lib/constants";
 
 interface MembersTabProps {
     inviteEmail: string;
@@ -25,8 +25,8 @@ interface MembersTabProps {
     handleCopyInviteLink: (inv: any) => void;
     handleResendInvitation: (inv: any) => void;
     handleDeleteInvitation: (id: string) => void;
-    inviteRole: string;
-    setInviteRole: (role: string) => void;
+    inviteRole: UserRole;
+    setInviteRole: (role: UserRole) => void;
 }
 
 export const MembersTab = ({
