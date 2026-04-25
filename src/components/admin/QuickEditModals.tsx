@@ -838,7 +838,10 @@ export function AdminCompanySettingsModal({ companyId, companyName, onClose, onS
     ];
 
     return createPortal(
-        <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
+        <div 
+            className="fixed inset-0 flex items-center justify-center p-4"
+            style={{ zIndex: 9999999, position: 'fixed' }}
+        >
             <motion.div 
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" 
@@ -855,7 +858,10 @@ export function AdminCompanySettingsModal({ companyId, companyName, onClose, onS
                             <Building2 className="w-5 h-5" />
                             <span className="text-[10px] font-black uppercase tracking-[0.2em]">Quick Edit</span>
                         </div>
-                        <h2 className="text-xl font-black text-slate-800 tracking-tight">{companyName} の企業設定</h2>
+                        <h2 className="text-xl font-black text-slate-800 tracking-tight">
+                            {companyName} の企業設定
+                            <span className="ml-2 px-2 py-0.5 bg-rose-500 text-white text-[8px] rounded-full animate-pulse">v.Portal-Fix</span>
+                        </h2>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-white rounded-xl transition-all shadow-sm">
                         <X className="w-5 h-5 text-slate-400" />
