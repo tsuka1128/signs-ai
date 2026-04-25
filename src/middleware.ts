@@ -12,15 +12,17 @@ export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const hostname = request.headers.get("host");
 
-    // ドメインを www.signs-ai.jp に統一（Canonical Redirect）
-    // 本番環境かつ、プライマリドメイン以外からのアクセスの場合に実施
+    // ドメインを統一（Canonical Redirect）
+    // 本番環境かつ、プライマリドメイン(NEXT_PUBLIC_CANONICAL_DOMAIN)以外からのアクセスの場合に実施
+    const canonicalDomain = process.env.NEXT_PUBLIC_CANONICAL_DOMAIN;
     if (
         process.env.NODE_ENV === "production" && 
+        canonicalDomain &&
         hostname && 
-        hostname !== "www.signs-ai.jp" &&
+        hostname !== canonicalDomain &&
         !hostname.includes("localhost")
     ) {
-        return NextResponse.redirect(`https://www.signs-ai.jp${pathname}${request.nextUrl.search}`, 301);
+        return NextResponse.redirect(`https://${canonicalDomain}${pathname}${request.nextUrl.search}`, 301);
     }
 
     let supabaseResponse = NextResponse.next({
