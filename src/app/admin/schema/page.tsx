@@ -13,7 +13,8 @@ import {
     Target,
     Layers,
     FileSearch,
-    History
+    History,
+    Zap
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils/index";
@@ -84,25 +85,6 @@ export default function AdminSchemaPage() {
             ]
         }
     ];
-
-    const Zap = ({ className }: { className?: string }) => (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-      >
-        <path d="M4 14.75V3.5a.5.5 0 0 1 .5-.5h15a.5.5 0 0 1 .5.5v11.25" />
-        <path d="M15 21l-3-3 3-3" />
-        <path d="M9 15l3 3-3 3" />
-      </svg>
-    );
 
     return (
         <main className="p-8 space-y-12 animate-fadeIn max-w-7xl mx-auto pb-32">
