@@ -78,7 +78,7 @@ export function HistoryModal({ companyId, companyName, onClose }: HistoryModalPr
     if (!mounted) return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 md:p-8">
+        <div className="fixed top-0 right-0 bottom-0 left-64 flex items-center justify-center p-4 md:p-8 z-[100]">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
             
             <div className="bg-white w-full max-w-3xl h-[80vh] rounded-[40px] shadow-2xl flex flex-col relative z-10 overflow-hidden animate-in fade-in zoom-in duration-300">

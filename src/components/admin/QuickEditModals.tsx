@@ -49,7 +49,7 @@ export function AdminDepartmentsModal({ companyId, companyName, onClose, onSucce
     if (typeof document === "undefined") return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
+        <div className="fixed top-0 right-0 bottom-0 left-64 flex items-center justify-center p-4 z-[100]">
             <motion.div 
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" 
@@ -254,7 +254,7 @@ export function AdminKpisModal({ companyId, companyName, onClose, onSuccess }: M
     if (typeof document === "undefined") return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
+        <div className="fixed top-0 right-0 bottom-0 left-64 flex items-center justify-center p-4 z-[100]">
             <motion.div 
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" 
@@ -466,7 +466,7 @@ export function AdminAxesModal({ companyId, companyName, onClose, onSuccess }: M
     if (typeof document === "undefined") return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
+        <div className="fixed top-0 right-0 bottom-0 left-64 flex items-center justify-center p-4 z-[100]">
             <motion.div 
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" 
@@ -662,7 +662,7 @@ export function AdminPlanOverridesModal({ companyId, companyName, onClose, onSuc
     if (!mounted) return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
+        <div className="fixed top-0 right-0 bottom-0 left-64 flex items-center justify-center p-4 z-[100]">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
             <motion.div layoutId="modal-overrides" className="bg-white rounded-[32px] w-full max-w-2xl overflow-hidden shadow-2xl relative z-10 flex flex-col">
                 <header className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
@@ -839,8 +839,7 @@ export function AdminCompanySettingsModal({ companyId, companyName, onClose, onS
 
     return createPortal(
         <div 
-            className="fixed inset-0 flex items-center justify-center p-4"
-            style={{ zIndex: 9999999, position: 'fixed' }}
+            className="fixed top-0 right-0 bottom-0 left-64 flex items-center justify-center p-4 z-[100]"
         >
             <motion.div 
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -858,10 +857,7 @@ export function AdminCompanySettingsModal({ companyId, companyName, onClose, onS
                             <Building2 className="w-5 h-5" />
                             <span className="text-[10px] font-black uppercase tracking-[0.2em]">Quick Edit</span>
                         </div>
-                        <h2 className="text-xl font-black text-slate-800 tracking-tight">
-                            {companyName} の企業設定
-                            <span className="ml-2 px-2 py-0.5 bg-rose-500 text-white text-[8px] rounded-full animate-pulse">v.Portal-Fix</span>
-                        </h2>
+                        <h2 className="text-xl font-black text-slate-800 tracking-tight">{companyName} の企業設定</h2>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-white rounded-xl transition-all shadow-sm">
                         <X className="w-5 h-5 text-slate-400" />

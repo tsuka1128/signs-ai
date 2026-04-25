@@ -294,7 +294,7 @@ export function CSVImportModal({ companyId, type, onClose, onSuccess }: CSVImpor
     if (!mounted) return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
+        <div className="fixed top-0 right-0 bottom-0 left-64 flex items-center justify-center p-4 z-[100]">
             <motion.div 
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" 
