@@ -367,7 +367,15 @@ export default function KpiInputPage() {
 
         if (error) {
             console.error("Save error details:", error);
-            setSaveError(`保存に失敗しました: ${error.message} (${error.code})`);
+
+            let userMessage = "保存に失敗しました。時間をおいて再度お試しください。";
+            if (error.code === "23505") {
+                userMessage = "データが重複しています。ページを再読み込みしてから再度お試しください。";
+            } else if (error.code === "42501") {
+                userMessage = "保存する権限がありません。管理者にお問い合わせください。";
+            }
+
+            setSaveError(userMessage);
             setTimeout(() => setSaveError(null), 8000);
             setIsSaved(false);
         } else {
