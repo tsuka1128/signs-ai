@@ -7,6 +7,7 @@ import { DetailLineChart } from "@/components/dashboard/DetailLineChart";
 import { KpiDisplayData } from "@/types/dashboard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { BarChart3 } from "lucide-react";
+import { HelpLink } from "@/components/ui/HelpLink";
 
 interface KpiSectionProps {
     displayKpis: KpiDisplayData[];
