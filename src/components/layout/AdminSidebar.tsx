@@ -11,7 +11,8 @@ import {
     ShieldAlert,
     CreditCard,
     HelpCircle,
-    Info
+    Info,
+    Network
 } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { signOut } from "@/lib/auth";
@@ -25,6 +26,7 @@ const MENU_ITEMS = [
     { name: "システムアラート", href: "/admin/alerts", icon: ShieldAlert },
     { name: "設定", href: "/admin/settings", icon: Settings },
     { name: "操作ログ", href: "/admin/logs", icon: ShieldAlert },
+    { name: "オブジェクト構成図", href: "/admin/schema", icon: Network },
     { name: "操作マニュアル", href: "/admin/help", icon: HelpCircle },
 ];
 
