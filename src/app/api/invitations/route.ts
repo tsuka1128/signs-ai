@@ -58,6 +58,20 @@ export async function POST(req: NextRequest) {
         }, { status: 429 });
     }
 
+    // 同一メアド・同一企業の既存 pending 招待を無効化
+    // これにより、オンボーディング時の .single() 取得エラーと、古いリンクの悪用を防止します。
+    const { error: cancelError } = await supabase
+        .from("invitations")
+        .update({ status: "cancelled" } as any)
+        .eq("company_id", effectiveCompanyId)
+        .eq("email", email.trim())
+        .eq("status", "pending");
+
+    if (cancelError) {
+        console.error("既存招待のキャンセルエラー:", cancelError);
+        // キャンセル失敗は致命的ではないため続行
+    }
+
     // 3. 招待データの作成
     const { data: invitation, error: inviteError } = await supabase
         .from("invitations")
