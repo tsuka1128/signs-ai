@@ -96,12 +96,17 @@ export function useAdmin() {
         localStorage.removeItem("impersonated_company_id");
         setImpersonatedCompanyId(null);
         
-        // ログを非同期で記録
-        if (currentId) {
-            await logAdminActivity('impersonate_stop', currentId);
+        try {
+            // ログを非同期で記録
+            if (currentId) {
+                await logAdminActivity('impersonate_stop', currentId);
+            }
+        } catch (err) {
+            console.error("代理ログイン終了ログ記録エラー:", err);
+        } finally {
+            // ブラウザ履歴を上書きし、確実に管理画面へ遷移させる
+            window.location.replace("/admin/companies");
         }
-        
-        router.push("/admin/companies");
     };
 
     return { loading, user, isSuperAdmin, impersonatedCompanyId, impersonate, stopImpersonating, supabase };

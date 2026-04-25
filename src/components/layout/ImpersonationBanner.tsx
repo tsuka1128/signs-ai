@@ -15,10 +15,8 @@ export function ImpersonationBanner() {
     const directImpersonating = typeof window !== "undefined" ? !!localStorage.getItem("impersonated_company_id") : false;
     const active = isImpersonating || directImpersonating;
 
-    const isAdminPage = pathname?.startsWith('/admin');
-
-    // 管理画面、または代理ログイン中でない場合は表示しない
-    if (!active || isAdminPage) return null;
+    // 代理ログイン中でない場合は表示しない（管理画面でも常に表示し、操作中であることを明示する）
+    if (!active) return null;
 
     return (
         <div className="sticky top-0 w-full z-[10000] animate-slideDown">
