@@ -82,8 +82,15 @@ export function Sidebar({
     }, []);
 
     const handleSignOut = async () => {
-        await signOut();
-        window.location.href = "/login";
+        try {
+            await signOut();
+        } catch (err) {
+            console.error("ログアウトエラー:", err);
+            // signOut が失敗しても強制的にログイン画面へ遷移する
+        } finally {
+            // replace() で履歴を上書きし、戻るボタンでダッシュボードに戻れないようにする
+            window.location.replace("/login");
+        }
     };
 
     const renderLink = (href: string, label: string, Icon: any, active?: boolean) => {
