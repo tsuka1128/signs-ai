@@ -10,29 +10,38 @@ interface AppLayoutProps {
     currentSection?: string;
     onSectionChange?: (id: string) => void;
     hasLaborData?: boolean;
+    hideSidebar?: boolean;
+    fullWidth?: boolean;
 }
 
 export function AppLayout({ 
     children, 
     currentSection, 
     onSectionChange, 
-    hasLaborData 
+    hasLaborData,
+    hideSidebar = false,
+    fullWidth = false
 }: AppLayoutProps) {
     const [isMobileOpen, setIsMobileOpen] = useState(false);
 
     return (
         <div className="min-h-screen bg-slate-50/50 flex">
             {/* Desktop Sidebar / Mobile Drawer */}
-            <Sidebar 
-                currentSection={currentSection}
-                onSectionChange={onSectionChange}
-                hasLaborData={hasLaborData}
-                isMobileOpen={isMobileOpen}
-                setIsMobileOpen={setIsMobileOpen}
-            />
+            {!hideSidebar && (
+                <Sidebar 
+                    currentSection={currentSection}
+                    onSectionChange={onSectionChange}
+                    hasLaborData={hasLaborData}
+                    isMobileOpen={isMobileOpen}
+                    setIsMobileOpen={setIsMobileOpen}
+                />
+            )}
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col min-w-0 lg:pl-64">
+            <div className={cn(
+                "flex-1 flex flex-col min-w-0 transition-all duration-300",
+                !hideSidebar && "lg:pl-64"
+            )}>
                 {/* Simplified Header */}
                 <Header 
                     isMobile={true} 
@@ -40,12 +49,18 @@ export function AppLayout({
                 />
 
                 <main className="flex-1 lg:pl-0">
-                    <div className="max-w-5xl mx-auto px-5 py-8 animate-fadeIn">
+                    <div className={cn(
+                        "mx-auto px-5 py-8 animate-fadeIn",
+                        fullWidth ? "max-w-full" : "max-w-5xl"
+                    )}>
                         {children}
                     </div>
                 </main>
 
-                <footer className="max-w-5xl mx-auto w-full px-5 py-12 text-center space-y-4 opacity-50">
+                <footer className={cn(
+                    "mx-auto w-full px-5 py-12 text-center space-y-4 opacity-50",
+                    fullWidth ? "max-w-full" : "max-w-5xl"
+                )}>
                     <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
                     <div className="flex items-center justify-center gap-3">
                          <div className="w-7 h-7 bg-teal-500/20 rounded-lg flex items-center justify-center">

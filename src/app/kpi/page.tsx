@@ -9,6 +9,7 @@ import { Info, Save, ArrowLeft, Building2, Lock, Unlock, BarChart3, AlertTriangl
 import { createClient } from "@/lib/supabase";
 import { Loading } from "@/components/ui/Loading";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Maximize2, Minimize2 } from "lucide-react";
 
 // KPI定義の型
 interface KpiDefinition {
@@ -42,9 +43,12 @@ interface KpiTableProps {
     isLocked: boolean;
     onInputChange: (month: string, kpiId: string, axisId: string | null, field: 'value' | 'target', val: string) => void;
     onToggleLock: () => void;
+    formatValue: (val: string, unit?: string) => string;
 }
 
-function KpiTable({ title, axisId, isMain, kpiDefinitions, allMonths, editValues, isLocked, onInputChange, onToggleLock }: KpiTableProps) {
+function KpiTable({ title, axisId, isMain, kpiDefinitions, allMonths, editValues, isLocked, onInputChange, onToggleLock, formatValue }: KpiTableProps) {
+    const [focusedCell, setFocusedCell] = useState<string | null>(null); // month_kpiId_axisId_field
+
     return (
         <div className="bg-white shadow-[0_4px_24px_-8px_rgba(0,0,0,0.05)] border border-slate-200 overflow-hidden relative mx-auto w-full rounded-[16px] mb-12">
             <div className={`px-5 py-4 ${isMain ? "bg-slate-800" : "bg-slate-100"} ${isMain ? "text-white" : "text-slate-800"} border-b border-slate-200 flex items-center justify-between`}>
@@ -127,35 +131,51 @@ function KpiTable({ title, axisId, isMain, kpiDefinitions, allMonths, editValues
                                             <div className="flex flex-col w-full h-full min-h-[90px]">
                                                 <div className={`h-[45px] flex items-center justify-between px-4 border-b ${idx === 0 ? "border-white" : "border-slate-100"}`}>
                                                     <span className={`text-[9px] font-black shrink-0 ${idx === 0 ? "text-teal-700" : "text-slate-400"}`}>実績</span>
-                                                    {!canEdit ? (
+                                                    {(!canEdit && focusedCell !== `${m.month}_${kpi.id}_${axisId || 'main'}_value`) ? (
                                                         <span className={`text-[14px] font-black text-right w-full ${idx === 0 ? "text-teal-900" : "text-slate-700"}`}>
-                                                            {editData.value ? editData.value : "-"}
+                                                            {editData.value ? formatValue(editData.value, kpi.unit) : "-"}
                                                         </span>
                                                     ) : (
                                                         <input
-                                                            type="number"
+                                                            type={focusedCell === `${m.month}_${kpi.id}_${axisId || 'main'}_value` ? "number" : "text"}
                                                             min="0"
-                                                            value={editData.value}
-                                                            onChange={(e) => onInputChange(m.month, kpi.id, axisId, 'value', e.target.value)}
+                                                            value={focusedCell === `${m.month}_${kpi.id}_${axisId || 'main'}_value` ? editData.value : (editData.value ? formatValue(editData.value, kpi.unit) : "")}
+                                                            onFocus={() => canEdit && setFocusedCell(`${m.month}_${kpi.id}_${axisId || 'main'}_value`)}
+                                                            onBlur={() => setFocusedCell(null)}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value.replace(/,/g, '');
+                                                                if (!isNaN(Number(val)) || val === "") {
+                                                                    onInputChange(m.month, kpi.id, axisId, 'value', val);
+                                                                }
+                                                            }}
+                                                            readOnly={!canEdit}
                                                             placeholder="---"
-                                                            className={`w-full text-right text-[14px] font-black outline-none bg-transparent placeholder-slate-200 ${idx === 0 ? "text-teal-900" : "text-slate-700"}`}
+                                                            className={`w-full text-right text-[14px] font-black outline-none bg-transparent placeholder-slate-200 transition-all ${idx === 0 ? "text-teal-900" : "text-slate-700"} ${!canEdit ? "cursor-default" : "focus:bg-white/50 rounded px-1"}`}
                                                         />
                                                     )}
                                                 </div>
                                                 <div className="h-[45px] flex items-center justify-between px-4">
                                                     <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter shrink-0">目標</span>
-                                                    {!canEdit ? (
+                                                    {(!canEdit && focusedCell !== `${m.month}_${kpi.id}_${axisId || 'main'}_target`) ? (
                                                         <span className="text-[14px] font-black text-slate-400 text-right w-full">
-                                                            {editData.target ? editData.target : "-"}
+                                                            {editData.target ? formatValue(editData.target, kpi.unit) : "-"}
                                                         </span>
                                                     ) : (
                                                         <input
-                                                            type="number"
+                                                            type={focusedCell === `${m.month}_${kpi.id}_${axisId || 'main'}_target` ? "number" : "text"}
                                                             min="0"
-                                                            value={editData.target}
-                                                            onChange={(e) => onInputChange(m.month, kpi.id, axisId, 'target', e.target.value)}
+                                                            value={focusedCell === `${m.month}_${kpi.id}_${axisId || 'main'}_target` ? editData.target : (editData.target ? formatValue(editData.target, kpi.unit) : "")}
+                                                            onFocus={() => canEdit && setFocusedCell(`${m.month}_${kpi.id}_${axisId || 'main'}_target`)}
+                                                            onBlur={() => setFocusedCell(null)}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value.replace(/,/g, '');
+                                                                if (!isNaN(Number(val)) || val === "") {
+                                                                    onInputChange(m.month, kpi.id, axisId, 'target', val);
+                                                                }
+                                                            }}
+                                                            readOnly={!canEdit}
                                                             placeholder="---"
-                                                            className="w-full text-right text-[14px] font-black outline-none bg-transparent placeholder-slate-200 text-slate-400"
+                                                            className={`w-full text-right text-[14px] font-black outline-none bg-transparent placeholder-slate-200 transition-all text-slate-400 ${!canEdit ? "cursor-default" : "focus:bg-white/50 rounded px-1"}`}
                                                         />
                                                     )}
                                                 </div>
@@ -188,6 +208,22 @@ export default function KpiInputPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
+    const [isFullScreen, setIsFullScreen] = useState(false);
+
+    // カンマ区切りフォーマット関数
+    const formatValue = (val: string, unit?: string) => {
+        if (!val || val === "") return "";
+        const num = Number(val);
+        if (isNaN(num)) return val;
+        
+        // カンマを入れない単位の判定
+        const noCommaUnits = ["年", "ID", "%"];
+        if (unit && noCommaUnits.includes(unit)) {
+            return val;
+        }
+        
+        return num.toLocaleString();
+    };
 
     useEffect(() => {
         fetchInitialData();
@@ -366,8 +402,8 @@ export default function KpiInputPage() {
     }
 
     return (
-        <AppLayout>
-            <main className="max-w-[1400px] mx-auto">
+        <AppLayout hideSidebar={isFullScreen} fullWidth={isFullScreen}>
+            <main className={cn("mx-auto transition-all duration-300", isFullScreen ? "max-w-full" : "max-w-[1400px]")}>
                 <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8 w-full">
                     <div>
                         <h1 className="text-2xl font-black text-slate-800 tracking-tighter mb-2 flex items-center gap-3">
@@ -378,6 +414,14 @@ export default function KpiInputPage() {
                     </div>
 
                     <div className="flex items-center gap-2 sm:gap-4 shrink-0 mt-4 sm:mt-0">
+                        <button 
+                            onClick={() => setIsFullScreen(!isFullScreen)}
+                            className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all shadow-sm"
+                            title={isFullScreen ? "通常表示に戻す" : "全画面で表示"}
+                        >
+                            {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                            {isFullScreen ? "縮小" : "拡大表示"}
+                        </button>
                         <button className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all shadow-sm">
                             <svg className="w-3.5 h-3.5 text-emerald-600" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-2h2v2zm0-4H7v-2h2v2zm0-4H7V7h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z" />
@@ -433,6 +477,7 @@ export default function KpiInputPage() {
                             isLocked={isLocked}
                             onInputChange={handleInputChange}
                             onToggleLock={() => setIsLocked(!isLocked)}
+                            formatValue={formatValue}
                         />
 
                         {/* 第2軸（ブランド・エリア等）テーブル一覧 */}
@@ -456,6 +501,7 @@ export default function KpiInputPage() {
                                         isLocked={isLocked}
                                         onInputChange={handleInputChange}
                                         onToggleLock={() => setIsLocked(!isLocked)}
+                                        formatValue={formatValue}
                                     />
                                 ))}
                             </div>
