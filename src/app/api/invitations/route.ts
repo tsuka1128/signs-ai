@@ -62,7 +62,10 @@ export async function POST(req: NextRequest) {
     // これにより、オンボーディング時の .single() 取得エラーと、古いリンクの悪用を防止します。
     const { error: cancelError } = await supabase
         .from("invitations")
-        .update({ status: "cancelled" } as any)
+        .update({ 
+            status: "cancelled",
+            deleted_at: new Date().toISOString()
+        } as any)
         .eq("company_id", effectiveCompanyId)
         .eq("email", email.trim())
         .eq("status", "pending");
