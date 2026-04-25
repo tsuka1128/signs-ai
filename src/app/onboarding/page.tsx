@@ -452,14 +452,14 @@ function OnboardingContent() {
                             <h2 className="text-lg font-black text-slate-800">始め方を選択してください</h2>
                             <div className="grid grid-cols-2 gap-3">
                                 <button
-                                    onClick={() => !tokenParam && setState(s => ({ ...s, mode: "create" }))}
-                                    disabled={!!tokenParam}
+                                    onClick={() => !state.invitationToken && setState(s => ({ ...s, mode: "create" }))}
+                                    disabled={!!state.invitationToken}
                                     className={cn(
                                         "p-4 rounded-2xl border-2 text-left transition-all",
                                         state.mode === "create"
                                             ? "border-teal-500 bg-teal-50/50"
                                             : "border-slate-100 bg-white hover:border-slate-200",
-                                        tokenParam && "opacity-50 cursor-not-allowed grayscale"
+                                        state.invitationToken && "opacity-50 cursor-not-allowed grayscale"
                                     )}
                                 >
                                     <div className="text-xl mb-1">新規作成</div>
@@ -491,7 +491,8 @@ function OnboardingContent() {
                                         type="text"
                                         placeholder="株式会社〇〇"
                                         value={state.companyName}
-                                        onChange={(e) => setState((s) => ({ ...s, companyName: e.target.value }))}
+                                        onChange={(e) => setState(s => ({ ...s, companyName: e.target.value }))}
+                                        readOnly={!!state.invitationToken}
                                         className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"
                                     />
                                     <p className="text-[10px] text-slate-400 ml-1">※後から設定画面で変更可能です</p>
@@ -517,10 +518,10 @@ function OnboardingContent() {
                                     placeholder="招待コードを入力"
                                     value={state.invitationToken}
                                     onChange={(e) => setState((s) => ({ ...s, invitationToken: e.target.value }))}
-                                    readOnly={!!tokenParam}
+                                    readOnly={!!state.invitationToken}
                                     className={cn(
-                                        "w-full px-4 py-3 rounded-xl border text-slate-800 font-medium text-sm focus:outline-none transition-all",
-                                        tokenParam ? "bg-slate-50 border-slate-100 text-slate-400" : "bg-white border-slate-200 focus:ring-2 focus:ring-teal-400 focus:border-transparent"
+                                        "w-full px-4 py-3 rounded-xl border text-sm font-bold transition-all",
+                                        state.invitationToken ? "bg-slate-50 border-slate-100 text-slate-400" : "bg-white border-slate-200 focus:ring-2 focus:ring-teal-400 focus:border-transparent"
                                     )}
                                 />
                                 {state.invitedCompany && (
