@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/Badge";
-import { Info, Save, ArrowLeft, Building2, Lock, Unlock, BarChart3 } from "lucide-react";
+import { Info, Save, ArrowLeft, Building2, Lock, Unlock, BarChart3, AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { Loading } from "@/components/ui/Loading";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -187,6 +187,7 @@ export default function KpiInputPage() {
 
     const [isSaving, setIsSaving] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
 
     useEffect(() => {
         fetchInitialData();
@@ -301,12 +302,17 @@ export default function KpiInputPage() {
             const month = parts[0];
             const kpiId = parts[1];
             const axisId = parts[2] === 'main' ? null : parts[2];
+            
+            // KPI定義から所属部署IDを特定
+            const kpiDef = kpiDefinitions.find(k => k.id === kpiId);
+            const deptId = kpiDef?.owner_dept_id || null;
 
             if (data.value !== "" || data.target !== "") {
                 upsertData.push({
                     kpi_definition_id: kpiId,
                     recorded_month: month,
                     axis_id: axisId,
+                    department_id: deptId,
                     value: Number(data.value || 0),
                     target_value: data.target !== "" ? Number(data.target) : null
                 });
@@ -319,15 +325,16 @@ export default function KpiInputPage() {
         }
 
         const { error } = await supabase.from('kpi_records').upsert(upsertData, {
-            onConflict: 'kpi_definition_id, recorded_month, axis_id'
+            onConflict: 'kpi_definition_id, recorded_month, department_id'
         });
 
         if (error) {
             console.error("Save error:", error);
-            alert(`保存に失敗しました: ${error.message}`);
+            setSaveError("保存に失敗しました。再度お試しください。");
+            setTimeout(() => setSaveError(null), 5000);
+            setIsSaved(false);
         } else {
             setIsSaved(true);
-            // 保存後も編集を続けられるようにする
             setTimeout(() => setIsSaved(false), 3000);
             await fetchInitialData();
         }
@@ -381,16 +388,37 @@ export default function KpiInputPage() {
                         <button
                             onClick={handleSave}
                             disabled={isSaving}
-                            className={`flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all shadow-sm ${isSaved
+                            className={`flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all shadow-sm ${
+                                isSaved
                                 ? "bg-emerald-500 text-white shadow-emerald-500/20"
+                                : isSaving
+                                ? "bg-slate-200 text-slate-400 cursor-not-allowed"
                                 : "bg-teal hover:bg-teal/90 text-white hover:shadow-md hover:scale-[1.02]"
-                                }`}
+                            }`}
                         >
-                            {isSaved ? "保存しました" : isSaving ? "保存中..." : "この内容で保存する"}
-                            <Save className="w-4 h-4 ml-1" />
+                            {isSaved ? (
+                                <>保存しました ✓</>
+                            ) : isSaving ? (
+                                <>保存中...</>
+                            ) : (
+                                <>
+                                    この内容で保存する
+                                    <Save className="w-4 h-4 ml-1" />
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>
+                
+                {/* 簡易トースト表示（エラー時） */}
+                {saveError && (
+                    <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                        <div className="flex items-center gap-3 bg-rose-50 border border-rose-100 text-rose-600 px-6 py-4 rounded-2xl shadow-sm">
+                            <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                            <p className="text-sm font-bold">{saveError}</p>
+                        </div>
+                    </div>
+                )}
 
                 {/* 基本軸テーブル */}
                 {kpiDefinitions.length > 0 ? (
