@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase-server";
+import { createServerSupabaseClient as createClient } from "@/lib/supabase-server";
 import { sendSlackNotification } from "./slack";
 import { getBaseURL } from "@/lib/utils/index";
 
