@@ -59,10 +59,12 @@ CREATE INDEX IF NOT EXISTS idx_notification_settings_user_id ON public.notificat
 ALTER TABLE public.notification_settings ENABLE ROW LEVEL SECURITY;
 
 -- 自分の設定のみ参照・更新可能
+DROP POLICY IF EXISTS "users_manage_own_notification_settings" ON public.notification_settings;
 CREATE POLICY "users_manage_own_notification_settings" ON public.notification_settings
     FOR ALL USING (user_id = auth.uid());
 
 -- super_admin は全参照可能
+DROP POLICY IF EXISTS "super_admins_all_notification_settings" ON public.notification_settings;
 CREATE POLICY "super_admins_all_notification_settings" ON public.notification_settings
     FOR ALL TO authenticated USING (
         EXISTS (
