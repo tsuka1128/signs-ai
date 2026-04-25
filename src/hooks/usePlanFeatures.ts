@@ -13,7 +13,7 @@ export type FeatureKey =
   | 'manual_ai_runs';
 
 export function usePlanFeatures() {
-  const { company, plan, loading, isTrial } = useCompany();
+  const { company, plan, loading, isTrial, trialDaysRemaining } = useCompany();
 
   // 個別上書き設定を取得 (JSONB)
   const overrides = useMemo(() => {
@@ -94,7 +94,7 @@ export function usePlanFeatures() {
     company,
     loading,
     isTrial,
-    trialDaysRemaining: useCompany().trialDaysRemaining,
+    trialDaysRemaining: trialDaysRemaining,
     canUse,
     limits,
     checkLimit,
