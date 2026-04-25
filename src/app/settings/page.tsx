@@ -165,6 +165,7 @@ export default function SettingsPage() {
                                 setCompany={handlers.setCompany}
                                 handleTestClientSlackWebhook={handlers.handleTestClientSlackWebhook}
                                 handleSaveIntegration={handlers.handleSaveIntegration}
+                                handleRemindVoiceCheck={handlers.handleRemindVoiceCheck}
                             />
                         </PlanGate>
                     )}

@@ -152,3 +152,102 @@ export async function sendAiSummaryNotification(companyId: string) {
         console.error("Failed to send AI summary notification:", error);
     }
 }
+
+/**
+ * 今月のボイスチェック未回答者へ催促通知を送信する
+ */
+export async function sendVoiceCheckReminders(companyId: string) {
+    try {
+        const supabase = await createClient();
+        const now = new Date();
+        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+
+        // 1. 配信対象候補（player / manager / admin などの回答対象ロール）を取得
+        // ※実際には回答権限のある全ユーザー
+        const { data: allUsers } = await supabase
+            .from('users')
+            .select('id, email, slack_user_id, role')
+            .eq('company_id', companyId);
+
+        if (!allUsers) return;
+
+        // 2. 今月の回答済みユーザーを取得
+        const { data: answered } = await supabase
+            .from('survey_responses')
+            .select('user_id')
+            .eq('company_id', companyId)
+            .eq('recorded_month', currentMonth);
+
+        const answeredUserIds = new Set(answered?.map(a => a.user_id) || []);
+
+        // 3. 未回答者を特定
+        const targets = allUsers.filter(u => 
+            !answeredUserIds.has(u.id) && 
+            u.slack_user_id // Slack ID がある人のみ
+        );
+
+        if (targets.length === 0) {
+            console.log("No unanswered users found for voice check reminder.");
+            return;
+        }
+
+        // 4. 通知設定によるフィルタリング
+        const userIds = targets.map(t => t.id);
+        const { data: settings } = await supabase
+            .from('notification_settings')
+            .select('user_id, slack_enabled')
+            .eq('notification_type', 'voice_check_reminder')
+            .in('user_id', userIds);
+
+        const finalTargets = targets.filter(t => {
+            const s = settings?.find(s => s.user_id === t.id);
+            return s ? s.slack_enabled : true; // デフォルト有効
+        });
+
+        if (finalTargets.length === 0) return;
+
+        // 5. 企業のWebhook URLを取得
+        const { data: company } = await supabase
+            .from('companies')
+            .select('slack_webhook_url')
+            .eq('id', companyId)
+            .single();
+
+        if (!company?.slack_webhook_url) return;
+
+        // 6. 送信
+        const mentions = finalTargets.map(t => `<@${t.slack_user_id}>`).join(' ');
+        const surveyUrl = `${getBaseURL()}/check`;
+
+        const text = `${mentions}\n今月のボイスチェック（組織状態アンケート）が未回答です。ご回答をお願いします。`;
+        const blocks = [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": `${mentions}\n*今月のボイスチェック（組織状態アンケート）への回答をお願いします。*\n組織の健康状態を把握するため、1分程度で終わる簡単な質問にご協力ください。`
+                }
+            },
+            {
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "アンケートに回答する"
+                        },
+                        "url": surveyUrl,
+                        "style": "primary"
+                    }
+                ]
+            }
+        ];
+
+        await sendSlackNotification(company.slack_webhook_url, text, blocks);
+        console.log(`Voice check reminder sent to ${finalTargets.length} users.`);
+
+    } catch (error) {
+        console.error("Failed to send voice check reminders:", error);
+    }
+}

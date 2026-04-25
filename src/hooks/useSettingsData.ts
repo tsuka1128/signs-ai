@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
@@ -56,12 +54,10 @@ export function useSettingsData() {
         }
         setCurrentUserId(authUser.id);
 
-        // ロールと本来の所属を一括取得（フックのステートに頼らず、この関数のスコープ内で完結させる）
         const { data: userData } = await supabase.from('users').select('company_id, role').eq('id', authUser.id).single();
         
         let targetId = userData?.company_id;
 
-        // 管理者の場合は localStorage を同期的に確認する（アトミックな判定）
         if (userData?.role === 'super_admin') {
             const storedId = typeof window !== "undefined" ? localStorage.getItem("impersonated_company_id") : null;
             if (storedId) {
@@ -73,7 +69,6 @@ export function useSettingsData() {
         }
 
         if (!targetId) {
-            // 管理者でもなく所属もない場合は onboarding へ
             if (userData?.role !== 'super_admin') {
                 router.push("/onboarding");
             } else {
@@ -344,7 +339,6 @@ export function useSettingsData() {
         }).select().single();
 
         if (!error && inv) {
-            // Send actual email via Resend
             try {
                 const mailRes = await fetch("/api/emails/invite", {
                     method: "POST",
@@ -389,7 +383,6 @@ export function useSettingsData() {
             });
             if (mailRes.ok) {
                 alert(`${inv.email} 宛に招待メールを再送しました`);
-                // Update local list
                 setInvitations(prev => prev.map(p => p.id === inv.id ? { ...p, updated_at: new Date().toISOString() } : p));
             } else {
                 const err = await mailRes.json();
@@ -417,7 +410,6 @@ export function useSettingsData() {
         }
         setHistoryTarget({ type, id, name });
 
-        // 現在のマスターデータから人数の初期値を取得
         const masterItem = type === 'dept' 
             ? depts.find(d => d.id === id) 
             : axes.find(a => a.id === id);
@@ -430,7 +422,6 @@ export function useSettingsData() {
             const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
             const existing = resources.find(r => r.recorded_month === m && (type === 'dept' ? r.department_id === id : r.axis_id === id));
             
-            // レコードがない場合、最新月（i=0）であればマスターの値を初期値としてセット
             const initialHeadcount = existing ? existing.head_count : (i === 0 ? currentHeadcount : 0);
             
             months.push({ 
@@ -461,7 +452,6 @@ export function useSettingsData() {
             });
             if (error) throw error;
 
-            // 最新月のデータをマスターテーブル (departments / kpi_axes) に同期
             const now = new Date();
             const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
             const latestRecord = upserts.find(u => u.recorded_month === currentMonthStr);
@@ -469,11 +459,9 @@ export function useSettingsData() {
             if (latestRecord) {
                 if (historyTarget.type === 'dept') {
                     await supabase.from('departments').update({ headcount: latestRecord.head_count }).eq('id', historyTarget.id);
-                    // ローカルステートを更新してUIを即座に反映
                     setDepts(prev => prev.map(d => d.id === historyTarget.id ? { ...d, headcount: latestRecord.head_count } : d));
                 } else {
                     await supabase.from('kpi_axes').update({ headcount: latestRecord.head_count }).eq('id', historyTarget.id);
-                    // ローカルステートを更新してUIを即座に反映
                     setAxes(prev => prev.map(a => a.id === historyTarget.id ? { ...a, headcount: latestRecord.head_count } : a));
                 }
             }
@@ -554,7 +542,6 @@ export function useSettingsData() {
             if (!res.ok) throw new Error("API Request Failed");
             alert("AIの分析処理が完了しました。ダッシュボードをご確認ください。");
             
-            // Mock: 実行回数のローカルインクリメント
             if (company) {
                 setCompany({
                     ...company,
@@ -565,6 +552,17 @@ export function useSettingsData() {
             alert(`分析の実行中にエラーが発生しました: ${error.message}`);
         } finally {
             setIsAnalyzing(false);
+        }
+    };
+
+    const handleRemindVoiceCheck = async () => {
+        if (!confirm("今月のアンケート未回答者に、Slackで回答を催促しますか？")) return;
+        try {
+            const res = await fetch("/api/settings/remind-voice-check", { method: "POST" });
+            if (!res.ok) throw new Error("API Request Failed");
+            alert("未回答者に催促通知を送信しました。");
+        } catch (error: any) {
+            alert(`エラーが発生しました: ${error.message}`);
         }
     };
 
@@ -583,7 +581,7 @@ export function useSettingsData() {
             handleSaveAllKpis, handleDeleteKpi, handleAddAxis, handleSaveAllAxes, handleDeleteAxis,
             handleInvite, handleDeleteInvitation, handleResendInvitation, handleCopyInviteLink,
             handleOpenHistory, handleSaveHistory, getHistoryTrend, handleStartEditUser,
-            handleSaveUserDetail, handleDeleteUser, handleRunAnalyze
+            handleSaveUserDetail, handleDeleteUser, handleRunAnalyze, handleRemindVoiceCheck
         }
     };
 }
