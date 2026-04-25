@@ -126,6 +126,7 @@ export async function POST(request: NextRequest) {
     if (success) {
         return NextResponse.json({ success: true });
     } else {
+        console.error(`Slack通知の送信に失敗しました: company_id=${effectiveCompanyId}, webhook=${company.slack_webhook_url?.slice(0, 40)}...`);
         return NextResponse.json({ error: "Failed to send Slack notification" }, { status: 500 });
     }
 }
