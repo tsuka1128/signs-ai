@@ -22,6 +22,7 @@ export function useSettingsData() {
     const [copied, setCopied] = useState(false);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [isImpersonating, setIsImpersonating] = useState(false);
+    const [inviteRole, setInviteRole] = useState<any>("player");
     
     // Invitation extra state
     const [inviteDeptId, setInviteDeptId] = useState("");
@@ -335,7 +336,7 @@ export function useSettingsData() {
             email: inviteEmail,
             company_id: company.id,
             inviter_id: currentUserId,
-            role: 'player',
+            role: inviteRole,
             department_id: inviteDeptId || null,
             axis_id: inviteAxisId || null,
             slack_user_id: inviteSlackUserId || null
@@ -359,6 +360,7 @@ export function useSettingsData() {
 
             alert("招待を送信しました（メールが配信されます）");
             setInviteEmail("");
+            setInviteRole("player");
             setInviteDeptId("");
             setInviteAxisId("");
             setInviteSlackUserId("");
@@ -569,10 +571,11 @@ export function useSettingsData() {
         state: {
             loading, isAnalyzing, company, depts, kpis, axes, secondaryAxisName, users, invitations, inviteEmail,
             copied, inviteDeptId, inviteAxisId, inviteSlackUserId, resources, historyModalOpen,
-            historyTarget, tempHistory, isSavingHistory, editingUser, editForm
+            historyTarget, tempHistory, isSavingHistory, editingUser, editForm, inviteRole
         },
         handlers: {
             setCompany, setDepts, setKpis, setAxes, setSecondaryAxisName, setInviteEmail, setInviteDeptId,
+            setInviteRole,
             setInviteAxisId, setInviteSlackUserId, setTempHistory, setHistoryModalOpen, setEditForm, setEditingUser,
             handleCopyId, handleSaveCompany, handleSaveIntegration, handleTestClientSlackWebhook,
             handleTestMemberSlack, handleAddDept, handleSaveAllDepts, handleDeleteDept, handleAddKpi,

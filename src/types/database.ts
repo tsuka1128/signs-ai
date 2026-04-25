@@ -36,7 +36,7 @@ export interface Database {
         Row: {
           id: string
           company_id: string | null
-          role: string
+          role: 'super_admin' | 'admin' | 'executive' | 'manager' | 'player' | 'partner'
           department_id: string | null
           display_name: string | null
           email: string | null
@@ -168,7 +168,7 @@ export interface Database {
           company_id: string | null
           inviter_id: string | null
           email: string
-          role: string | null
+          role: 'super_admin' | 'admin' | 'executive' | 'manager' | 'player' | 'partner' | null
           department_id: string | null
           axis_id: string | null
           slack_user_id: string | null

@@ -54,3 +54,16 @@ export const DEFAULT_SURVEY_QUESTIONS = [
     { id: 11, text: "KPI達成に向けて、準備周到に活動できていますか？", hint: "道筋が見えているだけで、体温は上がります。" },
 ];
 
+
+/**
+ * ユーザーロールの定義
+ */
+export const USER_ROLES = [
+    { value: "admin", label: "管理者（全社参照・設定変更）" },
+    { value: "executive", label: "経営層（全社参照・AI詳細診断）" },
+    { value: "manager", label: "マネージャー（自部門参照・KPI入力）" },
+    { value: "player", label: "一般メンバー（ボイスチェック回答）" },
+    { value: "partner", label: "外部パートナー" }
+] as const;
+
+export type UserRole = (typeof USER_ROLES)[number]["value"] | "super_admin";

@@ -24,6 +24,8 @@ interface MembersTabProps {
     handleCopyInviteLink: (inv: any) => void;
     handleResendInvitation: (inv: any) => void;
     handleDeleteInvitation: (id: string) => void;
+    inviteRole: string;
+    setInviteRole: (role: string) => void;
 }
 
 export const MembersTab = ({
@@ -46,7 +48,9 @@ export const MembersTab = ({
     invitations,
     handleCopyInviteLink,
     handleResendInvitation,
-    handleDeleteInvitation
+    handleDeleteInvitation,
+    inviteRole,
+    setInviteRole
 }: MembersTabProps) => {
     return (
         <div className="space-y-10 animate-in fade-in">
@@ -93,6 +97,21 @@ export const MembersTab = ({
                             >
                                 <option value="">未設定</option>
                                 {axes.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">付与する権限 <span className="text-rose-400">*</span></label>
+                            <select
+                                value={inviteRole}
+                                onChange={(e) => setInviteRole(e.target.value)}
+                                className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-600 outline-none focus:border-teal appearance-none"
+                            >
+                                <option value="player">一般メンバー (player)</option>
+                                <option value="manager">マネージャー (manager)</option>
+                                <option value="executive">経営層 (executive)</option>
+                                <option value="admin">管理者 (admin)</option>
+                                <option value="partner">外部パートナー (partner)</option>
                             </select>
                         </div>
 
