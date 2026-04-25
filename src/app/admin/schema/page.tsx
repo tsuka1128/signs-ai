@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { 
     Network,
     Building2,
@@ -42,7 +45,81 @@ const RELATIONS = [
     { from: "AiInsight", to: "AdminActivityLog", cardinality: "間接", type: "間接参照" },
 ];
 
+const zoneColorMap: Record<string, string> = {
+    emerald: "bg-emerald-50 text-emerald-600",
+    violet: "bg-violet-50 text-violet-600",
+    rose: "bg-rose-50 text-rose-600",
+    amber: "bg-amber-50 text-amber-600",
+    sky: "bg-sky-50 text-sky-600",
+    slate: "bg-slate-50 text-slate-500",
+};
+
+const ROLE_FLOWS = [
+  {
+    role: "admin",
+    label: "管理者",
+    color: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    badgeColor: "bg-emerald-500",
+    description: "システム全体のセットアップを担う。テナント構築からAI分析燃料の投入まで一貫して管理する。",
+    steps: [
+      { no: 1, object: "Company 作成", fields: "name / plan_id / status", zone: "テナント基盤", color: "emerald" },
+      { no: 2, object: "Department 作成", fields: "name / headcount", zone: "テナント基盤", color: "emerald" },
+      { no: 3, object: "Invitation 送信", fields: "email / role / expires_at", zone: "管理系", color: "slate" },
+      { no: 4, object: "KpiDefinition 登録", fields: "name / unit / target", zone: "業績・KPI", color: "violet" },
+      { no: 5, object: "SemanticLayer 設定", fields: "content（会社文脈）", zone: "サーベイ設定", color: "rose" },
+      { no: 6, object: "KpiRecord 入力", fields: "value / target / month", zone: "業績・KPI", color: "violet" },
+      { no: 7, object: "ResourceRecord 入力", fields: "head_count / labor_cost", zone: "業績・KPI", color: "violet" },
+      { no: 8, object: "AiInsight 確認", fields: "weather / content(140字)", zone: "AI分析", color: "amber" },
+      { no: 9, object: "ActionItem 作成", fields: "priority / owner / due_date", zone: "アクション", color: "sky" },
+    ]
+  },
+  {
+    role: "player",
+    label: "プレイヤー（現場）",
+    color: "bg-rose-100 text-rose-700 border-rose-200",
+    badgeColor: "bg-rose-500",
+    description: "接点は最小。Invitationで参加し、毎月Slack通知を受けてアンケートに回答するだけ。",
+    steps: [
+      { no: 1, object: "Invitation 受け取り", fields: "→ User生成 (role:player)", zone: "管理系", color: "slate" },
+      { no: 2, object: "Slack 通知受信", fields: "User.slack_user_id", zone: "テナント基盤", color: "emerald" },
+      { no: 3, object: "SurveyResponse 作成", fields: "recorded_month / dept", zone: "サーベイ", color: "rose" },
+      { no: 4, object: "SurveyAnswer × 11", fields: "question_no / score", zone: "サーベイ", color: "rose" },
+    ],
+    note: "匿名URL回答の場合: User不要 → SignsAI IDのみでSurveyResponse作成"
+  },
+  {
+    role: "executive",
+    label: "エグゼクティブ（経営者）",
+    color: "bg-amber-100 text-amber-700 border-amber-200",
+    badgeColor: "bg-amber-500",
+    description: "読み専。AiInsightを起点に全社データを横断参照し、ActionItemの承認・作成につなげる。",
+    steps: [
+      { no: 1, object: "AiInsight 閲覧（全社）", fields: "audience_role: executive", zone: "AI分析", color: "amber" },
+      { no: 2, object: "KpiRecord 参照", fields: "全部署・全KPI 月次推移", zone: "業績・KPI", color: "violet" },
+      { no: 3, object: "ResourceRecord 参照", fields: "人件費 / 生産性スコア", zone: "業績・KPI", color: "violet" },
+      { no: 4, object: "SurveyResponse 参照", fields: "pulse / 部署別サマリー", zone: "サーベイ", color: "rose" },
+      { no: 5, object: "ActionItem 承認・作成", fields: "priority: urgent / medium", zone: "アクション", color: "sky" },
+    ],
+    note: "操作は AdminActivityLog に自動記録（間接参照）"
+  },
+  {
+    role: "partner",
+    label: "パートナー（VC・コンサル）",
+    color: "bg-pink-100 text-pink-700 border-pink-200",
+    badgeColor: "bg-pink-500",
+    description: "partner_access_controlで許可された複数社を横断。各社の文脈を掴みAiInsightを読んでActionItemを提案する。",
+    steps: [
+      { no: 1, object: "複数社横断アクセス", fields: "partner_access_control で許可された企業", zone: "テナント基盤", color: "emerald" },
+      { no: 2, object: "SemanticLayer 参照", fields: "各社固有の文脈を把握", zone: "サーベイ設定", color: "rose" },
+      { no: 3, object: "AiInsight 閲覧", fields: "各社 executive スコープ", zone: "AI分析", color: "amber" },
+      { no: 4, object: "ActionItem 提案", fields: "owner: 各社 admin/manager", zone: "アクション", color: "sky" },
+    ]
+  }
+];
+
 export default function AdminSchemaPage() {
+    const [activeRole, setActiveRole] = useState("admin");
+
     const zones = [
         {
             title: "テナント基盤",
@@ -108,6 +185,8 @@ export default function AdminSchemaPage() {
             ]
         }
     ];
+
+    const activeFlow = ROLE_FLOWS.find(r => r.role === activeRole) || ROLE_FLOWS[0];
 
     return (
         <main className="p-8 space-y-12 animate-fadeIn max-w-7xl mx-auto pb-32">
@@ -175,7 +254,7 @@ export default function AdminSchemaPage() {
             </div>
 
             {/* Relations Section */}
-            <section className="space-y-4 pt-12">
+            <section className="space-y-4 pt-12 border-t border-slate-100">
                 <h2 className="text-sm font-black text-slate-500 uppercase tracking-widest">
                     オブジェクト間リレーション
                 </h2>
@@ -218,8 +297,80 @@ export default function AdminSchemaPage() {
                 </div>
             </section>
 
+            {/* Role Flows Section */}
+            <section className="space-y-8 pt-12 border-t border-slate-100">
+                <div className="flex flex-col gap-2">
+                    <h2 className="text-sm font-black text-slate-500 uppercase tracking-widest">
+                        ロール別ユースケースフロー
+                    </h2>
+                    <p className="text-xs text-slate-400 font-bold">
+                        各ロールがどのオブジェクトをどの順に操作するかを示します。
+                    </p>
+                </div>
+
+                {/* Tab UI */}
+                <div className="flex flex-wrap gap-2">
+                    {ROLE_FLOWS.map(rf => (
+                        <button
+                            key={rf.role}
+                            onClick={() => setActiveRole(rf.role)}
+                            className={cn(
+                                "px-5 py-2.5 rounded-full text-xs font-black border transition-all shadow-sm",
+                                activeRole === rf.role 
+                                    ? cn(rf.color, "ring-2 ring-offset-2 ring-slate-100") 
+                                    : "bg-white border-slate-200 text-slate-400 hover:border-slate-300"
+                            )}
+                        >
+                            {rf.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Active Flow Display */}
+                <div className={cn("rounded-[40px] border p-8 space-y-8 transition-all", activeFlow.color)}>
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                            <Badge className={cn("text-white border-none font-black", activeFlow.badgeColor)}>
+                                {activeFlow.label}
+                            </Badge>
+                            <h3 className="text-lg font-black tracking-tight">{activeFlow.label}のジャーニー</h3>
+                        </div>
+                        <p className="text-sm font-medium opacity-80 max-w-3xl leading-relaxed">
+                            {activeFlow.description}
+                        </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-4 items-stretch">
+                        {activeFlow.steps.map((step, i) => (
+                            <div key={i} className="flex items-center gap-4 group">
+                                <div className="bg-white/80 backdrop-blur-sm border border-white/50 rounded-3xl p-5 shadow-sm min-w-[180px] flex flex-col hover:bg-white transition-all hover:shadow-md h-full">
+                                    <div className="text-[10px] font-black text-slate-300 mb-2 uppercase tracking-widest">STEP {step.no}</div>
+                                    <div className="text-sm font-black text-slate-800 leading-tight mb-1">{step.object}</div>
+                                    <div className="text-[10px] font-mono text-slate-400 line-clamp-2 min-h-[1.5rem]">{step.fields}</div>
+                                    <div className={cn("mt-4 text-[9px] font-black px-3 py-1 rounded-full self-start", zoneColorMap[step.color])}>
+                                        {step.zone}
+                                    </div>
+                                </div>
+                                {i < activeFlow.steps.length - 1 && (
+                                    <div className="text-slate-300/50 font-black text-2xl animate-pulse">
+                                        ▸
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+
+                    {activeFlow.note && (
+                        <div className="mt-4 bg-white/40 border border-dashed border-white/60 rounded-3xl px-6 py-4 text-[12px] text-slate-500 font-bold flex items-start gap-3">
+                            <span className="text-base mt-[-2px]">💡</span>
+                            <p className="leading-relaxed">{activeFlow.note}</p>
+                        </div>
+                    )}
+                </div>
+            </section>
+
             {/* Solution Flow Section */}
-            <section className="space-y-8 pt-12">
+            <section className="space-y-8 pt-12 border-t border-slate-100">
                 <div className="flex flex-col gap-2">
                     <h2 className="text-sm font-black text-slate-500 uppercase tracking-widest">
                         ソリューション・データフロー
@@ -295,7 +446,7 @@ export default function AdminSchemaPage() {
             </section>
 
             <footer className="pt-10 border-t border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">
-                SignsAI Object Model Schema Diagram v1.1 - Detailed & Solution Flow
+                SignsAI Object Model Schema Diagram v1.2 - Full Documentation
             </footer>
         </main>
     );
