@@ -105,7 +105,7 @@ export const MembersTab = ({
                             <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">付与する権限 <span className="text-rose-400">*</span></label>
                             <select
                                 value={inviteRole}
-                                onChange={(e) => setInviteRole(e.target.value)}
+                                onChange={(e) => setInviteRole(e.target.value as UserRole)}
                                 className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-600 outline-none focus:border-teal appearance-none"
                             >
                                 {USER_ROLES.map((r) => (
