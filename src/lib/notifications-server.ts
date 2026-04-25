@@ -1,6 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase-server";
 import { sendSlackNotification } from "./slack";
-import { getBaseURL } from "./utils";
+import { getBaseURL } from "@/lib/utils/index";
 
 type NotificationType = 
     | 'ai_summary' 
