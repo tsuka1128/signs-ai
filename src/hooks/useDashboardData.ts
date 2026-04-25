@@ -408,7 +408,7 @@ export function useDashboardData(company: Company | null, supabase: any, isImper
             ? "【注意】現在は代理ログイン中です。他社の本番データを書き換えますが、本当にAI分析を実行しますか？"
             : "AI分析を実行しますか？現在のデータに基づきインサイトを生成します。";
         
-        if (!confirm(msg)) return;
+        if (typeof window !== "undefined" && !confirm(msg)) return;
 
         try {
             setIsAnalyzing(true);

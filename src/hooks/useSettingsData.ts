@@ -544,7 +544,7 @@ export function useSettingsData() {
             ? "【注意】現在は代理ログイン中です。他社の本番データを書き換え、最新の分析を生成します。本当によろしいですか？"
             : "AI分析を実行しますか？現在設定されているKPIや部署情報などをもとに、組織状態の推測とドキュメント生成を行います。";
         
-        if (!confirm(msg)) return;
+        if (typeof window !== "undefined" && !confirm(msg)) return;
         setIsAnalyzing(true);
         try {
             const res = await fetch("/api/ai/analyze", { method: "POST" });
