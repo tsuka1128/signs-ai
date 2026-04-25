@@ -362,7 +362,7 @@ export default function KpiInputPage() {
         }
 
         const { error } = await supabase.from('kpi_records').upsert(upsertData, {
-            onConflict: 'kpi_definition_id, recorded_month, department_id'
+            onConflict: 'kpi_definition_id, recorded_month, department_id, axis_id'
         });
 
         if (error) {
