@@ -21,6 +21,7 @@ export function useSettingsData() {
     const [inviteEmail, setInviteEmail] = useState("");
     const [copied, setCopied] = useState(false);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const [isImpersonating, setIsImpersonating] = useState(false);
     
     // Invitation extra state
     const [inviteDeptId, setInviteDeptId] = useState("");
@@ -63,6 +64,9 @@ export function useSettingsData() {
             const storedId = typeof window !== "undefined" ? localStorage.getItem("impersonated_company_id") : null;
             if (storedId) {
                 targetId = storedId;
+                setIsImpersonating(true);
+            } else {
+                setIsImpersonating(false);
             }
         }
 
@@ -536,7 +540,11 @@ export function useSettingsData() {
     };
 
     const handleRunAnalyze = async () => {
-        if (!confirm("AI分析を実行しますか？現在設定されているKPIや部署情報などをもとに、組織状態の推測とドキュメント生成を行います。")) return;
+        const msg = isImpersonating 
+            ? "【注意】現在は代理ログイン中です。他社の本番データを書き換え、最新の分析を生成します。本当によろしいですか？"
+            : "AI分析を実行しますか？現在設定されているKPIや部署情報などをもとに、組織状態の推測とドキュメント生成を行います。";
+        
+        if (!confirm(msg)) return;
         setIsAnalyzing(true);
         try {
             const res = await fetch("/api/ai/analyze", { method: "POST" });
