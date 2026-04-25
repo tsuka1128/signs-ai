@@ -72,16 +72,6 @@ export default function DocsPage() {
                                 <p className="text-xs text-slate-400 leading-relaxed font-medium px-4">
                                     {step.desc}
                                 </p>
-                                {i === 0 && (
-                                    <div className="hidden md:block absolute top-8 left-[33%] translate-x-[-50%] text-slate-700">
-                                        <ArrowRight className="w-6 h-6 opacity-20" />
-                                    </div>
-                                )}
-                                {i === 1 && (
-                                    <div className="hidden md:block absolute top-8 left-[66%] translate-x-[-50%] text-slate-700">
-                                        <ArrowRight className="w-6 h-6 opacity-20" />
-                                    </div>
-                                )}
                             </div>
                         ))}
                     </div>

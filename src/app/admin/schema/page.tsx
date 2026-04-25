@@ -18,8 +18,7 @@ import {
     Database,
     ArrowRight,
     Lightbulb,
-    TrendingUp,
-    Workflow
+    TrendingUp
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils/index";
