@@ -18,6 +18,8 @@ export interface Database {
           domain: string | null
           website_url: string | null
           short_id: string | null
+          plan_type: string | null
+          secondary_axis_name: string | null
           kpi_secondary_axis_name: string | null
           secondary_axis_size_kpi_id: string | null
           addon_labor_analytics: boolean
