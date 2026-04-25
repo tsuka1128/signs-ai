@@ -29,11 +29,22 @@ CHECK (role IN ('admin', 'executive', 'manager', 'player', 'partner'));
 -- =====================================================
 -- 3. 通知設定テーブル (notification_settings)
 -- =====================================================
+-- 【設計方針】
+-- レコードが存在しない通知種別については「デフォルト値」が適用されるものとします。
+-- 初期状態（レコードなし）では slack_enabled=TRUE を基本とすることを想定しています。
 CREATE TABLE IF NOT EXISTS public.notification_settings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
     notification_type TEXT NOT NULL, 
-    -- 種別例: 'ai_summary', 'anomaly_alert', 'voice_check_reminder', 'voice_check_progress', 'kpi_reminder', 'action_reminder'
+    -- 種別制約
+    CONSTRAINT notification_type_check CHECK (notification_type IN (
+        'ai_summary',           -- AI診断結果サマリー
+        'anomaly_alert',        -- 異常検知アラート
+        'voice_check_reminder', -- ボイスチェック催促
+        'voice_check_progress', -- ボイスチェック進捗
+        'kpi_reminder',         -- KPI入力リマインド
+        'action_reminder'       -- アクション期日リマインド
+    )),
     slack_enabled BOOLEAN NOT NULL DEFAULT TRUE,
     email_enabled BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

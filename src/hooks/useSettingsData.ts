@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { Company, Department, KpiDefinition, KpiAxis, User, Invitation, ResourceRecord } from "@/types/database";
+import { UserRole } from "@/lib/constants";
 
 export function useSettingsData() {
     const router = useRouter();
@@ -22,7 +23,7 @@ export function useSettingsData() {
     const [copied, setCopied] = useState(false);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [isImpersonating, setIsImpersonating] = useState(false);
-    const [inviteRole, setInviteRole] = useState<any>("player");
+    const [inviteRole, setInviteRole] = useState<UserRole>("player");
     
     // Invitation extra state
     const [inviteDeptId, setInviteDeptId] = useState("");

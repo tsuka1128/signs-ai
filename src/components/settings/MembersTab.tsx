@@ -2,6 +2,7 @@
 
 import { UserPlus, Mail, ArrowRight, ShieldCheck, Edit3, Copy, Send, Trash2 } from "lucide-react";
 import { SlackHelpTooltip } from "@/components/ui/SlackHelpTooltip";
+import { USER_ROLES } from "@/lib/constants";
 
 interface MembersTabProps {
     inviteEmail: string;
@@ -107,11 +108,11 @@ export const MembersTab = ({
                                 onChange={(e) => setInviteRole(e.target.value)}
                                 className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-600 outline-none focus:border-teal appearance-none"
                             >
-                                <option value="player">一般メンバー (player)</option>
-                                <option value="manager">マネージャー (manager)</option>
-                                <option value="executive">経営層 (executive)</option>
-                                <option value="admin">管理者 (admin)</option>
-                                <option value="partner">外部パートナー (partner)</option>
+                                {USER_ROLES.map((r) => (
+                                    <option key={r.value} value={r.value}>
+                                        {r.label} ({r.value})
+                                    </option>
+                                ))}
                             </select>
                         </div>
 
