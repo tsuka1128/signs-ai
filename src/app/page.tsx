@@ -36,6 +36,14 @@ export default function DashboardPage() {
   const { company, loading: authLoading, supabase, isImpersonating, userRole, userDepartmentId } = useCompany();
   const { state, derived, handlers } = useDashboardData(company, supabase, isImpersonating, userRole, userDepartmentId);
 
+  // マネージャーの場合、初期表示を「全社」から自部署に切り替える
+  useEffect(() => {
+    if (userRole === 'manager' && userDepartmentId && tab === 'all') {
+      setTab(userDepartmentId);
+      setOrgView(userDepartmentId);
+    }
+  }, [userRole, userDepartmentId, tab]);
+
   const latestAi = state.realAiInsights[0];
   const aiContent = state.aiContent;
   const secondaryAxisName = company?.secondary_axis_name || "プロダクト";

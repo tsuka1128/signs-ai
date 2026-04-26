@@ -541,14 +541,16 @@ export function useDashboardData(
     }, [state.realResources, state.realDepts, state.realAxes, state.realKpis, displayDepts, displayAxes, last13Months]);
 
     const deptTabs = useMemo(() => {
-        const tabs = [{ id: "all", label: "全社" }];
-        
         let depts = state.realDepts;
         if (userRole === 'manager' && userDepartmentId) {
             depts = depts.filter(d => d.id === userDepartmentId);
+            // manager には「全社」タブを表示しない
+            return depts.map(d => ({ id: d.id, label: d.name }));
         }
-
-        return [...tabs, ...depts.map(d => ({ id: d.id, label: d.name }))];
+        return [
+            { id: "all", label: "全社" },
+            ...depts.map(d => ({ id: d.id, label: d.name }))
+        ];
     }, [state.realDepts, userRole, userDepartmentId]);
 
     return {
