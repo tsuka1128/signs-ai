@@ -116,6 +116,15 @@ export async function POST(req: Request) {
                 .eq('company_id', companyId)
                 .in('recorded_month', targetMonths)
         ]);
+        
+        // 3.1 データ存在チェック（バリデーション）
+        if (!depts.data || depts.data.length === 0) {
+            return NextResponse.json({ error: "分析対象の部署が登録されていません。部署設定を先に完了させてください。" }, { status: 400 });
+        }
+        if (!surveys.data || surveys.data.length === 0) {
+            return NextResponse.json({ error: "診断に必要なアンケート回答データ（ボイスチェック実績）が不足しています。" }, { status: 400 });
+        }
+        // KPIは任意だが、警告を出すか検討（現状は進めるが、空だと分析精度が落ちる）
 
         // データが足りない場合のフォールバック
         const policy = semantic.data?.content || "組織方針がまだ設定されていません。";
@@ -276,35 +285,55 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
         // 4.1 システム設定の取得
         const sysSettings = await getSystemSettings();
 
-        const aiResultRaw = await generateAIInsight(prompt, {
-            systemPrompt,
-            temperature: sysSettings['temperature'] ?? 0.2,
-            maxTokens: sysSettings['max_tokens'] ?? 3000,
-            model: sysSettings['default_model'] ?? "claude-3-7-sonnet-20250219",
-            apiKey: sysSettings['anthropic_api_key']
-        });
+        // ── タイムアウト制御（Vercel Pro 上限 60秒 を考慮して 55秒で切る） ──
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 55000);
 
-        // ── AI回答のJSON解析（堅牢化） ──
         let aiResult: any;
+
         try {
-            const cleanJson = aiResultRaw.replace(/```json\n?|\n?```/g, "").trim();
-            aiResult = JSON.parse(cleanJson);
-        } catch (jsonError) {
-            console.error("[AI JSON Parse Error]:", jsonError, "Raw Data:", aiResultRaw);
-            return NextResponse.json({ 
-                error: "AIの回答を解析できませんでした。再度実行をお試しください。",
-                detail: "Invalid JSON format from AI model" 
-            }, { status: 502 });
+            const aiResultRaw = await generateAIInsight(prompt, {
+                systemPrompt,
+                temperature: sysSettings['temperature'] ?? 0.2,
+                maxTokens: sysSettings['max_tokens'] ?? 3000,
+                model: sysSettings['default_model'] ?? "claude-3-7-sonnet-20250219",
+                apiKey: sysSettings['anthropic_api_key'],
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            // ── AI回答のJSON解析（堅牢化） ──
+            try {
+                const cleanJson = aiResultRaw.replace(/```json\n?|\n?```/g, "").trim();
+                aiResult = JSON.parse(cleanJson);
+            } catch (jsonError) {
+                console.error("[AI JSON Parse Error]:", jsonError, "Raw Data:", aiResultRaw);
+                return NextResponse.json({ 
+                    error: "AIの回答を解析できませんでした。再度実行をお試しください。",
+                    detail: "Invalid JSON format from AI model" 
+                }, { status: 502 });
+            }
+        } catch (error: any) {
+            clearTimeout(timeoutId); // エラー時もクリア
+            if (error.name === 'AbortError') {
+                console.error("AI Analysis Timeout Error: Request took longer than 55s");
+                return NextResponse.json({ 
+                    error: "AI分析がタイムアウトしました。分析範囲を絞るか、再度実行してください。",
+                    detail: "Vercel timeout limit reached" 
+                }, { status: 504 });
+            }
+            throw error; // その他のエラーは外側の catch へ
         }
 
-        // 5. 結果をDBに保存
-        const { error: insertError } = await supabase.from('ai_insights').insert({
+        // 5. 結果をDBに保存 (重複時は既存データを更新)
+        const { error: insertError } = await supabase.from('ai_insights').upsert({
             company_id: companyId,
-            insight_type: 'full_report', // または 'comprehensive'などに変更も可
+            insight_type: 'full_report',
             target_month: latestMonth,
             content: aiResult,
-            model_used: sysSettings['default_model'] ?? 'claude-3-7-sonnet-20250219'
-        });
+            model_used: sysSettings['default_model'] ?? 'claude-3-7-sonnet-20250219',
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'company_id, target_month, insight_type' });
 
         if (insertError) throw insertError;
 
@@ -363,6 +392,13 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
         return NextResponse.json({  success: true, data: aiResult });
 
     } catch (error: any) {
+        if (error.name === 'AbortError') {
+            console.error("AI Analysis Timeout Error: Request took longer than 55s");
+            return NextResponse.json({ 
+                error: "AI分析がタイムアウトしました。分析範囲を絞るか、再度実行してください。",
+                detail: "Vercel timeout limit reached" 
+            }, { status: 504 });
+        }
         console.error("AI Analysis API Error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }

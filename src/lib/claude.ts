@@ -21,6 +21,8 @@ interface GenerateOptions {
     temperature?: number;
     /** APIキー（DBから取得した値を渡す用） */
     apiKey?: string;
+    /** タイムアウト制御用のSignal */
+    signal?: AbortSignal;
 }
 
 /**
@@ -59,6 +61,7 @@ export async function generateAIInsight(prompt: string, options?: GenerateOption
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
+        signal: options?.signal,
         headers: {
             "Content-Type": "application/json",
             "x-api-key": apiKey,
