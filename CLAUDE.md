@@ -13,7 +13,7 @@ KPI×アンケートをAIで分析し経営者向けに提案する。
 ## 絶対に守るルール
 - RLSは必ず get_my_company_id() 関数を使う
 - 新テーブル追加時はRLSポリシーを必ず設定する
-- kpi_records の onConflict は 'kpi_definition_id,recorded_month,department_id'（axis_idは不要）
+- kpi_records の onConflict は 'kpi_definition_id,recorded_month,department_id,axis_id'（axis_id=NULLが部署基本データ、axis_id=IDが第2軸データとして区別される）
 - recorded_month は YYYY-MM-01 形式で保存
 - survey_responses の recorded_month は YYYY-MM 形式
 - エラー時はトースト表示（成功:緑 / 失敗:赤）
