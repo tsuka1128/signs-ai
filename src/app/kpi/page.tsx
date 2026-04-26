@@ -256,7 +256,7 @@ export default function KpiInputPage() {
         }
         setAllMonths(months);
 
-        const { data: userData } = await supabase.from('users').select('company_id, role').eq('id', authUser.id).single();
+        const { data: userData } = await supabase.from('users').select('company_id, role, department_id').eq('id', authUser.id).single();
         
         // 管理者以外で会社に所属していない場合はオンボーディングへ
         if (!userData?.company_id && userData?.role !== 'super_admin') {
@@ -292,13 +292,18 @@ export default function KpiInputPage() {
 
         // KPI定義取得
         const { data: kpis } = await supabase.from('kpi_definitions').select('id, name, unit, owner_dept_id, departments(name)').eq('company_id', effectiveId).order('sort_order', { ascending: true });
-        const formattedKpis = (kpis || []).map((k: any) => ({
+        let formattedKpis = (kpis || []).map((k: any) => ({
             id: k.id,
             name: k.name,
             unit: k.unit,
             owner_dept_id: k.owner_dept_id,
             owner_dept_name: k.departments?.name || "未設定"
         }));
+
+        if (userData?.role === 'manager' && userData.department_id) {
+            formattedKpis = formattedKpis.filter(k => k.owner_dept_id === userData.department_id);
+        }
+
         setKpiDefinitions(formattedKpis);
 
         // 実績値取得

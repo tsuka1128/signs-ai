@@ -33,8 +33,8 @@ export default function DashboardPage() {
   const [month, setMonth] = useState("default");
   const [showDeepReport, setShowDeepReport] = useState(false);
 
-  const { company, loading: authLoading, supabase, isImpersonating } = useCompany();
-  const { state, derived, handlers } = useDashboardData(company, supabase, isImpersonating);
+  const { company, loading: authLoading, supabase, isImpersonating, userRole, userDepartmentId } = useCompany();
+  const { state, derived, handlers } = useDashboardData(company, supabase, isImpersonating, userRole, userDepartmentId);
 
   const latestAi = state.realAiInsights[0];
   const aiContent = state.aiContent;

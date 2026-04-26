@@ -20,7 +20,13 @@ interface DashboardState {
     realActionItems: ActionItem[];
 }
 
-export function useDashboardData(company: Company | null, supabase: any, isImpersonating?: boolean) {
+export function useDashboardData(
+    company: Company | null, 
+    supabase: any, 
+    isImpersonating?: boolean,
+    userRole?: string | null,
+    userDepartmentId?: string | null
+) {
     const [state, setState] = useState<DashboardState>({
         realDepts: [],
         realKpis: [],
@@ -204,7 +210,14 @@ export function useDashboardData(company: Company | null, supabase: any, isImper
     }, [state.realResponses, state.realDepts, state.realAxes, last13Months, aiContent]);
 
     const displayDepts = useMemo(() => {
-        return state.realDepts.map(d => {
+        let depts = state.realDepts;
+
+        // manager は自部署のみ
+        if (userRole === 'manager' && userDepartmentId) {
+            depts = depts.filter(d => d.id === userDepartmentId);
+        }
+
+        return depts.map(d => {
             const latestMonth = last13Months[12];
             const deptResponses = state.realResponses.filter(r => r.department_id === d.id);
             const latestAnswers = deptResponses
@@ -296,7 +309,7 @@ export function useDashboardData(company: Company | null, supabase: any, isImper
                 })
             };
         });
-    }, [state.realDepts, state.realResponses, state.realKpis, state.realKpiRecords, state.realResources, last13Months]);
+    }, [state.realDepts, state.realResponses, state.realKpis, state.realKpiRecords, state.realResources, last13Months, userRole, userDepartmentId]);
 
     const displayKpis = useMemo(() => {
         return state.realKpis.map(k => ({
@@ -527,10 +540,16 @@ export function useDashboardData(company: Company | null, supabase: any, isImper
         return { hasLaborData, laborRoi, laborDistRate, totalLaborCost, deptFinanceData, avgLaborCostPerHead };
     }, [state.realResources, state.realDepts, state.realAxes, state.realKpis, displayDepts, displayAxes, last13Months]);
 
-    const deptTabs = useMemo(() => [
-        { id: "all", label: "全社" },
-        ...state.realDepts.map(d => ({ id: d.id, label: d.name }))
-    ], [state.realDepts]);
+    const deptTabs = useMemo(() => {
+        const tabs = [{ id: "all", label: "全社" }];
+        
+        let depts = state.realDepts;
+        if (userRole === 'manager' && userDepartmentId) {
+            depts = depts.filter(d => d.id === userDepartmentId);
+        }
+
+        return [...tabs, ...depts.map(d => ({ id: d.id, label: d.name }))];
+    }, [state.realDepts, userRole, userDepartmentId]);
 
     return {
         state: { ...state, isAnalyzing, last13Months, monthLabels, fullMonthLabels, aiContent, ...financialMetrics },

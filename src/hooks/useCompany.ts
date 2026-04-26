@@ -22,6 +22,9 @@ export function useCompany() {
     const [user, setUser] = useState<any>(null);
     const [isImpersonating, setIsImpersonating] = useState(false);
 
+    const [userRole, setUserRole] = useState<string | null>(null);
+    const [userDepartmentId, setUserDepartmentId] = useState<string | null>(null);
+
     // 1. 同期用: localStorage の変更を監視
     useEffect(() => {
         const handleStorageChange = (e: StorageEvent) => {
@@ -49,8 +52,13 @@ export function useCompany() {
                 }
                 setUser(authUser);
 
-                const { data: userData } = await supabase.from('users').select('company_id, role').eq('id', authUser.id).single();
+                const { data: userData } = await supabase.from('users').select('company_id, role, department_id').eq('id', authUser.id).single();
                 
+                if (userData) {
+                    setUserRole(userData.role);
+                    setUserDepartmentId(userData.department_id);
+                }
+
                 let targetId = userData?.company_id;
                 let usedImpersonation = false;
 
@@ -100,5 +108,16 @@ export function useCompany() {
         ? Math.max(0, (plan?.trial_duration_days || defaultTrialDays) - differenceInDays(new Date(), new Date(company.created_at)))
         : null;
 
-    return { company, plan, loading, user, supabase, isImpersonating, isTrial, trialDaysRemaining };
+    return { 
+        company, 
+        plan, 
+        loading, 
+        user, 
+        supabase, 
+        isImpersonating, 
+        isTrial, 
+        trialDaysRemaining,
+        userRole,
+        userDepartmentId
+    };
 }
