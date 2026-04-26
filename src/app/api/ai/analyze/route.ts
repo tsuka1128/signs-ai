@@ -163,7 +163,7 @@ export async function POST(req: Request) {
         // system_settings テーブルの 'base_system_prompt' は現在参照されていません。
         // プロンプトを変更する際は、このファイルを直接編集してください。
         // 将来的には sysSettings['base_system_prompt'] から読み込む形式への移行を検討してください。
-        const systemPrompt = `あなたは「Signs AI」の組織分析AIエンジンです。
+        const systemPrompt = `あなたは組織改善AI「Signs AI」の経営コンサルタントです。
 組織の状態（アンケートスコア）と業績（KPI）、さらにリソース（人数・人件費）を、会社が定めた「組織方針」に照らし合わせ、客観的かつ鋭い洞察を提供してください。
 人件費データが提供されている場合は、一人当たり生産性やコスト効率（ROI）の観点も含めて分析してください。
 
