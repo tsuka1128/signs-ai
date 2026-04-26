@@ -202,14 +202,14 @@ export async function POST(req: Request) {
   },
   "department_feedback": [
     {
-      "from_dept": "部署名",
-      "to_dept": "部署名",
+      "from_dept_id": "送信元部署ID",
+      "to_dept_id": "送信先部署ID",
       "type": "positive|warning|alert|info",
       "text": "部署間の連携に関するフィードバックテキスト"
     }
   ],
   "suggested_actions": [
-    { "title": "施策名", "description": "具体的な指示内容", "priority": "urgent|high|normal", "dept_name": "部署名または全社" }
+    { "title": "施策名", "description": "具体的な指示内容", "priority": "urgent|high|normal", "dept_id": "部署IDまたはnull(全社の場合)" }
   ],
   "semantic_summary": {
     "phase": "現在の組織フェーズ（例：スケール期、再構築期など）",
@@ -311,10 +311,14 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
         // アクションを action_items に保存
         if (aiResult.suggested_actions) {
             const actionsToInsert = aiResult.suggested_actions.map((a: any) => {
-                const dept = depts.data?.find(d => d.name === a.dept_name);
+                const targetDeptId = a.dept_id;
+                // 万が一AIがIDを返さず名前を返した場合のフォールバック
+                const resolvedDeptId = depts.data?.find(d => d.id === targetDeptId)?.id || 
+                                     depts.data?.find(d => d.name === a.dept_id)?.id || null;
+                
                 return {
                     company_id: companyId,
-                    department_id: dept?.id || null,
+                    department_id: resolvedDeptId,
                     title: a.title,
                     description: a.description,
                     priority: a.priority,

@@ -249,7 +249,11 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
                                                 return <p>{deptInsight.text}</p>;
                                             }
                                             
-                                            const deptAction = actions.find(a => a.dept.toLowerCase() === dept.name.toLowerCase() || a.dept === 'All' || a.dept === '全社');
+                                            // ID一致、または (全社指定 かつ 名前が一致)
+                                            const deptAction = actions.find(a => 
+                                                a.department_id === dept.id || 
+                                                (!a.department_id && (a.dept === 'All' || a.dept === '全社' || (a.dept && a.dept.toLowerCase() === dept.name.toLowerCase())))
+                                            );
                                             if (deptAction) {
                                                 const priorityLabel = deptAction.priority === 'urgent' ? '【最優先】' : deptAction.priority === 'high' ? '【重要】' : '';
                                                 const statusLabel = deptAction.initialStatus === 'accepted' ? '（継続中）' : deptAction.initialStatus === 'kept' ? '（キープ中）' : '';

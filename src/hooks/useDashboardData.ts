@@ -182,14 +182,21 @@ export function useDashboardData(company: Company | null, supabase: any, isImper
             const topicsRaw = aiContent?.voice_topics;
             let finalVoiceTopics = defaultVoiceTopics;
             
-            if (Array.isArray(topicsRaw) && topicsRaw.length > 0) {
-                finalVoiceTopics = topicsRaw.map((t: any, idx: number) => ({
-                    id: t.id || `ai_voice_${idx}`,
-                    topic: t.topic || "トピック不明",
-                    sentiment: t.sentiment || "neutral",
-                    abstractedVoice: t.abstractedVoice || "詳細なし",
-                    persona: t.persona || "全社"
-                }));
+            if (Array.isArray(topicsRaw)) {
+                if (topicsRaw.length > 0) {
+                    finalVoiceTopics = topicsRaw.map((t: any, idx: number) => ({
+                        id: t.id || `ai_voice_${idx}`,
+                        topic: t.topic || "トピック不明",
+                        sentiment: t.sentiment || "neutral",
+                        abstractedVoice: t.abstractedVoice || "詳細なし",
+                        persona: t.persona || "全社"
+                    }));
+                } else {
+                    // 空配列の場合は「分析済みだが話題なし」
+                    finalVoiceTopics = [
+                        { id: "v_none", topic: "トピックなし", sentiment: "neutral", abstractedVoice: "今月の回答内容に基づき分析をおこないましたが、共通する顕著な課題や話題は検出されませんでした。組織体温は安定しています。", persona: "システム" }
+                    ];
+                }
             }
 
             return { viewName, scores: qScores, prevScores: prevQScores, pulse: avgPulse, pulseHistory, aiComment: comment, responseCount, responseRate, voiceTopics: finalVoiceTopics as any[] };
