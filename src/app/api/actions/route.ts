@@ -41,7 +41,7 @@ export async function POST(req: Request) {
         const { data, error } = await supabase
             .from("action_items")
             .insert({
-                company_id: profile.company_id,
+                company_id: companyId,
                 department_id: department_id || null,
                 title,
                 description: description || "",

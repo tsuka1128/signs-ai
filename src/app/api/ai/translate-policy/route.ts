@@ -85,8 +85,18 @@ ${JSON.stringify(depts.map(d => ({ id: d.id, name: d.name })))}
             apiKey: sysSettings['anthropic_api_key']
         });
 
-        const cleanJson = aiResultRaw.replace(/```json\n?|\n?```/g, "").trim();
-        const aiResult = JSON.parse(cleanJson);
+        // ── AI回答のJSON解析（堅牢化） ──
+        let aiResult: any;
+        try {
+            const cleanJson = aiResultRaw.replace(/```json\n?|\n?```/g, "").trim();
+            aiResult = JSON.parse(cleanJson);
+        } catch (jsonError) {
+            console.error("[Translation AI JSON Parse Error]:", jsonError, "Raw Data:", aiResultRaw);
+            return NextResponse.json({ 
+                error: "AIの回答を解析できませんでした。",
+                detail: "Invalid JSON format from AI model" 
+            }, { status: 502 });
+        }
 
         return NextResponse.json({ success: true, translations: aiResult.translations });
 

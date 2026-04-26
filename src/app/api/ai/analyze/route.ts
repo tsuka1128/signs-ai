@@ -303,7 +303,7 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
             insight_type: 'full_report', // または 'comprehensive'などに変更も可
             target_month: latestMonth,
             content: aiResult,
-            model_used: 'claude-3-7-sonnet-20250219'
+            model_used: sysSettings['default_model'] ?? 'claude-3-7-sonnet-20250219'
         });
 
         if (insertError) throw insertError;
