@@ -13,9 +13,10 @@ interface ScatterData {
     kpiName?: string;
     prevHead?: number;
     mrr?: number;
-    sizeValue?: number; // 追加
+    sizeValue?: number;
     respondentsCount?: number;
     masterHeadcount?: number;
+    hasKpiData?: boolean;
 }
 
 interface ScatterPlotProps {
@@ -96,16 +97,14 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
                 const y = cy(d.productivity);
 
                 // 円の半径を計算
-                let r = Math.max(12, Math.min(48, (d.kpiAch / 100) * 20));
+                let r = 12; // データなしのデフォルト最小サイズ
 
-                if (isProduct) {
-                    // sizeValue があれば優先使用。なければ mrr や kpiAch
-                    const valForSize = d.sizeValue !== undefined ? d.sizeValue : (d.mrr || d.kpiAch || 100);
-                    r = Math.max(12, Math.min(48, (valForSize / 100) * 20));
-
-                    // 特例: 全くデータがない（初期値100）の場合のみ、所属人数の規模に応じて少し大きくする
-                    if (valForSize === 100 && d.kpiAch === 100 && d.head > 0) {
-                        r = Math.max(16, Math.min(50, (d.head / 10) * 5));
+                if (d.hasKpiData) {
+                    if (isProduct) {
+                        const valForSize = d.sizeValue !== undefined ? d.sizeValue : d.kpiAch;
+                        r = Math.max(12, Math.min(48, (valForSize / 100) * 20));
+                    } else {
+                        r = Math.max(12, Math.min(48, (d.kpiAch / 100) * 20));
                     }
                 }
 
@@ -133,11 +132,12 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
 
                         <circle
                             cx={0} cy={0} r={r}
-                            fill={col} opacity={0.15}
+                            fill={col} opacity={d.hasKpiData === false ? 0.05 : 0.15}
                             stroke={col} strokeWidth={1.5}
+                            strokeDasharray={d.hasKpiData === false ? "3,3" : "0"}
                             className="transition-all duration-300 ease-in-out group-hover:opacity-40"
                         />
-                        {isAchieved && (
+                        {isAchieved && d.hasKpiData !== false && (
                             <circle
                                 cx={0} cy={0} r={4}
                                 fill={col}
@@ -145,7 +145,7 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
                                 style={{ transformOrigin: "0px 0px" }}
                             />
                         )}
-                        <circle cx={0} cy={0} r={4} fill={col} />
+                        <circle cx={0} cy={0} r={4} fill={col} opacity={d.hasKpiData === false ? 0.3 : 1} />
 
                         {/* 部署名 / プロダクト名 背景とテキスト */}
                         <rect x={-40} y={-r - 32} width={80} height={14} rx={3} fill="white" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
@@ -155,7 +155,9 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
                         {!isProduct && (
                             <>
                                 <rect x={-40} y={-r - 18} width={80} height={12} rx={3} fill="white" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-                                <text x={0} y={-r - 10} textAnchor="middle" className="text-[9px] fill-slate-500 font-bold transition-all duration-1000 ease-in-out pointer-events-none">KPI: {d.kpiName || `${d.kpiAch}%`}</text>
+                                <text x={0} y={-r - 10} textAnchor="middle" className="text-[9px] fill-slate-500 font-bold transition-all duration-1000 ease-in-out pointer-events-none">
+                                    KPI: {d.hasKpiData === false ? "未入力" : (d.kpiName || `${d.kpiAch}%`)}
+                                </text>
                             </>
                         )}
 
