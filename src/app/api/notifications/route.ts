@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 // GET /api/notifications -> 自分宛ての未読通知一覧 (最大20件)
 export async function GET() {
   const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   
   const { data: notifications, error } = await supabase
     .from("notifications")
@@ -22,6 +24,9 @@ export async function GET() {
 // PATCH /api/notifications -> { ids: string[] } で既読にする
 export async function PATCH(request: Request) {
   const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { ids } = await request.json();
 
   if (!Array.isArray(ids) || ids.length === 0) {
