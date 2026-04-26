@@ -30,7 +30,7 @@ export const IntegrationTab = ({
                 <div className="space-y-8">
                     <div>
                         <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-                            <Link2 className="w-5 h-5 text-teal" /> Slack 連携設定
+                            <Link2 className="w-5 h-5 text-teal" /> Slack連携
                         </h2>
                         <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 space-y-6">
                             <div className="max-w-xl">
@@ -121,13 +121,16 @@ export const IntegrationTab = ({
                                 {/* 各通知タイプのテキストエリア */}
                                 {[
                                     { key: "slack_msg_ai_summary",    label: "AI分析完了通知",        defaultKey: "ai_summary" },
-                                    { key: "slack_msg_anomaly_alert", label: "異常スコアアラート",     defaultKey: "anomaly_alert" },
+                                    { key: "slack_msg_anomaly_alert", label: "異常スコアアラート",     defaultKey: "anomaly_alert", hint: "※この後に検知された詳細リストが自動で続きます" },
                                     { key: "slack_msg_voice_check",   label: "ボイスチェックリマインド", defaultKey: "voice_check" },
                                     { key: "slack_msg_kpi_reminder",  label: "KPI実績入力リマインド",  defaultKey: "kpi_reminder" },
-                                ].map(({ key, label, defaultKey }) => (
+                                ].map(({ key, label, defaultKey, hint }) => (
                                     <div key={key} className="space-y-2">
                                         <div className="flex items-center justify-between px-1">
-                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{label}</label>
+                                            <div className="flex items-center gap-2">
+                                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{label}</label>
+                                                {hint && <span className="text-[9px] text-rose-400 font-bold">{hint}</span>}
+                                            </div>
                                             <button
                                                 type="button"
                                                 onClick={() => setCompany({ ...company, [key]: null })}
