@@ -352,7 +352,7 @@ export default function AdminSchemaPage() {
                                     </div>
                                 </div>
                                 {i < activeFlow.steps.length - 1 && (
-                                    <div className="text-slate-300/50 font-black text-2xl animate-pulse">
+                                    <div className="text-slate-300/50 font-black text-2xl">
                                         ▸
                                     </div>
                                 )}
