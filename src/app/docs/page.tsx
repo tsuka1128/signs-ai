@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { 
     BookOpen, 
     MessageSquare, 
@@ -46,14 +45,11 @@ export default function DocsPage() {
 
                     {/* Integrated SVG Diagram for Admin Journey */}
                     <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-[32px] p-8 flex items-center justify-center shadow-inner overflow-hidden">
-                        <div className="relative w-full max-w-4xl aspect-[16/9]">
-                            <Image 
-                                src="/SignsAI%20_svg/signsai_flow_admin.svg" 
-                                alt="Signs AI Solution Flow"
-                                fill
-                                className="object-contain drop-shadow-2xl"
-                            />
-                        </div>
+                        <img 
+                            src="/SignsAI%20_svg/signsai_flow_admin.svg" 
+                            alt="Signs AI Solution Flow"
+                            className="max-w-full h-auto drop-shadow-2xl"
+                        />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
