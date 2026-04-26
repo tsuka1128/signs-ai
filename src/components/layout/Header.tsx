@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/Badge";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
-import { Menu, X, Bell, CheckCircle2, ChevronDown, LogOut } from "lucide-react";
+import { Menu, X, Bell, CheckCircle2, ChevronDown, LogOut, UserCog } from "lucide-react";
 import { useNotifications, Notification } from "@/hooks/useNotifications";
 import { useRouter } from "next/navigation";
 
@@ -24,6 +24,14 @@ export function Header({ isMobile, onMobileMenuClick }: HeaderProps) {
     const [userEmail, setUserEmail] = useState("");
     const [deptName, setDeptName] = useState<string | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
+    const [axisName, setAxisName] = useState<string | null>(null);
+    const [showProfileModal, setShowProfileModal] = useState(false);
+    const [depts, setDepts] = useState<any[]>([]);
+    const [axes, setAxes] = useState<any[]>([]);
+    const [profileForm, setProfileForm] = useState({
+        display_name: "", department_id: "", axis_id: "", slack_user_id: ""
+    });
+    const [profileSaving, setProfileSaving] = useState(false);
 
     const { unreadCount, notifications, markAsRead, handleNotificationClick } = useNotifications();
 
@@ -46,13 +54,14 @@ export function Header({ isMobile, onMobileMenuClick }: HeaderProps) {
 
                 const { data: profile } = await supabase
                     .from("users")
-                    .select("role, department_id, display_name, companies(id, name, plans(name)), departments(name)")
+                    .select("role, department_id, axis_id, display_name, slack_user_id, companies(id, name, plans(name)), departments(name), axes(name)")
                     .eq("id", user.id)
                     .single();
 
                 if (profile) {
                     setDeptName((profile as any)?.departments?.name ?? null);
                     setUserRole(profile.role ?? null);
+                    setAxisName((profile as any)?.axes?.name ?? null);
                 }
 
                 const impersonatedId = (profile?.role === 'super_admin' && typeof window !== "undefined")
@@ -79,13 +88,33 @@ export function Header({ isMobile, onMobileMenuClick }: HeaderProps) {
                     const pName = comp?.plans?.name || "Standard";
                     setPlanName(pName);
                 }
+
+                // 部署・担当領域の選択肢を取得
+                if (profile) {
+                    const effectiveCompanyId = impersonatedId || (profile as any)?.companies?.id;
+                    if (effectiveCompanyId) {
+                        const [deptsRes, axesRes] = await Promise.all([
+                            supabase.from("departments").select("id, name").eq("company_id", effectiveCompanyId).order("sort_order"),
+                            supabase.from("axes").select("id, name").eq("company_id", effectiveCompanyId),
+                        ]);
+                        setDepts(deptsRes.data ?? []);
+                        setAxes(axesRes.data ?? []);
+                        setProfileForm({
+                            display_name: profile.display_name ?? "",
+                            department_id: profile.department_id ?? "",
+                            axis_id: (profile as any).axis_id ?? "",
+                            slack_user_id: (profile as any).slack_user_id ?? "",
+                        });
+                    }
+                }
             }
         };
         fetchUserData();
     }, []);
 
     return (
-        <header className="h-16 flex items-center justify-between px-6 bg-white border-b border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] sticky top-0 z-50">
+        <>
+            <header className="h-16 flex items-center justify-between px-6 bg-white border-b border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] sticky top-0 z-50">
             <div className="flex items-center gap-4">
                 {/* Mobile Menu Trigger */}
                 <button 
@@ -205,7 +234,19 @@ export function Header({ isMobile, onMobileMenuClick }: HeaderProps) {
                                     <p className="text-[9px] text-slate-400 font-bold mt-0.5">
                                         {deptName ?? "部署未設定"} · {userRole ? (ROLE_LABELS[userRole] ?? userRole) : "ロール未設定"}
                                     </p>
+                                    {axisName && (
+                                        <p className="text-[9px] text-slate-400 font-bold mt-0.5">
+                                            担当領域: {axisName}
+                                        </p>
+                                    )}
                                 </div>
+                                <button
+                                    onClick={() => { setShowProfileModal(true); setShowUserMenu(false); }}
+                                    className="w-full text-left px-4 py-3 text-[12px] font-bold text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-2 border-b border-slate-50"
+                                >
+                                    <UserCog className="w-3.5 h-3.5 text-slate-400" />
+                                    プロフィール設定
+                                </button>
                                 <button
                                     onClick={async () => { await supabase.auth.signOut(); window.location.href = "/login"; }}
                                     className="w-full text-left px-4 py-3 text-[12px] font-bold text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-2"
@@ -219,6 +260,93 @@ export function Header({ isMobile, onMobileMenuClick }: HeaderProps) {
                 </div>
             </div>
         </header>
+
+        {/* Profile Edit Modal */}
+        {showProfileModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                    <div className="p-8 border-b border-slate-100 flex items-center justify-between">
+                        <h3 className="text-xl font-black text-slate-800 tracking-tighter">プロフィール設定</h3>
+                        <button onClick={() => setShowProfileModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                            <X className="w-5 h-5 text-slate-400" />
+                        </button>
+                    </div>
+                    <div className="p-8 space-y-5">
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest">氏名 (任意)</label>
+                            <input
+                                type="text"
+                                value={profileForm.display_name}
+                                onChange={(e) => setProfileForm({ ...profileForm, display_name: e.target.value })}
+                                placeholder="例: 佐藤 太郎"
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-teal transition-all"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest">所属部署</label>
+                            <select
+                                value={profileForm.department_id}
+                                onChange={(e) => setProfileForm({ ...profileForm, department_id: e.target.value })}
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-teal transition-all"
+                            >
+                                <option value="">未設定</option>
+                                {depts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest">担当領域</label>
+                            <select
+                                value={profileForm.axis_id}
+                                onChange={(e) => setProfileForm({ ...profileForm, axis_id: e.target.value })}
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-teal transition-all"
+                            >
+                                <option value="">未設定</option>
+                                {axes.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest">Slack User ID (任意)</label>
+                            <input
+                                type="text"
+                                value={profileForm.slack_user_id}
+                                onChange={(e) => setProfileForm({ ...profileForm, slack_user_id: e.target.value })}
+                                placeholder="例: U12345678"
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-teal transition-all"
+                            />
+                        </div>
+                    </div>
+                    <div className="p-8 bg-slate-50 flex gap-3">
+                        <button
+                            onClick={() => setShowProfileModal(false)}
+                            className="flex-1 py-4 bg-white border border-slate-200 rounded-2xl text-slate-400 font-bold"
+                        >
+                            キャンセル
+                        </button>
+                        <button
+                            onClick={async () => {
+                                setProfileSaving(true);
+                                const res = await fetch("/api/profile", {
+                                    method: "PATCH",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify(profileForm),
+                                });
+                                if (res.ok) {
+                                    setDeptName(depts.find(d => d.id === profileForm.department_id)?.name ?? null);
+                                    setAxisName(axes.find(a => a.id === profileForm.axis_id)?.name ?? null);
+                                    setShowProfileModal(false);
+                                }
+                                setProfileSaving(false);
+                            }}
+                            disabled={profileSaving}
+                            className="flex-[2] py-4 bg-teal text-white rounded-2xl font-black shadow-lg shadow-teal/20 hover:bg-teal-600 transition-all disabled:opacity-50"
+                        >
+                            {profileSaving ? "保存中..." : "保存する"}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+        </>
     );
 }
 
