@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Settings2, Sparkles } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { cn } from "@/lib/utils/index";
@@ -23,12 +24,19 @@ import { HistoryModal } from "@/components/settings/HistoryModal";
 import { MemberEditModal } from "@/components/settings/MemberEditModal";
 
 export default function SettingsPage() {
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState("company");
-    const { state, handlers } = useSettingsData();
+    const { state, handlers, userRole } = useSettingsData();
     const { plan, limits } = usePlanFeatures();
 
-    if (state.loading) {
-        return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    useEffect(() => {
+        if (!state.loading && userRole !== "super_admin" && userRole !== "admin") {
+            router.push("/");
+        }
+    }, [state.loading, userRole, router]);
+
+    if (state.loading || (userRole !== "super_admin" && userRole !== "admin")) {
+        return <div className="flex items-center justify-center min-h-screen">認証中...</div>;
     }
 
     return (

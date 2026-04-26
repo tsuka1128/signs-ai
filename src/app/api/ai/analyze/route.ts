@@ -6,7 +6,6 @@ import { NextResponse } from "next/server";
 import { normalizeMonth, getLastNMonths } from "@/lib/utils/date";
 import { sendAiSummaryNotification, sendAnomalyAlertNotification } from "@/lib/notifications-server";
 
-// デフォルトのシステムプロンプト（DBに設定がない場合のフォールバック）
 const DEFAULT_SYSTEM_PROMPT = `あなたは組織改善AI「Signs AI」の経営コンサルタントです。
 組織の状態（アンケートスコア）と業績（KPI）、さらにリソース（人数・人件費）を、会社が定めた「組織方針」に照らし合わせ、客観的かつ鋭い洞察を提供してください。
 人件費データが提供されている場合は、一人当たり生産性やコスト効率（ROI）の観点も含めて分析してください。
@@ -85,6 +84,8 @@ const DEFAULT_SYSTEM_PROMPT = `あなたは組織改善AI「Signs AI」の経営
 export async function POST(req: Request) {
     try {
         const supabase = await createServerSupabaseClient();
+        const sysSettings = await getSystemSettings();
+        const systemPrompt = sysSettings['base_system_prompt'] || DEFAULT_SYSTEM_PROMPT;
 
         // 1. 認証チェック
         const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -200,8 +201,6 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "診断に必要なアンケート回答データ（ボイスチェック実績）が不足しています。" }, { status: 400 });
         }
 
-        const policy = semantic.data?.content || "組織方針がまだ設定されていません。";
-
         const summarizeMonth = (month: string) => {
             const monthSurveys = surveys.data?.filter(s => normalizeMonth(s.recorded_month) === normalizeMonth(month)) || [];
             const monthKpis = kpiRecs.data?.filter(r => normalizeMonth(r.recorded_month) === normalizeMonth(month)) || [];
@@ -229,10 +228,6 @@ export async function POST(req: Request) {
             "6m": summarizeMonth(historicalMonths["6m"]),
             "12m": summarizeMonth(historicalMonths["12m"]),
         };
-
-        // 4. システム設定とプロンプトの構築
-        const sysSettings = await getSystemSettings();
-        const systemPrompt = sysSettings['base_system_prompt'] || DEFAULT_SYSTEM_PROMPT;
 
         // 部署別データの集約とスコア集計
         const deptScores: { deptId: string; deptName: string; avgScore: number }[] = [];
@@ -262,6 +257,7 @@ export async function POST(req: Request) {
                 voice_comments: comments
             };
         });
+        const policy = semantic.data?.content || "組織方針がまだ設定されていません。";
 
         const prompt = `対象月: ${latestMonth}
 各データセクションは ### DATA START と ### DATA END で区切られています。

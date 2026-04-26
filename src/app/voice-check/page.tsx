@@ -44,7 +44,13 @@ export default function VoiceCheckPage() {
             
             // 管理者以外で会社に所属していない場合は処理中断
             if (!userData?.company_id && userData?.role !== 'super_admin') {
-                setLoading(false);
+                router.push("/");
+                return;
+            }
+
+            // Role check: Only admin and super_admin allowed
+            if (userData?.role !== 'admin' && userData?.role !== 'super_admin') {
+                router.push("/");
                 return;
             }
 

@@ -57,6 +57,7 @@ export function Sidebar({
     const supabase = createClient();
     const [companyName, setCompanyName] = useState("");
     const [userInitial, setUserInitial] = useState("?");
+    const [userRole, setUserRole] = useState<string>("player");
     const [isDashboardExpanded, setIsDashboardExpanded] = useState(true);
     const [isManageOpen, setIsManageOpen] = useState(false);
 
@@ -75,6 +76,7 @@ export function Sidebar({
                 
                 if (profile) {
                     setCompanyName((profile as any).companies?.name || "Signs AI User");
+                    setUserRole(profile.role || "player");
                 }
             }
         };
@@ -219,30 +221,36 @@ export function Sidebar({
                                     Management
                                 </p>
                                 <div className="space-y-0.5">
-                                    <Link 
-                                        href="/kpi" 
-                                        onClick={() => { setIsManageOpen(false); setIsMobileOpen?.(false); }}
-                                        className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all hover:text-slate-900"
-                                    >
-                                        <Activity className="w-4 h-4 text-slate-400" />
-                                        KPI入力
-                                    </Link>
-                                    <Link 
-                                        href="/voice-check" 
-                                        onClick={() => { setIsManageOpen(false); setIsMobileOpen?.(false); }}
-                                        className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all hover:text-slate-900"
-                                    >
-                                        <CheckCircle2 className="w-4 h-4 text-slate-400" />
-                                        ボイスチェック
-                                    </Link>
-                                    <Link 
-                                        href="/settings" 
-                                        onClick={() => { setIsManageOpen(false); setIsMobileOpen?.(false); }}
-                                        className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all hover:text-slate-900"
-                                    >
-                                        <Settings className="w-4 h-4 text-slate-400" />
-                                        設定管理
-                                    </Link>
+                                    {(userRole === 'super_admin' || userRole === 'admin' || userRole === 'manager') && (
+                                        <Link 
+                                            href="/kpi" 
+                                            onClick={() => { setIsManageOpen(false); setIsMobileOpen?.(false); }}
+                                            className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all hover:text-slate-900"
+                                        >
+                                            <Activity className="w-4 h-4 text-slate-400" />
+                                            KPI入力
+                                        </Link>
+                                    )}
+                                    {(userRole === 'super_admin' || userRole === 'admin') && (
+                                        <Link 
+                                            href="/voice-check" 
+                                            onClick={() => { setIsManageOpen(false); setIsMobileOpen?.(false); }}
+                                            className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all hover:text-slate-900"
+                                        >
+                                            <CheckCircle2 className="w-4 h-4 text-slate-400" />
+                                            ボイスチェック
+                                        </Link>
+                                    )}
+                                    {(userRole === 'super_admin' || userRole === 'admin') && (
+                                        <Link 
+                                            href="/settings" 
+                                            onClick={() => { setIsManageOpen(false); setIsMobileOpen?.(false); }}
+                                            className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all hover:text-slate-900"
+                                        >
+                                            <Settings className="w-4 h-4 text-slate-400" />
+                                            設定管理
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
                         </>

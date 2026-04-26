@@ -20,6 +20,7 @@ export function useSettingsData() {
     const [inviteEmail, setInviteEmail] = useState("");
     const [copied, setCopied] = useState(false);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const [userRole, setUserRole] = useState<UserRole | "super_admin">("player");
     const [isImpersonating, setIsImpersonating] = useState(false);
     const [inviteRole, setInviteRole] = useState<UserRole>("player");
     
@@ -57,6 +58,7 @@ export function useSettingsData() {
 
         const { data: userData } = await supabase.from('users').select('company_id, role').eq('id', authUser.id).single();
         
+        if (userData?.role) setUserRole(userData.role as any);
         let targetId = userData?.company_id;
 
         if (userData?.role === 'super_admin') {
@@ -640,6 +642,7 @@ export function useSettingsData() {
             handleOpenHistory, handleSaveHistory, getHistoryTrend, handleStartEditUser,
             handleSaveUserDetail, handleDeleteUser, handleRunAnalyze, handleRemindVoiceCheck,
             handlePreviewNotification, handleRemindKpi
-        }
+        },
+        userRole
     };
 }
