@@ -60,6 +60,7 @@ const ROLE_FLOWS = [
     label: "管理者",
     color: "bg-emerald-100 text-emerald-700 border-emerald-200",
     badgeColor: "bg-emerald-500",
+    svgPath: "/SignsAI%20_svg/signsai_flow_admin.svg",
     description: "システム全体のセットアップを担う。テナント構築からAI分析燃料の投入まで一貫して管理する。",
     steps: [
       { no: 1, object: "Company 作成", fields: "name / plan_id / status", zone: "テナント基盤", color: "emerald" },
@@ -78,6 +79,7 @@ const ROLE_FLOWS = [
     label: "プレイヤー（現場）",
     color: "bg-rose-100 text-rose-700 border-rose-200",
     badgeColor: "bg-rose-500",
+    svgPath: "/SignsAI%20_svg/signsai_flow_player.svg",
     description: "接点は最小。Invitationで参加し、毎月Slack通知を受けてアンケートに回答するだけ。",
     steps: [
       { no: 1, object: "Invitation 受け取り", fields: "→ User生成 (role:player)", zone: "管理系", color: "slate" },
@@ -92,6 +94,7 @@ const ROLE_FLOWS = [
     label: "エグゼクティブ（経営者）",
     color: "bg-amber-100 text-amber-700 border-amber-200",
     badgeColor: "bg-amber-500",
+    svgPath: "/SignsAI%20_svg/signsai_flow_executive.svg",
     description: "読み専。AiInsightを起点に全社データを横断参照し、ActionItemの承認・作成につなげる。",
     steps: [
       { no: 1, object: "AiInsight 閲覧（全社）", fields: "audience_role: executive", zone: "AI分析", color: "amber" },
@@ -107,6 +110,7 @@ const ROLE_FLOWS = [
     label: "パートナー（VC・コンサル）",
     color: "bg-pink-100 text-pink-700 border-pink-200",
     badgeColor: "bg-pink-500",
+    svgPath: "/SignsAI%20_svg/signsai_flow_partner.svg",
     description: "partner_access_controlで許可された複数社を横断。各社の文脈を掴みAiInsightを読んでActionItemを提案する。",
     steps: [
       { no: 1, object: "複数社横断アクセス", fields: "partner_access_control で許可された企業", zone: "テナント基盤", color: "emerald" },
@@ -341,6 +345,16 @@ export default function AdminSchemaPage() {
                             </p>
                         </div>
 
+                        {/* SVG Illustration */}
+                        {activeFlow.svgPath && (
+                            <div className="bg-white/60 backdrop-blur-sm border border-white/50 rounded-[32px] p-8 flex items-center justify-center shadow-inner overflow-hidden min-h-[300px]">
+                                <img 
+                                    src={activeFlow.svgPath} 
+                                    alt={`${activeFlow.label} Flow`}
+                                    className="max-w-full h-auto drop-shadow-lg"
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex flex-wrap gap-4 items-stretch">
