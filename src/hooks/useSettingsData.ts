@@ -41,7 +41,8 @@ export function useSettingsData() {
         display_name: "",
         slack_user_id: "",
         department_id: "",
-        axis_id: ""
+        axis_id: "",
+        role: "player"
     });
 
     const loadSettings = useCallback(async () => {
@@ -538,7 +539,8 @@ export function useSettingsData() {
             display_name: u.display_name || "",
             slack_user_id: (u as any).slack_user_id || "",
             department_id: u.department_id || "",
-            axis_id: u.axis_id || ""
+            axis_id: u.axis_id || "",
+            role: u.role || "player"
         });
     };
 
@@ -549,7 +551,8 @@ export function useSettingsData() {
             display_name: editForm.display_name || null,
             slack_user_id: editForm.slack_user_id || null,
             department_id: editForm.department_id || null,
-            axis_id: editForm.axis_id || null
+            axis_id: editForm.axis_id || null,
+            role: editForm.role
         } as any).eq('id', editingUser.id);
 
         if (!error) {

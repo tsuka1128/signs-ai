@@ -2,6 +2,7 @@
 
 import { X, Save, Trash2 } from "lucide-react";
 import { SlackHelpTooltip } from "@/components/ui/SlackHelpTooltip";
+import { USER_ROLES } from "@/lib/constants";
 
 interface MemberEditModalProps {
     userEmail: string;
@@ -52,6 +53,28 @@ export const MemberEditModal = ({
                                 placeholder="例: 佐藤 太郎"
                                 className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-teal transition-all"
                             />
+                        </div>
+
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-400 mb-2 ml-1 uppercase tracking-widest">
+                                権限ロール
+                            </label>
+                            <select
+                                value={editForm.role || ''}
+                                onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:border-teal transition-all"
+                            >
+                                {USER_ROLES.map((r) => (
+                                    <option key={r.value} value={r.value}>
+                                        {r.label}
+                                    </option>
+                                ))}
+                            </select>
+                            {editForm.role === 'manager' && !editForm.department_id && (
+                                <p className="text-[10px] text-rose-400 mt-1.5 ml-1 font-bold">
+                                    マネージャーには所属部署の設定が必要です
+                                </p>
+                            )}
                         </div>
 
                         <div>

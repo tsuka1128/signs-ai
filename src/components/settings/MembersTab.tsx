@@ -78,7 +78,14 @@ export const MembersTab = ({
                         </div>
                         
                         <div>
-                            <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">所属部署 (任意)</label>
+                            <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase tracking-widest">
+                                所属部署
+                                {inviteRole === 'manager' ? (
+                                    <span className="text-rose-400 ml-1">*</span>
+                                ) : (
+                                    <span className="text-slate-300 ml-1">(任意)</span>
+                                )}
+                            </label>
                             <select
                                 value={inviteDeptId}
                                 onChange={(e) => setInviteDeptId(e.target.value)}
@@ -110,7 +117,7 @@ export const MembersTab = ({
                             >
                                 {USER_ROLES.map((r) => (
                                     <option key={r.value} value={r.value}>
-                                        {r.label} ({r.value})
+                                        {r.label}
                                     </option>
                                 ))}
                             </select>
@@ -144,7 +151,8 @@ export const MembersTab = ({
                     <div className="flex justify-end pt-4">
                         <button
                             onClick={handleInvite}
-                            disabled={!inviteEmail}
+                            disabled={!inviteEmail || (inviteRole === 'manager' && !inviteDeptId)}
+                            title={inviteRole === 'manager' && !inviteDeptId ? 'マネージャーには所属部署の設定が必要です' : undefined}
                             className="bg-teal text-white px-10 py-4 rounded-2xl font-black hover:bg-teal-600 transition-all shadow-xl shadow-teal/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             招待メールを送信 <ArrowRight className="w-5 h-5" />
@@ -164,6 +172,7 @@ export const MembersTab = ({
                                 <tr className="bg-slate-50 border-b border-slate-100">
                                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">メンバー</th>
                                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">所属部署</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">権限</th>
                                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">担当領域</th>
                                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Slack ID</th>
                                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">設定</th>
@@ -194,6 +203,11 @@ export const MembersTab = ({
                                                 ) : (
                                                     <span className="text-slate-300 text-[10px] font-bold">未設定</span>
                                                 )}
+                                            </td>
+                                            <td className="px-6 py-5">
+                                                <span className="inline-flex px-3 py-1 rounded-full text-[10px] font-black bg-slate-100 text-slate-500">
+                                                    {USER_ROLES.find(r => r.value === u.role)?.label?.split('（')[0] ?? u.role}
+                                                </span>
                                             </td>
                                             <td className="px-6 py-5">
                                                 <div className="flex flex-col gap-1">
