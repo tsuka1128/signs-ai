@@ -1,10 +1,22 @@
 import { createClient } from "@supabase/supabase-js";
 
 // サービスロールを使用して通知を作成するための管理者クライアント
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+let supabaseAdmin: any = null;
+
+function getSupabaseAdmin() {
+  if (supabaseAdmin) return supabaseAdmin;
+  
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !key) {
+    // ビルド時はここを通る可能性があるが、関数が呼ばれない限りエラーにはならない
+    return null;
+  }
+
+  supabaseAdmin = createClient(url, key);
+  return supabaseAdmin;
+}
 
 export type NotificationType =
   | "ai_analysis_done"
@@ -32,7 +44,13 @@ export interface CreateNotificationParams {
  * 新しい通知を作成します（サーバーサイド専用）
  */
 export async function createNotification(params: CreateNotificationParams) {
-  const { error } = await supabaseAdmin.from("notifications").insert({
+  const admin = getSupabaseAdmin();
+  if (!admin) {
+    console.warn("createNotification skipped: Supabase admin client not initialized (check env vars)");
+    return;
+  }
+
+  const { error } = await admin.from("notifications").insert({
     company_id: params.companyId,
     type: params.type,
     title: params.title,
