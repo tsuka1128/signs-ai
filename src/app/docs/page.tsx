@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { 
     BookOpen, 
     MessageSquare, 
@@ -41,6 +42,18 @@ export default function DocsPage() {
                     <div className="text-center space-y-3">
                         <h2 className="text-2xl font-black tracking-tight">Signs AI が組織課題を解決する仕組み</h2>
                         <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">How it Works</p>
+                    </div>
+
+                    {/* Integrated SVG Diagram for Admin Journey */}
+                    <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-[32px] p-8 flex items-center justify-center shadow-inner overflow-hidden">
+                        <div className="relative w-full max-w-4xl aspect-[16/9]">
+                            <Image 
+                                src="/SignsAI%20_svg/signsai_flow_admin.svg" 
+                                alt="Signs AI Solution Flow"
+                                fill
+                                className="object-contain drop-shadow-2xl"
+                            />
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
