@@ -54,14 +54,12 @@ export function Header({ isMobile, onMobileMenuClick }: HeaderProps) {
 
                 const { data: profile } = await supabase
                     .from("users")
-                    .select("role, department_id, axis_id, display_name, slack_user_id, companies(id, name, plans(name)), departments(name), axes(name)")
+                    .select("role, department_id, axis_id, display_name, slack_user_id, companies(id, name, plans(name))")
                     .eq("id", user.id)
                     .single();
 
                 if (profile) {
-                    setDeptName((profile as any)?.departments?.name ?? null);
                     setUserRole(profile.role ?? null);
-                    setAxisName((profile as any)?.axes?.name ?? null);
                 }
 
                 const impersonatedId = (profile?.role === 'super_admin' && typeof window !== "undefined")
@@ -99,6 +97,8 @@ export function Header({ isMobile, onMobileMenuClick }: HeaderProps) {
                         ]);
                         setDepts(deptsRes.data ?? []);
                         setAxes(axesRes.data ?? []);
+                        setDeptName(deptsRes.data?.find((d: any) => d.id === profile.department_id)?.name ?? null);
+                        setAxisName(axesRes.data?.find((a: any) => a.id === (profile as any).axis_id)?.name ?? null);
                         setProfileForm({
                             display_name: profile.display_name ?? "",
                             department_id: profile.department_id ?? "",
