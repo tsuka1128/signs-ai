@@ -3,6 +3,7 @@
 import { Link2, Save, BellRing, AlertCircle, Eye } from "lucide-react";
 import { SlackHelpTooltip } from "@/components/ui/SlackHelpTooltip";
 import { SLACK_MESSAGE_DEFAULTS, SlackMessageKey } from "@/lib/slack-message-defaults";
+import { cn } from "@/lib/utils/index";
 
 interface IntegrationTabProps {
     company: any;
