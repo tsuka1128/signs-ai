@@ -59,10 +59,30 @@ export const IntegrationTab = ({
                             </div>
 
                             <div className="border-t border-slate-200 pt-6">
-                                <label className="block text-[10px] font-bold text-slate-400 mb-4 ml-1 uppercase flex items-center gap-1">
-                                    <AlertCircle className="w-3 h-3" /> 異常検知アラートの閾値 (AI分析時)
-                                </label>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div className="flex items-center justify-between mb-4">
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1">
+                                        <AlertCircle className="w-3 h-3" /> 異常検知アラートの閾値 (AI分析時)
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <span className="text-[10px] font-bold text-slate-500">
+                                            {company?.anomaly_alert_enabled !== false ? "通知オン" : "通知オフ"}
+                                        </span>
+                                        <div
+                                            onClick={() => setCompany({ ...company, anomaly_alert_enabled: !(company?.anomaly_alert_enabled !== false) })}
+                                            className={`w-10 h-5 rounded-full transition-colors cursor-pointer relative ${
+                                                company?.anomaly_alert_enabled !== false ? "bg-teal" : "bg-slate-300"
+                                            }`}
+                                        >
+                                            <div className={`w-4 h-4 bg-white rounded-full shadow m-0.5 transition-transform absolute left-0 top-0 ${
+                                                company?.anomaly_alert_enabled !== false ? "translate-x-5" : "translate-x-0"
+                                            }`} />
+                                        </div>
+                                    </label>
+                                </div>
+                                <div className={cn(
+                                    "grid grid-cols-1 sm:grid-cols-3 gap-4 transition-all duration-300",
+                                    company?.anomaly_alert_enabled === false && "opacity-40 pointer-events-none grayscale-[0.5]"
+                                )}>
                                     <div>
                                         <label className="block text-[10px] font-medium text-slate-500 mb-1 ml-1">絶対値下限</label>
                                         <div className="relative">

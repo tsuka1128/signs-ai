@@ -134,6 +134,7 @@ export function useSettingsData() {
             anomaly_threshold_absolute: company.anomaly_threshold_absolute,
             anomaly_threshold_drop: company.anomaly_threshold_drop,
             anomaly_threshold_gap: company.anomaly_threshold_gap,
+            anomaly_alert_enabled: company.anomaly_alert_enabled ?? true,
             slack_msg_ai_summary: company.slack_msg_ai_summary,
             slack_msg_anomaly_alert: company.slack_msg_anomaly_alert,
             slack_msg_voice_check: company.slack_msg_voice_check,

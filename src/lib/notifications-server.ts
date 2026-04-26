@@ -270,11 +270,11 @@ export async function sendAnomalyAlertNotification(
         const supabase = await createClient();
         const { data: company } = await supabase
             .from('companies')
-            .select('slack_webhook_url, anomaly_threshold_absolute, anomaly_threshold_drop, anomaly_threshold_gap, slack_msg_anomaly_alert')
+            .select('slack_webhook_url, anomaly_threshold_absolute, anomaly_threshold_drop, anomaly_threshold_gap, slack_msg_anomaly_alert, anomaly_alert_enabled')
             .eq('id', companyId)
             .single();
 
-        if (!company?.slack_webhook_url) return;
+        if (!company?.slack_webhook_url || company.anomaly_alert_enabled === false) return;
 
         // 閾値の設定（DBになければデフォルト値、または0の場合も考慮）
         const threshAbs = company.anomaly_threshold_absolute ?? 60;
