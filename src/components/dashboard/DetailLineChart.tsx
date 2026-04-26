@@ -48,6 +48,27 @@ export function DetailLineChart({
         ? `${pathData} L ${points[points.length - 1].x} ${padding.top + chartHeight} L ${points[0].x} ${padding.top + chartHeight} Z`
         : "";
 
+    // 目標ラインの座標を計算
+    const targetPoints = targetData.map((v, i) => {
+        if (v == null || v === 0) return null;
+        const x = padding.left + (targetData.length > 1 ? (i / (targetData.length - 1)) * chartWidth : 0.5 * chartWidth);
+        const y = padding.top + chartHeight - ((v - min) / range) * chartHeight;
+        return { x, y, v };
+    });
+
+    const hasTargetLine = targetPoints.some(p => p !== null);
+    const targetPathSegments: string[] = [];
+    let segmentStart = true;
+    targetPoints.forEach((p) => {
+        if (p === null) {
+            segmentStart = true;
+        } else {
+            targetPathSegments.push(segmentStart ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`);
+            segmentStart = false;
+        }
+    });
+    const targetPathData = targetPathSegments.join(" ");
+
     // ラベルが多すぎる場合に間引く
     const shouldSkipLabel = labels.length > 8;
 
@@ -113,6 +134,20 @@ export function DetailLineChart({
                 {/* Area */}
                 <path d={areaData} fill="url(#chartGradient)" />
 
+                {/* Target Line */}
+                {hasTargetLine && (
+                    <path
+                        d={targetPathData}
+                        fill="none"
+                        stroke="#CBD5E1"
+                        strokeWidth={1.5}
+                        strokeDasharray="5 3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        opacity={0.8}
+                    />
+                )}
+
                 {/* Line */}
                 <path
                     d={pathData}
@@ -157,6 +192,21 @@ export function DetailLineChart({
                     );
                 })}
             </svg>
+
+            {hasTargetLine && (
+                <div className="flex items-center gap-4 mt-1 ml-1">
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-4 h-0.5 rounded-full" style={{ backgroundColor: color }} />
+                        <span className="text-[10px] font-bold text-slate-400">実績</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <svg width="16" height="2" viewBox="0 0 16 2">
+                            <line x1="0" y1="1" x2="16" y2="1" stroke="#CBD5E1" strokeWidth="1.5" strokeDasharray="5 3" />
+                        </svg>
+                        <span className="text-[10px] font-bold text-slate-400">目標</span>
+                    </div>
+                </div>
+            )}
 
             {/* Tooltip */}
             {hoveredIndex !== null && (
