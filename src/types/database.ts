@@ -69,6 +69,7 @@ export interface Database {
           is_higher_better: boolean
           owner_department_id: string | null
           owner_dept_id: string | null
+          is_revenue: boolean
           is_main: boolean
           is_secondary_size_metric: boolean
           sort_order: number | null

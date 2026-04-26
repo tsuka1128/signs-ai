@@ -259,6 +259,7 @@ export function useDashboardData(company: Company | null, supabase: any, isImper
                 weather: getWeatherFromPulse(pulseScore),
                 arrow: "flat",
                 kpiAch,
+                hasKpiData: count > 0,
                 kpis: state.realKpis.filter(k => k.owner_dept_id === d.id)
                     .sort((a, b) => (b.is_main ? 1 : 0) - (a.is_main ? 1 : 0))
                     .map((k: any) => ({
@@ -367,6 +368,7 @@ export function useDashboardData(company: Company | null, supabase: any, isImper
                 sizeHistory,
                 productivity: calculateProductivity(kpiAch, pulseScore),
                 kpiAch,
+                hasKpiData: mRecs.length > 0,
                 mrr: sizeHistory[12],
                 pulse: Number(pulseScore.toFixed(1)),
                 pulseHistory,
@@ -491,7 +493,7 @@ export function useDashboardData(company: Company | null, supabase: any, isImper
         const laborRoi = totalLaborCost > 0 ? Math.round((avgAch / (totalLaborCost / 100)) * 10) / 10 : 0;
 
         // Distribution Rate = Total Labor / Total Revenue
-        const revenueKpis = state.realKpis.filter(k => k.name.includes("売上") || k.name.includes("利益") || k.unit === "円" || k.unit === "万円");
+        const revenueKpis = state.realKpis.filter(k => k.is_revenue === true);
         let totalRevenue = 0;
         revenueKpis.forEach(k => {
             totalRevenue += (k.val || 0);

@@ -20,6 +20,7 @@ interface KpiDefinition {
     unit: string;
     owner_dept_id: string | null;
     owner_dept_name?: string;
+    is_revenue?: boolean;
 }
 
 // KPI実績の型
