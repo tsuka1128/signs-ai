@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { createNotification } from "@/lib/notifications";
 import { generateAIInsight } from "@/lib/claude";
 import { getSystemSettings } from "@/lib/settings-server";
 import { NextResponse } from "next/server";
@@ -340,6 +341,46 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
         }, { onConflict: 'company_id, target_month, insight_type' });
 
         if (insertError) throw insertError;
+
+        // 通知を作成 (fire-and-forget)
+        void (async () => {
+            const targetMonth = latestMonth.substring(0, 7); // YYYY-MM
+            
+            // admin と executive へ全社通知
+            void createNotification({
+                companyId,
+                type: "ai_analysis_done",
+                title: "AI分析が完了しました",
+                body: `${targetMonth} の分析レポートが生成されました`,
+                link: "/history",
+                targetRole: "admin",
+                targetDepartmentId: null,
+            });
+            void createNotification({
+                companyId,
+                type: "ai_analysis_done",
+                title: "AI分析が完了しました",
+                body: `${targetMonth} の分析レポートが生成されました`,
+                link: "/history",
+                targetRole: "executive",
+                targetDepartmentId: null,
+            });
+
+            // manager へ部署ごと通知
+            if (depts.data) {
+                for (const dept of depts.data) {
+                    void createNotification({
+                        companyId,
+                        type: "ai_analysis_done",
+                        title: "AI分析が完了しました",
+                        body: `${targetMonth} の ${dept.name} の分析レポートが生成されました`,
+                        link: "/history",
+                        targetRole: "manager",
+                        targetDepartmentId: dept.id,
+                    });
+                }
+            }
+        })();
 
         // アクションを action_items に保存
         if (aiResult.suggested_actions) {

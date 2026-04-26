@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { MainInsightCard } from "@/components/dashboard/MainInsightCard";
 import { TabBar } from "@/components/ui/TabBar";
