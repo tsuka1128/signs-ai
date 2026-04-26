@@ -1,6 +1,6 @@
 "use client";
 
-import { Target, ArrowRight, Star, Trash2, Plus, Save } from "lucide-react";
+import { Target, ArrowRight, Star, Trash2, Plus, Save, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { KPI_UNIT_OPTIONS } from "@/lib/constants";
 import { usePlanFeatures } from "@/hooks/usePlanFeatures";
@@ -30,6 +30,15 @@ export const KpiTab = ({
             <div>
                 <h2 className="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
                     <Target className="w-5 h-5 text-teal" /> KPI設定
+                    <a
+                        href="/docs/kpi-setup"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-auto flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-teal transition-colors"
+                    >
+                        <HelpCircle className="w-3.5 h-3.5" />
+                        ヘルプ
+                    </a>
                 </h2>
                 <p className="text-xs text-slate-500 mb-6">各部署の重要指標を定義します。生産性スコアの基盤となります。</p>
 

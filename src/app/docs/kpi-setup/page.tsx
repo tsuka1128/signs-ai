@@ -91,17 +91,6 @@ export default function KpiSetupPage() {
                 </div>
             </div>
 
-            {/* Next buttons */}
-            <div className="pt-10 border-t border-slate-100 flex items-center justify-between">
-                <Link href="/docs/slack-integration" className="flex items-center gap-2 text-slate-400 hover:text-slate-600 transition-all font-bold group">
-                    <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />
-                    Slack連携の手順
-                </Link>
-                <Link href="/docs/introduction" className="flex items-center gap-2 text-teal hover:text-teal-600 transition-all font-bold group">
-                    はじめに：Signs AIとは？
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
-            </div>
         </div>
     );
 }

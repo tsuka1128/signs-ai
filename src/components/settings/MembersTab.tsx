@@ -1,6 +1,6 @@
 "use client";
 
-import { UserPlus, Mail, ArrowRight, ShieldCheck, Edit3, Copy, Send, Trash2 } from "lucide-react";
+import { UserPlus, Mail, ArrowRight, ShieldCheck, Edit3, Copy, Send, Trash2, HelpCircle } from "lucide-react";
 import { SlackHelpTooltip } from "@/components/ui/SlackHelpTooltip";
 import { USER_ROLES, UserRole } from "@/lib/constants";
 
@@ -58,6 +58,15 @@ export const MembersTab = ({
             <div>
                 <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                     <UserPlus className="w-5 h-5 text-teal" /> メンバーを招待
+                    <a
+                        href="/docs/member-management"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-auto flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-teal transition-colors"
+                    >
+                        <HelpCircle className="w-3.5 h-3.5" />
+                        ヘルプ
+                    </a>
                 </h2>
                 <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

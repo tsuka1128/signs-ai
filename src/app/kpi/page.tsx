@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/Badge";
-import { Info, Save, ArrowLeft, Building2, Lock, Unlock, BarChart3, AlertTriangle } from "lucide-react";
+import { Info, Save, ArrowLeft, Building2, Lock, Unlock, BarChart3, AlertTriangle, HelpCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { Loading } from "@/components/ui/Loading";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -426,7 +426,15 @@ export default function KpiInputPage() {
                             月次KPI一括入力
                             <div className="flex items-center gap-2">
                                 <Badge className="bg-teal/10 text-teal border-none text-[10px] font-bold px-2">管理者向け</Badge>
-                                <HelpLink href="/docs/kpi-input" label="入力方法を確認" />
+                                <a
+                                    href="/docs/kpi-input"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-teal transition-colors"
+                                >
+                                    <HelpCircle className="w-3.5 h-3.5" />
+                                    ヘルプ
+                                </a>
                             </div>
                         </h1>
                         <p className="text-slate-500 text-base mt-2 max-w-2xl font-medium">全社のKPIの実績と目標を入力します。直近1年分の推移を確認しながら、入力・編集が可能です。</p>

@@ -12,7 +12,8 @@ import {
     Share2,
     FileText,
     MessageSquare,
-    ClipboardList
+    ClipboardList,
+    HelpCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 
@@ -122,6 +123,15 @@ export default function VoiceCheckPage() {
                     <h1 className="text-2xl font-black text-slate-800 tracking-tighter flex items-center gap-3">
                         <ClipboardList className="w-8 h-8 text-teal" />
                         ボイスチェック運用
+                        <a
+                            href="/docs/voice-check"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ml-auto flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-teal transition-colors"
+                        >
+                            <HelpCircle className="w-3.5 h-3.5" />
+                            ヘルプ
+                        </a>
                     </h1>
                     <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-widest">アンケートの配布と回答状況の管理</p>
                 </div>

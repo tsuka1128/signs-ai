@@ -1,6 +1,6 @@
 "use client";
 
-import { Link2, Save, BellRing, AlertCircle, Eye } from "lucide-react";
+import { Link2, Save, BellRing, AlertCircle, Eye, HelpCircle } from "lucide-react";
 import { SlackHelpTooltip } from "@/components/ui/SlackHelpTooltip";
 import { SLACK_MESSAGE_DEFAULTS, SlackMessageKey } from "@/lib/slack-message-defaults";
 import { cn } from "@/lib/utils/index";
@@ -32,6 +32,15 @@ export const IntegrationTab = ({
                     <div>
                         <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                             <Link2 className="w-5 h-5 text-teal" /> Slack連携
+                            <a
+                                href="/docs/slack-integration"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="ml-auto flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-teal transition-colors"
+                            >
+                                <HelpCircle className="w-3.5 h-3.5" />
+                                ヘルプ
+                            </a>
                         </h2>
                         <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 space-y-6">
                             <div className="max-w-xl">

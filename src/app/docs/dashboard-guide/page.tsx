@@ -224,17 +224,6 @@ export default function DashboardGuidePage() {
                 </div>
             </section>
 
-            {/* Navigation */}
-            <div className="pt-10 border-t border-slate-100 flex items-center justify-between">
-                <Link href="/docs/kpi-input" className="flex items-center gap-2 text-slate-400 hover:text-slate-600 transition-all font-bold group">
-                    <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />
-                    KPI実績の入力方法
-                </Link>
-                <Link href="/docs/pdca-guide" className="flex items-center gap-2 text-teal hover:text-teal-600 transition-all font-bold group">
-                    組織改善のPDCAサイクル
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
-            </div>
         </div>
     );
 }
