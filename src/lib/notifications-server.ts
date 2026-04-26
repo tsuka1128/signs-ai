@@ -1,6 +1,7 @@
 import { createServerSupabaseClient as createClient } from "@/lib/supabase-server";
 import { sendSlackNotification } from "./slack";
 import { getBaseURL } from "@/lib/utils/index";
+import { SLACK_MESSAGE_DEFAULTS } from "./slack-message-defaults";
 
 type NotificationType = 
     | 'ai_summary' 
@@ -89,10 +90,10 @@ export async function sendAiSummaryNotification(companyId: string) {
     try {
         const supabase = await createClient();
         
-        // 企業のWebhook URLを取得
+        // 企業のWebhook URLとカスタム文面を取得
         const { data: company } = await supabase
             .from('companies')
-            .select('slack_webhook_url, name')
+            .select('slack_webhook_url, name, slack_msg_ai_summary')
             .eq('id', companyId)
             .single();
 
@@ -109,14 +110,15 @@ export async function sendAiSummaryNotification(companyId: string) {
 
         const mentions = targets.map(t => `<@${t.slack_user_id}>`).join(' ');
         const dashboardUrl = `${getBaseURL()}/dashboard`;
+        const customText = company.slack_msg_ai_summary || SLACK_MESSAGE_DEFAULTS.ai_summary;
 
-        const text = `${mentions}\nAIによる組織状態の分析が完了しました。詳細はアプリをご確認ください。`;
+        const text = `${mentions}\n${customText}`;
         const blocks = [
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": `${mentions}\n*AIによる組織状態の分析が完了しました。*\n最新の診断レポートがダッシュボードからご確認いただけます。`
+                    "text": `${mentions}\n${customText}`
                 }
             },
             {
@@ -206,10 +208,10 @@ export async function sendVoiceCheckReminders(companyId: string) {
 
         if (finalTargets.length === 0) return;
 
-        // 5. 企業のWebhook URLを取得
+        // 5. 企業のWebhook URLとカスタム文面を取得
         const { data: company } = await supabase
             .from('companies')
-            .select('slack_webhook_url')
+            .select('slack_webhook_url, slack_msg_voice_check')
             .eq('id', companyId)
             .single();
 
@@ -218,14 +220,15 @@ export async function sendVoiceCheckReminders(companyId: string) {
         // 6. 送信
         const mentions = finalTargets.map(t => `<@${t.slack_user_id}>`).join(' ');
         const surveyUrl = `${getBaseURL()}/check`;
+        const customText = company.slack_msg_voice_check || SLACK_MESSAGE_DEFAULTS.voice_check;
 
-        const text = `${mentions}\n今月のボイスチェック（組織状態アンケート）が未回答です。ご回答をお願いします。`;
+        const text = `${mentions}\n${customText}`;
         const blocks = [
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": `${mentions}\n*今月のボイスチェック（組織状態アンケート）への回答をお願いします。*\n組織の健康状態を把握するため、1分程度で終わる簡単な質問にご協力ください。`
+                    "text": `${mentions}\n${customText}`
                 }
             },
             {
@@ -267,7 +270,7 @@ export async function sendAnomalyAlertNotification(
         const supabase = await createClient();
         const { data: company } = await supabase
             .from('companies')
-            .select('slack_webhook_url, anomaly_threshold_absolute, anomaly_threshold_drop, anomaly_threshold_gap')
+            .select('slack_webhook_url, anomaly_threshold_absolute, anomaly_threshold_drop, anomaly_threshold_gap, slack_msg_anomaly_alert')
             .eq('id', companyId)
             .single();
 
@@ -313,14 +316,15 @@ export async function sendAnomalyAlertNotification(
         const title = isUrgent ? '*【緊急】組織異常検知アラート*' : '*組織異常検知アラート*';
         
         const dashboardUrl = `${getBaseURL()}/dashboard`;
-        const text = `${mentions}\n組織状態に異常が検知されました。\n${anomalies.join('\n')}`;
+        const customText = company.slack_msg_anomaly_alert || SLACK_MESSAGE_DEFAULTS.anomaly_alert;
+        const text = `${mentions}\n${customText}\n\n${anomalies.join('\n')}`;
 
         const blocks = [
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": `${mentions}\n${icon} ${title}\nAI分析により、以下の異常またはリスクが検知されました。至急状況を確認してください。`
+                    "text": `${mentions}\n${icon} ${title}\n${customText}`
                 }
             },
             {
@@ -366,10 +370,10 @@ export async function sendKpiReminders(companyId: string): Promise<void> {
         const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const prevMonth = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}-01`;
 
-        // 2. 会社情報取得 (Webhook)
+        // 2. 会社情報取得 (Webhook, カスタム文面)
         const { data: company } = await supabase
             .from('companies')
-            .select('slack_webhook_url')
+            .select('slack_webhook_url, slack_msg_kpi_reminder')
             .eq('id', companyId)
             .single();
 
@@ -424,12 +428,14 @@ export async function sendKpiReminders(companyId: string): Promise<void> {
             kpiList.push(`他${missingKpis.length - 5}件`);
         }
 
+        const customText = company.slack_msg_kpi_reminder || SLACK_MESSAGE_DEFAULTS.kpi_reminder;
+
         const blocks = [
             {
                 type: "section",
                 text: {
                     type: "mrkdwn",
-                    text: `${mentions}\n📊 *【KPI入力リマインド】前月分の未入力KPIがあります*\n以下のKPIがまだ入力されていません。数値の入力をお願いします。`
+                    text: `${mentions}\n${customText}`
                 }
             },
             {

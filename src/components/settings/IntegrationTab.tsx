@@ -2,6 +2,7 @@
 
 import { Link2, Save, BellRing, AlertCircle, Eye } from "lucide-react";
 import { SlackHelpTooltip } from "@/components/ui/SlackHelpTooltip";
+import { SLACK_MESSAGE_DEFAULTS, SlackMessageKey } from "@/lib/slack-message-defaults";
 
 interface IntegrationTabProps {
     company: any;
@@ -108,6 +109,42 @@ export const IntegrationTab = ({
                                 <p className="text-[10px] text-slate-500 mt-3 ml-1 leading-relaxed">
                                     全社平均スコアがこの閾値を下回るか、急激な変動があった場合にSlack通知が飛びます。
                                 </p>
+                            </div>
+
+                            {/* 通知文面カスタマイズ */}
+                            <div className="pt-6 border-t border-slate-200 space-y-6">
+                                <h3 className="text-sm font-bold text-slate-700">通知文面のカスタマイズ</h3>
+                                <p className="text-xs text-slate-500 -mt-4 leading-relaxed">
+                                    各通知のSlackメッセージ文を変更できます。空欄にするとデフォルト文が使用されます。
+                                </p>
+
+                                {/* 各通知タイプのテキストエリア */}
+                                {[
+                                    { key: "slack_msg_ai_summary",    label: "AI分析完了通知",        defaultKey: "ai_summary" },
+                                    { key: "slack_msg_anomaly_alert", label: "異常スコアアラート",     defaultKey: "anomaly_alert" },
+                                    { key: "slack_msg_voice_check",   label: "ボイスチェックリマインド", defaultKey: "voice_check" },
+                                    { key: "slack_msg_kpi_reminder",  label: "KPI実績入力リマインド",  defaultKey: "kpi_reminder" },
+                                ].map(({ key, label, defaultKey }) => (
+                                    <div key={key} className="space-y-2">
+                                        <div className="flex items-center justify-between px-1">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{label}</label>
+                                            <button
+                                                type="button"
+                                                onClick={() => setCompany({ ...company, [key]: null })}
+                                                className="text-[10px] font-bold text-teal/60 hover:text-teal underline transition-colors"
+                                            >
+                                                デフォルトに戻す
+                                            </button>
+                                        </div>
+                                        <textarea
+                                            rows={3}
+                                            value={company?.[key] ?? SLACK_MESSAGE_DEFAULTS[defaultKey as SlackMessageKey]}
+                                            onChange={(e) => setCompany({ ...company, [key]: e.target.value })}
+                                            placeholder={SLACK_MESSAGE_DEFAULTS[defaultKey as SlackMessageKey]}
+                                            className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-[11px] text-slate-600 outline-none focus:border-teal resize-none font-mono leading-relaxed shadow-sm"
+                                        />
+                                    </div>
+                                ))}
                             </div>
 
                             <div className="pt-2">

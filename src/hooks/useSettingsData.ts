@@ -133,7 +133,11 @@ export function useSettingsData() {
             slack_webhook_url: company.slack_webhook_url,
             anomaly_threshold_absolute: company.anomaly_threshold_absolute,
             anomaly_threshold_drop: company.anomaly_threshold_drop,
-            anomaly_threshold_gap: company.anomaly_threshold_gap
+            anomaly_threshold_gap: company.anomaly_threshold_gap,
+            slack_msg_ai_summary: company.slack_msg_ai_summary,
+            slack_msg_anomaly_alert: company.slack_msg_anomaly_alert,
+            slack_msg_voice_check: company.slack_msg_voice_check,
+            slack_msg_kpi_reminder: company.slack_msg_kpi_reminder
         }).eq('id', company.id);
 
         if (!error) alert("連携・通知設定を保存しました");
@@ -151,7 +155,16 @@ export function useSettingsData() {
             const res = await fetch("/api/settings/test-slack", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ webhookUrl, previewType: type })
+                body: JSON.stringify({ 
+                    webhookUrl, 
+                    previewType: type,
+                    customMessages: {
+                        slack_msg_ai_summary: company.slack_msg_ai_summary,
+                        slack_msg_anomaly_alert: company.slack_msg_anomaly_alert,
+                        slack_msg_voice_check: company.slack_msg_voice_check,
+                        slack_msg_kpi_reminder: company.slack_msg_kpi_reminder
+                    }
+                })
             });
             if (res.ok) {
                 alert("プレビュー通知を送信しました。Slackをご確認ください");

@@ -54,7 +54,7 @@ export default function SettingsPage() {
                         { id: "axis", label: "担当領域" },
                         { id: "ai", label: "AI分析" },
                         { id: "users", label: "メンバー" },
-                        { id: "integration", label: "外部連携" }
+                        { id: "integration", label: "Slack連携" }
                     ].map(t => (
                         <button
                             key={t.id}

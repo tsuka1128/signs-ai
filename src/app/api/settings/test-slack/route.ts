@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { sendSlackNotification } from "@/lib/slack";
+import { SLACK_MESSAGE_DEFAULTS } from "@/lib/slack-message-defaults";
 
 export async function POST(req: Request) {
   try {
@@ -11,8 +12,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // `slack_webhook_url`, `slackUserId`, `previewType` をリクエストボディから取得
-    const { webhookUrl, slackUserId, previewType } = await req.json();
+    // `slack_webhook_url`, `slackUserId`, `previewType`, `customMessages` をリクエストボディから取得
+    const { webhookUrl, slackUserId, previewType, customMessages } = await req.json();
 
     if (!webhookUrl) {
       return NextResponse.json({ error: "Webhook URL is required" }, { status: 400 });
@@ -22,13 +23,14 @@ export async function POST(req: Request) {
     let blocks: any[] = [];
 
     if (previewType === 'ai_summary') {
+      const customText = customMessages?.slack_msg_ai_summary || SLACK_MESSAGE_DEFAULTS.ai_summary;
       message = "【サンプル】AIによる組織状態の分析が完了しました。";
       blocks = [
         {
           "type": "section",
           "text": {
             "type": "mrkdwn",
-            "text": "🎉 *AIによる組織状態の分析が完了しました（サンプル）*\n最新の診断レポートがダッシュボードからご確認いただけます。"
+            "text": `🎉 *AIによる組織状態の分析が完了しました（サンプル）*\n\n${customText}`
           }
         },
         {
@@ -37,13 +39,14 @@ export async function POST(req: Request) {
         }
       ];
     } else if (previewType === 'anomaly_alert') {
+      const customText = customMessages?.slack_msg_anomaly_alert || SLACK_MESSAGE_DEFAULTS.anomaly_alert;
       message = "【サンプル】組織異常検知アラート";
       blocks = [
         {
           "type": "section",
           "text": {
             "type": "mrkdwn",
-            "text": "🚨 *組織異常検知アラート（サンプル）*\nAI分析により、一部の部署で急激なスコア下落が検知されました。"
+            "text": `🚨 *組織異常検知アラート（サンプル）*\n\n${customText}`
           }
         },
         {
@@ -59,13 +62,14 @@ export async function POST(req: Request) {
         }
       ];
     } else if (previewType === 'voice_check_reminder') {
+      const customText = customMessages?.slack_msg_voice_check || SLACK_MESSAGE_DEFAULTS.voice_check;
       message = "【サンプル】ボイスチェック未回答者への催促";
       blocks = [
         {
           "type": "section",
           "text": {
             "type": "mrkdwn",
-            "text": "📢 *今月のボイスチェックへの回答をお願いします（サンプル）*\n組織の健康状態を把握するため、ご協力ください。"
+            "text": `📢 *今月のボイスチェックへの回答をお願いします（サンプル）*\n\n${customText}`
           }
         }
       ];
