@@ -228,7 +228,7 @@ export function useDashboardData(company: Company | null, supabase: any, isImper
             const respondentsCount = deptResponses.filter(r => normalizeMonth(r.recorded_month) === latestMonth).length;
 
             const mKpis = state.realKpis.filter(k => k.owner_dept_id === d.id);
-            const mRecs = state.realKpiRecords.filter(r => r.recorded_month === last13Months[12]);
+            const mRecs = state.realKpiRecords.filter(r => normalizeMonth(r.recorded_month) === normalizeMonth(last13Months[12]));
             
             let totalAch = 0;
             let count = 0;
@@ -270,7 +270,7 @@ export function useDashboardData(company: Company | null, supabase: any, isImper
                 kpiName: state.realKpis.find(k => k.owner_dept_id === d.id && k.is_main)?.name ||
                         state.realKpis.find(k => k.owner_dept_id === d.id)?.name || "",
                 productivityHistory: last13Months.map((month, idx) => {
-                    const mRecs = state.realKpiRecords.filter(r => r.recorded_month === month);
+                    const mRecs = state.realKpiRecords.filter(r => normalizeMonth(r.recorded_month) === normalizeMonth(month));
                     let tAch = 0;
                     let c = 0;
                     mKpis.forEach(def => {
@@ -283,7 +283,7 @@ export function useDashboardData(company: Company | null, supabase: any, isImper
                             }
                         }
                     });
-                    const avgAch = c > 0 ? tAch / c : 100;
+                    const avgAch = c > 0 ? tAch / c : 0;
                     return calculateProductivity(avgAch, pulseHistory[idx]);
                 })
             };
@@ -294,7 +294,7 @@ export function useDashboardData(company: Company | null, supabase: any, isImper
         return state.realKpis.map(k => ({
             ...k,
             id: `kpi_${k.id}`,
-            dept: state.realDepts.find(d => d.id === k.owner_department_id)?.name || "",
+            dept: state.realDepts.find(d => d.id === k.owner_dept_id)?.name || "",
             voices: [],
             yoy: calculateGrowthRate(Number((k as any).prev?.[12]), Number((k as any).prev?.[0]))
         }));
@@ -340,7 +340,7 @@ export function useDashboardData(company: Company | null, supabase: any, isImper
             const latestActualHead = latestResource?.head_count || headHistory[12] || axis.headcount || 0;
             const laborCostPerHead = (latestLabor > 0 && latestActualHead > 0) ? Math.round((latestLabor / latestActualHead) * 10) / 10 : 0;
 
-            const mRecs = state.realKpiRecords.filter(r => r.recorded_month === last13Months[12] && r.axis_id === axis.id);
+            const mRecs = state.realKpiRecords.filter(r => normalizeMonth(r.recorded_month) === normalizeMonth(last13Months[12]) && r.axis_id === axis.id);
             let totalAch = 0;
             let count = 0;
             mRecs.forEach(rec => {
@@ -383,7 +383,7 @@ export function useDashboardData(company: Company | null, supabase: any, isImper
                     };
                 }).filter(Boolean).slice(0, 3) as any[],
                 productivityHistory: last13Months.map((month, idx) => {
-                    const mRecsMonth = state.realKpiRecords.filter(r => r.recorded_month === month && r.axis_id === axis.id);
+                    const mRecsMonth = state.realKpiRecords.filter(r => normalizeMonth(r.recorded_month) === normalizeMonth(month) && r.axis_id === axis.id);
                     let tAch = 0;
                     let c = 0;
                     mRecsMonth.forEach(rec => {
@@ -394,7 +394,7 @@ export function useDashboardData(company: Company | null, supabase: any, isImper
                             c++;
                         }
                     });
-                    const avgAch = c > 0 ? tAch / c : 100;
+                    const avgAch = c > 0 ? tAch / c : 0;
                     return calculateProductivity(avgAch, pulseHistory[idx]);
                 })
             };
@@ -476,7 +476,11 @@ export function useDashboardData(company: Company | null, supabase: any, isImper
             return res?.labor_cost || 0;
         });
 
-        const totalLaborCost = [...deptsLabor, ...axesLabor].reduce((a, b) => a + b, 0);
+        const deptsLaborSum = deptsLabor.reduce((a, b) => a + b, 0);
+        const axesLaborSum = axesLabor.reduce((a, b) => a + b, 0);
+
+        // 部署側人件費データを優先、無ければ領域側を使う（二重カウント防止）
+        const totalLaborCost = deptsLaborSum > 0 ? deptsLaborSum : axesLaborSum;
         const hasLaborData = totalLaborCost > 0;
 
         if (!hasLaborData) return { hasLaborData: false, laborRoi: 0, laborDistRate: 0, totalLaborCost: 0 };
@@ -504,10 +508,11 @@ export function useDashboardData(company: Company | null, supabase: any, isImper
             pulse: d.pulse
         }));
 
-        const totalActualHead = displayDepts.reduce((sum, d) => {
-            const h = d.headHistory?.[12] || 0;
-            return sum + h;
-        }, 0);
+        const deptsActualHead = displayDepts.reduce((sum, d) => sum + (d.headHistory?.[12] || 0), 0);
+        const axesActualHead = displayAxes.reduce((sum, a) => sum + (a.headHistory?.[12] || 0), 0);
+        
+        // 部署側人数を優先、無ければ領域側を使う
+        const totalActualHead = deptsActualHead > 0 ? deptsActualHead : axesActualHead;
         const avgLaborCostPerHead = totalActualHead > 0 ? Math.round((totalLaborCost / totalActualHead) * 10) / 10 : 0;
 
         return { hasLaborData, laborRoi, laborDistRate, totalLaborCost, deptFinanceData, avgLaborCostPerHead };

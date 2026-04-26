@@ -4,7 +4,7 @@ import { TrendingUp, X, Save } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 
 interface HistoryModalProps {
-    historyTarget: { name: string } | null;
+    historyTarget: { type: 'dept' | 'axis', name: string } | null;
     setHistoryModalOpen: (open: boolean) => void;
     tempHistory: any[];
     setTempHistory: (history: any[]) => void;
@@ -32,6 +32,16 @@ export const HistoryModal = ({
                                 {historyTarget?.name} の推移
                             </h3>
                             <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-widest">月別の人数と人件費（任意）の実績を入力</p>
+                            {historyTarget?.type === 'axis' && (
+                                <div className="mt-3 p-3 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-2.5">
+                                    <span className="text-amber-500 mt-0.5">⚠️</span>
+                                    <p className="text-[10px] font-bold text-amber-700 leading-relaxed">
+                                        ここで入力した人件費・人数は領域別分析にのみ使用されます。<br />
+                                        全社合計は「部署」タブで入力した数値が優先的に集計されます。<br />
+                                        （部署を運用していない場合のみ、こちらの数値が全社合計に使われます）
+                                    </p>
+                                </div>
+                            )}
                         </div>
                         <button onClick={() => setHistoryModalOpen(false)} className="p-3 hover:bg-slate-50 rounded-2xl transition-all">
                             <X className="w-6 h-6 text-slate-400" />
