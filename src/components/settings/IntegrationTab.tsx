@@ -204,7 +204,10 @@ export const IntegrationTab = ({
                         </h2>
                         <div className="bg-amber-50 p-8 rounded-3xl border border-amber-100 space-y-6">
                             <div className="space-y-4">
-                                <h3 className="text-sm font-black text-amber-800">未回答者への一斉催促</h3>
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-sm font-black text-amber-800">未回答者への一斉催促</h3>
+                                    <span className="text-[10px] font-bold text-amber-600 bg-amber-100/50 px-2 py-0.5 rounded-full">ボイスチェックリマインド設定を使用</span>
+                                </div>
                                 <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
                                     今月のボイスチェック（アンケート）にまだ回答していないメンバー全員に対して、Slackで一斉に催促メッセージを送信します。
                                 </p>
@@ -219,7 +222,10 @@ export const IntegrationTab = ({
                             </div>
 
                             <div className="border-t border-amber-200 pt-6 space-y-4">
-                                <h3 className="text-sm font-black text-amber-800">KPI未入力部署へのリマインド</h3>
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-sm font-black text-amber-800">KPI未入力部署へのリマインド</h3>
+                                    <span className="text-[10px] font-bold text-amber-600 bg-amber-100/50 px-2 py-0.5 rounded-full">KPI実績入力リマインド設定を使用</span>
+                                </div>
                                 <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
                                     前月分のKPIがまだ入力されていない担当部署のマネージャーに対して、Slackで入力を促すメッセージを送信します。
                                 </p>
