@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/Badge";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
-import { Menu, X, Bell, CheckCircle2 } from "lucide-react";
+import { Menu, X, Bell, CheckCircle2, ChevronDown, LogOut } from "lucide-react";
 import { useNotifications, Notification } from "@/hooks/useNotifications";
 import { useRouter } from "next/navigation";
 
@@ -20,20 +20,40 @@ export function Header({ isMobile, onMobileMenuClick }: HeaderProps) {
     const [planName, setPlanName] = useState("");
     const [userInitial, setUserInitial] = useState("?");
     const [showNotifications, setShowNotifications] = useState(false);
+    const [showUserMenu, setShowUserMenu] = useState(false);
+    const [userEmail, setUserEmail] = useState("");
+    const [deptName, setDeptName] = useState<string | null>(null);
+    const [userRole, setUserRole] = useState<string | null>(null);
 
     const { unreadCount, notifications, markAsRead, handleNotificationClick } = useNotifications();
+
+    // ロール日本語変換
+    const ROLE_LABELS: Record<string, string> = {
+        admin: "管理者",
+        executive: "経営層",
+        manager: "マネージャー",
+        player: "一般メンバー",
+        partner: "外部パートナー",
+        super_admin: "Super Admin",
+    };
 
     useEffect(() => {
         const fetchUserData = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 setUserInitial(user.email?.[0].toUpperCase() || "U");
+                setUserEmail(user.email ?? "");
 
                 const { data: profile } = await supabase
                     .from("users")
-                    .select("role, companies(id, name, plans(name))")
+                    .select("role, department_id, display_name, companies(id, name, plans(name)), departments(name)")
                     .eq("id", user.id)
                     .single();
+
+                if (profile) {
+                    setDeptName((profile as any)?.departments?.name ?? null);
+                    setUserRole(profile.role ?? null);
+                }
 
                 const impersonatedId = (profile?.role === 'super_admin' && typeof window !== "undefined")
                     ? localStorage.getItem("impersonated_company_id")
@@ -154,14 +174,48 @@ export function Header({ isMobile, onMobileMenuClick }: HeaderProps) {
                 </div>
                 
                 <div className="h-8 w-px bg-slate-100 mx-1" />
+                
+                {/* User Info Button */}
+                <div className="relative">
+                    <button
+                        onClick={() => setShowUserMenu(!showUserMenu)}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-slate-50 transition-colors group"
+                    >
+                        <div className="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-black text-[10px] shrink-0">
+                            {userInitial}
+                        </div>
+                        <div className="hidden sm:flex flex-col items-start leading-tight">
+                            <span className="text-[11px] font-black text-slate-700 max-w-[120px] truncate">
+                                {deptName ?? "未設定"}
+                            </span>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                                {userRole ? (ROLE_LABELS[userRole] ?? userRole) : "未設定"}
+                            </span>
+                        </div>
+                        <ChevronDown className="w-3 h-3 text-slate-400 group-hover:text-slate-600 transition-colors hidden sm:block" />
+                    </button>
 
-                <div className="flex items-center gap-3">
-                    <p className="text-[10px] font-black text-slate-400 tabular-nums uppercase tracking-widest hidden sm:block">
-                        {new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '.')}
-                    </p>
-                    <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center font-bold text-xs ring-2 ring-white">
-                        {userInitial}
-                    </div>
+                    {/* Dropdown */}
+                    {showUserMenu && (
+                        <>
+                            <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
+                            <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="px-4 py-3 border-b border-slate-50">
+                                    <p className="text-[10px] font-black text-slate-800 truncate">{userEmail}</p>
+                                    <p className="text-[9px] text-slate-400 font-bold mt-0.5">
+                                        {deptName ?? "部署未設定"} · {userRole ? (ROLE_LABELS[userRole] ?? userRole) : "ロール未設定"}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={async () => { await supabase.auth.signOut(); window.location.href = "/login"; }}
+                                    className="w-full text-left px-4 py-3 text-[12px] font-bold text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-2"
+                                >
+                                    <LogOut className="w-3.5 h-3.5 text-slate-400" />
+                                    ログアウト
+                                </button>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
         </header>
