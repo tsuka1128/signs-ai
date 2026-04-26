@@ -6,6 +6,82 @@ import { NextResponse } from "next/server";
 import { normalizeMonth, getLastNMonths } from "@/lib/utils/date";
 import { sendAiSummaryNotification, sendAnomalyAlertNotification } from "@/lib/notifications-server";
 
+// デフォルトのシステムプロンプト（DBに設定がない場合のフォールバック）
+const DEFAULT_SYSTEM_PROMPT = `あなたは組織改善AI「Signs AI」の経営コンサルタントです。
+組織の状態（アンケートスコア）と業績（KPI）、さらにリソース（人数・人件費）を、会社が定めた「組織方針」に照らし合わせ、客観的かつ鋭い洞察を提供してください。
+人件費データが提供されている場合は、一人当たり生産性やコスト効率（ROI）の観点も含めて分析してください。
+
+回答は以下の構造を持ったJSON形式のみで出力してください。Markdown装飾(\`\`\`json等)は不要です。
+{
+  "summary": "140文字程度の全体サマリー",
+  "deep_report": {
+    "executive_summary": "詳細な全社分析テキスト（経営への総評・戦略進捗）",
+    "correlation": "体温とKPIの相関分析（組織の健全性が成果にどう影響しているか）",
+    "strategic_alignment": "直近の組織方針との整合性評価（現場の動きと経営方針の乖離）",
+    "risks": "潜在的な中長期リスクと機会の指摘",
+    "recommendations": "経営層が明日から打つべき具体的な一手（経営判断の材料）"
+  },
+  "insights_by_dept": {
+    "部署ID": {
+      "tone": "前向き・行動喚起|冷静・品質重視|共感・伴走|構造的・警告的",
+      "text": "該当部署の現在のコンディションや組織方針を受けた専用の診断・応援メッセージ（100文字程度）"
+    }
+  },
+  "voice_topics": [
+    {
+      "topic": "話題（例：評価の透明性、業務効率化、チームワークなど）",
+      "sentiment": "positive|neutral|negative",
+      "abstractedVoice": "生声（フリーコメント）から抽出・意訳した、ペルソナごとの代弁コメント（1〜2文程度）。個人が特定されない表現にすること。",
+      "persona": "どのような層からの声か（例：営業部門の若手、全社の管理職など）"
+    }
+  ],
+  "matrix_analysis": {
+    "1m": {
+      "past_record": "【1ヶ月前の記録】過去の業績と体温について",
+      "change": "【当時と今の比較】1ヶ月間での変化・推移",
+      "retrospective": "振り返り: アラート発生時の分析"
+    },
+    "3m": {
+      "past_record": "【3ヶ月前の記録】過去の業績と体温について",
+      "change": "【当時と今の比較】3ヶ月間での変化・推移",
+      "retrospective": "振り返り: 成果または課題の原因分析"
+    },
+    "6m": {
+      "past_record": "【6ヶ月前の記録】過去の業績と体温について",
+      "change": "【当時と今の変化】半年間での変化・推移",
+      "retrospective": "振り返り: 長期的なマネジメントの良し悪しに関する考察"
+    },
+    "12m": {
+      "past_record": "【1年前の記録】過去の業績と体温について",
+      "change": "【当時と今の比較】1年間での変化・推移",
+      "retrospective": "振り返り: 組織の成長痛や文化変容に関する深い考察"
+    }
+  },
+  "department_feedback": [
+    {
+      "from_dept_id": "送信元部署ID",
+      "to_dept_id": "送信先部署ID",
+      "type": "positive|warning|alert|info",
+      "text": "部署間の連携に関するフィードバックテキスト"
+    }
+  ],
+  "suggested_actions": [
+    { "title": "施策名", "description": "具体的な指示内容", "priority": "urgent|high|normal", "dept_id": "部署IDまたはnull(全社の場合)" }
+  ],
+  "semantic_summary": {
+    "phase": "現在の組織フェーズ（例：スケール期、再構築期など）",
+    "key_kpi": "最重要KPI",
+    "top_agenda": "最優先アジェンダ"
+  },
+  "risk_level": "low|medium|high",
+  "risk_reason": "highの場合のみ、異常の理由を1文で記載"
+}
+
+注: risk_level は以下の基準で判定してください。
+- high: 組織に緊急対応が必要な兆候がある（スコアの急落、複数部門での同時悪化、戦略との深刻な乖離など）。
+- medium: 注視が必要な兆候がある。
+- low: 正常範囲内。`;
+
 export async function POST(req: Request) {
     try {
         const supabase = await createServerSupabaseClient();
@@ -59,7 +135,6 @@ export async function POST(req: Request) {
         const overrides = (companyData as any)?.plan_overrides || {};
         const maxRuns = overrides.manual_ai_runs_per_month ?? planData?.manual_ai_runs_per_month ?? 1;
         
-        // 月が変わっている場合は、カウンターを実質0として扱う（保存は後ほど実行成功時に行う）
         let usedRuns = companyData?.manual_ai_runs_used_this_month ?? 0;
         const lastActiveMonth = companyData?.manual_ai_runs_active_month;
 
@@ -118,19 +193,15 @@ export async function POST(req: Request) {
                 .in('recorded_month', targetMonths)
         ]);
         
-        // 3.1 データ存在チェック（バリデーション）
         if (!depts.data || depts.data.length === 0) {
             return NextResponse.json({ error: "分析対象の部署が登録されていません。部署設定を先に完了させてください。" }, { status: 400 });
         }
         if (!surveys.data || surveys.data.length === 0) {
             return NextResponse.json({ error: "診断に必要なアンケート回答データ（ボイスチェック実績）が不足しています。" }, { status: 400 });
         }
-        // KPIは任意だが、警告を出すか検討（現状は進めるが、空だと分析精度が落ちる）
 
-        // データが足りない場合のフォールバック
         const policy = semantic.data?.content || "組織方針がまだ設定されていません。";
 
-        // 月ごとの簡易サマリーを作成してAIに渡す
         const summarizeMonth = (month: string) => {
             const monthSurveys = surveys.data?.filter(s => normalizeMonth(s.recorded_month) === normalizeMonth(month)) || [];
             const monthKpis = kpiRecs.data?.filter(r => normalizeMonth(r.recorded_month) === normalizeMonth(month)) || [];
@@ -159,87 +230,11 @@ export async function POST(req: Request) {
             "12m": summarizeMonth(historicalMonths["12m"]),
         };
 
-        // 4. Claude へのプロンプト構築
-        // ⚠️ 重要：このシステムプロンプトはコード内にハードコードされています。
-        // system_settings テーブルの 'base_system_prompt' は現在参照されていません。
-        // プロンプトを変更する際は、このファイルを直接編集してください。
-        // 将来的には sysSettings['base_system_prompt'] から読み込む形式への移行を検討してください。
-        const systemPrompt = `あなたは組織改善AI「Signs AI」の経営コンサルタントです。
-組織の状態（アンケートスコア）と業績（KPI）、さらにリソース（人数・人件費）を、会社が定めた「組織方針」に照らし合わせ、客観的かつ鋭い洞察を提供してください。
-人件費データが提供されている場合は、一人当たり生産性やコスト効率（ROI）の観点も含めて分析してください。
+        // 4. システム設定とプロンプトの構築
+        const sysSettings = await getSystemSettings();
+        const systemPrompt = sysSettings['base_system_prompt'] || DEFAULT_SYSTEM_PROMPT;
 
-回答は以下の構造を持ったJSON形式のみで出力してください。Markdown装飾(\`\`\`json等)は不要です。
-{
-  "summary": "140文字程度の全体サマリー",
-  "deep_report": {
-    "executive_summary": "詳細な全社分析テキスト（経営への総評・戦略進捗）",
-    "correlation": "体温とKPIの相関分析（組織の健全性が成果にどう影響しているか）",
-    "strategic_alignment": "直近の組織方針との整合性評価（現場の動きと経営方針の乖離）",
-    "risks": "潜在的な中長期リスクと機会の指摘",
-    "recommendations": "経営層が明日から打つべき具体的な一手（経営判断の材料）"
-  },
-  "insights_by_dept": {
-    "部署ID": {
-      "tone": "前向き・行動喚起|冷静・品質重視|共感・伴走|構造的・警告的",
-      "text": "該当部署の現在のコンディションや組織方針を受けた専用の診断・応援メッセージ（100文字程度）"
-    }
-  },
-  "voice_topics": [
-    {
-      "topic": "話題（例：評価の透明性、業務効率化、チームワークなど）",
-      "sentiment": "positive|neutral|negative",
-      "abstractedVoice": "生声（フリーコメント）から抽出・意訳した、ペルソナごとの代弁コメント（1〜2文程度）。個人が特定されない表現にすること。",
-      "persona": "どのような層からの声か（例：営業部門の若手、全社の管理職など）"
-    }
-  ],
-  "matrix_analysis": {
-    "1m": {
-      "past_record": "【1ヶ月前の記録】過去の業績と体温について",
-      "change": "【当時と今の比較】1ヶ月間での変化・推移",
-      "retrospective": "振り返り: アラート発生時の分析"
-    },
-    "3m": {
-      "past_record": "【3ヶ月前の記録】過去の業績と体温について",
-      "change": "【当時と今の比較】3ヶ月間での変化・推移",
-      "retrospective": "振り返り: 成果または課題の原因分析"
-    },
-    "6m": {
-      "past_record": "【6ヶ月前の記録】過去の業績と体温について",
-      "change": "【当時と今の比較】半年間での変化・推移",
-      "retrospective": "振り返り: 長期的なマネジメントの良し悪しに関する考察"
-    },
-    "12m": {
-      "past_record": "【1年前の記録】過去の業績と体温について",
-      "change": "【当時と今の比較】1年間での変化・推移",
-      "retrospective": "振り返り: 組織の成長痛や文化変容に関する深い考察"
-    }
-  },
-  "department_feedback": [
-    {
-      "from_dept_id": "送信元部署ID",
-      "to_dept_id": "送信先部署ID",
-      "type": "positive|warning|alert|info",
-      "text": "部署間の連携に関するフィードバックテキスト"
-    }
-  ],
-  "suggested_actions": [
-    { "title": "施策名", "description": "具体的な指示内容", "priority": "urgent|high|normal", "dept_id": "部署IDまたはnull(全社の場合)" }
-  ],
-  "semantic_summary": {
-    "phase": "現在の組織フェーズ（例：スケール期、再構築期など）",
-    "key_kpi": "最重要KPI",
-    "top_agenda": "最優先アジェンダ"
-  },
-  "risk_level": "low|medium|high",
-  "risk_reason": "highの場合のみ、異常の理由を1文で記載"
-}
-
-注: risk_level は以下の基準で判定してください。
-- high: 組織に緊急対応が必要な兆候がある（スコアの急落、複数部門での同時悪化、戦略との深刻な乖離など）。
-- medium: 注視が必要な兆候がある。
-- low: 正常範囲内。`;
-
-        // 部署別データの集約とスコア集計（通知にも再利用）
+        // 部署別データの集約とスコア集計
         const deptScores: { deptId: string; deptName: string; avgScore: number }[] = [];
         const deptDetails = depts.data?.map(d => {
             const deptSurveys = surveys.data?.filter(s => s.department_id === d.id && normalizeMonth(s.recorded_month) === normalizeMonth(latestMonth));
@@ -269,14 +264,21 @@ export async function POST(req: Request) {
         });
 
         const prompt = `対象月: ${latestMonth}
+各データセクションは ### DATA START と ### DATA END で区切られています。
+
+### DATA START (組織方針・フェーズ)
 組織方針: ${policy}
+セマンティック設定: ${JSON.stringify(semantic.data || {})}
+### DATA END
 
-過去の推移データ（参考）:
+### DATA START (過去の推移データ)
 ${JSON.stringify(historicalContext, null, 2)}
+### DATA END
 
-現在の詳細データ:
-- 部署別統計: ${JSON.stringify(deptDetails)}
+### DATA START (現在の詳細データ)
+- 部署別詳細: ${JSON.stringify(deptDetails)}
 - KPI定義: ${JSON.stringify(kpiDefs.data?.map(k => ({ name: k.name, unit: k.unit })))}
+### DATA END
 
 分析の要件:
 1. 全社的な傾向をサマリーしてください。
@@ -286,9 +288,6 @@ ${JSON.stringify(historicalContext, null, 2)}
 5. suggested_actions は、即実行可能な具体的なアクションを少なくとも3つ提案してください。
 
 JSONの構造に従い詳細な分析結果を出力してください。`;
-
-        // 4.1 システム設定の取得
-        const sysSettings = await getSystemSettings();
 
         // ── タイムアウト制御（Vercel Pro 上限 60秒 を考慮して 55秒で切る） ──
         const controller = new AbortController();
@@ -319,7 +318,7 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
                 }, { status: 502 });
             }
         } catch (error: any) {
-            clearTimeout(timeoutId); // エラー時もクリア
+            clearTimeout(timeoutId); 
             if (error.name === 'AbortError') {
                 console.error("AI Analysis Timeout Error: Request took longer than 55s");
                 return NextResponse.json({ 
@@ -327,10 +326,10 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
                     detail: "Vercel timeout limit reached" 
                 }, { status: 504 });
             }
-            throw error; // その他のエラーは外側の catch へ
+            throw error;
         }
 
-        // 5. 結果をDBに保存 (重複時は既存データを更新)
+        // 5. 結果をDBに保存
         const { error: insertError } = await supabase.from('ai_insights').upsert({
             company_id: companyId,
             insight_type: 'full_report',
@@ -342,16 +341,15 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
 
         if (insertError) throw insertError;
 
-        // 通知を作成 (fire-and-forget)
+        // 通知を作成
         void (async () => {
-            const targetMonth = latestMonth.substring(0, 7); // YYYY-MM
+            const targetMonthLabel = latestMonth.substring(0, 7);
             
-            // admin と executive へ全社通知
             void createNotification({
                 companyId,
                 type: "ai_analysis_done",
                 title: "AI分析が完了しました",
-                body: `${targetMonth} の分析レポートが生成されました`,
+                body: `${targetMonthLabel} の分析レポートが生成されました`,
                 link: "/history",
                 targetRole: "admin",
                 targetDepartmentId: null,
@@ -360,20 +358,19 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
                 companyId,
                 type: "ai_analysis_done",
                 title: "AI分析が完了しました",
-                body: `${targetMonth} の分析レポートが生成されました`,
+                body: `${targetMonthLabel} の分析レポートが生成されました`,
                 link: "/history",
                 targetRole: "executive",
                 targetDepartmentId: null,
             });
 
-            // manager へ部署ごと通知
             if (depts.data) {
                 for (const dept of depts.data) {
                     void createNotification({
                         companyId,
                         type: "ai_analysis_done",
                         title: "AI分析が完了しました",
-                        body: `${targetMonth} の ${dept.name} の分析レポートが生成されました`,
+                        body: `${targetMonthLabel} の ${dept.name} の分析レポートが生成されました`,
                         link: "/history",
                         targetRole: "manager",
                         targetDepartmentId: dept.id,
@@ -386,7 +383,6 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
         if (aiResult.suggested_actions) {
             const actionsToInsert = aiResult.suggested_actions.map((a: any) => {
                 const targetDeptId = a.dept_id;
-                // 万が一AIがIDを返さず名前を返した場合のフォールバック
                 const resolvedDeptId = depts.data?.find(d => d.id === targetDeptId)?.id || 
                                      depts.data?.find(d => d.name === a.dept_id)?.id || null;
                 
@@ -403,7 +399,6 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
             await supabase.from('action_items').insert(actionsToInsert);
         }
 
-        // ── AI実行回数カウンターの更新（インクリメント & 月の同期） ──
         await supabase
             .from('companies')
             .update({ 
@@ -412,10 +407,8 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
             })
             .eq('id', companyId);
 
-        // ※ Slack通知（内部にtry/catchを内包しておりメインフローを止めない。レスポンスをブロックしないよう非同期実行）
         void sendAiSummaryNotification(companyId);
 
-        // 異常検知アラート
         const currentAvgPulse = historicalContext.current.avg_pulse
             ? parseFloat(historicalContext.current.avg_pulse as string)
             : 0;
@@ -434,16 +427,9 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
             );
         }
 
-        return NextResponse.json({  success: true, data: aiResult });
+        return NextResponse.json({ success: true, data: aiResult });
 
     } catch (error: any) {
-        if (error.name === 'AbortError') {
-            console.error("AI Analysis Timeout Error: Request took longer than 55s");
-            return NextResponse.json({ 
-                error: "AI分析がタイムアウトしました。分析範囲を絞るか、再度実行してください。",
-                detail: "Vercel timeout limit reached" 
-            }, { status: 504 });
-        }
         console.error("AI Analysis API Error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
