@@ -12,7 +12,8 @@ import {
     CreditCard,
     HelpCircle,
     Info,
-    Network
+    Network,
+    GitBranch
 } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { signOut } from "@/lib/auth";
@@ -27,6 +28,7 @@ const MENU_ITEMS = [
     { name: "設定", href: "/admin/settings", icon: Settings },
     { name: "操作ログ", href: "/admin/logs", icon: ShieldAlert },
     { name: "オブジェクト構成図", href: "/admin/schema", icon: Network },
+    { name: "全体のフロー", href: "/admin/flow", icon: GitBranch },
     { name: "操作マニュアル", href: "/admin/help", icon: HelpCircle },
 ];
 
