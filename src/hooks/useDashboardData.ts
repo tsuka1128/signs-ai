@@ -136,9 +136,26 @@ export function useDashboardData(
             }
 
             const latestMonth = last13Months[12];
-            const prevMonth = last13Months[11];
+            let targetMonth = latestMonth;
+            let isStale = false;
+            let dataMonth: string | null = null;
+
+            let latestResponses = filtered.filter(r => normalizeMonth(r.recorded_month) === latestMonth);
             
-            const latestResponses = filtered.filter(r => normalizeMonth(r.recorded_month) === latestMonth);
+            // 今月データがなければ直近月にフォールバック
+            if (latestResponses.length === 0) {
+                for (let i = last13Months.length - 2; i >= 0; i--) {
+                    const prevResponses = filtered.filter(r => normalizeMonth(r.recorded_month) === last13Months[i]);
+                    if (prevResponses.length > 0) {
+                        latestResponses = prevResponses;
+                        targetMonth = last13Months[i];
+                        isStale = true;
+                        dataMonth = `${parseInt(last13Months[i].split('-')[1])}月`;
+                        break;
+                    }
+                }
+            }
+
             const latestAnswers = latestResponses.flatMap(r => r.survey_answers || []);
 
             const responseCount = latestResponses.length;
@@ -155,7 +172,12 @@ export function useDashboardData(
                 return scoresForQ.reduce((sum, s) => sum + s, 0) / scoresForQ.length;
             });
 
+            // 比較用の「そのさらに前月」
+            const targetMonthIdx = last13Months.indexOf(targetMonth);
+            const prevMonth = targetMonthIdx > 0 ? last13Months[targetMonthIdx - 1] : null;
+            
             const prevQScores = questions.map((_, qi) => {
+                if (!prevMonth) return 0;
                 const scoresForQ: number[] = [];
                 filtered
                     .filter(r => normalizeMonth(r.recorded_month) === prevMonth)
@@ -213,7 +235,19 @@ export function useDashboardData(
                 }
             }
 
-            return { viewName, scores: qScores, prevScores: prevQScores, pulse: avgPulse, pulseHistory, aiComment: comment, responseCount, responseRate, voiceTopics: finalVoiceTopics as any[] };
+            return { 
+                viewName, 
+                scores: qScores, 
+                prevScores: prevQScores, 
+                pulse: avgPulse, 
+                pulseHistory, 
+                aiComment: comment, 
+                responseCount, 
+                responseRate, 
+                voiceTopics: finalVoiceTopics as any[],
+                isStale,
+                dataMonth
+            };
         };
     }, [state.realResponses, state.realDepts, state.realAxes, last13Months, aiContent]);
 

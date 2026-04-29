@@ -41,6 +41,11 @@ export function SurveySection({
                     <div>
                         <h1 className="text-xl font-black text-slate-800 tracking-tighter flex items-center gap-3">
                             組織の体温
+                            {data.isStale && data.dataMonth && (
+                                <Badge className="border border-slate-200 bg-slate-50 text-slate-400 text-[10px] font-bold px-2 py-1">
+                                    📅 {data.dataMonth}参照
+                                </Badge>
+                            )}
                         </h1>
                         <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-[0.1em]">11の問いから紐解く現場の真実</p>
                     </div>

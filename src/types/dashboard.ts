@@ -57,6 +57,8 @@ export interface SurveyHistoryData {
     responseCount: number;
     responseRate: number;
     voiceTopics?: VoiceTopic[];
+    isStale?: boolean;
+    dataMonth?: string | null;
 }
 
 export interface MatrixItemData extends DepartmentDisplayData {
