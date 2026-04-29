@@ -12,15 +12,22 @@ interface AppLayoutProps {
     hasLaborData?: boolean;
     hideSidebar?: boolean;
     fullWidth?: boolean;
+    /**
+     * If true, render children directly without the mx-auto/px/py max-width wrapper
+     * and skip the global footer. Use for pages that need edge-to-edge layouts
+     * (e.g. sticky side panels).
+     */
+    bare?: boolean;
 }
 
-export function AppLayout({ 
-    children, 
-    currentSection, 
-    onSectionChange, 
+export function AppLayout({
+    children,
+    currentSection,
+    onSectionChange,
     hasLaborData,
     hideSidebar = false,
-    fullWidth = false
+    fullWidth = false,
+    bare = false,
 }: AppLayoutProps) {
     const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -49,27 +56,33 @@ export function AppLayout({
                 />
 
                 <main className="flex-1 lg:pl-0">
-                    <div className={cn(
-                        "mx-auto px-5 py-8 animate-fadeIn",
-                        fullWidth ? "max-w-full" : "max-w-5xl"
-                    )}>
-                        {children}
-                    </div>
+                    {bare ? (
+                        children
+                    ) : (
+                        <div className={cn(
+                            "mx-auto px-5 py-8 animate-fadeIn",
+                            fullWidth ? "max-w-full" : "max-w-5xl"
+                        )}>
+                            {children}
+                        </div>
+                    )}
                 </main>
 
-                <footer className={cn(
-                    "mx-auto w-full px-5 py-12 text-center space-y-4 opacity-50",
-                    fullWidth ? "max-w-full" : "max-w-5xl"
-                )}>
-                    <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-                    <div className="flex items-center justify-center gap-3">
-                         <div className="w-7 h-7 bg-teal-500/20 rounded-lg flex items-center justify-center">
-                            <span className="text-teal font-black text-sm italic">S</span>
+                {!bare && (
+                    <footer className={cn(
+                        "mx-auto w-full px-5 py-12 text-center space-y-4 opacity-50",
+                        fullWidth ? "max-w-full" : "max-w-5xl"
+                    )}>
+                        <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+                        <div className="flex items-center justify-center gap-3">
+                             <div className="w-7 h-7 bg-teal-500/20 rounded-lg flex items-center justify-center">
+                                <span className="text-teal font-black text-sm italic">S</span>
+                            </div>
+                            <h2 className="text-xl font-black text-slate-300 tracking-tighter">Signs AI</h2>
                         </div>
-                        <h2 className="text-xl font-black text-slate-300 tracking-tighter">Signs AI</h2>
-                    </div>
-                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">組織に体温を — by Taion Inc.</p>
-                </footer>
+                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">組織に体温を — by Taion Inc.</p>
+                    </footer>
+                )}
             </div>
         </div>
     );

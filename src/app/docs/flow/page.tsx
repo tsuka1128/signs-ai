@@ -24,6 +24,7 @@ const CSS = `
     width: 320px; min-width: 320px;
     background: var(--bg2); border-right: 0.5px solid var(--border2);
     padding: 24px 20px; display: flex; flex-direction: column; gap: 16px;
+    align-self: flex-start;
     position: sticky; top: 0; height: 100vh; overflow-y: auto;
   }
   .flow-panel-title {
