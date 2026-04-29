@@ -306,9 +306,12 @@ export default function KpiInputPage() {
 
         setKpiDefinitions(formattedKpis);
 
-        // 実績値取得
+        // 実績値取得 (kpi_records は company_id を持たないため kpi_definition_id で絞る)
         const monthList = months.map(m => m.month);
-        const { data: recs, error: rErr } = await supabase.from('kpi_records').select('*').in('recorded_month', monthList);
+        const kpiIdList = formattedKpis.map(k => k.id);
+        const { data: recs, error: rErr } = kpiIdList.length > 0
+            ? await supabase.from('kpi_records').select('*').in('kpi_definition_id', kpiIdList).in('recorded_month', monthList)
+            : { data: [], error: null };
         if (rErr) console.error("Records fetch error:", rErr);
 
         const initialEditValues: Record<string, { value: string, target: string }> = {};

@@ -49,14 +49,22 @@ export function useDashboardData(
     const loadData = useCallback(async () => {
         if (!company) return;
 
-        const [d, k, s, r, a, recs, resources, ai, act] = await Promise.all([
+        // kpi_records は company_id カラムを持たないため、先に kpi_definitions を取得してから絞り込む
+        const [d, k, s, r, a] = await Promise.all([
             supabase.from('departments').select('*').eq('company_id', company.id).order('sort_order', { ascending: true }),
             supabase.from('kpi_definitions').select('*').eq('company_id', company.id).order('sort_order', { ascending: true }),
             supabase.from('semantic_layers').select('*').eq('company_id', company.id).order('created_at', { ascending: false }),
             supabase.from('survey_responses').select('*, survey_answers(*)').eq('company_id', company.id),
             supabase.from('kpi_axes').select('*').eq('company_id', company.id).order('sort_order', { ascending: true }),
-            supabase.from('kpi_records').select('*').in('recorded_month', last13Months),
-            supabase.from('resource_records').select('*').in('recorded_month', last13Months),
+        ]);
+
+        const kpiIds: string[] = (k.data || []).map((def: any) => def.id);
+
+        const [recs, resources, ai, act] = await Promise.all([
+            kpiIds.length > 0
+                ? supabase.from('kpi_records').select('*').in('kpi_definition_id', kpiIds).in('recorded_month', last13Months)
+                : Promise.resolve({ data: [], error: null }),
+            supabase.from('resource_records').select('*').eq('company_id', company.id).in('recorded_month', last13Months),
             supabase.from('ai_insights').select('*').eq('company_id', company.id).order('created_at', { ascending: false }).limit(1),
             supabase.from('action_items').select('*').eq('company_id', company.id).eq('is_archived', false).order('created_at', { ascending: false })
         ]);
