@@ -120,11 +120,20 @@ export function useDashboardData(
 
         const surveyViewId = (passedOrgView === "product" || passedOrgView === "dept" || passedOrgView === "all") ? "all" : passedOrgView;
 
+        // デバッグログ: ロード済みデータ数と対象IDの確認
+        console.debug(`[SurveyDetail Debug] TotalResponsesLoaded: ${state.realResponses.length}, SearchingForID: ${surveyViewId}`);
+        if (state.realResponses.length > 0) {
+            console.debug(`[SurveyDetail Debug] Sample Response AxisID: ${state.realResponses[0].axis_id}`);
+        }
+
         if (surveyViewId !== "all") {
-            const dept = state.realDepts.find(d => d.id === surveyViewId);
-            const axis = state.realAxes.find(a => a.id === surveyViewId);
+            const dept = state.realDepts.find(d => d.id.trim() === surveyViewId.trim());
+            const axis = state.realAxes.find(a => a.id.trim() === surveyViewId.trim());
             viewName = dept ? dept.name : (axis ? axis.name : "不明なターゲット");
-            filtered = state.realResponses.filter(r => r.department_id === surveyViewId || r.axis_id === surveyViewId);
+            filtered = state.realResponses.filter(r => 
+                (r.department_id && r.department_id.trim() === surveyViewId.trim()) || 
+                (r.axis_id && r.axis_id.trim() === surveyViewId.trim())
+            );
             targetHeadcount = dept 
                 ? state.realUsers.filter(u => u.department_id === dept.id).length 
                 : (axis ? state.realUsers.filter(u => u.axis_id === axis.id).length : 0);
@@ -132,7 +141,7 @@ export function useDashboardData(
             targetHeadcount = state.realUsers.length;
         }
 
-        console.debug(`[SurveyDetail Debug] passedOrgView: ${passedOrgView}, surveyViewId: ${surveyViewId}, viewName: ${viewName}, filteredResponses: ${filtered.length}`);
+        console.debug(`[SurveyDetail Debug] viewName: ${viewName}, filteredResponses: ${filtered.length}`);
 
         const latestMonth = last13Months[12];
         let targetMonth = latestMonth;
