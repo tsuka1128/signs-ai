@@ -63,7 +63,7 @@ export function useDashboardData(
             supabase.from('users').select('id, department_id, axis_id').eq('company_id', company.id)
         ]);
 
-        const kpiIds = (k.data || []).map(def => def.id);
+        const kpiIds = (k.data || []).map((def: any) => def.id);
 
         // Step 2: KPI実績とリソース実績をフェッチ（安全な絞り込み）
         const [recs, resources] = await Promise.all([
