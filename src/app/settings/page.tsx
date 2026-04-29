@@ -98,6 +98,7 @@ export default function SettingsPage() {
                             handleDeleteDept={handlers.handleDeleteDept}
                             handleAddDept={handlers.handleAddDept}
                             handleSaveAllDepts={handlers.handleSaveAllDepts}
+                            users={state.users}
                         />
                     )}
 
@@ -127,6 +128,7 @@ export default function SettingsPage() {
                                 handleDeleteAxis={handlers.handleDeleteAxis}
                                 handleAddAxis={handlers.handleAddAxis}
                                 handleSaveAllAxes={handlers.handleSaveAllAxes}
+                                users={state.users}
                             />
                         </PlanGate>
                     )}

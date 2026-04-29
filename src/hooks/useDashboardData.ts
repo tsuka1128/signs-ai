@@ -18,6 +18,7 @@ interface DashboardState {
     realResources: ResourceRecord[];
     realAiInsights: AiInsight[];
     realActionItems: ActionItem[];
+    realUsers: any[];
 }
 
 export function useDashboardData(
@@ -37,7 +38,8 @@ export function useDashboardData(
         realKpiRecords: [],
         realResources: [],
         realAiInsights: [],
-        realActionItems: []
+        realActionItems: [],
+        realUsers: []
     });
 
     const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -58,7 +60,8 @@ export function useDashboardData(
             supabase.from('kpi_records').select('*').in('recorded_month', last13Months),
             supabase.from('resource_records').select('*').in('recorded_month', last13Months),
             supabase.from('ai_insights').select('*').eq('company_id', company.id).order('created_at', { ascending: false }).limit(1),
-            supabase.from('action_items').select('*').eq('company_id', company.id).eq('is_archived', false).order('created_at', { ascending: false })
+            supabase.from('action_items').select('*').eq('company_id', company.id).eq('is_archived', false).order('created_at', { ascending: false }),
+            supabase.from('users').select('id, department_id, axis_id').eq('company_id', company.id)
         ]);
 
         let mergedKpis: any[] = [];
@@ -98,7 +101,8 @@ export function useDashboardData(
             realKpiRecords: recs.data || [],
             realResources: resources.data || [],
             realAiInsights: ai.data || [],
-            realActionItems: act.data || []
+            realActionItems: act.data || [],
+            realUsers: users.data || []
         });
     }, [company, last13Months, supabase]);
 
@@ -124,7 +128,11 @@ export function useDashboardData(
                 const axis = state.realAxes.find(a => a.id === surveyViewId);
                 viewName = dept ? dept.name : (axis ? axis.name : "不明なターゲット");
                 filtered = state.realResponses.filter(r => r.department_id === surveyViewId || r.axis_id === surveyViewId);
-                targetHeadcount = dept ? (dept.headcount || 0) : (axis ? (axis.headcount || 0) : 0);
+                targetHeadcount = dept 
+                    ? state.realUsers.filter(u => u.department_id === dept.id).length 
+                    : (axis ? state.realUsers.filter(u => u.axis_id === axis.id).length : 0);
+            } else {
+                targetHeadcount = state.realUsers.length;
             }
 
             const latestMonth = last13Months[12];
@@ -240,9 +248,10 @@ export function useDashboardData(
                 const res = state.realResources.find(rr => rr.department_id === d.id && normalizeMonth(rr.recorded_month) === month);
                 return res ? res.head_count : 0;
             });
+            const activeUserCount = state.realUsers.filter(u => u.department_id === d.id).length;
             const latestResource = state.realResources.find(rr => rr.department_id === d.id && normalizeMonth(rr.recorded_month) === latestMonth);
             const latestLabor = latestResource?.labor_cost || 0;
-            const latestActualHead = latestResource?.head_count || headHistory[12] || d.headcount || 0;
+            const latestActualHead = latestResource?.head_count || activeUserCount;
             const laborCostPerHead = (latestLabor > 0 && latestActualHead > 0) ? Math.round((latestLabor / latestActualHead) * 10) / 10 : 0;
 
             const respondentsCount = deptResponses.filter(r => normalizeMonth(r.recorded_month) === latestMonth).length;
@@ -267,9 +276,9 @@ export function useDashboardData(
             return {
                 id: d.id,
                 name: d.name,
-                head: `${headHistory[12]} / ${d.headcount || 0}`,
+                head: `${headHistory[12] || activeUserCount} / ${activeUserCount}`,
                 respondentsCount,
-                masterHeadcount: d.headcount || 0,
+                masterHeadcount: activeUserCount,
                 headHistory,
                 laborCostPerHead,
                 totalLaborCost: latestLabor,
@@ -356,9 +365,10 @@ export function useDashboardData(
                 const res = state.realResources.find(rr => rr.axis_id === axis.id && normalizeMonth(rr.recorded_month) === month);
                 return res ? res.head_count : 0;
             });
+            const activeUserCount = state.realUsers.filter(u => u.axis_id === axis.id).length;
             const latestResource = state.realResources.find(rr => rr.axis_id === axis.id && normalizeMonth(rr.recorded_month) === latestMonth);
             const latestLabor = latestResource?.labor_cost || 0;
-            const latestActualHead = latestResource?.head_count || headHistory[12] || axis.headcount || 0;
+            const latestActualHead = latestResource?.head_count || activeUserCount;
             const laborCostPerHead = (latestLabor > 0 && latestActualHead > 0) ? Math.round((latestLabor / latestActualHead) * 10) / 10 : 0;
 
             const mRecs = state.realKpiRecords.filter(r => normalizeMonth(r.recorded_month) === normalizeMonth(last13Months[12]) && r.axis_id === axis.id);
@@ -377,13 +387,13 @@ export function useDashboardData(
             return {
                 id: axis.id,
                 name: axis.name,
-                head: `${activeHead} / ${axis.headcount || 0}`,
+                head: `${activeHead} / ${activeUserCount}`,
                 respondentsCount: activeHead,
-                masterHeadcount: axis.headcount || 0,
+                masterHeadcount: activeUserCount,
                 headHistory,
                 laborCostPerHead,
                 totalLaborCost: latestLabor,
-                xAxisHead: axis.headcount || 0,
+                xAxisHead: activeUserCount,
                 sizeValue: sizeHistory[12],
                 sizeHistory,
                 productivity: calculateProductivity(kpiAch, pulseScore),

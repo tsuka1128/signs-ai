@@ -13,6 +13,7 @@ interface DepartmentsTabProps {
     handleDeleteDept: (id: string) => void;
     handleAddDept: () => void;
     handleSaveAllDepts: () => void;
+    users?: any[];
 }
 
 export const DepartmentsTab = ({
@@ -22,7 +23,8 @@ export const DepartmentsTab = ({
     handleOpenHistory,
     handleDeleteDept,
     handleAddDept,
-    handleSaveAllDepts
+    handleSaveAllDepts,
+    users = []
 }: DepartmentsTabProps) => {
     const { limits, planName } = usePlanFeatures();
     const isAtLimit = depts.length >= limits.maxDepartments;
@@ -35,7 +37,7 @@ export const DepartmentsTab = ({
                 </h2>
                 <div className="mb-6">
                     <p className="text-xs text-slate-500 mb-1">組織内の各部署を登録してください。バブルチャートの比較に使用されます。</p>
-                    <p className="text-[10px] text-slate-400">※ 各部署の人数はKPI計算に用いる「実際の組織の総従業員数」です。システム上の登録メンバー数とは連動しません。</p>
+                    <p className="text-[10px] text-slate-400">※ 各部署の人数は、システムに登録されているメンバー数（アカウント数）と自動的に連動しています。</p>
                 </div>
 
                 <div className="space-y-4">
@@ -63,7 +65,9 @@ export const DepartmentsTab = ({
                                         <div className="px-4 py-2 bg-slate-100/50 rounded-xl border border-slate-200/50 flex items-center gap-1.5 hover:bg-slate-100 transition-colors">
                                             <Users className="w-3.5 h-3.5 text-slate-400" />
                                             <div className="flex items-baseline gap-0.5">
-                                                <span className="text-sm font-black text-slate-700 tracking-tighter">{d.headcount || 0}</span>
+                                                <span className="text-sm font-black text-slate-700 tracking-tighter">
+                                                    {users.filter(u => u.department_id === d.id).length}
+                                                </span>
                                                 <span className="text-[9px] font-bold text-slate-400">名</span>
                                             </div>
                                         </div>
