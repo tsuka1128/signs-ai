@@ -120,11 +120,12 @@ export function useDashboardData(
 
         const surveyViewId = (passedOrgView === "product" || passedOrgView === "dept" || passedOrgView === "all") ? "all" : passedOrgView;
 
-        // デバッグログ: ロード済みデータ数と対象IDの確認
-        console.debug(`[SurveyDetail Debug] TotalResponsesLoaded: ${state.realResponses.length}, SearchingForID: ${surveyViewId}`);
-        if (state.realResponses.length > 0) {
-            console.debug(`[SurveyDetail Debug] Sample Response AxisID: ${state.realResponses[0].axis_id}`);
-        }
+        // 【調査ログ】ロードされた35件が持っているIDをすべて列挙する
+        const uniqueDeptIds = Array.from(new Set(state.realResponses.map(r => r.department_id))).filter(Boolean);
+        const uniqueAxisIds = Array.from(new Set(state.realResponses.map(r => r.axis_id))).filter(Boolean);
+        console.debug(`[SurveyDetail Debug] Total: ${state.realResponses.length}, LookingFor: ${surveyViewId}`);
+        console.debug(`[SurveyDetail Debug] Available DeptIDs in Data:`, uniqueDeptIds);
+        console.debug(`[SurveyDetail Debug] Available AxisIDs in Data:`, uniqueAxisIds);
 
         if (surveyViewId !== "all") {
             const dept = state.realDepts.find(d => d.id.trim() === surveyViewId.trim());
