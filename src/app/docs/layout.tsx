@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
-    BookOpen, 
-    MessageSquare, 
-    BarChart3, 
-    Users, 
-    ChevronRight, 
+    BookOpen,
+    MessageSquare,
+    BarChart3,
+    Users,
+    ChevronRight,
     ArrowLeft,
     Home,
     HelpCircle,
@@ -17,7 +17,8 @@ import {
     MessageSquareHeart,
     Table2,
     LayoutDashboard,
-    TrendingUp
+    TrendingUp,
+    Workflow
 } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { DocsSearch } from "@/components/docs/DocsSearch";
@@ -37,6 +38,7 @@ const DOCS_MENU = [
         title: "はじめに",
         items: [
             { title: "Signs AIとは？", href: "/docs/introduction", icon: BookOpen },
+            { title: "使い方の全体像（月次サイクル）", href: "/docs/flow", icon: Workflow },
             { title: "初回セットアップガイド", href: "/docs/getting-started", icon: Rocket },
         ]
     },
@@ -149,7 +151,10 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
 
             {/* Main Content Area */}
                 <main className="flex-1 min-w-0">
-                    <div className="p-6 md:p-12 max-w-3xl mx-auto">
+                    <div className={cn(
+                        "p-6 md:p-12 mx-auto",
+                        pathname === "/docs/flow" ? "max-w-none" : "max-w-3xl"
+                    )}>
                         {children}
 
 
