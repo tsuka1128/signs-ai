@@ -113,12 +113,12 @@ export function useDashboardData(
     const latestAi = state.realAiInsights[0];
     const aiContent = latestAi?.content as any;
 
-    const currentSurveyData = useCallback((orgView: string) => {
+        const currentSurveyData = useCallback((passedOrgView: string) => {
         let filtered = state.realResponses;
         let viewName = "全社";
         let targetHeadcount = state.realDepts.reduce((sum, d) => sum + (d.headcount || 0), 0);
 
-        const surveyViewId = (orgView === "product" || orgView === "dept" || orgView === "all") ? "all" : orgView;
+        const surveyViewId = (passedOrgView === "product" || passedOrgView === "dept" || passedOrgView === "all") ? "all" : passedOrgView;
 
         if (surveyViewId !== "all") {
             const dept = state.realDepts.find(d => d.id === surveyViewId);
@@ -132,7 +132,7 @@ export function useDashboardData(
             targetHeadcount = state.realUsers.length;
         }
 
-        console.debug(`[SurveyDetail Debug] viewName: ${viewName}, surveyViewId: ${surveyViewId}, filteredResponses: ${filtered.length}`);
+        console.debug(`[SurveyDetail Debug] passedOrgView: ${passedOrgView}, surveyViewId: ${surveyViewId}, viewName: ${viewName}, filteredResponses: ${filtered.length}`);
 
         const latestMonth = last13Months[12];
         let targetMonth = latestMonth;
