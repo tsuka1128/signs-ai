@@ -145,21 +145,23 @@ export function useDashboardData(
             const sameNameAxisIds = state.realAxes.filter(a => a.name === viewName).map(a => a.id);
             const allTargetIds = Array.from(new Set([surveyViewId, ...sameNameDeptIds, ...sameNameAxisIds]));
 
-            // 2. この組織に所属している全ユーザーのIDを特定（メンバー一覧の紐付けを再現）
-            const memberUserIds = state.realUsers
-                .filter(u => 
-                    (u.department_id && allTargetIds.includes(u.department_id)) || 
-                    (u.axis_id && allTargetIds.includes(u.axis_id))
-                )
-                .map(u => u.id);
+            // 2. この組織に所属している全ユーザーのIDと名前を特定
+            const members = state.realUsers.filter(u => 
+                (u.department_id && allTargetIds.includes(u.department_id)) || 
+                (u.axis_id && allTargetIds.includes(u.axis_id))
+            );
+            const memberUserIds = members.map(u => u.id);
+            const memberNames = members.map(u => (u as any).name).filter(Boolean);
 
-            // 3. 回答データのフィルタリング（直接紐付け or 回答者が所属メンバー）
+            console.debug(`[SurveyDetail Debug] Target: ${viewName}, Members Found: ${members.length}`, memberUserIds);
+
+            // 3. 回答データのフィルタリング
             filtered = state.realResponses.filter(r => {
                 // 直接紐付いている場合
                 if (r.department_id && allTargetIds.includes(r.department_id)) return true;
                 if (r.axis_id && allTargetIds.includes(r.axis_id)) return true;
                 
-                // 直接紐付けがない場合、回答者が所属メンバーであれば集計対象とする
+                // 回答者が所属メンバーのIDまたは名前と一致する場合
                 if (r.user_id && memberUserIds.includes(r.user_id)) return true;
                 
                 return false;
@@ -172,7 +174,7 @@ export function useDashboardData(
             targetHeadcount = state.realUsers.length;
         }
 
-        console.debug(`[SurveyDetail Debug] viewName: ${viewName}, filteredResponses: ${filtered.length}, memberCount: ${state.realUsers.filter(u => u.axis_id === surveyViewId || u.department_id === surveyViewId).length}`);
+        console.debug(`[SurveyDetail Debug] Final Results for ${viewName}: RespCount=${filtered.length}`);
 
         const latestMonth = last13Months[12];
         let targetMonth = latestMonth;
