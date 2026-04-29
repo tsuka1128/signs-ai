@@ -26,6 +26,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { Badge } from "@/components/ui/Badge";
 import { signOut } from "@/lib/auth";
+import { DOCS_MENU } from "@/lib/docs-menu";
 
 interface SidebarProps {
     currentSection?: string;
@@ -59,9 +60,11 @@ export function Sidebar({
     const [userInitial, setUserInitial] = useState("?");
     const [userRole, setUserRole] = useState<string>("player");
     const [isDashboardExpanded, setIsDashboardExpanded] = useState(true);
+    const [isDocsExpanded, setIsDocsExpanded] = useState(pathname.startsWith("/docs"));
     const [isManageOpen, setIsManageOpen] = useState(false);
 
     const isDashboardActive = pathname === "/";
+    const isDocsActive = pathname.startsWith("/docs");
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -203,7 +206,64 @@ export function Sidebar({
                     {/* Support Section */}
                     <div className="space-y-1">
                         <p className="px-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.25em] mb-4">Support</p>
-                        {renderLink("/docs", "ヘルプ・マニュアル", HelpCircle)}
+                        <div className="space-y-1">
+                            <button
+                                onClick={() => setIsDocsExpanded(!isDocsExpanded)}
+                                className={cn(
+                                    "flex w-full items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all group",
+                                    isDocsActive ? "text-teal" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                                )}
+                            >
+                                <HelpCircle className={cn("w-4.5 h-4.5", isDocsActive ? "text-teal" : "text-slate-400 group-hover:text-slate-500")} />
+                                ヘルプ・マニュアル
+                                <div className="ml-auto">
+                                    {isDocsExpanded ? <ChevronDown className="w-3.5 h-3.5 opacity-50" /> : <ChevronRight className="w-3.5 h-3.5 opacity-50" />}
+                                </div>
+                            </button>
+
+                            {isDocsExpanded && (
+                                <div className="ml-4 pl-4 border-l border-slate-100 space-y-3 mt-1 animate-in slide-in-from-left-2 duration-200">
+                                    <Link
+                                        href="/docs"
+                                        onClick={() => setIsMobileOpen?.(false)}
+                                        className={cn(
+                                            "flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-bold transition-all",
+                                            pathname === "/docs"
+                                                ? "text-teal bg-teal/5"
+                                                : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                                        )}
+                                    >
+                                        <HelpCircle className={cn("w-3.5 h-3.5", pathname === "/docs" ? "text-teal" : "text-slate-300")} />
+                                        ドキュメントトップ
+                                    </Link>
+
+                                    {DOCS_MENU.map((group) => (
+                                        <div key={group.title} className="space-y-1">
+                                            <p className="px-3 text-[9px] font-black text-slate-300 uppercase tracking-widest">{group.title}</p>
+                                            {group.items.map((item) => {
+                                                const isActive = pathname === item.href;
+                                                return (
+                                                    <Link
+                                                        key={item.href}
+                                                        href={item.href}
+                                                        onClick={() => setIsMobileOpen?.(false)}
+                                                        className={cn(
+                                                            "flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-bold transition-all",
+                                                            isActive
+                                                                ? "text-teal bg-teal/5"
+                                                                : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                                                        )}
+                                                    >
+                                                        <item.icon className={cn("w-3.5 h-3.5 flex-shrink-0", isActive ? "text-teal" : "text-slate-300")} />
+                                                        <span className="leading-tight">{item.title}</span>
+                                                    </Link>
+                                                );
+                                            })}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </nav>
 
