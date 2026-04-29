@@ -51,33 +51,48 @@ export function useDashboardData(
     const loadData = useCallback(async () => {
         if (!company) return;
 
-        const [d, k, s, r, a, recs, resources, ai, act, users] = await Promise.all([
+        // Step 1: 基本データをフェッチ
+        const [d, k, s, r, a, ai, act, users] = await Promise.all([
             supabase.from('departments').select('*').eq('company_id', company.id).order('sort_order', { ascending: true }),
             supabase.from('kpi_definitions').select('*').eq('company_id', company.id).order('sort_order', { ascending: true }),
             supabase.from('semantic_layers').select('*').eq('company_id', company.id).order('created_at', { ascending: false }),
             supabase.from('survey_responses').select('*, survey_answers(*)').eq('company_id', company.id),
             supabase.from('kpi_axes').select('*').eq('company_id', company.id).order('sort_order', { ascending: true }),
-            supabase.from('kpi_records').select('*').in('recorded_month', last13Months),
-            supabase.from('resource_records').select('*').in('recorded_month', last13Months),
             supabase.from('ai_insights').select('*').eq('company_id', company.id).order('created_at', { ascending: false }).limit(1),
             supabase.from('action_items').select('*').eq('company_id', company.id).eq('is_archived', false).order('created_at', { ascending: false }),
             supabase.from('users').select('id, department_id, axis_id').eq('company_id', company.id)
+        ]);
+
+        const kpiIds = (k.data || []).map(def => def.id);
+
+        // Step 2: KPI実績とリソース実績をフェッチ（安全な絞り込み）
+        const [recs, resources] = await Promise.all([
+            kpiIds.length > 0 
+                ? supabase.from('kpi_records').select('*').in('kpi_definition_id', kpiIds).in('recorded_month', last13Months)
+                : Promise.resolve({ data: [] }),
+            supabase.from('resource_records').select('*').eq('company_id', company.id).in('recorded_month', last13Months)
         ]);
 
         let mergedKpis: any[] = [];
         if (k.data && k.data.length > 0) {
             const latestMonth = last13Months[12];
             mergedKpis = k.data.map((def: any) => {
+                // そのKPI定義に関連するレコードを抽出
                 const records = (recs.data || []).filter((rec: any) => rec.kpi_definition_id === def.id && rec.axis_id === null);
-                const latest = records.find((rec: any) => normalizeMonth(rec.recorded_month) === latestMonth);
-
+                
+                // 部署に紐付かない「グローバル」なレコードを優先的に探す。なければ最新を拾う。
+                const latest = records.find((rec: any) => normalizeMonth(rec.recorded_month) === latestMonth && (rec.department_id === null || rec.department_id === def.owner_dept_id)) 
+                            || records.find((rec: any) => normalizeMonth(rec.recorded_month) === latestMonth);
+                
                 const history = last13Months.map(m => {
-                    const r = records.find((rec: any) => normalizeMonth(rec.recorded_month) === m);
+                    const r = records.find((rec: any) => normalizeMonth(rec.recorded_month) === m && (rec.department_id === null || rec.department_id === def.owner_dept_id))
+                         || records.find((rec: any) => normalizeMonth(rec.recorded_month) === m);
                     return r ? r.value : 0;
                 });
 
                 const targetHistory = last13Months.map(m => {
-                    const r = records.find((rec: any) => normalizeMonth(rec.recorded_month) === m);
+                    const r = records.find((rec: any) => normalizeMonth(rec.recorded_month) === m && (rec.department_id === null || rec.department_id === def.owner_dept_id))
+                         || records.find((rec: any) => normalizeMonth(rec.recorded_month) === m);
                     return r ? r.target_value : (def.target_default ?? 0);
                 });
 

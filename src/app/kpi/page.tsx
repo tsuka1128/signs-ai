@@ -308,7 +308,12 @@ export default function KpiInputPage() {
 
         // 実績値取得
         const monthList = months.map(m => m.month);
-        const { data: recs, error: rErr } = await supabase.from('kpi_records').select('*').in('recorded_month', monthList);
+        const kpiIds = formattedKpis.map(k => k.id);
+        const { data: recs, error: rErr } = await supabase.from('kpi_records')
+            .select('*')
+            .in('kpi_definition_id', kpiIds)
+            .in('recorded_month', monthList);
+            
         if (rErr) console.error("Records fetch error:", rErr);
 
         const initialEditValues: Record<string, { value: string, target: string }> = {};
