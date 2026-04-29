@@ -113,147 +113,143 @@ export function useDashboardData(
     const latestAi = state.realAiInsights[0];
     const aiContent = latestAi?.content as any;
 
-    const currentSurveyData = useMemo(() => {
-        // Logic for currentSurveyData (aggregated pulse/response rate)
-        // ... based on orgView (moved to component side for better tab control)
-        return (orgView: string) => {
-            let filtered = state.realResponses;
-            let viewName = "全社";
-            let targetHeadcount = state.realDepts.reduce((sum, d) => sum + (d.headcount || 0), 0);
+    const currentSurveyData = useCallback((orgView: string) => {
+        let filtered = state.realResponses;
+        let viewName = "全社";
+        let targetHeadcount = state.realDepts.reduce((sum, d) => sum + (d.headcount || 0), 0);
 
-            const surveyViewId = (orgView === "product" || orgView === "dept" || orgView === "all") ? "all" : orgView;
+        const surveyViewId = (orgView === "product" || orgView === "dept" || orgView === "all") ? "all" : orgView;
 
-            if (surveyViewId !== "all") {
-                const dept = state.realDepts.find(d => d.id === surveyViewId);
-                const axis = state.realAxes.find(a => a.id === surveyViewId);
-                viewName = dept ? dept.name : (axis ? axis.name : "不明なターゲット");
-                filtered = state.realResponses.filter(r => r.department_id === surveyViewId || r.axis_id === surveyViewId);
-                targetHeadcount = dept 
-                    ? state.realUsers.filter(u => u.department_id === dept.id).length 
-                    : (axis ? state.realUsers.filter(u => u.axis_id === axis.id).length : 0);
-            } else {
-                targetHeadcount = state.realUsers.length;
-            }
+        if (surveyViewId !== "all") {
+            const dept = state.realDepts.find(d => d.id === surveyViewId);
+            const axis = state.realAxes.find(a => a.id === surveyViewId);
+            viewName = dept ? dept.name : (axis ? axis.name : "不明なターゲット");
+            filtered = state.realResponses.filter(r => r.department_id === surveyViewId || r.axis_id === surveyViewId);
+            targetHeadcount = dept 
+                ? state.realUsers.filter(u => u.department_id === dept.id).length 
+                : (axis ? state.realUsers.filter(u => u.axis_id === axis.id).length : 0);
+        } else {
+            targetHeadcount = state.realUsers.length;
+        }
 
-            console.debug(`[SurveyDetail Debug] viewName: ${viewName}, surveyViewId: ${surveyViewId}, filteredResponses: ${filtered.length}`);
+        console.debug(`[SurveyDetail Debug] viewName: ${viewName}, surveyViewId: ${surveyViewId}, filteredResponses: ${filtered.length}`);
 
-            const latestMonth = last13Months[12];
-            let targetMonth = latestMonth;
-            let isStale = false;
-            let dataMonth: string | null = null;
+        const latestMonth = last13Months[12];
+        let targetMonth = latestMonth;
+        let isStale = false;
+        let dataMonth: string | null = null;
 
-            let latestResponses = filtered.filter(r => normalizeMonth(r.recorded_month) === latestMonth);
-            
-            // 今月データがなければ直近月にフォールバック
-            if (latestResponses.length === 0) {
-                console.debug(`[SurveyDetail Debug] Current month (${latestMonth}) is empty. Searching for fallback...`);
-                for (let i = last13Months.length - 2; i >= 0; i--) {
-                    const prevResponses = filtered.filter(r => normalizeMonth(r.recorded_month) === last13Months[i]);
-                    if (prevResponses.length > 0) {
-                        latestResponses = prevResponses;
-                        targetMonth = last13Months[i];
-                        isStale = true;
-                        dataMonth = `${parseInt(last13Months[i].split('-')[1])}月`;
-                        console.debug(`[SurveyDetail Debug] Found fallback in ${targetMonth}: ${latestResponses.length} responses`);
-                        break;
-                    }
+        let latestResponses = filtered.filter(r => normalizeMonth(r.recorded_month) === latestMonth);
+        
+        // 今月データがなければ直近月にフォールバック
+        if (latestResponses.length === 0) {
+            console.debug(`[SurveyDetail Debug] Current month (${latestMonth}) is empty. Searching for fallback...`);
+            for (let i = last13Months.length - 2; i >= 0; i--) {
+                const prevResponses = filtered.filter(r => normalizeMonth(r.recorded_month) === last13Months[i]);
+                if (prevResponses.length > 0) {
+                    latestResponses = prevResponses;
+                    targetMonth = last13Months[i];
+                    isStale = true;
+                    dataMonth = `${parseInt(last13Months[i].split('-')[1])}月`;
+                    console.debug(`[SurveyDetail Debug] Found fallback in ${targetMonth}: ${latestResponses.length} responses`);
+                    break;
                 }
             }
+        }
 
-            const latestAnswers = latestResponses.flatMap(r => r.survey_answers || []);
+        const latestAnswers = latestResponses.flatMap(r => r.survey_answers || []);
 
-            const responseCount = latestResponses.length;
-            const responseRate = targetHeadcount > 0 ? Math.round((responseCount / targetHeadcount) * 100) : 0;
+        const responseCount = latestResponses.length;
+        const responseRate = targetHeadcount > 0 ? Math.round((responseCount / targetHeadcount) * 100) : 0;
 
-            const questions = DEFAULT_SURVEY_QUESTIONS;
-            const qScores = questions.map((_, qi) => {
-                const scoresForQ: number[] = [];
-                latestResponses.forEach(r => {
+        const questions = DEFAULT_SURVEY_QUESTIONS;
+        const qScores = questions.map((_, qi) => {
+            const scoresForQ: number[] = [];
+            latestResponses.forEach(r => {
+                const ans = r.survey_answers || [];
+                if (ans[qi]) scoresForQ.push(ans[qi].score);
+            });
+            if (scoresForQ.length === 0) return 0;
+            return scoresForQ.reduce((sum, s) => sum + s, 0) / scoresForQ.length;
+        });
+
+        // 比較用の「そのさらに前月」
+        const targetMonthIdx = last13Months.indexOf(targetMonth);
+        const prevMonth = targetMonthIdx > 0 ? last13Months[targetMonthIdx - 1] : null;
+        
+        const prevQScores = questions.map((_, qi) => {
+            if (!prevMonth) return 0;
+            const scoresForQ: number[] = [];
+            filtered
+                .filter(r => normalizeMonth(r.recorded_month) === prevMonth)
+                .forEach(r => {
                     const ans = r.survey_answers || [];
                     if (ans[qi]) scoresForQ.push(ans[qi].score);
                 });
-                if (scoresForQ.length === 0) return 0;
-                return scoresForQ.reduce((sum, s) => sum + s, 0) / scoresForQ.length;
-            });
+            if (scoresForQ.length === 0) return 0;
+            return scoresForQ.reduce((sum, s) => sum + s, 0) / scoresForQ.length;
+        });
 
-            // 比較用の「そのさらに前月」
-            const targetMonthIdx = last13Months.indexOf(targetMonth);
-            const prevMonth = targetMonthIdx > 0 ? last13Months[targetMonthIdx - 1] : null;
-            
-            const prevQScores = questions.map((_, qi) => {
-                if (!prevMonth) return 0;
-                const scoresForQ: number[] = [];
-                filtered
-                    .filter(r => normalizeMonth(r.recorded_month) === prevMonth)
-                    .forEach(r => {
-                        const ans = r.survey_answers || [];
-                        if (ans[qi]) scoresForQ.push(ans[qi].score);
-                    });
-                if (scoresForQ.length === 0) return 0;
-                return scoresForQ.reduce((sum, s) => sum + s, 0) / scoresForQ.length;
-            });
+        const avgPulse = latestAnswers.length > 0
+            ? latestAnswers.reduce((sum, a) => sum + (a as any).score, 0) / latestAnswers.length
+            : 0;
 
-            const avgPulse = latestAnswers.length > 0
-                ? latestAnswers.reduce((sum, a) => sum + (a as any).score, 0) / latestAnswers.length
-                : 0;
+        const pulseHistory = last13Months.map(month => {
+            const monthAnswers = filtered
+                .filter(r => normalizeMonth(r.recorded_month) === month)
+                .flatMap(r => r.survey_answers || []);
+            if (monthAnswers.length === 0) return 0;
+            return monthAnswers.reduce((sum, a) => sum + (a as any).score, 0) / monthAnswers.length;
+        });
 
-            const pulseHistory = last13Months.map(month => {
-                const monthAnswers = filtered
-                    .filter(r => normalizeMonth(r.recorded_month) === month)
-                    .flatMap(r => r.survey_answers || []);
-                if (monthAnswers.length === 0) return 0;
-                return monthAnswers.reduce((sum, a) => sum + (a as any).score, 0) / monthAnswers.length;
-            });
-
-            let comment = aiContent?.summary || "回答データが蓄積されていません。";
-            if (!aiContent && avgPulse > 0) {
-                const lowScoreQ = qScores.map((s, i) => ({ s, i })).filter(x => x.s > 0 && x.s < 3.0).sort((a, b) => a.s - b.s)[0];
-                if (lowScoreQ) {
-                    comment = `${questions[lowScoreQ.i].text} のスコアが低迷しています。環境改善の検討が必要です。`;
-                } else {
-                    comment = "全体的に良好な体温が維持されています。";
-                }
+        let comment = aiContent?.summary || "回答データが蓄積されていません。";
+        if (!aiContent && avgPulse > 0) {
+            const lowScoreQ = qScores.map((s, i) => ({ s, i })).filter(x => x.s > 0 && x.s < 3.0).sort((a, b) => a.s - b.s)[0];
+            if (lowScoreQ) {
+                comment = `${questions[lowScoreQ.i].text} のスコアが低迷しています。環境改善の検討が必要です。`;
+            } else {
+                comment = "全体的に良好な体温が維持されています。";
             }
+        }
 
-            const defaultVoiceTopics = [
-                { id: "v_empty", topic: "データ収集中", sentiment: "neutral", abstractedVoice: "まだ現場の声が集まっていないか、AIによるトピック抽出がおこなわれていません。アンケート配信とAI分析を実行してください。", persona: "システム" }
-            ];
+        const defaultVoiceTopics = [
+            { id: "v_empty", topic: "データ収集中", sentiment: "neutral", abstractedVoice: "まだ現場の声が集まっていないか、AIによるトピック抽出がおこなわれていません。アンケート配信とAI分析を実行してください。", persona: "システム" }
+        ];
 
-            const topicsRaw = aiContent?.voice_topics;
-            let finalVoiceTopics = defaultVoiceTopics;
-            
-            if (Array.isArray(topicsRaw)) {
-                if (topicsRaw.length > 0) {
-                    finalVoiceTopics = topicsRaw.map((t: any, idx: number) => ({
-                        id: t.id || `ai_voice_${idx}`,
-                        topic: t.topic || "トピック不明",
-                        sentiment: t.sentiment || "neutral",
-                        abstractedVoice: t.abstractedVoice || "詳細なし",
-                        persona: t.persona || "全社"
-                    }));
-                } else {
-                    // 空配列の場合は「分析済みだが話題なし」
-                    finalVoiceTopics = [
-                        { id: "v_none", topic: "トピックなし", sentiment: "neutral", abstractedVoice: "今月の回答内容に基づき分析をおこないましたが、共通する顕著な課題や話題は検出されませんでした。組織体温は安定しています。", persona: "システム" }
-                    ];
-                }
+        const topicsRaw = aiContent?.voice_topics;
+        let finalVoiceTopics = defaultVoiceTopics;
+        
+        if (Array.isArray(topicsRaw)) {
+            if (topicsRaw.length > 0) {
+                finalVoiceTopics = topicsRaw.map((t: any, idx: number) => ({
+                    id: t.id || `ai_voice_${idx}`,
+                    topic: t.topic || "トピック不明",
+                    sentiment: t.sentiment || "neutral",
+                    abstractedVoice: t.abstractedVoice || "詳細なし",
+                    persona: t.persona || "全社"
+                }));
+            } else {
+                // 空配列の場合は「分析済みだが話題なし」
+                finalVoiceTopics = [
+                    { id: "v_none", topic: "トピックなし", sentiment: "neutral", abstractedVoice: "今月の回答内容に基づき分析をおこないましたが、共通する顕著な課題や話題は検出されませんでした。組織体温は安定しています。", persona: "システム" }
+                ];
             }
+        }
 
-            return { 
-                viewName, 
-                scores: qScores, 
-                prevScores: prevQScores, 
-                pulse: avgPulse, 
-                pulseHistory, 
-                aiComment: comment, 
-                responseCount, 
-                responseRate, 
-                voiceTopics: finalVoiceTopics as any[],
-                isStale,
-                dataMonth
-            };
+        return { 
+            viewName, 
+            scores: qScores, 
+            prevScores: prevQScores, 
+            pulse: avgPulse, 
+            pulseHistory, 
+            aiComment: comment, 
+            responseCount, 
+            responseRate, 
+            voiceTopics: finalVoiceTopics as any[],
+            isStale,
+            dataMonth
         };
-    }, [state.realResponses, state.realDepts, state.realAxes, last13Months, aiContent]);
+    }, [state.realResponses, state.realDepts, state.realAxes, state.realUsers, last13Months, aiContent]);
 
     const displayDepts = useMemo(() => {
         let depts = state.realDepts;
