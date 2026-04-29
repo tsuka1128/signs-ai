@@ -61,10 +61,28 @@ export function Sidebar({
     const [userRole, setUserRole] = useState<string>("player");
     const [isDashboardExpanded, setIsDashboardExpanded] = useState(true);
     const [isDocsExpanded, setIsDocsExpanded] = useState(pathname.startsWith("/docs"));
+    const [expandedDocsGroups, setExpandedDocsGroups] = useState<Set<string>>(() => {
+        const initial = new Set<string>();
+        DOCS_MENU.forEach(group => {
+            if (group.items.some(item => item.href === pathname)) {
+                initial.add(group.title);
+            }
+        });
+        return initial;
+    });
     const [isManageOpen, setIsManageOpen] = useState(false);
 
     const isDashboardActive = pathname === "/";
     const isDocsActive = pathname.startsWith("/docs");
+
+    const toggleDocsGroup = (title: string) => {
+        setExpandedDocsGroups(prev => {
+            const next = new Set(prev);
+            if (next.has(title)) next.delete(title);
+            else next.add(title);
+            return next;
+        });
+    };
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -237,30 +255,51 @@ export function Sidebar({
                                         ドキュメントトップ
                                     </Link>
 
-                                    {DOCS_MENU.map((group) => (
-                                        <div key={group.title} className="space-y-1">
-                                            <p className="px-3 text-[9px] font-black text-slate-300 uppercase tracking-widest">{group.title}</p>
-                                            {group.items.map((item) => {
-                                                const isActive = pathname === item.href;
-                                                return (
-                                                    <Link
-                                                        key={item.href}
-                                                        href={item.href}
-                                                        onClick={() => setIsMobileOpen?.(false)}
-                                                        className={cn(
-                                                            "flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-bold transition-all",
-                                                            isActive
-                                                                ? "text-teal bg-teal/5"
-                                                                : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
-                                                        )}
-                                                    >
-                                                        <item.icon className={cn("w-3.5 h-3.5 flex-shrink-0", isActive ? "text-teal" : "text-slate-300")} />
-                                                        <span className="leading-tight">{item.title}</span>
-                                                    </Link>
-                                                );
-                                            })}
-                                        </div>
-                                    ))}
+                                    {DOCS_MENU.map((group) => {
+                                        const isGroupExpanded = expandedDocsGroups.has(group.title);
+                                        const hasActiveItem = group.items.some(item => item.href === pathname);
+                                        return (
+                                            <div key={group.title} className="space-y-1">
+                                                <button
+                                                    onClick={() => toggleDocsGroup(group.title)}
+                                                    className={cn(
+                                                        "flex w-full items-center justify-between px-3 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-colors",
+                                                        hasActiveItem
+                                                            ? "text-teal/70 hover:text-teal"
+                                                            : "text-slate-300 hover:text-slate-500"
+                                                    )}
+                                                >
+                                                    <span>{group.title}</span>
+                                                    {isGroupExpanded
+                                                        ? <ChevronDown className="w-3 h-3 opacity-60" />
+                                                        : <ChevronRight className="w-3 h-3 opacity-60" />}
+                                                </button>
+                                                {isGroupExpanded && (
+                                                    <div className="space-y-1 animate-in slide-in-from-top-1 duration-150">
+                                                        {group.items.map((item) => {
+                                                            const isActive = pathname === item.href;
+                                                            return (
+                                                                <Link
+                                                                    key={item.href}
+                                                                    href={item.href}
+                                                                    onClick={() => setIsMobileOpen?.(false)}
+                                                                    className={cn(
+                                                                        "flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-bold transition-all",
+                                                                        isActive
+                                                                            ? "text-teal bg-teal/5"
+                                                                            : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                                                                    )}
+                                                                >
+                                                                    <item.icon className={cn("w-3.5 h-3.5 flex-shrink-0", isActive ? "text-teal" : "text-slate-300")} />
+                                                                    <span className="leading-tight">{item.title}</span>
+                                                                </Link>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>

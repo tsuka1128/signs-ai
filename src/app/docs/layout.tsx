@@ -14,15 +14,18 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
     return (
         <AppLayout>
             <main className="flex-1 min-w-0">
-                <div className={cn(
-                    "p-6 md:p-12 mx-auto",
-                    isFullWidth ? "max-w-none" : "max-w-3xl"
-                )}>
-                    {children}
+                {isFullWidth ? (
+                    children
+                ) : (
+                    <div className="p-6 md:p-12 mx-auto max-w-4xl">
+                        {children}
+                    </div>
+                )}
 
-                    {/* Pagination Navigation */}
+                {/* Pagination + Footer (always padded) */}
+                <div className="p-6 md:p-12 mx-auto max-w-4xl">
                     {pathname !== "/docs" && (
-                        <div className="mt-16 pt-8 border-t border-slate-100">
+                        <div className="mt-4 pt-8 border-t border-slate-100">
                             <div className="grid grid-cols-2 gap-4">
                                 {(() => {
                                     const flatItems = DOCS_MENU.flatMap(group => group.items);
@@ -68,7 +71,6 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
                         </div>
                     )}
 
-                    {/* Footer within Docs */}
                     <footer className="mt-20 pt-10 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4 text-slate-400">
                         <p className="text-xs font-medium">© 2026 Signs AI Inc. All rights reserved.</p>
                         <div className="flex items-center gap-6">

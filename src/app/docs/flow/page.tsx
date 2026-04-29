@@ -17,15 +17,14 @@ const CSS = `
     background: var(--bg); color: var(--text);
     font-size: 13px; line-height: 1.6;
   }
-  .flow-page { display: flex; gap: 0; min-height: 70vh; }
+  .flow-page { display: flex; gap: 0; min-height: 100vh; }
 
   /* サイドパネル */
   .flow-panel {
     width: 320px; min-width: 320px;
     background: var(--bg2); border-right: 0.5px solid var(--border2);
     padding: 24px 20px; display: flex; flex-direction: column; gap: 16px;
-    position: sticky; top: 20px; height: fit-content; max-height: calc(100vh - 40px); overflow-y: auto;
-    border-radius: 16px;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
   }
   .flow-panel-title {
     font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
@@ -48,7 +47,18 @@ const CSS = `
   }
 
   /* メイン図 */
-  .flow-main { flex: 1; padding: 24px 20px; overflow-x: auto; min-width: 0; }
+  .flow-main { flex: 1; padding: 32px 32px; overflow-x: auto; min-width: 0; }
+  .flow-intro { margin-bottom: 32px; padding-bottom: 24px; border-bottom: 0.5px solid var(--border); }
+  .flow-intro-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 999px;
+    background: var(--teal-50); color: var(--teal-800);
+    border: 0.5px solid rgba(29, 158, 117, 0.2);
+    margin-bottom: 12px;
+  }
+  .flow-intro-title { font-size: 24px; font-weight: 800; color: var(--text); line-height: 1.3; margin-bottom: 8px; letter-spacing: -0.01em; }
+  .flow-intro-desc { font-size: 14px; color: var(--text2); line-height: 1.7; }
   .flow-diagram-title {
     font-size: 13px; font-weight: 700; color: var(--text2);
     margin-bottom: 20px; letter-spacing: 0.04em;
@@ -285,47 +295,42 @@ export default function DocsFlowPage() {
     const panel = activePanelId ? PANELS[activePanelId] : null;
 
     return (
-        <div>
-            {/* Intro */}
-            <div className="mb-8 space-y-3">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-teal/5 text-teal rounded-full text-[10px] font-black uppercase tracking-widest border border-teal/10">
-                    Signs AI の使い方
-                </div>
-                <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">
-                    使い方の全体像（月次サイクル）
-                </h1>
-                <p className="text-base text-slate-500 font-medium leading-relaxed">
-                    Signs AI は毎月の組織運営サイクルに沿って動いています。誰が何をいつ行うのかを、ステップごとに確認できます。
-                    各ノードをクリックすると、左側に詳しい解説が表示されます。
-                </p>
-            </div>
+        <div className="flow-root">
+            <style dangerouslySetInnerHTML={{ __html: CSS }} />
+            <div className="flow-page">
 
-            <div className="flow-root rounded-[24px] border border-slate-100 overflow-hidden">
-                <style dangerouslySetInnerHTML={{ __html: CSS }} />
-                <div className="flow-page">
+                {/* サイドパネル */}
+                <aside className="flow-panel">
+                    <div className="flow-panel-title">解説パネル</div>
+                    {!panel ? (
+                        <div className="flow-panel-empty">
+                            右の図のノードをクリックすると<br />ここに解説が表示されます
+                        </div>
+                    ) : (
+                        <div className="flow-panel-content active">
+                            <span className={`flow-panel-badge ${panel.badge.color}`}>{panel.badge.label}</span>
+                            <div className="flow-panel-heading">{panel.heading}</div>
+                            <div className="flow-panel-body" style={{ whiteSpace: "pre-line" }}>{panel.body}</div>
+                            {panel.note && (
+                                <div className="flow-panel-note">💡 {panel.note}</div>
+                            )}
+                        </div>
+                    )}
+                </aside>
 
-                    {/* サイドパネル */}
-                    <aside className="flow-panel">
-                        <div className="flow-panel-title">解説パネル</div>
-                        {!panel ? (
-                            <div className="flow-panel-empty">
-                                右の図のノードをクリックすると<br />ここに解説が表示されます
-                            </div>
-                        ) : (
-                            <div className="flow-panel-content active">
-                                <span className={`flow-panel-badge ${panel.badge.color}`}>{panel.badge.label}</span>
-                                <div className="flow-panel-heading">{panel.heading}</div>
-                                <div className="flow-panel-body" style={{ whiteSpace: "pre-line" }}>{panel.body}</div>
-                                {panel.note && (
-                                    <div className="flow-panel-note">💡 {panel.note}</div>
-                                )}
-                            </div>
-                        )}
-                    </aside>
+                {/* メイン図 */}
+                <main className="flow-main">
+                    {/* Intro */}
+                    <div className="flow-intro">
+                        <div className="flow-intro-badge">Signs AI の使い方</div>
+                        <h1 className="flow-intro-title">使い方の全体像（月次サイクル）</h1>
+                        <p className="flow-intro-desc">
+                            Signs AI は毎月の組織運営サイクルに沿って動いています。誰が何をいつ行うのかを、ステップごとに確認できます。
+                            各ノードをクリックすると、左側に詳しい解説が表示されます。
+                        </p>
+                    </div>
 
-                    {/* メイン図 */}
-                    <main className="flow-main">
-                        <div className="flow-diagram-title">Signs AI — 月次オペレーションサイクル</div>
+                    <div className="flow-diagram-title">Signs AI — 月次オペレーションサイクル</div>
 
                         {/* 準備：管理者セットアップ */}
                         <div className="flow-step">
@@ -478,8 +483,7 @@ export default function DocsFlowPage() {
                                 </div>
                             ))}
                         </div>
-                    </main>
-                </div>
+                </main>
             </div>
         </div>
     );
