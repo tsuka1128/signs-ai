@@ -262,7 +262,8 @@ export function useDashboardData(
             let totalAch = 0;
             let count = 0;
             mKpis.forEach(def => {
-                const rec = mRecs.find(r => r.kpi_definition_id === def.id && r.axis_id === null && r.department_id === d.id);
+                // department_id が設定されているレコードを優先。なければ owner_dept_id で紐付いた旧形式にフォールバック
+                const rec = mRecs.find(r => r.kpi_definition_id === def.id && r.axis_id === null && (r.department_id === d.id || (r.department_id === null && def.owner_dept_id === d.id)));
                 if (rec && rec.target_value !== null) {
                     const ach = calculateAchievementRate(rec.value, rec.target_value, def.is_higher_better !== false);
                     if (ach !== null) {
@@ -304,7 +305,7 @@ export function useDashboardData(
                     let tAch = 0;
                     let c = 0;
                     mKpis.forEach(def => {
-                        const rec = mRecs.find(r => r.kpi_definition_id === def.id && r.axis_id === null && r.department_id === d.id);
+                        const rec = mRecs.find(r => r.kpi_definition_id === def.id && r.axis_id === null && (r.department_id === d.id || (r.department_id === null && def.owner_dept_id === d.id)));
                         if (rec && rec.target_value !== null) {
                             const ach = calculateAchievementRate(rec.value, rec.target_value, def.is_higher_better !== false);
                             if (ach !== null) {
