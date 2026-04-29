@@ -31,7 +31,7 @@ export function calculateProductivity(achievementRate: number, pulseScore: numbe
  * 体温スコアから天気アイコンへの変換
  */
 export function getWeatherFromPulse(score: number): "sun" | "cloud" | "rain" {
-    if (score >= 4.0) return "sun";
+    if (score >= 3.8) return "sun";
     if (score >= 3.0) return "cloud";
     return "rain";
 }
