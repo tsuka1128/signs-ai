@@ -51,6 +51,10 @@ export function SurveySection({
                     </div>
                 </div>
                 <div className="flex flex-col gap-4">
+                    {/* 一時的なデバッグ情報 */}
+                    <div className="bg-amber-50 border border-amber-200 p-2 rounded text-[9px] text-amber-700 font-mono">
+                        DEBUG: View={data.viewName} | Pulse={data.pulse} | Resp={data.responseCount} | Stale={data.isStale ? "YES" : "NO"} | Month={data.dataMonth || "None"}
+                    </div>
                     <TabBar
                         tabs={[{ id: "dept", label: "部署別" }, { id: "product", label: `${secondaryAxisName}別` }]}
                         active={matView}
