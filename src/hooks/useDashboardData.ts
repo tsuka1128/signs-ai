@@ -120,7 +120,7 @@ export function useDashboardData(
 
         const surveyViewId = (passedOrgView === "product" || passedOrgView === "dept" || passedOrgView === "all") ? "all" : passedOrgView;
 
-        // 【調査ログ】ロードされた35件が持っているIDをすべて列挙する
+        // 【調査ログ】部署ID側も確認する
         const uniqueDeptIds = Array.from(new Set(state.realResponses.map(r => r.department_id))).filter(Boolean);
         const uniqueAxisIds = Array.from(new Set(state.realResponses.map(r => r.axis_id))).filter(Boolean);
         console.debug(`[SurveyDetail Debug] Total: ${state.realResponses.length}, LookingFor: ${surveyViewId}`);
@@ -131,10 +131,13 @@ export function useDashboardData(
             const dept = state.realDepts.find(d => d.id.trim() === surveyViewId.trim());
             const axis = state.realAxes.find(a => a.id.trim() === surveyViewId.trim());
             viewName = dept ? dept.name : (axis ? axis.name : "不明なターゲット");
+            
+            // 部署IDまたは領域IDのどちらかに一致すればOK（データの紐付けの揺れを吸収）
             filtered = state.realResponses.filter(r => 
                 (r.department_id && r.department_id.trim() === surveyViewId.trim()) || 
                 (r.axis_id && r.axis_id.trim() === surveyViewId.trim())
             );
+            
             targetHeadcount = dept 
                 ? state.realUsers.filter(u => u.department_id === dept.id).length 
                 : (axis ? state.realUsers.filter(u => u.axis_id === axis.id).length : 0);
