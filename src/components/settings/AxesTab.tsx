@@ -69,7 +69,10 @@ export const AxesTab = ({
                 </div>
 
                 <div className="space-y-4">
-                    <h3 className="text-sm font-bold text-slate-700 ml-1">{secondaryAxisName}の項目一覧</h3>
+                    <div className="ml-1 mb-2">
+                        <h3 className="text-sm font-bold text-slate-700 mb-1">{secondaryAxisName}の項目一覧</h3>
+                        <p className="text-[10px] text-slate-400">※ 各項目の人数はKPI計算に用いる「実際の組織の総従業員数」です。システム上の登録メンバー数とは連動しません。</p>
+                    </div>
                     <Reorder.Group axis="y" values={axes} onReorder={setAxes} className="space-y-4">
                         {axes.map(a => (
                             <Reorder.Item

@@ -33,7 +33,10 @@ export const DepartmentsTab = ({
                 <h2 className="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
                     <Users className="w-5 h-5 text-teal" /> 部署管理
                 </h2>
-                <p className="text-xs text-slate-500 mb-6">組織内の各部署を登録してください。バブルチャートの比較に使用されます。</p>
+                <div className="mb-6">
+                    <p className="text-xs text-slate-500 mb-1">組織内の各部署を登録してください。バブルチャートの比較に使用されます。</p>
+                    <p className="text-[10px] text-slate-400">※ 各部署の人数はKPI計算に用いる「実際の組織の総従業員数」です。システム上の登録メンバー数とは連動しません。</p>
+                </div>
 
                 <div className="space-y-4">
                     <Reorder.Group axis="y" values={depts} onReorder={setDepts} className="space-y-4">
