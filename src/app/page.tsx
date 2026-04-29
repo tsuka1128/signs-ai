@@ -103,10 +103,20 @@ export default function DashboardPage() {
     const targetIdx = monthsMap[month] ?? 12;
 
     return (matView === "product" ? derived.displayAxes : derived.displayDepts).map((d: any) => {
-      const pulseAtMonth = d.pulseHistory?.[targetIdx] || 0;
+      let pulseAtMonth = d.pulseHistory?.[targetIdx] || 0;
       const headAtMonth = d.headHistory?.[targetIdx] || 0;
-      const prodAtMonth = d.productivityHistory?.[targetIdx] || 100;
+      let prodAtMonth = d.productivityHistory?.[targetIdx] || 100;
       const sizeAtMonth = (matView === "product" && d.sizeHistory) ? d.sizeHistory[targetIdx] : 100;
+
+      // 回答なし（pulse === 0）の場合、前月（または直近の過去月）の生産性を位置のフォールバックとして使用する
+      if (pulseAtMonth === 0 && d.pulseHistory && d.productivityHistory) {
+        for (let i = targetIdx - 1; i >= 0; i--) {
+          if (d.pulseHistory[i] > 0) {
+            prodAtMonth = d.productivityHistory[i];
+            break;
+          }
+        }
+      }
 
       let head = headAtMonth;
       if (head === 0) {
@@ -122,7 +132,7 @@ export default function DashboardPage() {
         ...d,
         head,
         productivity: prodAtMonth,
-        pulse: pulseAtMonth || d.pulse,
+        pulse: pulseAtMonth,
         weather: getWeatherFromPulse(pulseAtMonth || d.pulse),
         mrr: sizeAtMonth,
         sizeValue: sizeAtMonth
