@@ -135,6 +135,8 @@ export function useDashboardData(
                 targetHeadcount = state.realUsers.length;
             }
 
+            console.debug(`[SurveyDetail Debug] viewName: ${viewName}, surveyViewId: ${surveyViewId}, filteredResponses: ${filtered.length}`);
+
             const latestMonth = last13Months[12];
             let targetMonth = latestMonth;
             let isStale = false;
@@ -144,6 +146,7 @@ export function useDashboardData(
             
             // 今月データがなければ直近月にフォールバック
             if (latestResponses.length === 0) {
+                console.debug(`[SurveyDetail Debug] Current month (${latestMonth}) is empty. Searching for fallback...`);
                 for (let i = last13Months.length - 2; i >= 0; i--) {
                     const prevResponses = filtered.filter(r => normalizeMonth(r.recorded_month) === last13Months[i]);
                     if (prevResponses.length > 0) {
@@ -151,6 +154,7 @@ export function useDashboardData(
                         targetMonth = last13Months[i];
                         isStale = true;
                         dataMonth = `${parseInt(last13Months[i].split('-')[1])}月`;
+                        console.debug(`[SurveyDetail Debug] Found fallback in ${targetMonth}: ${latestResponses.length} responses`);
                         break;
                     }
                 }

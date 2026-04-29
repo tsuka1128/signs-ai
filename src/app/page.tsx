@@ -239,7 +239,7 @@ export default function DashboardPage() {
 
           {sec === "survey" && (
             <SurveySection
-              data={currentSurveyData}
+              data={currentSurveyData(orgView)}
               secondaryAxisName={secondaryAxisName}
               matView={matView}
               setMatView={setMatView}
