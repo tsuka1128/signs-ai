@@ -43,6 +43,8 @@ export function OrganizationSection({
                             arrow={d.arrow || "flat"}
                             kpis={d.kpis}
                             laborCostPerHead={d.laborCostPerHead}
+                            isStale={d.isStale}
+                            dataMonth={d.dataMonth}
                         />
                     ))
                 ) : (

@@ -20,9 +20,11 @@ interface OrganizationCardProps {
     arrow: "up" | "down" | "flat";
     kpis: KpiItem[];
     laborCostPerHead?: number;
+    isStale?: boolean;
+    dataMonth?: string | null;
 }
 
-export function OrganizationCard({ name, head, pulse, weather, arrow, kpis, laborCostPerHead }: OrganizationCardProps) {
+export function OrganizationCard({ name, head, pulse, weather, arrow, kpis, laborCostPerHead, isStale, dataMonth }: OrganizationCardProps) {
     const isNone = pulse === 0;
     const risk = isNone ? "none" : pulse < 2.5 ? "overheat" : pulse >= 3.5 ? "stable" : "caution";
     const pulseColorClass = isNone ? "text-slate-300" : pulse >= 3.5 ? "text-emerald-500" : pulse >= 2.5 ? "text-amber-500" : "text-rose-500";
@@ -69,6 +71,12 @@ export function OrganizationCard({ name, head, pulse, weather, arrow, kpis, labo
                         risk === "stable" ? "✅ 適温" :
                             risk === "none" ? "😶 未計測" : "⚠️ 要注意"}
                 </Badge>
+                {/* 前月データ参照中バッジ */}
+                {isStale && dataMonth && (
+                    <Badge className="border border-slate-200 bg-slate-50 text-slate-400 text-[9px] font-bold px-2 py-1">
+                        📅 {dataMonth}参照
+                    </Badge>
+                )}
             </div>
 
             {/* KPI Grid */}

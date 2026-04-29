@@ -232,9 +232,27 @@ export function useDashboardData(
                 .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
                 .flatMap(r => r.survey_answers || []);
 
-            const pulseScore = latestAnswers.length > 0
+            // 今月データがなければ直近月にフォールバック
+            let pulseScore = latestAnswers.length > 0
                 ? latestAnswers.reduce((sum, a) => sum + (a as any).score, 0) / latestAnswers.length
                 : 0;
+            let isStale = false;
+            let dataMonth: string | null = null;
+
+            if (latestAnswers.length === 0) {
+                for (let i = last13Months.length - 2; i >= 0; i--) {
+                    const prevAnswers = deptResponses
+                        .filter(r => normalizeMonth(r.recorded_month) === last13Months[i])
+                        .flatMap(r => r.survey_answers || []);
+                    if (prevAnswers.length > 0) {
+                        pulseScore = prevAnswers.reduce((sum, a) => sum + (a as any).score, 0) / prevAnswers.length;
+                        isStale = true;
+                        // 「3月」のような表示用ラベルを生成
+                        dataMonth = `${parseInt(last13Months[i].split('-')[1])}月`;
+                        break;
+                    }
+                }
+            }
 
             const pulseHistory = last13Months.map(month => {
                 const monthAnswers = deptResponses
@@ -258,15 +276,7 @@ export function useDashboardData(
 
             const mKpis = state.realKpis.filter(k => k.owner_dept_id === d.id);
             const mRecs = state.realKpiRecords.filter(r => normalizeMonth(r.recorded_month) === normalizeMonth(last13Months[12]));
-            // デバッグ: KPI定義とレコードの中身を確認
-            if (d.id === state.realDepts[0]?.id) {
-                console.debug('[KPI Debug] dept:', d.name, d.id);
-                console.debug('[KPI Debug] realKpis:', state.realKpis.slice(0, 3).map(k => ({ id: k.id, name: k.name, owner_dept_id: k.owner_dept_id })));
-                console.debug('[KPI Debug] mKpis for this dept:', mKpis.length, mKpis.map(k => k.name));
-                console.debug('[KPI Debug] mRecs this month:', mRecs.length, mRecs.slice(0, 3).map(r => ({ kpi_def_id: r.kpi_definition_id, dept_id: r.department_id, val: r.value })));
-                console.debug('[KPI Debug] realResponses count:', state.realResponses.length);
-            }
-            
+
             let totalAch = 0;
             let count = 0;
             mKpis.forEach(def => {
@@ -298,6 +308,8 @@ export function useDashboardData(
                 arrow: "flat",
                 kpiAch,
                 hasKpiData: count > 0,
+                isStale,
+                dataMonth,
                 kpis: state.realKpis.filter(k => k.owner_dept_id === d.id)
                     .sort((a, b) => (b.is_main ? 1 : 0) - (a.is_main ? 1 : 0))
                     .map((k: any) => ({
@@ -347,9 +359,26 @@ export function useDashboardData(
                 .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
                 .flatMap(r => r.survey_answers || []);
 
-            const pulseScore = latestAnswers.length > 0
+            // 今月データがなければ直近月にフォールバック
+            let pulseScore = latestAnswers.length > 0
                 ? latestAnswers.reduce((sum, a) => sum + (a as any).score, 0) / latestAnswers.length
                 : 0;
+            let isStale = false;
+            let dataMonth: string | null = null;
+
+            if (latestAnswers.length === 0) {
+                for (let i = last13Months.length - 2; i >= 0; i--) {
+                    const prevAnswers = axisResponses
+                        .filter(r => normalizeMonth(r.recorded_month) === last13Months[i])
+                        .flatMap(r => r.survey_answers || []);
+                    if (prevAnswers.length > 0) {
+                        pulseScore = prevAnswers.reduce((sum, a) => sum + (a as any).score, 0) / prevAnswers.length;
+                        isStale = true;
+                        dataMonth = `${parseInt(last13Months[i].split('-')[1])}月`;
+                        break;
+                    }
+                }
+            }
 
             const pulseHistory = last13Months.map(month => {
                 const monthAnswers = axisResponses
@@ -413,6 +442,8 @@ export function useDashboardData(
                 pulseHistory,
                 weather: getWeatherFromPulse(pulseScore),
                 arrow: "flat",
+                isStale,
+                dataMonth,
                 kpis: state.realKpis.map(def => {
                     const rec = state.realKpiRecords.find(r => r.kpi_definition_id === def.id && r.axis_id === axis.id && normalizeMonth(r.recorded_month) === latestMonth);
                     if (!rec) return null;
