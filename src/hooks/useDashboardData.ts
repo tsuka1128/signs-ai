@@ -120,23 +120,27 @@ export function useDashboardData(
 
         const surveyViewId = (passedOrgView === "product" || passedOrgView === "dept" || passedOrgView === "all") ? "all" : passedOrgView;
 
-        // 【調査ログ】部署ID側も確認する
-        const uniqueDeptIds = Array.from(new Set(state.realResponses.map(r => r.department_id))).filter(Boolean);
-        const uniqueAxisIds = Array.from(new Set(state.realResponses.map(r => r.axis_id))).filter(Boolean);
-        console.debug(`[SurveyDetail Debug] Total: ${state.realResponses.length}, LookingFor: ${surveyViewId}`);
-        console.debug(`[SurveyDetail Debug] Available DeptIDs in Data:`, uniqueDeptIds);
-        console.debug(`[SurveyDetail Debug] Available AxisIDs in Data:`, uniqueAxisIds);
-
         if (surveyViewId !== "all") {
             const dept = state.realDepts.find(d => d.id.trim() === surveyViewId.trim());
             const axis = state.realAxes.find(a => a.id.trim() === surveyViewId.trim());
             viewName = dept ? dept.name : (axis ? axis.name : "不明なターゲット");
             
-            // 部署IDまたは領域IDのどちらかに一致すればOK（データの紐付けの揺れを吸収）
-            filtered = state.realResponses.filter(r => 
-                (r.department_id && r.department_id.trim() === surveyViewId.trim()) || 
-                (r.axis_id && r.axis_id.trim() === surveyViewId.trim())
-            );
+            // ユーザー情報を介した高度なフィルタリング
+            filtered = state.realResponses.filter(r => {
+                // 1. レコード自体にIDがある場合（優先）
+                if (r.department_id && r.department_id.trim() === surveyViewId.trim()) return true;
+                if (r.axis_id && r.axis_id.trim() === surveyViewId.trim()) return true;
+                
+                // 2. レコードにIDがない場合、回答ユーザーの現在の所属から特定する
+                if (r.user_id) {
+                    const user = state.realUsers.find(u => u.id === r.user_id);
+                    if (user) {
+                        if (user.department_id && user.department_id.trim() === surveyViewId.trim()) return true;
+                        if (user.axis_id && user.axis_id.trim() === surveyViewId.trim()) return true;
+                    }
+                }
+                return false;
+            });
             
             targetHeadcount = dept 
                 ? state.realUsers.filter(u => u.department_id === dept.id).length 
