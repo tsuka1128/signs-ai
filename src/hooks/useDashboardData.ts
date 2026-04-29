@@ -140,25 +140,28 @@ export function useDashboardData(
             const axis = state.realAxes.find(a => a.id.trim() === surveyViewId.trim());
             viewName = dept ? dept.name : (axis ? axis.name : "不明なターゲット");
             
-            // 【強化】名前が一致するすべてのID（部署ID・領域ID）を収集する
-            // これにより、IDが変わってしまった過去のデータも拾えるようになります
+            // 1. この組織（名前ベース含む）に紐付く全IDを収集
             const sameNameDeptIds = state.realDepts.filter(d => d.name === viewName).map(d => d.id);
             const sameNameAxisIds = state.realAxes.filter(a => a.name === viewName).map(a => a.id);
             const allTargetIds = Array.from(new Set([surveyViewId, ...sameNameDeptIds, ...sameNameAxisIds]));
 
+            // 2. この組織に所属している全ユーザーのIDを特定（メンバー一覧の紐付けを再現）
+            const memberUserIds = state.realUsers
+                .filter(u => 
+                    (u.department_id && allTargetIds.includes(u.department_id)) || 
+                    (u.axis_id && allTargetIds.includes(u.axis_id))
+                )
+                .map(u => u.id);
+
+            // 3. 回答データのフィルタリング（直接紐付け or 回答者が所属メンバー）
             filtered = state.realResponses.filter(r => {
-                // 1. レコード自体のIDが、対象名のいずれかのIDと一致するか
+                // 直接紐付いている場合
                 if (r.department_id && allTargetIds.includes(r.department_id)) return true;
                 if (r.axis_id && allTargetIds.includes(r.axis_id)) return true;
                 
-                // 2. 回答ユーザーの現在の所属が、対象名のいずれかのIDと一致するか
-                if (r.user_id) {
-                    const user = state.realUsers.find(u => u.id === r.user_id);
-                    if (user) {
-                        if (user.department_id && allTargetIds.includes(user.department_id)) return true;
-                        if (user.axis_id && allTargetIds.includes(user.axis_id)) return true;
-                    }
-                }
+                // 直接紐付けがない場合、回答者が所属メンバーであれば集計対象とする
+                if (r.user_id && memberUserIds.includes(r.user_id)) return true;
+                
                 return false;
             });
             
@@ -169,7 +172,7 @@ export function useDashboardData(
             targetHeadcount = state.realUsers.length;
         }
 
-        console.debug(`[SurveyDetail Debug] viewName: ${viewName}, filteredResponses: ${filtered.length}`);
+        console.debug(`[SurveyDetail Debug] viewName: ${viewName}, filteredResponses: ${filtered.length}, memberCount: ${state.realUsers.filter(u => u.axis_id === surveyViewId || u.department_id === surveyViewId).length}`);
 
         const latestMonth = last13Months[12];
         let targetMonth = latestMonth;
