@@ -125,18 +125,23 @@ export function useDashboardData(
             const axis = state.realAxes.find(a => a.id.trim() === surveyViewId.trim());
             viewName = dept ? dept.name : (axis ? axis.name : "不明なターゲット");
             
-            // ユーザー情報を介した高度なフィルタリング
+            // 【強化】名前が一致するすべてのID（部署ID・領域ID）を収集する
+            // これにより、IDが変わってしまった過去のデータも拾えるようになります
+            const sameNameDeptIds = state.realDepts.filter(d => d.name === viewName).map(d => d.id);
+            const sameNameAxisIds = state.realAxes.filter(a => a.name === viewName).map(a => a.id);
+            const allTargetIds = Array.from(new Set([surveyViewId, ...sameNameDeptIds, ...sameNameAxisIds]));
+
             filtered = state.realResponses.filter(r => {
-                // 1. レコード自体にIDがある場合（優先）
-                if (r.department_id && r.department_id.trim() === surveyViewId.trim()) return true;
-                if (r.axis_id && r.axis_id.trim() === surveyViewId.trim()) return true;
+                // 1. レコード自体のIDが、対象名のいずれかのIDと一致するか
+                if (r.department_id && allTargetIds.includes(r.department_id)) return true;
+                if (r.axis_id && allTargetIds.includes(r.axis_id)) return true;
                 
-                // 2. レコードにIDがない場合、回答ユーザーの現在の所属から特定する
+                // 2. 回答ユーザーの現在の所属が、対象名のいずれかのIDと一致するか
                 if (r.user_id) {
                     const user = state.realUsers.find(u => u.id === r.user_id);
                     if (user) {
-                        if (user.department_id && user.department_id.trim() === surveyViewId.trim()) return true;
-                        if (user.axis_id && user.axis_id.trim() === surveyViewId.trim()) return true;
+                        if (user.department_id && allTargetIds.includes(user.department_id)) return true;
+                        if (user.axis_id && allTargetIds.includes(user.axis_id)) return true;
                     }
                 }
                 return false;
