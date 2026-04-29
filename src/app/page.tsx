@@ -49,7 +49,7 @@ export default function DashboardPage() {
   const secondaryAxisName = company?.secondary_axis_name || "プロダクト";
 
   // Derived current metrics based on UI state
-  const currentSurveyData = useMemo(() => derived.currentSurveyData(orgView), [derived, orgView]);
+  const currentSurveyData = useMemo(() => (derived as any).getCurrentSurveyData(orgView), [derived, orgView]);
 
   const ins = useMemo(() => {
     const pulse = currentSurveyData.pulse;
@@ -239,7 +239,7 @@ export default function DashboardPage() {
 
           {sec === "survey" && (
             <SurveySection
-              data={currentSurveyData(orgView)}
+              data={currentSurveyData}
               secondaryAxisName={secondaryAxisName}
               matView={matView}
               setMatView={setMatView}

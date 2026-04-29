@@ -651,7 +651,7 @@ export function useDashboardData(
 
     return {
         state: { ...state, isAnalyzing, last13Months, monthLabels, fullMonthLabels, aiContent, ...financialMetrics },
-        derived: { currentSurveyData, displayDepts, displayKpis, displayAxes, deptTabs },
+        derived: { getCurrentSurveyData: currentSurveyData, displayDepts, displayKpis, displayAxes, deptTabs },
         handlers: { handleRunAnalyze, handleSaveSemantic, handleDeleteSemantic }
     };
 }
