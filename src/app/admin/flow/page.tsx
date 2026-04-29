@@ -300,13 +300,14 @@ const PANELS: Record<string, PanelContent> = {
     },
 };
 
-function Node({ id, color, title, sub, selected, onSelect }: {
-    id: string; color: string; title: string; sub: string; selected: boolean; onSelect: (id: string) => void;
+function Node({ nodeKey, panelId, color, title, sub, selectedKey, onSelect }: {
+    nodeKey: string; panelId: string; color: string; title: string; sub: string;
+    selectedKey: string | null; onSelect: (nodeKey: string, panelId: string) => void;
 }) {
     return (
         <div
-            className={`flow-node ${color}${selected ? " selected" : ""}`}
-            onClick={() => onSelect(id)}
+            className={`flow-node ${color}${selectedKey === nodeKey ? " selected" : ""}`}
+            onClick={() => onSelect(nodeKey, panelId)}
         >
             <span className="flow-node-title">{title}</span>
             <span className="flow-node-sub">{sub}</span>
@@ -315,13 +316,18 @@ function Node({ id, color, title, sub, selected, onSelect }: {
 }
 
 export default function AdminFlowPage() {
-    const [selected, setSelected] = useState<string | null>(null);
+    const [selectedKey, setSelectedKey] = useState<string | null>(null);
+    const [activePanelId, setActivePanelId] = useState<string | null>(null);
 
-    const handleSelect = useCallback((id: string) => {
-        setSelected(prev => prev === id ? null : id);
+    const handleSelect = useCallback((nodeKey: string, panelId: string) => {
+        setSelectedKey(prev => {
+            if (prev === nodeKey) { setActivePanelId(null); return null; }
+            setActivePanelId(panelId);
+            return nodeKey;
+        });
     }, []);
 
-    const panel = selected ? PANELS[selected] : null;
+    const panel = activePanelId ? PANELS[activePanelId] : null;
 
     return (
         <div className="flow-root">
@@ -378,13 +384,13 @@ export default function AdminFlowPage() {
                             Admin — 初回セットアップ
                         </div>
                         <div className="flow-nodes">
-                            <Node id="company"     color="n-teal"   title="Company"        sub="plan_id / status"                      selected={selected === "company"}     onSelect={handleSelect} />
-                            <Node id="department"  color="n-teal"   title="Department"     sub="headcount"                             selected={selected === "department"}  onSelect={handleSelect} />
-                            <Node id="kpidef"      color="n-purple" title="KpiDefinition"  sub="name / unit"                           selected={selected === "kpidef"}      onSelect={handleSelect} />
-                            <Node id="semantic"    color="n-coral"  title="SemanticLayer"  sub="会社方針・文脈"                          selected={selected === "semantic"}    onSelect={handleSelect} />
-                            <Node id="survey-setup" color="n-coral" title="Survey 設定"    sub="カスタム設問 × 3"                       selected={selected === "survey-setup"} onSelect={handleSelect} />
+                            <Node nodeKey="s1_company"      panelId="company"      color="n-teal"   title="Company"        sub="plan_id / status"                           selectedKey={selectedKey} onSelect={handleSelect} />
+                            <Node nodeKey="s1_department"   panelId="department"   color="n-teal"   title="Department"     sub="headcount"                                  selectedKey={selectedKey} onSelect={handleSelect} />
+                            <Node nodeKey="s1_kpidef"       panelId="kpidef"       color="n-purple" title="KpiDefinition"  sub="name / unit"                                selectedKey={selectedKey} onSelect={handleSelect} />
+                            <Node nodeKey="s1_semantic"     panelId="semantic"     color="n-coral"  title="SemanticLayer"  sub="会社方針・文脈"                               selectedKey={selectedKey} onSelect={handleSelect} />
+                            <Node nodeKey="s1_survey-setup" panelId="survey-setup" color="n-coral"  title="Survey 設定"    sub="カスタム設問 × 3"                            selectedKey={selectedKey} onSelect={handleSelect} />
                             <div style={{ width: "100%", maxWidth: 360 }}>
-                                <Node id="invitation" color="n-gray" title="Invitation 送信" sub="role: manager / player / executive を招待" selected={selected === "invitation"} onSelect={handleSelect} />
+                                <Node nodeKey="s1_invitation" panelId="invitation" color="n-gray"   title="Invitation 送信" sub="role: manager / player / executive を招待"  selectedKey={selectedKey} onSelect={handleSelect} />
                             </div>
                         </div>
                     </div>
@@ -399,9 +405,9 @@ export default function AdminFlowPage() {
                             Manager — 月次KPI・リソース入力（自部署スコープ）
                         </div>
                         <div className="flow-nodes">
-                            <Node id="kpirec"           color="n-purple" title="KpiRecord 入力"      sub="value / target / month（自部署のみ）" selected={selected === "kpirec"}           onSelect={handleSelect} />
-                            <Node id="resource"          color="n-purple" title="ResourceRecord 入力"  sub="head_count / labor_cost（自部署のみ）" selected={selected === "resource"}          onSelect={handleSelect} />
-                            <Node id="slack-kpi-request" color="n-green"  title="Slack KPI入力依頼"    sub="kpi_reminder → manager"               selected={selected === "slack-kpi-request"} onSelect={handleSelect} />
+                            <Node nodeKey="s2_kpirec"           panelId="kpirec"           color="n-purple" title="KpiRecord 入力"     sub="value / target / month（自部署のみ）"  selectedKey={selectedKey} onSelect={handleSelect} />
+                            <Node nodeKey="s2_resource"         panelId="resource"         color="n-purple" title="ResourceRecord 入力" sub="head_count / labor_cost（自部署のみ）" selectedKey={selectedKey} onSelect={handleSelect} />
+                            <Node nodeKey="s2_slack-kpi-request" panelId="slack-kpi-request" color="n-green" title="Slack KPI入力依頼"  sub="kpi_reminder → manager"               selectedKey={selectedKey} onSelect={handleSelect} />
                         </div>
                     </div>
 
@@ -415,9 +421,9 @@ export default function AdminFlowPage() {
                             Player — ボイスチェック回答
                         </div>
                         <div className="flow-nodes">
-                            <Node id="slack-remind" color="n-gray"  title="Slack 通知受信"    sub="voice_check_reminder"         selected={selected === "slack-remind"}  onSelect={handleSelect} />
-                            <Node id="surveyres"    color="n-coral" title="SurveyResponse"    sub="recorded_month / pulse"       selected={selected === "surveyres"}     onSelect={handleSelect} />
-                            <Node id="surveyanswer" color="n-coral" title="SurveyAnswer × 11" sub="question_no / score"          selected={selected === "surveyanswer"}  onSelect={handleSelect} />
+                            <Node nodeKey="s3_slack-remind" panelId="slack-remind" color="n-gray"  title="Slack 通知受信"    sub="voice_check_reminder"   selectedKey={selectedKey} onSelect={handleSelect} />
+                            <Node nodeKey="s3_surveyres"    panelId="surveyres"    color="n-coral" title="SurveyResponse"    sub="recorded_month / pulse" selectedKey={selectedKey} onSelect={handleSelect} />
+                            <Node nodeKey="s3_surveyanswer" panelId="surveyanswer" color="n-coral" title="SurveyAnswer × 11" sub="question_no / score"    selectedKey={selectedKey} onSelect={handleSelect} />
                         </div>
                     </div>
 
@@ -431,18 +437,18 @@ export default function AdminFlowPage() {
                             SignsAI — AI分析実行（Admin手動 or 自動スケジュール）
                         </div>
                         <div className="flow-nodes">
-                            <Node id="kpirec"    color="n-purple" title="KpiRecord"      sub="業績データ"   selected={selected === "kpirec"}    onSelect={handleSelect} />
-                            <Node id="resource"  color="n-purple" title="ResourceRecord" sub="人件費ROI"    selected={selected === "resource"}  onSelect={handleSelect} />
-                            <Node id="surveyres" color="n-coral"  title="SurveyResponse" sub="組織体温"     selected={selected === "surveyres"} onSelect={handleSelect} />
-                            <Node id="semantic"  color="n-coral"  title="SemanticLayer"  sub="組織方針文脈"  selected={selected === "semantic"}  onSelect={handleSelect} />
+                            <Node nodeKey="s4_kpirec"    panelId="kpirec"    color="n-purple" title="KpiRecord"      sub="業績データ"   selectedKey={selectedKey} onSelect={handleSelect} />
+                            <Node nodeKey="s4_resource"  panelId="resource"  color="n-purple" title="ResourceRecord" sub="人件費ROI"    selectedKey={selectedKey} onSelect={handleSelect} />
+                            <Node nodeKey="s4_surveyres" panelId="surveyres" color="n-coral"  title="SurveyResponse" sub="組織体温"     selectedKey={selectedKey} onSelect={handleSelect} />
+                            <Node nodeKey="s4_semantic"  panelId="semantic"  color="n-coral"  title="SemanticLayer"  sub="組織方針文脈" selectedKey={selectedKey} onSelect={handleSelect} />
                         </div>
                         <div style={{ padding: "6px 0 0 8px" }}>
                             <div className="flow-nodes">
                                 <div style={{ minWidth: 200 }}>
-                                    <Node id="aiinsight"  color="n-amber" title="AiInsight 生成・保存"  sub="summary / deep_report / insights_by_dept" selected={selected === "aiinsight"}  onSelect={handleSelect} />
+                                    <Node nodeKey="s4_aiinsight"  panelId="aiinsight"  color="n-amber" title="AiInsight 生成・保存" sub="summary / deep_report / insights_by_dept" selectedKey={selectedKey} onSelect={handleSelect} />
                                 </div>
                                 <div style={{ minWidth: 180 }}>
-                                    <Node id="actionitem" color="n-blue"  title="ActionItem 自動生成"   sub="is_ai_generated: true / dept別"            selected={selected === "actionitem"} onSelect={handleSelect} />
+                                    <Node nodeKey="s4_actionitem" panelId="actionitem" color="n-blue"  title="ActionItem 自動生成"  sub="is_ai_generated: true / dept別"           selectedKey={selectedKey} onSelect={handleSelect} />
                                 </div>
                             </div>
                         </div>
@@ -458,10 +464,10 @@ export default function AdminFlowPage() {
                             Admin — 分析レビュー &amp; ai_summary 通知確認
                         </div>
                         <div className="flow-nodes">
-                            <Node id="aiinsight"       color="n-amber" title="AiInsight 閲覧"      sub="Deep Report 全社分析"       selected={selected === "aiinsight"}       onSelect={handleSelect} />
-                            <Node id="admin-review"    color="n-blue"  title="ActionItem 確認・編集" sub="priority 調整 / 手動追加"   selected={selected === "admin-review"}    onSelect={handleSelect} />
-                            <Node id="admin-review"    color="n-gray"  title="AdminActivityLog"    sub="操作ログ自動記録"            selected={selected === "admin-review"}    onSelect={handleSelect} />
-                            <Node id="slack-admin-done" color="n-green" title="Slack 完了報告"       sub="ai_summary → executive"    selected={selected === "slack-admin-done"} onSelect={handleSelect} />
+                            <Node nodeKey="s5_aiinsight"        panelId="aiinsight"        color="n-amber" title="AiInsight 閲覧"       sub="Deep Report 全社分析"     selectedKey={selectedKey} onSelect={handleSelect} />
+                            <Node nodeKey="s5_admin-review-act" panelId="admin-review"     color="n-blue"  title="ActionItem 確認・編集" sub="priority 調整 / 手動追加" selectedKey={selectedKey} onSelect={handleSelect} />
+                            <Node nodeKey="s5_admin-review-log" panelId="admin-review"     color="n-gray"  title="AdminActivityLog"     sub="操作ログ自動記録"          selectedKey={selectedKey} onSelect={handleSelect} />
+                            <Node nodeKey="s5_slack-admin-done" panelId="slack-admin-done" color="n-green" title="Slack 完了報告"        sub="ai_summary → executive"   selectedKey={selectedKey} onSelect={handleSelect} />
                         </div>
                     </div>
 
@@ -475,9 +481,9 @@ export default function AdminFlowPage() {
                             Executive — アクション承認 &amp; 組織方向性決定
                         </div>
                         <div className="flow-nodes">
-                            <Node id="exec-action"   color="n-amber" title="AiInsight 閲覧"       sub="executive スコープ"         selected={selected === "exec-action"}   onSelect={handleSelect} />
-                            <Node id="exec-action"   color="n-blue"  title="ActionItem 承認・作成" sub="priority: urgent / high"   selected={selected === "exec-action"}   onSelect={handleSelect} />
-                            <Node id="exec-semantic" color="n-coral" title="SemanticLayer 更新"   sub="次月方針を反映"              selected={selected === "exec-semantic"} onSelect={handleSelect} />
+                            <Node nodeKey="s6_exec-action-ai"   panelId="exec-action"   color="n-amber" title="AiInsight 閲覧"       sub="executive スコープ"        selectedKey={selectedKey} onSelect={handleSelect} />
+                            <Node nodeKey="s6_exec-action-item" panelId="exec-action"   color="n-blue"  title="ActionItem 承認・作成" sub="priority: urgent / high"  selectedKey={selectedKey} onSelect={handleSelect} />
+                            <Node nodeKey="s6_exec-semantic"    panelId="exec-semantic" color="n-coral" title="SemanticLayer 更新"   sub="次月方針を反映"             selectedKey={selectedKey} onSelect={handleSelect} />
                         </div>
                     </div>
 
@@ -491,14 +497,14 @@ export default function AdminFlowPage() {
                             Manager — ai_analysis_done 通知受信 &amp; 自部署アクション確認
                         </div>
                         <div className="flow-nodes">
-                            <Node id="notify-create"  color="n-amber" title="analyze API 完了"     sub="createNotification(manager)"        selected={selected === "notify-create"}  onSelect={handleSelect} />
-                            <Node id="notify-create"  color="n-gray"  title="Notification 作成"    sub="targetRole: manager / dept別"        selected={selected === "notify-create"}  onSelect={handleSelect} />
-                            <Node id="notify-setting" color="n-gray"  title="NotificationSetting"  sub="slack_enabled チェック"              selected={selected === "notify-setting"} onSelect={handleSelect} />
+                            <Node nodeKey="s7_notify-create-api"    panelId="notify-create"  color="n-amber" title="analyze API 完了"    sub="createNotification(manager)"  selectedKey={selectedKey} onSelect={handleSelect} />
+                            <Node nodeKey="s7_notify-create-record" panelId="notify-create"  color="n-gray"  title="Notification 作成"   sub="targetRole: manager / dept別"  selectedKey={selectedKey} onSelect={handleSelect} />
+                            <Node nodeKey="s7_notify-setting"       panelId="notify-setting" color="n-gray"  title="NotificationSetting" sub="slack_enabled チェック"        selectedKey={selectedKey} onSelect={handleSelect} />
                         </div>
                         <div style={{ padding: "6px 0 0 8px" }}>
                             <div className="flow-nodes">
-                                <Node id="slack-dm"       color="n-green" title="Slack DM 送信"           sub="User.slack_user_id が必須"        selected={selected === "slack-dm"}       onSelect={handleSelect} />
-                                <Node id="action-confirm" color="n-blue"  title="ActionItem 確認（自部署）" sub="dept_id = 自部署のみ SELECT"      selected={selected === "action-confirm"} onSelect={handleSelect} />
+                                <Node nodeKey="s7_slack-dm"       panelId="slack-dm"       color="n-green" title="Slack DM 送信"           sub="User.slack_user_id が必須"   selectedKey={selectedKey} onSelect={handleSelect} />
+                                <Node nodeKey="s7_action-confirm" panelId="action-confirm" color="n-blue"  title="ActionItem 確認（自部署）" sub="dept_id = 自部署のみ SELECT" selectedKey={selectedKey} onSelect={handleSelect} />
                             </div>
                         </div>
                     </div>
