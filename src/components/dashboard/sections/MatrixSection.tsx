@@ -37,6 +37,7 @@ export function MatrixSection({
     const scatterData = useMemo(() => {
         return currentMatData.map(d => ({
             ...d,
+            head: d.masterHeadcount || 0,
             sizeValue: sizeBase === "labor" ? d.totalLaborCost : d.sizeValue
         }));
     }, [currentMatData, sizeBase]);
