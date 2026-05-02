@@ -263,11 +263,38 @@ export function useSettingsData() {
     };
 
     const handleDeleteDept = async (id: string) => {
-        if (!confirm("この部署を削除しますか？")) return;
-        if (!id.startsWith("new_")) {
-            const supabase = createClient();
-            await supabase.from('departments').delete().eq('id', id);
+        if (id.startsWith("new_")) {
+            // 未保存の部署はそのまま除去
+            setDepts(depts.filter(d => d.id !== id));
+            return;
         }
+
+        const supabase = createClient();
+
+        // 関連データ件数を事前確認
+        const [{ count: surveyCount }, { count: kpiCount }] = await Promise.all([
+            supabase.from('survey_responses').select('*', { count: 'exact', head: true }).eq('department_id', id),
+            supabase.from('kpi_records').select('*', { count: 'exact', head: true }).eq('department_id', id),
+        ]);
+
+        const dept = depts.find(d => d.id === id);
+        const deptName = dept?.name || "この部署";
+        const hasLinkedData = (surveyCount ?? 0) > 0 || (kpiCount ?? 0) > 0;
+
+        let confirmMessage = `「${deptName}」を削除しますか？`;
+        if (hasLinkedData) {
+            confirmMessage =
+                `⚠️ 警告：「${deptName}」には紐付いたデータがあります。\n\n` +
+                `  • アンケート回答: ${surveyCount ?? 0} 件\n` +
+                `  • KPI実績: ${kpiCount ?? 0} 件\n\n` +
+                `削除すると、これらのデータは「どの組織にも属さない孤立データ」になり、` +
+                `ダッシュボードに表示されなくなります。\n\n` +
+                `本当に削除しますか？`;
+        }
+
+        if (!confirm(confirmMessage)) return;
+
+        await supabase.from('departments').delete().eq('id', id);
         setDepts(depts.filter(d => d.id !== id));
     };
 

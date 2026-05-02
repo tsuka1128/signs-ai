@@ -116,6 +116,26 @@ export function useAdminSettings(companyId: string) {
             const idsToDelete = existingIds.filter(id => !currentIds.includes(id));
 
             if (idsToDelete.length > 0) {
+                // 削除前に関連データ件数を確認し、あれば警告
+                const [{ count: surveyCount }, { count: kpiCount }] = await Promise.all([
+                    supabase.from('survey_responses').select('*', { count: 'exact', head: true }).in('department_id', idsToDelete),
+                    supabase.from('kpi_records').select('*', { count: 'exact', head: true }).in('department_id', idsToDelete),
+                ]);
+
+                if ((surveyCount ?? 0) > 0 || (kpiCount ?? 0) > 0) {
+                    const proceed = typeof window !== 'undefined' && window.confirm(
+                        `⚠️ 警告：削除しようとしている部署に紐付いたデータがあります。\n\n` +
+                        `  • アンケート回答: ${surveyCount ?? 0} 件\n` +
+                        `  • KPI実績: ${kpiCount ?? 0} 件\n\n` +
+                        `削除するとこれらのデータが孤立し、ダッシュボードに表示されなくなります。\n` +
+                        `本当に削除しますか？`
+                    );
+                    if (!proceed) {
+                        setLoading(false);
+                        return;
+                    }
+                }
+
                 const { error: delErr } = await supabase.from('departments').delete().in('id', idsToDelete);
                 if (delErr) throw delErr;
             }
