@@ -752,6 +752,17 @@ export function useDashboardData(
             laborRoi: d.totalLaborCost > 0 ? Math.round((d.kpiAch / (d.totalLaborCost / 1000000)) * 10) / 10 : 0
         }));
 
+        const axisFinanceData = displayAxes.map(a => ({
+            id: a.id,
+            name: a.name,
+            laborCostPerHead: a.laborCostPerHead,
+            totalLaborCost: a.totalLaborCost,
+            kpiAch: a.kpiAch,
+            pulse: a.pulse,
+            headcount: a.headHistory?.[12] || 0,
+            laborRoi: a.totalLaborCost > 0 ? Math.round((a.kpiAch / (a.totalLaborCost / 1000000)) * 10) / 10 : 0
+        }));
+
         const deptsActualHead = displayDepts.reduce((sum, d) => sum + (d.headHistory?.[12] || 0), 0);
         const axesActualHead = displayAxes.reduce((sum, a) => sum + (a.headHistory?.[12] || 0), 0);
         
@@ -759,7 +770,7 @@ export function useDashboardData(
         const totalActualHead = deptsActualHead > 0 ? deptsActualHead : axesActualHead;
         const avgLaborCostPerHead = totalActualHead > 0 ? Math.round((totalLaborCost / totalActualHead) * 10) / 10 : 0;
 
-        return { hasLaborData, laborRoi, laborDistRate, totalLaborCost, deptFinanceData, avgLaborCostPerHead };
+        return { hasLaborData, laborRoi, laborDistRate, totalLaborCost, deptFinanceData, axisFinanceData, avgLaborCostPerHead };
     }, [state.realResources, state.realDepts, state.realAxes, state.realKpis, displayDepts, displayAxes, last13Months]);
 
     const deptTabs = useMemo(() => {

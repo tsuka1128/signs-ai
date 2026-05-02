@@ -208,7 +208,9 @@ export default function DashboardPage() {
                 laborDistRate={state.laborDistRate}
                 totalLaborCost={state.totalLaborCost}
                 deptFinanceData={state.deptFinanceData}
+                axisFinanceData={state.axisFinanceData}
                 avgLaborCostPerHead={state.avgLaborCostPerHead}
+                secondaryAxisName={secondaryAxisName}
                 aiContent={aiContent}
               />
             </PlanGate>
