@@ -721,12 +721,13 @@ export function useDashboardData(
         const axesLaborSum = axesLabor.reduce((a, b) => a + b, 0);
 
         // 部署側人件費データを優先、無ければ領域側を使う（二重カウント防止）
-        const totalLaborCost = deptsLaborSum > 0 ? deptsLaborSum : axesLaborSum;
-        const hasLaborData = totalLaborCost > 0;
+        const rawTotalLaborCost = deptsLaborSum > 0 ? deptsLaborSum : axesLaborSum;
+        const totalLaborCost = Math.round(rawTotalLaborCost / 10000); // 万円単位に変換
+        const hasLaborData = rawTotalLaborCost > 0;
 
         if (!hasLaborData) return { hasLaborData: false, laborRoi: 0, laborDistRate: 0, totalLaborCost: 0 };
 
-        // ROI = (Avg KPI Achievement) / (Total Labor Cost / 100)  -- Simple Index
+        // ROI = (Avg KPI Achievement) / (Total Labor Cost(万円) / 100)  -- Simple Index
         const allAch = [...displayDepts, ...displayAxes].map(d => d.kpiAch);
         const avgAch = allAch.length > 0 ? allAch.reduce((a, b) => a + b, 0) / allAch.length : 0;
         const laborRoi = totalLaborCost > 0 ? Math.round((avgAch / (totalLaborCost / 100)) * 10) / 10 : 0;
@@ -738,7 +739,7 @@ export function useDashboardData(
             totalRevenue += (k.val || 0);
         });
 
-        const laborDistRate = totalRevenue > 0 ? Math.round((totalLaborCost / totalRevenue) * 100) : 0;
+        const laborDistRate = totalRevenue > 0 ? Math.round((rawTotalLaborCost / totalRevenue) * 100) : 0;
 
         const deptFinanceData = displayDepts.map(d => ({
             id: d.id,
