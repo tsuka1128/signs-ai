@@ -165,7 +165,7 @@ export function useDashboardData(
                 return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
             });
 
-            const avgPulse = answers.length > 0 ? answers.reduce((a, b) => a + b, 0) / answers.length : 0;
+            const avgPulse = answers.length > 0 ? answers.reduce((a: number, b: any) => a + b.score, 0) / answers.length : 0;
             
             return { id: org.id, name: org.name, qScores, avgPulse };
         }).filter(o => o.avgPulse > 0); // データがある組織のみ母集団とする
@@ -177,7 +177,7 @@ export function useDashboardData(
             const activeScores = orgScores.map(o => o.qScores[qi]).filter(s => s > 0);
             return activeScores.length > 0 ? activeScores.reduce((a, b) => a + b, 0) / activeScores.length : 0;
         });
-        const companyAvgPulse = orgScores.reduce((a, b) => a + b, 0) / orgScores.length;
+        const companyAvgPulse = orgScores.reduce((a, b) => a + b.avgPulse, 0) / orgScores.length;
 
         // 標準偏差と偏差値の算出関数
         const calculateDeviations = (scores: number[], mean: number) => {
