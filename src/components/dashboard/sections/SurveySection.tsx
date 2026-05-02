@@ -80,45 +80,59 @@ export function SurveySection({
                 />
             ) : (
                 <>
-                    {/* Summary Stats */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
-                            <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">現在の回答率</span>
-                            <div className="flex items-baseline gap-2">
-                                <span className={cn(
-                                    "text-3xl font-black tabular-nums tracking-tighter",
-                                    data.responseRate >= 80 ? "text-teal" : data.responseRate >= 40 ? "text-indigo-400" : "text-rose-500"
-                                )}>
-                                    {data.responseRate}%
-                                </span>
-                                <span className="text-[10px] text-slate-400 font-bold uppercase tabular-nums">({data.responseCount}名回答済)</span>
-                            </div>
-                            <div className="mt-3 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                <div 
-                                    className={cn(
-                                        "h-full transition-all duration-1000",
-                                        data.responseRate >= 80 ? "bg-teal" : data.responseRate >= 40 ? "bg-indigo-400" : "bg-rose-500"
-                                    )}
-                                    style={{ width: `${data.responseRate}%` }}
-                                />
-                            </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+                        <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">現在の回答率</span>
+                        <div className="flex items-baseline gap-2">
+                            <span className={cn(
+                                "text-3xl font-black tabular-nums tracking-tighter",
+                                (data as any).responseRate >= 80 ? "text-teal" : (data as any).responseRate >= 40 ? "text-indigo-400" : "text-rose-500"
+                            )}>
+                                {(data as any).responseRate}%
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tabular-nums">({(data as any).responseCount}名回答済)</span>
                         </div>
-                        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
-                            <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">当月平均体温</span>
-                            <div className="flex items-baseline gap-2">
-                                <span className={cn(
-                                    "text-3xl font-black tabular-nums tracking-tighter",
-                                    data.pulse >= 3.5 ? "text-emerald-500" : data.pulse >= 2.5 ? "text-amber-500" : "text-rose-500"
-                                )}>
-                                    {data.pulse.toFixed(1)}
-                                </span>
-                                <span className="text-[10px] text-slate-400 font-bold uppercase">/ 5.0</span>
-                            </div>
-                            <p className="mt-3 text-[10px] text-slate-400 font-bold leading-tight">
-                                {data.pulse >= 3.5 ? "非常に良好なコンディションです。" : data.pulse >= 2.5 ? "一部に課題が見られます。" : "早急な対話と対策が必要です。"}
-                            </p>
+                        <div className="mt-3 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div 
+                                className={cn(
+                                    "h-full transition-all duration-1000",
+                                    (data as any).responseRate >= 80 ? "bg-teal" : (data as any).responseRate >= 40 ? "bg-indigo-400" : "bg-rose-500"
+                                )}
+                                style={{ width: `${(data as any).responseRate}%` }}
+                            />
                         </div>
                     </div>
+                    <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+                        <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">当月平均体温</span>
+                        <div className="flex items-baseline gap-2">
+                            <span className={cn(
+                                "text-3xl font-black tabular-nums tracking-tighter",
+                                data.pulse >= 3.5 ? "text-emerald-500" : data.pulse >= 2.5 ? "text-amber-500" : "text-rose-500"
+                            )}>
+                                {data.pulse.toFixed(1)}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase">/ 5.0</span>
+                        </div>
+                        <p className="mt-3 text-[10px] text-slate-400 font-bold leading-tight">
+                            {data.pulse >= 3.5 ? "非常に良好なコンディションです。" : data.pulse >= 2.5 ? "一部に課題が見られます。" : "早急な対話と対策が必要です。"}
+                        </p>
+                    </div>
+                    <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hidden md:block">
+                        <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">全社偏差値</span>
+                        <div className="flex items-baseline gap-2">
+                            <span className={cn(
+                                "text-3xl font-black tabular-nums tracking-tighter",
+                                (data as any).deviation >= 55 ? "text-blue-500" : (data as any).deviation >= 45 ? "text-slate-600" : "text-rose-500"
+                            )}>
+                                {(data as any).deviation?.toFixed(1) || '50.0'}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase">/ 100</span>
+                        </div>
+                        <p className="mt-3 text-[10px] text-slate-400 font-bold leading-tight">
+                            {(data as any).deviation >= 55 ? "全社平均を上回る高水準です。" : (data as any).deviation >= 45 ? "全社平均並みの水準です。" : "全社平均を下回る傾向にあります。"}
+                        </p>
+                    </div>
+                </div>
 
                     {/* Pulse History Chart */}
                     <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm transition-all hover:shadow-md space-y-4">
@@ -234,15 +248,23 @@ export function SurveySection({
                             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">設問別スコア詳細</h3>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {questions.map((q, i) => (
-                                <SurveyQuestionCard
-                                    key={q.id}
-                                    question={q.text}
-                                    hint={q.hint}
-                                    score={data.scores[i]}
-                                    prevScore={data.prevScores[i]}
-                                />
-                            ))}
+                            {questions.map((q, i) => {
+                                const questionDev = (data as any).questionDeviations?.[i];
+                                const devDiff = questionDev !== undefined ? questionDev - 50 : undefined;
+                                const allOrgsScores = (data as any).allOrgsStats?.orgScores?.map((o: any) => o.qScores[i]);
+
+                                return (
+                                    <SurveyQuestionCard
+                                        key={q.id}
+                                        question={q.text}
+                                        hint={q.hint}
+                                        score={data.scores[i]}
+                                        prevScore={data.prevScores[i]}
+                                        deviationDiff={devDiff}
+                                        allOrgsScores={allOrgsScores}
+                                    />
+                                );
+                            })}
                         </div>
                     </div>
                 </>

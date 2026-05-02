@@ -142,6 +142,80 @@ export function useDashboardData(
     const latestAi = state.realAiInsights[0];
     const aiContent = latestAi?.content as any;
 
+    // --- 全組織の統計データ計算 (偏差値用) ---
+    const allOrgsStats = useMemo(() => {
+        const targetMonth = state.latestSurveyMonth;
+        if (!targetMonth) return null;
+
+        const orgs = [
+            ...state.realDepts.map(d => ({ id: d.id, name: d.name, type: 'dept' })),
+            ...state.realAxes.map(a => ({ id: a.id, name: a.name, type: 'axis' }))
+        ];
+
+        // 各組織の最新基準月における設問別スコアを計算
+        const orgScores = orgs.map(org => {
+            const filtered = state.realResponses.filter(r => 
+                (org.type === 'dept' ? r.department_id === org.id : r.axis_id === org.id) &&
+                normalizeMonth(r.recorded_month) === normalizeMonth(targetMonth)
+            );
+            const answers = filtered.flatMap(r => r.survey_answers || []);
+            
+            const qScores = DEFAULT_SURVEY_QUESTIONS.map((_, qi) => {
+                const vals = filtered.map(r => (r.survey_answers || [])[qi]?.score).filter(s => s !== undefined);
+                return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+            });
+
+            const avgPulse = answers.length > 0 ? answers.reduce((a, b) => a + b, 0) / answers.length : 0;
+            
+            return { id: org.id, name: org.name, qScores, avgPulse };
+        }).filter(o => o.avgPulse > 0); // データがある組織のみ母集団とする
+
+        if (orgScores.length === 0) return null;
+
+        // 全社平均の算出
+        const companyQScores = DEFAULT_SURVEY_QUESTIONS.map((_, qi) => {
+            const activeScores = orgScores.map(o => o.qScores[qi]).filter(s => s > 0);
+            return activeScores.length > 0 ? activeScores.reduce((a, b) => a + b, 0) / activeScores.length : 0;
+        });
+        const companyAvgPulse = orgScores.reduce((a, b) => a + b, 0) / orgScores.length;
+
+        // 標準偏差と偏差値の算出関数
+        const calculateDeviations = (scores: number[], mean: number) => {
+            const n = scores.length;
+            if (n <= 1) return scores.map(() => 50);
+            const variance = scores.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / n;
+            const std = Math.sqrt(variance);
+            
+            return scores.map(s => {
+                if (std === 0) return 50;
+                const dev = 50 + 10 * (s - mean) / std;
+                return Math.max(0, Math.min(100, Math.round(dev * 10) / 10)); // 0-100クランプ、小数点1位
+            });
+        };
+
+        // 各組織の偏差値をマッピング
+        const deviationsMap: Record<string, { total: number, questions: number[] }> = {};
+        
+        const totalDevs = calculateDeviations(orgScores.map(o => o.avgPulse), companyAvgPulse);
+        const questionDevs = DEFAULT_SURVEY_QUESTIONS.map((_, qi) => 
+            calculateDeviations(orgScores.map(o => o.qScores[qi]), companyQScores[qi])
+        );
+
+        orgScores.forEach((org, idx) => {
+            deviationsMap[org.id] = {
+                total: totalDevs[idx],
+                questions: DEFAULT_SURVEY_QUESTIONS.map((_, qi) => questionDevs[qi][idx])
+            };
+        });
+
+        return {
+            companyQScores,
+            companyAvgPulse,
+            deviationsMap,
+            orgScores // 比較グラフ用
+        };
+    }, [state.realResponses, state.realDepts, state.realAxes, state.latestSurveyMonth]);
+
         const currentSurveyData = useCallback((passedOrgView: string) => {
         let filtered = state.realResponses;
         let viewName = "全社";
@@ -270,6 +344,11 @@ export function useDashboardData(
             }
         }
 
+        // 偏差値データの取得
+        const orgStats = allOrgsStats?.deviationsMap[surveyViewId];
+        const deviation = orgStats?.total || 50;
+        const questionDeviations = orgStats?.questions || questions.map(() => 50);
+
         return { 
             viewName, 
             scores: qScores, 
@@ -281,9 +360,12 @@ export function useDashboardData(
             responseRate, 
             voiceTopics: finalVoiceTopics as any[],
             isStale,
-            dataMonth
+            dataMonth,
+            deviation,
+            questionDeviations,
+            allOrgsStats // 全社比較用
         };
-    }, [state.realResponses, state.realDepts, state.realAxes, state.realUsers, last13Months, aiContent]);
+    }, [state.realResponses, state.realDepts, state.realAxes, state.realUsers, state.latestSurveyMonth, last13Months, aiContent, allOrgsStats]);
 
     const displayDepts = useMemo(() => {
         let depts = state.realDepts;
