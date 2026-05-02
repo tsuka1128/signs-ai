@@ -216,14 +216,14 @@ export function SurveySection({
                                 <MessageCircle className="w-4 h-4 text-slate-300" />
                                 現場の声（AI分析）
                             </h3>
-                            {data.responseCount >= 5 && (
+                            {data.responseCount >= 3 && (
                                 <Badge className="bg-teal/10 text-teal font-black text-[9px] border-none px-2 uppercase tracking-widest">
                                     {data.voiceTopics?.length || 0} Topics Extracted
                                 </Badge>
                             )}
                         </div>
 
-                        {data.responseCount < 5 ? (
+                        {data.responseCount < 3 ? (
                             <div className="bg-slate-50 rounded-3xl p-8 border border-slate-100 flex flex-col items-center justify-center text-center space-y-4 shadow-inner">
                                 <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm">
                                     <Lock className="w-6 h-6 text-slate-300" />
@@ -231,7 +231,7 @@ export function SurveySection({
                                 <div>
                                     <p className="text-sm font-black text-slate-700 mb-1">生データの閲覧が制限されています</p>
                                     <p className="text-[11px] text-slate-400 font-medium leading-relaxed max-w-sm mx-auto">
-                                        個人の特定を防ぐ（心理的安全性を担保する）ため、対象グループの回答者が <b>5名以上</b> になるまで定性コメントおよびトピック抽出は表示されません。<br />
+                                        個人の特定を防ぐ（心理的安全性を担保する）ため、対象グループの回答者が <b>3名以上</b> になるまで定性コメントおよびトピック抽出は表示されません。<br />
                                         現在の回答者：<span className="font-black text-rose-500">{data.responseCount} 名</span>
                                     </p>
                                 </div>
