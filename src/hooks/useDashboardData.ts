@@ -73,16 +73,24 @@ export function useDashboardData(
             supabase.from('resource_records').select('*').eq('company_id', company.id).in('recorded_month', last13Months)
         ]);
 
+        // データが存在する最新月を特定する
+        const latestSurveyMonth = [...last13Months].reverse().find(m => 
+            (r.data || []).some(res => normalizeMonth(res.recorded_month) === m)
+        ) || last13Months[12];
+
+        const latestKpiMonth = [...last13Months].reverse().find(m => 
+            (recs.data || []).some(res => normalizeMonth(res.recorded_month) === m)
+        ) || last13Months[12];
+
         let mergedKpis: any[] = [];
         if (k.data && k.data.length > 0) {
-            const latestMonth = last13Months[12];
             mergedKpis = k.data.map((def: any) => {
                 // そのKPI定義に関連するレコードを抽出
                 const records = (recs.data || []).filter((rec: any) => rec.kpi_definition_id === def.id && rec.axis_id === null);
                 
-                // 部署に紐付かない「グローバル」なレコードを優先的に探す。なければ最新を拾う。
-                const latest = records.find((rec: any) => normalizeMonth(rec.recorded_month) === latestMonth && (rec.department_id === null || rec.department_id === def.owner_dept_id)) 
-                            || records.find((rec: any) => normalizeMonth(rec.recorded_month) === latestMonth);
+                // 部署に紐付かない「グローバル」なレコードを優先的に探す。
+                const latest = records.find((rec: any) => normalizeMonth(rec.recorded_month) === latestKpiMonth && (rec.department_id === null || rec.department_id === def.owner_dept_id)) 
+                            || records.find((rec: any) => normalizeMonth(rec.recorded_month) === latestKpiMonth);
                 
                 const history = last13Months.map(m => {
                     const r = records.find((rec: any) => normalizeMonth(rec.recorded_month) === m && (rec.department_id === null || rec.department_id === def.owner_dept_id))
@@ -117,7 +125,9 @@ export function useDashboardData(
             realResources: resources.data || [],
             realAiInsights: ai.data || [],
             realActionItems: act.data || [],
-            realUsers: users.data || []
+            realUsers: users.data || [],
+            latestSurveyMonth,
+            latestKpiMonth
         });
     }, [company, last13Months, supabase]);
 
