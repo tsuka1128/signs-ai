@@ -748,7 +748,8 @@ export function useDashboardData(
             totalLaborCost: d.totalLaborCost,
             kpiAch: d.kpiAch,
             pulse: d.pulse,
-            headcount: d.headHistory?.[12] || 0
+            headcount: d.headHistory?.[12] || 0,
+            laborRoi: d.totalLaborCost > 0 ? Math.round((d.kpiAch / (d.totalLaborCost / 1000000)) * 10) / 10 : 0
         }));
 
         const deptsActualHead = displayDepts.reduce((sum, d) => sum + (d.headHistory?.[12] || 0), 0);

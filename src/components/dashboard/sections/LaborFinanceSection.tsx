@@ -13,6 +13,7 @@ interface LaborFinanceSectionProps {
         kpiAch: number;
         pulse: number;
         headcount: number;
+        laborRoi: number;
     }[];
     avgLaborCostPerHead?: number;
     aiContent?: any;
@@ -146,6 +147,7 @@ export function LaborFinanceSection({
                                 <th className="px-4 py-4 text-center">単価(万)</th>
                                 <th className="px-4 py-4 text-center">KPI達成率</th>
                                 <th className="px-4 py-4 text-center">体温</th>
+                                <th className="px-4 py-4 text-center">ROI</th>
                                 <th className="px-6 py-4 text-right">効率スコア</th>
                             </tr>
                         </thead>
@@ -188,6 +190,13 @@ export function LaborFinanceSection({
                                                 {d.pulse >= 4.0 ? <Sun className="w-3 h-3 text-amber-400" /> : d.pulse >= 3.0 ? <Cloud className="w-3 h-3 text-slate-300" /> : <CloudRain className="w-3 h-3 text-slate-400" />}
                                                 <span className={cn(isLowPulse ? "text-rose-500" : "text-slate-600")}>{d.pulse.toFixed(1)}</span>
                                             </div>
+                                        </td>
+                                        <td className={cn(
+                                            "px-4 py-4 text-center tabular-nums",
+                                            d.laborRoi >= 100 ? "text-teal font-black" : 
+                                            d.laborRoi >= 80 ? "text-slate-600" : "text-slate-400"
+                                        )}>
+                                            {d.laborRoi.toFixed(1)}
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
