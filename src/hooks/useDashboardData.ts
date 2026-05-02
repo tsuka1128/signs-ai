@@ -71,10 +71,19 @@ export function useDashboardData(
 
         let mergedKpis: any[] = [];
         if (k.data && k.data.length > 0) {
-            const latestMonth = last13Months[12];
+            // loadData 内では state がまだ更新されていないため、ここで直近有効月を探す
+            const allRecords = recs.data || [];
+            let effectiveKpiMonth = last13Months[12];
+            for (let i = last13Months.length - 1; i >= 0; i--) {
+                if (allRecords.some((r: any) => normalizeMonth(r.recorded_month) === last13Months[i])) {
+                    effectiveKpiMonth = last13Months[i];
+                    break;
+                }
+            }
+
             mergedKpis = k.data.map((def: any) => {
-                const records = (recs.data || []).filter((rec: any) => rec.kpi_definition_id === def.id && rec.axis_id === null);
-                const latest = records.find((rec: any) => normalizeMonth(rec.recorded_month) === latestMonth);
+                const records = allRecords.filter((rec: any) => rec.kpi_definition_id === def.id && rec.axis_id === null);
+                const latest = records.find((rec: any) => normalizeMonth(rec.recorded_month) === effectiveKpiMonth);
 
                 const history = last13Months.map(m => {
                     const r = records.find((rec: any) => normalizeMonth(rec.recorded_month) === m);
@@ -117,6 +126,33 @@ export function useDashboardData(
     const latestAi = state.realAiInsights[0];
     const aiContent = latestAi?.content as any;
 
+    /**
+     * 直近13ヶ月のうち、survey_responses にデータが存在する最新月。
+     * 月初など「今月まだ回答がない」状況で 0 にならないようフォールバック用に使う。
+     */
+    const latestSurveyMonth = useMemo(() => {
+        for (let i = last13Months.length - 1; i >= 0; i--) {
+            const m = last13Months[i];
+            if (state.realResponses.some(r => normalizeMonth(r.recorded_month) === m)) return m;
+        }
+        return last13Months[last13Months.length - 1];
+    }, [state.realResponses, last13Months]);
+
+    /**
+     * 直近13ヶ月のうち、kpi_records にデータが存在する最新月。
+     */
+    const latestKpiMonth = useMemo(() => {
+        for (let i = last13Months.length - 1; i >= 0; i--) {
+            const m = last13Months[i];
+            if (state.realKpiRecords.some(r => normalizeMonth(r.recorded_month) === m)) return m;
+        }
+        return last13Months[last13Months.length - 1];
+    }, [state.realKpiRecords, last13Months]);
+
+    /** 今月にデータがなく過去月を参照しているか */
+    const isSurveyFallback = latestSurveyMonth !== last13Months[last13Months.length - 1];
+    const isKpiFallback    = latestKpiMonth    !== last13Months[last13Months.length - 1];
+
     const currentSurveyData = useMemo(() => {
         // Logic for currentSurveyData (aggregated pulse/response rate)
         // ... based on orgView (moved to component side for better tab control)
@@ -135,8 +171,10 @@ export function useDashboardData(
                 targetHeadcount = dept ? (dept.headcount || 0) : (axis ? (axis.headcount || 0) : 0);
             }
 
-            const latestMonth = last13Months[12];
-            const prevMonth = last13Months[11];
+            // 今月データがない場合は直近データがある月を使う（月初の 0 表示を防ぐ）
+            const latestMonth = latestSurveyMonth;
+            const latestMonthIdx = last13Months.indexOf(latestMonth);
+            const prevMonth = latestMonthIdx > 0 ? last13Months[latestMonthIdx - 1] : last13Months[0];
             
             const latestResponses = filtered.filter(r => normalizeMonth(r.recorded_month) === latestMonth);
             const latestAnswers = latestResponses.flatMap(r => r.survey_answers || []);
@@ -213,9 +251,9 @@ export function useDashboardData(
                 }
             }
 
-            return { viewName, scores: qScores, prevScores: prevQScores, pulse: avgPulse, pulseHistory, aiComment: comment, responseCount, responseRate, voiceTopics: finalVoiceTopics as any[] };
+            return { viewName, scores: qScores, prevScores: prevQScores, pulse: avgPulse, pulseHistory, aiComment: comment, responseCount, responseRate, voiceTopics: finalVoiceTopics as any[], refMonth: latestMonth, isFallback: isSurveyFallback };
         };
-    }, [state.realResponses, state.realDepts, state.realAxes, last13Months, aiContent]);
+    }, [state.realResponses, state.realDepts, state.realAxes, last13Months, aiContent, latestSurveyMonth, isSurveyFallback]);
 
     const displayDepts = useMemo(() => {
         let depts = state.realDepts;
@@ -226,7 +264,9 @@ export function useDashboardData(
         }
 
         return depts.map(d => {
-            const latestMonth = last13Months[12];
+            // アンケート: 直近データがある月、KPI: 直近データがある月を使う
+            const latestMonth = latestSurveyMonth;
+            const latestKpiMonthForDept = latestKpiMonth;
             const deptResponses = state.realResponses.filter(r => r.department_id === d.id);
             const latestAnswers = deptResponses
                 .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
@@ -248,7 +288,7 @@ export function useDashboardData(
                 const res = state.realResources.find(rr => rr.department_id === d.id && normalizeMonth(rr.recorded_month) === month);
                 return res ? res.head_count : 0;
             });
-            const latestResource = state.realResources.find(rr => rr.department_id === d.id && normalizeMonth(rr.recorded_month) === latestMonth);
+            const latestResource = state.realResources.find(rr => rr.department_id === d.id && normalizeMonth(rr.recorded_month) === latestKpiMonthForDept);
             const latestLabor = latestResource?.labor_cost || 0;
             const latestActualHead = latestResource?.head_count || headHistory[12] || d.headcount || 0;
             const laborCostPerHead = (latestLabor > 0 && latestActualHead > 0) ? Math.round((latestLabor / latestActualHead) * 10) / 10 : 0;
@@ -256,7 +296,7 @@ export function useDashboardData(
             const respondentsCount = deptResponses.filter(r => normalizeMonth(r.recorded_month) === latestMonth).length;
 
             const mKpis = state.realKpis.filter(k => k.owner_dept_id === d.id);
-            const mRecs = state.realKpiRecords.filter(r => normalizeMonth(r.recorded_month) === normalizeMonth(last13Months[12]));
+            const mRecs = state.realKpiRecords.filter(r => normalizeMonth(r.recorded_month) === latestKpiMonthForDept);
             
             let totalAch = 0;
             let count = 0;
@@ -317,7 +357,7 @@ export function useDashboardData(
                 })
             };
         });
-    }, [state.realDepts, state.realResponses, state.realKpis, state.realKpiRecords, state.realResources, last13Months, userRole, userDepartmentId]);
+    }, [state.realDepts, state.realResponses, state.realKpis, state.realKpiRecords, state.realResources, last13Months, userRole, userDepartmentId, latestSurveyMonth, latestKpiMonth]);
 
     const displayKpis = useMemo(() => {
         return state.realKpis.map(k => ({
@@ -331,7 +371,7 @@ export function useDashboardData(
 
     const displayAxes = useMemo(() => {
         return state.realAxes.map(axis => {
-            const latestMonth = last13Months[12];
+            const latestMonth = latestSurveyMonth;
             const axisResponses = state.realResponses.filter(r => r.axis_id === axis.id);
             const latestAnswers = axisResponses
                 .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
@@ -364,12 +404,12 @@ export function useDashboardData(
                 const res = state.realResources.find(rr => rr.axis_id === axis.id && normalizeMonth(rr.recorded_month) === month);
                 return res ? res.head_count : 0;
             });
-            const latestResource = state.realResources.find(rr => rr.axis_id === axis.id && normalizeMonth(rr.recorded_month) === latestMonth);
+            const latestResource = state.realResources.find(rr => rr.axis_id === axis.id && normalizeMonth(rr.recorded_month) === latestKpiMonth);
             const latestLabor = latestResource?.labor_cost || 0;
             const latestActualHead = latestResource?.head_count || headHistory[12] || axis.headcount || 0;
             const laborCostPerHead = (latestLabor > 0 && latestActualHead > 0) ? Math.round((latestLabor / latestActualHead) * 10) / 10 : 0;
 
-            const mRecs = state.realKpiRecords.filter(r => normalizeMonth(r.recorded_month) === normalizeMonth(last13Months[12]) && r.axis_id === axis.id);
+            const mRecs = state.realKpiRecords.filter(r => normalizeMonth(r.recorded_month) === latestKpiMonth && r.axis_id === axis.id);
             let totalAch = 0;
             let count = 0;
             mRecs.forEach(rec => {
@@ -429,7 +469,7 @@ export function useDashboardData(
                 })
             };
         });
-    }, [state.realAxes, state.realResponses, state.realKpiRecords, state.realKpis, state.realResources, company, last13Months]);
+    }, [state.realAxes, state.realResponses, state.realKpiRecords, state.realKpis, state.realResources, company, last13Months, latestSurveyMonth, latestKpiMonth]);
 
     const handleRunAnalyze = async () => {
         if (!company) return;
@@ -562,7 +602,8 @@ export function useDashboardData(
     }, [state.realDepts, userRole, userDepartmentId]);
 
     return {
-        state: { ...state, isAnalyzing, last13Months, monthLabels, fullMonthLabels, aiContent, ...financialMetrics },
+        state: { ...state, isAnalyzing, last13Months, monthLabels, fullMonthLabels, aiContent, ...financialMetrics,
+                 latestSurveyMonth, latestKpiMonth, isSurveyFallback, isKpiFallback },
         derived: { currentSurveyData, displayDepts, displayKpis, displayAxes, deptTabs },
         handlers: { handleRunAnalyze, handleSaveSemantic, handleDeleteSemantic }
     };
