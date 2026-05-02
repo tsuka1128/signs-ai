@@ -159,43 +159,24 @@ export function useDashboardData(
             const sameNameAxisIds = state.realAxes.filter(a => a.name === viewName).map(a => a.id);
             const allTargetIds = Array.from(new Set([surveyViewId, ...sameNameDeptIds, ...sameNameAxisIds]));
 
-            // 2. この組織に所属している全ユーザーのIDと名前を特定
-            const members = state.realUsers.filter(u => 
-                (u.department_id && allTargetIds.includes(u.department_id)) || 
-                (u.axis_id && allTargetIds.includes(u.axis_id))
-            );
-            const memberUserIds = members.map(u => u.id);
-            const memberNames = members.map(u => (u as any).name).filter(Boolean);
-
-            console.debug(`[SurveyDetail Debug] Target: ${viewName}, Members Found: ${members.length}`, memberUserIds);
-
-            // 3. 回答データのフィルタリング
+            // 2. 回答データのフィルタリング
             filtered = state.realResponses.filter(r => {
                 // 直接紐付いている場合
                 if (r.department_id && allTargetIds.includes(r.department_id)) return true;
                 if (r.axis_id && allTargetIds.includes(r.axis_id)) return true;
-                
-                // 回答者が所属メンバーのIDまたは名前と一致する場合
-                if (r.user_id && memberUserIds.includes(r.user_id)) return true;
-                
+
                 return false;
             });
             
-            targetHeadcount = dept 
-                ? state.realUsers.filter(u => u.department_id === dept.id).length 
-                : (axis ? state.realUsers.filter(u => u.axis_id === axis.id).length : 0);
-        } else {
-            targetHeadcount = state.realUsers.length;
+            targetHeadcount = dept
+                ? (dept.headcount || state.realUsers.filter(u => u.department_id === dept.id).length)
+                : (axis ? (axis.headcount || state.realUsers.filter(u => u.axis_id === axis.id).length) : 0);
         }
-
-        console.debug(`[SurveyDetail Debug] Final Results for ${viewName}: RespCount=${filtered.length}`);
 
         const latestMonth = last13Months[12];
         const targetMonth = state.latestSurveyMonth || latestMonth;
         const isStale = normalizeMonth(targetMonth) !== normalizeMonth(latestMonth);
         const dataMonth = isStale ? `${parseInt(targetMonth.split('-')[1])}月` : null;
-
-        console.debug(`[SurveyDetail Debug] TargetMonth: ${targetMonth}, isStale: ${isStale}`);
 
         let latestResponses = filtered.filter(r => normalizeMonth(r.recorded_month) === normalizeMonth(targetMonth));
         
@@ -205,7 +186,6 @@ export function useDashboardData(
                 const prevResponses = filtered.filter(r => normalizeMonth(r.recorded_month) === last13Months[i]);
                 if (prevResponses.length > 0) {
                     latestResponses = prevResponses;
-                    console.debug(`[SurveyDetail Debug] Individual fallback for ${viewName} to ${last13Months[i]}`);
                     break;
                 }
             }
