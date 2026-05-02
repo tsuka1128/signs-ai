@@ -100,12 +100,8 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
                 let r = 12; // データなしのデフォルト最小サイズ
 
                 if (d.hasKpiData) {
-                    if (isProduct) {
-                        const valForSize = d.sizeValue !== undefined ? d.sizeValue : d.kpiAch;
-                        r = Math.max(12, Math.min(48, (valForSize / 100) * 20));
-                    } else {
-                        r = Math.max(12, Math.min(48, (d.kpiAch / 100) * 20));
-                    }
+                    const valForSize = d.sizeValue !== undefined ? d.sizeValue : d.kpiAch;
+                    r = Math.max(12, Math.min(48, (valForSize / 100) * 20));
                 }
 
                 // 過半数のルールを一時的に無効化し、1人でも回答があればOKとする
