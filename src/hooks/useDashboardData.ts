@@ -152,69 +152,68 @@ export function useDashboardData(
             ...state.realAxes.map(a => ({ id: a.id, name: a.name, type: 'axis' }))
         ];
 
-        // 各組織の最新基準月における設問別スコアを計算
-        const orgScores = orgs.map(org => {
-            const filtered = state.realResponses.filter(r => 
-                (org.type === 'dept' ? r.department_id === org.id : r.axis_id === org.id) &&
-                normalizeMonth(r.recorded_month) === normalizeMonth(targetMonth)
-            );
-            const answers = filtered.flatMap(r => r.survey_answers || []);
-            
-            const qScores = DEFAULT_SURVEY_QUESTIONS.map((_, qi) => {
-                const vals = filtered.map(r => (r.survey_answers || [])[qi]?.score).filter(s => s !== undefined);
-                return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+        // 過去13ヶ月分の統計を計算
+        const monthlyStats = last13Months.map(month => {
+            const orgScores = orgs.map(org => {
+                const filtered = state.realResponses.filter(r => 
+                    (org.type === 'dept' ? r.department_id === org.id : r.axis_id === org.id) &&
+                    normalizeMonth(r.recorded_month) === normalizeMonth(month)
+                );
+                const answers = filtered.flatMap(r => r.survey_answers || []);
+                
+                const qScores = DEFAULT_SURVEY_QUESTIONS.map((_, qi) => {
+                    const vals = filtered.map(r => (r.survey_answers || [])[qi]?.score).filter(s => s !== undefined);
+                    return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+                });
+
+                const avgPulse = answers.length > 0 ? answers.reduce((a: number, b: any) => a + b.score, 0) / answers.length : 0;
+                return { id: org.id, qScores, avgPulse };
+            }).filter(o => o.avgPulse > 0);
+
+            if (orgScores.length === 0) return null;
+
+            const companyAvgPulse = orgScores.reduce((a, b) => a + b.avgPulse, 0) / orgScores.length;
+            const companyQScores = DEFAULT_SURVEY_QUESTIONS.map((_, qi) => {
+                const activeScores = orgScores.map(o => o.qScores[qi]).filter(s => s > 0);
+                return activeScores.length > 0 ? activeScores.reduce((a, b) => a + b, 0) / activeScores.length : 0;
             });
 
-            const avgPulse = answers.length > 0 ? answers.reduce((a: number, b: any) => a + b.score, 0) / answers.length : 0;
-            
-            return { id: org.id, name: org.name, qScores, avgPulse };
-        }).filter(o => o.avgPulse > 0); // データがある組織のみ母集団とする
-
-        if (orgScores.length === 0) return null;
-
-        // 全社平均の算出
-        const companyQScores = DEFAULT_SURVEY_QUESTIONS.map((_, qi) => {
-            const activeScores = orgScores.map(o => o.qScores[qi]).filter(s => s > 0);
-            return activeScores.length > 0 ? activeScores.reduce((a, b) => a + b, 0) / activeScores.length : 0;
-        });
-        const companyAvgPulse = orgScores.reduce((a, b) => a + b.avgPulse, 0) / orgScores.length;
-
-        // 標準偏差と偏差値の算出関数
-        const calculateDeviations = (scores: number[], mean: number) => {
-            const n = scores.length;
-            if (n <= 1) return scores.map(() => 50);
-            const variance = scores.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / n;
-            const std = Math.sqrt(variance);
-            
-            return scores.map(s => {
-                if (std === 0) return 50;
-                const dev = 50 + 10 * (s - mean) / std;
-                return Math.max(0, Math.min(100, Math.round(dev * 10) / 10)); // 0-100クランプ、小数点1位
-            });
-        };
-
-        // 各組織の偏差値をマッピング
-        const deviationsMap: Record<string, { total: number, questions: number[] }> = {};
-        
-        const totalDevs = calculateDeviations(orgScores.map(o => o.avgPulse), companyAvgPulse);
-        const questionDevs = DEFAULT_SURVEY_QUESTIONS.map((_, qi) => 
-            calculateDeviations(orgScores.map(o => o.qScores[qi]), companyQScores[qi])
-        );
-
-        orgScores.forEach((org, idx) => {
-            deviationsMap[org.id] = {
-                total: totalDevs[idx],
-                questions: DEFAULT_SURVEY_QUESTIONS.map((_, qi) => questionDevs[qi][idx])
+            // 標準偏差と偏差値の算出関数
+            const calculateDevs = (scores: number[], mean: number) => {
+                const n = scores.length;
+                if (n <= 1) return scores.map(() => 50);
+                const variance = scores.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / n;
+                const std = Math.sqrt(variance);
+                return scores.map(s => {
+                    if (std === 0) return 50;
+                    const dev = 50 + 10 * (s - mean) / std;
+                    return Math.max(0, Math.min(100, Math.round(dev * 10) / 10));
+                });
             };
+
+            const totalDevs = calculateDevs(orgScores.map(o => o.avgPulse), companyAvgPulse);
+            const questionDevs = DEFAULT_SURVEY_QUESTIONS.map((_, qi) => 
+                calculateDevs(orgScores.map(o => o.qScores[qi]), companyQScores[qi])
+            );
+
+            const deviationsMap: Record<string, { total: number, questions: number[] }> = {};
+            orgScores.forEach((org, idx) => {
+                deviationsMap[org.id] = {
+                    total: totalDevs[idx],
+                    questions: DEFAULT_SURVEY_QUESTIONS.map((_, qi) => questionDevs[qi][idx])
+                };
+            });
+
+            return { month, companyAvgPulse, companyQScores, deviationsMap, orgScores };
         });
+
+        const latestStats = monthlyStats.find(s => s?.month === targetMonth) || monthlyStats.filter(s => s !== null).pop();
 
         return {
-            companyQScores,
-            companyAvgPulse,
-            deviationsMap,
-            orgScores // 比較グラフ用
+            latestStats,
+            monthlyStats
         };
-    }, [state.realResponses, state.realDepts, state.realAxes, state.latestSurveyMonth]);
+    }, [state.realResponses, state.realDepts, state.realAxes, state.latestSurveyMonth, last13Months]);
 
         const currentSurveyData = useCallback((passedOrgView: string) => {
         let filtered = state.realResponses;
@@ -345,9 +344,16 @@ export function useDashboardData(
         }
 
         // 偏差値データの取得
-        const orgStats = allOrgsStats?.deviationsMap[surveyViewId];
+        const latestStats = allOrgsStats?.latestStats;
+        const orgStats = latestStats?.deviationsMap[surveyViewId];
         const deviation = orgStats?.total || 50;
         const questionDeviations = orgStats?.questions || questions.map(() => 50);
+
+        // 偏差値履歴の算出
+        const deviationHistory = last13Months.map(month => {
+            const stats = allOrgsStats?.monthlyStats.find(s => s?.month === month);
+            return stats?.deviationsMap[surveyViewId]?.total || 0;
+        });
 
         return { 
             viewName, 
@@ -355,6 +361,7 @@ export function useDashboardData(
             prevScores: prevQScores, 
             pulse: avgPulse, 
             pulseHistory, 
+            deviationHistory,
             aiComment: comment, 
             responseCount, 
             responseRate, 
@@ -363,7 +370,7 @@ export function useDashboardData(
             dataMonth,
             deviation,
             questionDeviations,
-            allOrgsStats // 全社比較用
+            allOrgsStats: latestStats // 全社比較用（最新分のみ渡す）
         };
     }, [state.realResponses, state.realDepts, state.realAxes, state.realUsers, state.latestSurveyMonth, last13Months, aiContent, allOrgsStats]);
 

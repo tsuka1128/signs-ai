@@ -9,6 +9,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { FileQuestion, Lock, MessageCircle, TrendingUp, TrendingDown, MinusCircle, Sparkles } from "lucide-react";
 
+import { useState } from "react";
+
 interface SurveySectionProps {
     data: SurveyHistoryData;
     secondaryAxisName: string;
@@ -34,6 +36,9 @@ export function SurveySection({
     monthLabels,
     questions,
 }: SurveySectionProps) {
+    const [chartMode, setChartMode] = useState<'pulse' | 'deviation'>('pulse');
+    const surveyViewId = (orgView === "product" || orgView === "dept" || orgView === "all") ? "all" : orgView;
+
     return (
         <div className="space-y-8 animate-fadeIn">
             <div className="space-y-4">
@@ -138,18 +143,48 @@ export function SurveySection({
                     <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm transition-all hover:shadow-md space-y-4">
                         <div className="flex items-start justify-between">
                             <div>
-                                <h3 className="text-lg font-black text-slate-800 tracking-tight">組織体温の推移</h3>
+                                <h3 className="text-lg font-black text-slate-800 tracking-tight">
+                                    組織体温の推移
+                                    <span className="text-xs font-bold text-slate-400 ml-2">({chartMode === 'pulse' ? 'スコア' : '全社偏差値'})</span>
+                                </h3>
                                 <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">
                                     継続的なストレスや熱量の変化をモニタリング
                                 </p>
                             </div>
+                            
+                            {surveyViewId !== "all" && (
+                                <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
+                                    <button
+                                        onClick={() => setChartMode('pulse')}
+                                        className={cn(
+                                            "px-3 py-1.5 text-[10px] font-black rounded-lg transition-all",
+                                            chartMode === 'pulse' ? "bg-white text-teal shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                        )}
+                                    >
+                                        スコア
+                                    </button>
+                                    <button
+                                        onClick={() => setChartMode('deviation')}
+                                        className={cn(
+                                            "px-3 py-1.5 text-[10px] font-black rounded-lg transition-all",
+                                            chartMode === 'deviation' ? "bg-white text-blue-500 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                        )}
+                                    >
+                                        偏差値
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         <div className="h-40 w-full pt-4">
                             <DetailLineChart
-                                data={data.pulseHistory}
+                                data={chartMode === 'pulse' ? data.pulseHistory : (data as any).deviationHistory}
                                 labels={monthLabels}
-                                color={data.pulse >= 3.5 ? "#10B981" : data.pulse >= 2.5 ? "#F59E0B" : "#EF4444"}
+                                color={chartMode === 'pulse' 
+                                    ? (data.pulse >= 3.5 ? "#10B981" : data.pulse >= 2.5 ? "#F59E0B" : "#EF4444")
+                                    : "#3B82F6"
+                                }
+                                targetData={chartMode === 'deviation' ? Array(monthLabels.length).fill(50) : undefined}
                                 height={140}
                             />
                         </div>
