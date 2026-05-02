@@ -191,23 +191,21 @@ export function useDashboardData(
         console.debug(`[SurveyDetail Debug] Final Results for ${viewName}: RespCount=${filtered.length}`);
 
         const latestMonth = last13Months[12];
-        let targetMonth = latestMonth;
-        let isStale = false;
-        let dataMonth: string | null = null;
+        const targetMonth = state.latestSurveyMonth || latestMonth;
+        const isStale = normalizeMonth(targetMonth) !== normalizeMonth(latestMonth);
+        const dataMonth = isStale ? `${parseInt(targetMonth.split('-')[1])}月` : null;
 
-        let latestResponses = filtered.filter(r => normalizeMonth(r.recorded_month) === latestMonth);
+        console.debug(`[SurveyDetail Debug] TargetMonth: ${targetMonth}, isStale: ${isStale}`);
+
+        let latestResponses = filtered.filter(r => normalizeMonth(r.recorded_month) === normalizeMonth(targetMonth));
         
-        // 今月データがなければ直近月にフォールバック
-        if (latestResponses.length === 0) {
-            console.debug(`[SurveyDetail Debug] Current month (${latestMonth}) is empty. Searching for fallback...`);
-            for (let i = last13Months.length - 2; i >= 0; i--) {
+        // もし会社全体の最新月でもその部署にデータがない場合は、さらに過去を探索する（念のための個別フォールバック）
+        if (latestResponses.length === 0 && surveyViewId !== "all") {
+            for (let i = last13Months.indexOf(targetMonth) - 1; i >= 0; i--) {
                 const prevResponses = filtered.filter(r => normalizeMonth(r.recorded_month) === last13Months[i]);
                 if (prevResponses.length > 0) {
                     latestResponses = prevResponses;
-                    targetMonth = last13Months[i];
-                    isStale = true;
-                    dataMonth = `${parseInt(last13Months[i].split('-')[1])}月`;
-                    console.debug(`[SurveyDetail Debug] Found fallback in ${targetMonth}: ${latestResponses.length} responses`);
+                    console.debug(`[SurveyDetail Debug] Individual fallback for ${viewName} to ${last13Months[i]}`);
                     break;
                 }
             }
