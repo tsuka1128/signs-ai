@@ -427,7 +427,7 @@ export function useDashboardData(
             const latestResource = state.realResources.find(rr => rr.department_id === d.id && normalizeMonth(rr.recorded_month) === latestMonth);
             const latestLabor = latestResource?.labor_cost || 0;
             const latestActualHead = latestResource?.head_count || activeUserCount;
-            const laborCostPerHead = (latestLabor > 0 && latestActualHead > 0) ? Math.round((latestLabor / latestActualHead) * 10) / 10 : 0;
+            const laborCostPerHead = (latestLabor > 0 && latestActualHead > 0) ? Math.round((latestLabor / latestActualHead / 10000) * 10) / 10 : 0;
 
             const respondentsCount = deptResponses.filter(r => normalizeMonth(r.recorded_month) === latestMonth).length;
 
@@ -462,7 +462,7 @@ export function useDashboardData(
                 masterHeadcount: activeUserCount,
                 headHistory,
                 laborCostPerHead,
-                totalLaborCost: latestLabor,
+                totalLaborCost: Math.round((latestLabor || 0) / 10000),
                 productivity: calculateProductivity(kpiAch, pulseScore),
                 pulse: Number(pulseScore.toFixed(1)),
                 pulseHistory,
@@ -572,7 +572,7 @@ export function useDashboardData(
             const latestResource = state.realResources.find(rr => rr.axis_id === axis.id && normalizeMonth(rr.recorded_month) === latestMonth);
             const latestLabor = latestResource?.labor_cost || 0;
             const latestActualHead = latestResource?.head_count || activeUserCount;
-            const laborCostPerHead = (latestLabor > 0 && latestActualHead > 0) ? Math.round((latestLabor / latestActualHead) * 10) / 10 : 0;
+            const laborCostPerHead = (latestLabor > 0 && latestActualHead > 0) ? Math.round((latestLabor / latestActualHead / 10000) * 10) / 10 : 0;
 
             const targetMonthStr = isStale && dataMonth 
                 ? last13Months.find(m => m.includes(`-${dataMonth.replace('月', '').padStart(2, '0')}-`)) || last13Months[12]
@@ -599,7 +599,7 @@ export function useDashboardData(
                 masterHeadcount: activeUserCount,
                 headHistory,
                 laborCostPerHead,
-                totalLaborCost: latestLabor,
+                totalLaborCost: Math.round((latestLabor || 0) / 10000),
                 xAxisHead: activeUserCount,
                 sizeValue: sizeHistory[12],
                 sizeHistory,
