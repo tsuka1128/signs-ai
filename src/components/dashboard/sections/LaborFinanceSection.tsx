@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { TrendingUp, PieChart, Info, ArrowUpRight, Target, Coins, Users, Activity, Sun, Cloud, CloudRain } from "lucide-react";
 import { cn } from "@/lib/utils/index";
-import { TabBar } from "@/components/dashboard/common/TabBar";
+import { TabBar } from "@/components/ui/TabBar";
 
 interface LaborFinanceSectionProps {
     laborRoi: number;
