@@ -1,6 +1,4 @@
-"use client";
-
-import { TrendingUp, PieChart, Info, ArrowUpRight, Target, Coins } from "lucide-react";
+import { TrendingUp, PieChart, Info, ArrowUpRight, Target, Coins, Users, Activity, Sun, Cloud, CloudRain } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 
 interface LaborFinanceSectionProps {
@@ -14,16 +12,11 @@ interface LaborFinanceSectionProps {
         totalLaborCost: number;
         kpiAch: number;
         pulse: number;
+        headcount: number;
     }[];
     avgLaborCostPerHead?: number;
     aiContent?: any;
 }
-
-const DEPT_COLORS = [
-    "bg-teal-500", "bg-indigo-500", "bg-amber-500", "bg-rose-500",
-    "bg-emerald-500", "bg-sky-500", "bg-violet-500", "bg-orange-500",
-    "bg-slate-400"
-];
 
 export function LaborFinanceSection({ 
     laborRoi, 
@@ -35,286 +28,323 @@ export function LaborFinanceSection({
 }: LaborFinanceSectionProps) {
     const hasDistRate = laborDistRate > 0;
 
+    // 効率スコアの算出とソート
+    const sortedData = [...deptFinanceData]
+        .map(d => ({ 
+            ...d, 
+            efficiency: d.laborCostPerHead > 0 ? d.kpiAch / d.laborCostPerHead : 0 
+        }))
+        .sort((a, b) => b.efficiency - a.efficiency);
+
+    const maxEff = Math.max(...sortedData.map(d => d.efficiency), 1);
+
+    // AI提言用のグルーピング
+    const alertDepts = deptFinanceData.filter(d => d.pulse < 3.0 && d.laborCostPerHead > avgLaborCostPerHead);
+    const cautionDepts = deptFinanceData.filter(d => d.pulse < 3.0 && d.laborCostPerHead <= avgLaborCostPerHead);
+    const idealDepts = deptFinanceData.filter(d => d.pulse >= 3.0 && d.laborCostPerHead <= avgLaborCostPerHead);
+
+    const avgAch = deptFinanceData.length > 0 
+        ? Math.round(deptFinanceData.reduce((a, b) => a + b.kpiAch, 0) / deptFinanceData.length) 
+        : 0;
+
     return (
-        <div className="space-y-6 animate-fadeIn">
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-8 animate-fadeIn">
+            {/* セクション①：サマリーKPI */}
+            <div className={cn(
+                "grid gap-4",
+                hasDistRate ? "grid-cols-1 md:grid-cols-3" : "grid-cols-1 md:grid-cols-2"
+            )}>
                 {/* ROI Card */}
-                <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-4 hover:shadow-md transition-all">
+                <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4 hover:shadow-md transition-all">
                     <div className="flex justify-between items-start">
-                        <div className="w-12 h-12 bg-teal-50 rounded-2xl flex items-center justify-center">
-                            <TrendingUp className="w-6 h-6 text-teal" />
+                        <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center">
+                            <TrendingUp className="w-5 h-5 text-teal" />
                         </div>
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-teal-50 text-teal rounded-full text-[10px] font-black uppercase tracking-widest">
+                        <div className="flex items-center gap-1 px-2 py-0.5 bg-teal-50 text-teal rounded-full text-[9px] font-black uppercase tracking-widest">
                             <ArrowUpRight className="w-3 h-3" />
-                            Efficiency
+                            ROI
                         </div>
                     </div>
                     <div>
-                        <h3 className="text-sm font-bold text-slate-500 mb-1 flex items-center gap-1.5">
-                            人件費ROI (投資対効果)
+                        <h3 className="text-xs font-bold text-slate-500 mb-1 flex items-center gap-1.5">
+                            人件費ROI
                             <div className="relative group/roi text-left">
-                                <button className="w-3.5 h-3.5 rounded-full bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-500 flex items-center justify-center text-[9px] font-black cursor-help transition-colors select-none">?</button>
-                                <div className="absolute top-full left-0 mt-2 w-64 bg-slate-800 text-white p-3.5 rounded-xl shadow-xl text-[10px] leading-relaxed break-normal whitespace-normal hidden group-hover/roi:block z-[40] normal-case tracking-normal animate-in fade-in zoom-in-95 font-medium">
-                                    <div className="font-bold text-white mb-2 flex items-center gap-1.5">計算式: 平均KPI達成率 ÷ (総人件費 / 100)</div>
-                                    <div className="text-slate-300 italic mb-2">※ 総人件費は最新月（万円単位）</div>
-                                    <div className="text-slate-200">
-                                        投入したリソース（人件費）に対して、どれだけ効率的に目標達成（成果）を引き出せているかを測定するインデックス値です。
-                                    </div>
+                                <button className="w-3 h-3 rounded-full bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-500 flex items-center justify-center text-[8px] font-black cursor-help transition-colors select-none">?</button>
+                                <div className="absolute top-full left-0 mt-2 w-56 bg-slate-800 text-white p-3 rounded-lg shadow-xl text-[10px] leading-relaxed hidden group-hover/roi:block z-[40]">
+                                    平均KPI達成率 ÷ (総人件費 / 100)
                                 </div>
                             </div>
                         </h3>
                         <div className="flex items-baseline gap-2">
-                            <span className="text-4xl font-black text-slate-800 tracking-tighter">{laborRoi.toFixed(1)}</span>
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Index</span>
+                            <span className="text-3xl font-black text-slate-800 tracking-tighter">{laborRoi.toFixed(1)}</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Index</span>
                         </div>
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed font-medium">
-                        全社のKPI達成状況を人件費の投下量で割った独自指標です。数値が高いほど、少ないリソースで高い成果を上げていることを示します。
+                    <p className="text-[10px] text-slate-400 font-medium">
+                        数値が高いほど、少ない人件費で高いKPI達成率を実現できています。
                     </p>
                 </div>
 
-                {/* Distribution Rate Card */}
-                <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-4 hover:shadow-md transition-all">
+                {/* Avg Cost Card */}
+                <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4 hover:shadow-md transition-all">
                     <div className="flex justify-between items-start">
-                        <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center">
-                            <PieChart className="w-6 h-6 text-indigo-500" />
+                        <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
+                            <Users className="w-5 h-5 text-amber-500" />
                         </div>
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-500 rounded-full text-[10px] font-black uppercase tracking-widest">
-                            <Target className="w-3 h-3" />
-                            Structure
+                        <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-500 rounded-full text-[9px] font-black uppercase tracking-widest">
+                            Average
                         </div>
                     </div>
                     <div>
-                        <h3 className="text-sm font-bold text-slate-500 mb-1 flex items-center gap-1.5">
-                            労働分配率
-                            <div className="relative group/dist text-left">
-                                <button className="w-3.5 h-3.5 rounded-full bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-500 flex items-center justify-center text-[9px] font-black cursor-help transition-colors select-none">?</button>
-                                <div className="absolute top-full left-0 mt-2 w-64 bg-slate-800 text-white p-3.5 rounded-xl shadow-xl text-[10px] leading-relaxed break-normal whitespace-normal hidden group-hover/dist:block z-[40] normal-case tracking-normal animate-in fade-in zoom-in-95 font-medium">
-                                    <div className="font-bold text-white mb-2 flex items-center gap-1.5">計算式: (総人件費 ÷ 売上KPI実績) × 100</div>
-                                    <div className="text-slate-200">
-                                        売上高のうち、どれだけが人件費として分配されているかを示す指標です。一般的に40~60%が適正と言われますが、ビジネスモデルにより異なります。
-                                    </div>
-                                </div>
-                            </div>
-                        </h3>
+                        <h3 className="text-xs font-bold text-slate-500 mb-1">一人当たり平均単価</h3>
                         <div className="flex items-baseline gap-2">
-                            <span className={cn(
-                                "text-4xl font-black tracking-tighter",
-                                hasDistRate ? "text-slate-800" : "text-slate-300"
-                            )}>
-                                {hasDistRate ? laborDistRate : "--"}
-                            </span>
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">%</span>
+                            <span className="text-3xl font-black text-slate-800 tracking-tighter">{avgLaborCostPerHead.toLocaleString()}</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">万円</span>
                         </div>
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed font-medium">
-                        {hasDistRate 
-                          ? "売上KPIに対する総人件費の比率です。一般的に40~60%が適正と言われますが、ビジネスモデルにより異なります。"
-                          : "売上KPIの入力がないため算出できません。売上実績を入力すると、現在の人件費バランスを評価できます。"}
-                    </p>
+                    <p className="text-[10px] text-slate-400 font-medium">全社の基準値。投資判断のベースとなります。</p>
+                </div>
+
+                {/* Distribution Rate Card (Optional) */}
+                {hasDistRate && (
+                    <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4 hover:shadow-md transition-all">
+                        <div className="flex justify-between items-start">
+                            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+                                <PieChart className="w-5 h-5 text-indigo-500" />
+                            </div>
+                            <div className="flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-500 rounded-full text-[9px] font-black uppercase tracking-widest">
+                                Ratio
+                            </div>
+                        </div>
+                        <div>
+                            <h3 className="text-xs font-bold text-slate-500 mb-1">労働分配率</h3>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-3xl font-black text-slate-800 tracking-tighter">{laborDistRate}</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">%</span>
+                            </div>
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-medium">売上に対する人件費の比率。収益性の健全性を示します。</p>
+                    </div>
+                )}
+            </div>
+
+            {/* セクション②：部署別 効率一覧テーブル */}
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+                    <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-teal" />
+                        部署別 効率分析一覧
+                    </h3>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Efficiency Matrix</span>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                                <th className="px-6 py-4">部署名</th>
+                                <th className="px-4 py-4 text-center">人数</th>
+                                <th className="px-4 py-4 text-center">単価(万)</th>
+                                <th className="px-4 py-4 text-center">KPI達成率</th>
+                                <th className="px-4 py-4 text-center">体温</th>
+                                <th className="px-6 py-4 text-right">効率スコア</th>
+                            </tr>
+                        </thead>
+                        <tbody className="text-xs font-bold">
+                            {sortedData.map((d) => {
+                                const isLowPulse = d.pulse < 3.0;
+                                const isHighCost = d.laborCostPerHead > avgLaborCostPerHead;
+                                const isHighAch = d.kpiAch >= 100;
+                                
+                                // 効率スコアを5段階の●で表示
+                                const scoreIdx = maxEff > 0 ? Math.ceil((d.efficiency / maxEff) * 5) : 0;
+                                const dots = Array(5).fill(0).map((_, i) => (
+                                    <span key={i} className={cn(
+                                        "inline-block w-1.5 h-1.5 rounded-full mr-0.5",
+                                        i < scoreIdx ? "bg-teal" : "bg-slate-100"
+                                    )} />
+                                ));
+
+                                return (
+                                    <tr key={d.id} className={cn(
+                                        "border-b border-slate-50 transition-colors hover:bg-slate-50/30",
+                                        isLowPulse && "bg-rose-50/40"
+                                    )}>
+                                        <td className="px-6 py-4 text-slate-800">{d.name}</td>
+                                        <td className="px-4 py-4 text-center text-slate-500">{d.headcount}名</td>
+                                        <td className={cn(
+                                            "px-4 py-4 text-center",
+                                            isHighCost ? "text-amber-500" : "text-slate-600"
+                                        )}>
+                                            {d.laborCostPerHead > 0 ? `${d.laborCostPerHead}万` : <span className="text-slate-300">データなし</span>}
+                                        </td>
+                                        <td className={cn(
+                                            "px-4 py-4 text-center",
+                                            isHighAch ? "text-teal font-black" : "text-slate-600"
+                                        )}>
+                                            {d.kpiAch}%
+                                        </td>
+                                        <td className="px-4 py-4 text-center">
+                                            <div className="flex items-center justify-center gap-1.5">
+                                                {d.pulse >= 4.0 ? <Sun className="w-3 h-3 text-amber-400" /> : d.pulse >= 3.0 ? <Cloud className="w-3 h-3 text-slate-300" /> : <CloudRain className="w-3 h-3 text-slate-400" />}
+                                                <span className={cn(isLowPulse ? "text-rose-500" : "text-slate-600")}>{d.pulse.toFixed(1)}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                {d.laborCostPerHead > 0 ? dots : <span className="text-[10px] text-slate-300">算出不能</span>}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
                 </div>
             </div>
-            
-            {/* ❶ 部署別コスト効率ランキング & ❷ 構成比 */}
-            {deptFinanceData.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Ranking Block */}
-                    <div className="md:col-span-2 bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-6">
+
+            {/* セクション③：象限分析 */}
+            <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm space-y-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h3 className="text-base font-black text-slate-800 tracking-tight flex items-center gap-2">
+                            <Target className="w-5 h-5 text-teal" />
+                            体温 × コスト 象限分析
+                        </h3>
+                        <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-widest">Organizational Health vs. Cost Baseline</p>
+                    </div>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100">
+                        <span className="text-[9px] font-black text-slate-400 uppercase">全社平均</span>
+                        <span className="text-xs font-black text-slate-700">{avgLaborCostPerHead}万</span>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-slate-100 rounded-3xl overflow-hidden shadow-inner border border-slate-100">
+                    {/* Quarter 1: High Pulse, Low Cost */}
+                    <div className="bg-emerald-50/20 p-8 min-h-[140px] space-y-3">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                <TrendingUp className="w-4 h-4 text-teal" />
-                                部署別コスト効率ランキング
-                            </h3>
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Efficiency Ranking</span>
+                            <span className="text-[9px] font-black text-emerald-600 bg-white px-2 py-0.5 rounded-full border border-emerald-100 uppercase tracking-widest">理想的</span>
+                            <span className="text-[8px] font-bold text-slate-400 uppercase">自律型高効率</span>
                         </div>
-                        
-                        <div className="space-y-5">
-                            {deptFinanceData
-                                .map(d => ({ ...d, efficiency: d.laborCostPerHead > 0 ? d.kpiAch / d.laborCostPerHead : 0 }))
-                                .sort((a, b) => b.efficiency - a.efficiency)
-                                .map((d, i) => {
-                                    const isHighEfficiency = d.efficiency > 2; // Arbitrary threshold for demo visualization
-                                    return (
-                                        <div key={d.id} className="group cursor-default">
-                                            <div className="flex justify-between items-end mb-1.5">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-[10px] font-bold text-slate-300">#{i + 1}</span>
-                                                    <span className="text-xs font-bold text-slate-700">{d.name}</span>
-                                                </div>
-                                                <div className="text-[10px] font-bold text-slate-400">
-                                                    単価:{d.laborCostPerHead}万 / 達成:{d.kpiAch}%
-                                                </div>
-                                            </div>
-                                            <div className="h-2 bg-slate-50 rounded-full overflow-hidden flex">
-                                                <div 
-                                                    className={cn(
-                                                        "h-full rounded-full transition-all duration-1000",
-                                                        d.kpiAch >= 100 ? "bg-teal-400" : d.kpiAch >= 80 ? "bg-amber-400" : "bg-rose-400"
-                                                    )}
-                                                    style={{ width: `${Math.min(100, (d.efficiency / 3) * 100)}%` }} // Normalized for visualization
-                                                />
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                        <div className="flex flex-wrap gap-2">
+                            {deptFinanceData.filter(d => d.pulse >= 3.0 && d.laborCostPerHead <= avgLaborCostPerHead).map(d => (
+                                <div key={d.id} className="px-3 py-2 bg-white border border-emerald-100 rounded-xl shadow-sm flex flex-col gap-0.5">
+                                    <span className="text-xs font-bold text-slate-700">{d.name}</span>
+                                    <span className="text-[9px] text-slate-400 font-bold">体温 {d.pulse.toFixed(1)} / {d.laborCostPerHead}万</span>
+                                </div>
+                            ))}
                         </div>
                     </div>
-
-                    {/* Composition Block */}
-                    <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-6">
+                    
+                    {/* Quarter 2: High Pulse, High Cost */}
+                    <div className="bg-indigo-50/20 p-8 min-h-[140px] space-y-3 border-l border-slate-100">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                <PieChart className="w-4 h-4 text-indigo-500" />
-                                人件費構成比
-                            </h3>
+                            <span className="text-[9px] font-black text-indigo-600 bg-white px-2 py-0.5 rounded-full border border-indigo-100 uppercase tracking-widest">安定投資</span>
+                            <span className="text-[8px] font-bold text-slate-400 uppercase">高稼働・厚待遇</span>
                         </div>
-                        
-                        <div className="space-y-6">
-                            {/* Stacked Vertical Bar */}
-                            <div className="h-64 w-full bg-slate-50 rounded-2xl p-1.5 flex flex-col gap-1 overflow-hidden">
-                                {deptFinanceData.map((d, i) => {
-                                    const percent = totalLaborCost > 0 ? (d.totalLaborCost / totalLaborCost) * 100 : 0;
-                                    if (percent < 1) return null;
-                                    return (
-                                        <div 
-                                            key={d.id}
-                                            className={cn("w-full rounded-lg relative group/item", DEPT_COLORS[i % DEPT_COLORS.length])}
-                                            style={{ height: `${percent}%` }}
-                                        >
-                                            <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 bg-slate-800 text-white text-[9px] px-2 py-1 rounded hidden group-hover/item:block whitespace-nowrap z-30">
-                                                {d.name}: {percent.toFixed(1)}%
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                            
-                            <div className="space-y-2">
-                                {deptFinanceData.slice(0, 5).map((d, i) => (
-                                    <div key={d.id} className="flex items-center justify-between text-[10px]">
-                                        <div className="flex items-center gap-2">
-                                            <div className={cn("w-2 h-2 rounded-full", DEPT_COLORS[i % DEPT_COLORS.length])} />
-                                            <span className="font-bold text-slate-600">{d.name}</span>
-                                        </div>
-                                        <span className="font-black text-slate-400 italic">{(totalLaborCost > 0 ? (d.totalLaborCost / totalLaborCost) * 100 : 0).toFixed(1)}%</span>
-                                    </div>
-                                ))}
-                            </div>
+                        <div className="flex flex-wrap gap-2">
+                            {deptFinanceData.filter(d => d.pulse >= 3.0 && d.laborCostPerHead > avgLaborCostPerHead).map(d => (
+                                <div key={d.id} className="px-3 py-2 bg-white border border-indigo-100 rounded-xl shadow-sm flex flex-col gap-0.5">
+                                    <span className="text-xs font-bold text-slate-700">{d.name}</span>
+                                    <span className="text-[9px] text-slate-400 font-bold">体温 {d.pulse.toFixed(1)} / {d.laborCostPerHead}万</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    {/* Quarter 3: Low Pulse, Low Cost */}
+                    <div className="bg-amber-50/20 p-8 min-h-[140px] space-y-3 border-t border-slate-100">
+                        <div className="flex items-center justify-between">
+                            <span className="text-[9px] font-black text-amber-600 bg-white px-2 py-0.5 rounded-full border border-amber-100 uppercase tracking-widest">要注意</span>
+                            <span className="text-[8px] font-bold text-slate-400 uppercase">投資不足リスク</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {deptFinanceData.filter(d => d.pulse < 3.0 && d.laborCostPerHead <= avgLaborCostPerHead).map(d => (
+                                <div key={d.id} className="px-3 py-2 bg-white border border-amber-100 rounded-xl shadow-sm flex flex-col gap-0.5">
+                                    <span className="text-xs font-bold text-slate-700">{d.name}</span>
+                                    <span className="text-[9px] text-slate-400 font-bold">体温 {d.pulse.toFixed(1)} / {d.laborCostPerHead}万</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    {/* Quarter 4: Low Pulse, High Cost */}
+                    <div className="bg-rose-50/20 p-8 min-h-[140px] space-y-3 border-t border-l border-slate-100">
+                        <div className="flex items-center justify-between">
+                            <span className="text-[9px] font-black text-rose-600 bg-white px-2 py-0.5 rounded-full border border-rose-100 uppercase tracking-widest">警告域</span>
+                            <span className="text-[8px] font-bold text-slate-400 uppercase">構造的非能率</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {deptFinanceData.filter(d => d.pulse < 3.0 && d.laborCostPerHead > avgLaborCostPerHead).map(d => (
+                                <div key={d.id} className="px-3 py-2 bg-white border border-rose-100 rounded-xl shadow-sm ring-1 ring-rose-100 flex flex-col gap-0.5">
+                                    <span className="text-xs font-bold text-slate-700">{d.name}</span>
+                                    <span className="text-[9px] text-slate-400 font-bold">体温 {d.pulse.toFixed(1)} / {d.laborCostPerHead}万</span>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
-            )}
+            </div>
 
-            {/* ❸ 体温 × コスト 4象限分析 */}
-            {deptFinanceData.length > 0 && (
-                <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm space-y-8">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
-                            <h3 className="text-base font-black text-slate-800 tracking-tight flex items-center gap-2">
-                                <Target className="w-5 h-5 text-teal" />
-                                体温 × コスト 象限分析
-                            </h3>
-                            <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-widest">Organizational Health vs. Cost Baseline</p>
-                        </div>
-                        <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-2xl border border-slate-100">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">全社単価平均</span>
-                            <span className="text-xs font-black text-slate-700">{avgLaborCostPerHead.toLocaleString()}万円</span>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-slate-100 rounded-3xl border border-slate-100 overflow-hidden shadow-inner">
-                        {/* Quarter 1: High Pulse, Low Cost */}
-                        <div className="bg-emerald-50/30 p-8 min-h-[160px] space-y-4">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-black text-emerald-600 border border-emerald-200 px-2.5 py-1 rounded-full uppercase tracking-widest bg-white">理想的</span>
-                                <span className="text-[9px] font-bold text-slate-400 uppercase">自律型高効率</span>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                {deptFinanceData.filter(d => d.pulse >= 3.0 && d.laborCostPerHead <= avgLaborCostPerHead).map(d => (
-                                    <div key={d.id} className="px-3 py-1.5 bg-white border border-emerald-100 text-slate-700 text-xs font-bold rounded-xl shadow-sm">
-                                        {d.name}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        
-                        {/* Quarter 2: High Pulse, High Cost */}
-                        <div className="bg-indigo-50/30 p-8 min-h-[160px] space-y-4 border-l border-slate-100">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-black text-indigo-600 border border-indigo-200 px-2.5 py-1 rounded-full uppercase tracking-widest bg-white">安定投資</span>
-                                <span className="text-[9px] font-bold text-slate-400 uppercase">高稼働・厚待遇</span>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                {deptFinanceData.filter(d => d.pulse >= 3.0 && d.laborCostPerHead > avgLaborCostPerHead).map(d => (
-                                    <div key={d.id} className="px-3 py-1.5 bg-white border border-indigo-100 text-slate-700 text-xs font-bold rounded-xl shadow-sm">
-                                        {d.name}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        
-                        {/* Quarter 3: Low Pulse, Low Cost */}
-                        <div className="bg-amber-50/30 p-8 min-h-[160px] space-y-4 border-t border-slate-100">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-black text-amber-600 border border-amber-200 px-2.5 py-1 rounded-full uppercase tracking-widest bg-white">要注意</span>
-                                <span className="text-[9px] font-bold text-slate-400 uppercase">投資不足リスク</span>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                {deptFinanceData.filter(d => d.pulse < 3.0 && d.laborCostPerHead <= avgLaborCostPerHead).map(d => (
-                                    <div key={d.id} className="px-3 py-1.5 bg-white border border-amber-100 text-slate-700 text-xs font-bold rounded-xl shadow-sm">
-                                        {d.name}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        
-                        {/* Quarter 4: Low Pulse, High Cost */}
-                        <div className="bg-rose-50/30 p-8 min-h-[160px] space-y-4 border-t border-l border-slate-100">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-black text-rose-600 border border-rose-200 px-2.5 py-1 rounded-full uppercase tracking-widest bg-white">警告域</span>
-                                <span className="text-[9px] font-bold text-slate-400 uppercase">構造的非能率</span>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                {deptFinanceData.filter(d => d.pulse < 3.0 && d.laborCostPerHead > avgLaborCostPerHead).map(d => (
-                                    <div key={d.id} className="px-3 py-1.5 bg-white border border-rose-100 text-slate-700 text-xs font-bold rounded-xl shadow-sm ring-1 ring-rose-100">
-                                        {d.name}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* AI Insight for Finance */}
+            {/* セクション④：AIアクション提言 */}
             <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                     <Coins className="w-32 h-32" />
                 </div>
                 
-                <div className="relative z-10 space-y-6">
-                    <div className="flex items-center gap-3 mb-2">
+                <div className="relative z-10 space-y-8">
+                    <div className="flex items-center gap-3">
                         <div className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-teal-400 border border-white/5">
-                            Financial Insight
+                            AI Action Recommendations
                         </div>
                     </div>
                     
-                    <div className="space-y-4">
-                        <h3 className="text-2xl font-black tracking-tight leading-tight italic">
-                            人件費を「コスト」から<br />「投資」へ変える視点。
-                        </h3>
-                        <div className="h-px w-20 bg-teal-500" />
-                        <div className="text-sm text-slate-300 leading-loose font-medium max-w-xl">
+                    <div className="space-y-6">
+                        <div className="text-lg font-bold text-slate-100 leading-relaxed max-w-2xl italic border-l-4 border-teal-500 pl-6">
                             {aiContent?.deep_report?.correlation || 
-                             "現在の人件費総額は " + (totalLaborCost / 100).toFixed(1) + " 億円規模です。マトリックス図で「人件費サイズ」に切り替え、高単価かつ低生産性の領域がないか確認してください。組織体温が高い（ sun ）状態での高ROIは、持続可能な成長フェーズにあることを示唆しています。"}
+                             `現在の全社ROI ${laborRoi.toFixed(1)} は、${avgLaborCostPerHead}万円の投資に対して平均KPI達成率 ${avgAch}% を実現しています。`}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                            {alertDepts.length > 0 && (
+                                <div className="bg-white/5 backdrop-blur-sm p-4 rounded-2xl border border-white/5 flex items-start gap-4">
+                                    <span className="text-lg">🔴</span>
+                                    <div className="space-y-1">
+                                        <div className="text-xs font-black text-rose-400 uppercase tracking-widest">警告域：高コスト・低体温</div>
+                                        <div className="text-sm font-bold text-slate-200">
+                                            [{alertDepts.map(d => d.name).join(", ")}] → マネージャーとの1on1実施を推奨
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            {cautionDepts.length > 0 && (
+                                <div className="bg-white/5 backdrop-blur-sm p-4 rounded-2xl border border-white/5 flex items-start gap-4">
+                                    <span className="text-lg">🟡</span>
+                                    <div className="space-y-1">
+                                        <div className="text-xs font-black text-amber-400 uppercase tracking-widest">要注意：投資不足リスク</div>
+                                        <div className="text-sm font-bold text-slate-200">
+                                            [{cautionDepts.map(d => d.name).join(", ")}] → 目標・役割の明確化を検討
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            {idealDepts.length > 0 && (
+                                <div className="bg-white/5 backdrop-blur-sm p-4 rounded-2xl border border-white/5 flex items-start gap-4">
+                                    <span className="text-lg">🟢</span>
+                                    <div className="space-y-1">
+                                        <div className="text-xs font-black text-teal-400 uppercase tracking-widest">理想的：高効率維持中</div>
+                                        <div className="text-sm font-bold text-slate-200">
+                                            [{idealDepts.map(d => d.name).join(", ")}] → 採用強化・他部署への横展開を検討
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     <div className="pt-4">
                         <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
                             <Info className="w-3.5 h-3.5" />
-                            Data source: Resource Records & KPI Achievement
+                            Data source: Financial Baseline Analysis
                         </div>
                     </div>
                 </div>

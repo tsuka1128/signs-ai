@@ -746,7 +746,8 @@ export function useDashboardData(
             laborCostPerHead: d.laborCostPerHead,
             totalLaborCost: d.totalLaborCost,
             kpiAch: d.kpiAch,
-            pulse: d.pulse
+            pulse: d.pulse,
+            headcount: d.headHistory?.[12] || 0
         }));
 
         const deptsActualHead = displayDepts.reduce((sum, d) => sum + (d.headHistory?.[12] || 0), 0);
