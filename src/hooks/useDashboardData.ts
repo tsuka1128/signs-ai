@@ -75,11 +75,11 @@ export function useDashboardData(
 
         // データが存在する最新月を特定する
         const latestSurveyMonth = [...last13Months].reverse().find(m => 
-            (r.data || []).some(res => normalizeMonth(res.recorded_month) === m)
+            (r.data || []).some((res: any) => normalizeMonth(res.recorded_month) === m)
         ) || last13Months[12];
 
         const latestKpiMonth = [...last13Months].reverse().find(m => 
-            (recs.data || []).some(res => normalizeMonth(res.recorded_month) === m)
+            (recs.data || []).some((res: any) => normalizeMonth(res.recorded_month) === m)
         ) || last13Months[12];
 
         let mergedKpis: any[] = [];
