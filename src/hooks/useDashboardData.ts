@@ -19,6 +19,8 @@ interface DashboardState {
     realAiInsights: AiInsight[];
     realActionItems: ActionItem[];
     realUsers: any[];
+    latestSurveyMonth: string | null;
+    latestKpiMonth: string | null;
 }
 
 export function useDashboardData(
@@ -39,7 +41,9 @@ export function useDashboardData(
         realResources: [],
         realAiInsights: [],
         realActionItems: [],
-        realUsers: []
+        realUsers: [],
+        latestSurveyMonth: null,
+        latestKpiMonth: null
     });
 
     const [isAnalyzing, setIsAnalyzing] = useState(false);
