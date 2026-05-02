@@ -1,5 +1,7 @@
+import { useState, useMemo } from "react";
 import { TrendingUp, PieChart, Info, ArrowUpRight, Target, Coins, Users, Activity, Sun, Cloud, CloudRain } from "lucide-react";
 import { cn } from "@/lib/utils/index";
+import { TabBar } from "@/components/ui/TabBar";
 
 interface LaborFinanceSectionProps {
     laborRoi: number;
@@ -15,7 +17,18 @@ interface LaborFinanceSectionProps {
         headcount: number;
         laborRoi: number;
     }[];
+    axisFinanceData?: {
+        id: string;
+        name: string;
+        laborCostPerHead: number;
+        totalLaborCost: number;
+        kpiAch: number;
+        pulse: number;
+        headcount: number;
+        laborRoi: number;
+    }[];
     avgLaborCostPerHead?: number;
+    secondaryAxisName?: string;
     aiContent?: any;
 }
 
@@ -24,29 +37,42 @@ export function LaborFinanceSection({
     laborDistRate, 
     totalLaborCost, 
     deptFinanceData = [], 
+    axisFinanceData = [],
     avgLaborCostPerHead = 0,
+    secondaryAxisName,
     aiContent 
 }: LaborFinanceSectionProps) {
+    const [financeView, setFinanceView] = useState<'dept' | 'axis'>('dept');
     const hasDistRate = laborDistRate > 0;
+    const hasAxisData = axisFinanceData.length > 0;
+
+    const activeData = financeView === 'dept' ? deptFinanceData : axisFinanceData;
 
     // 効率スコアの算出とソート
-    const sortedData = [...deptFinanceData]
-        .map(d => ({ 
-            ...d, 
-            efficiency: d.laborCostPerHead > 0 ? d.kpiAch / d.laborCostPerHead : 0 
-        }))
-        .sort((a, b) => b.efficiency - a.efficiency);
+    const sortedData = useMemo(() => {
+        return [...activeData]
+            .map(d => ({ 
+                ...d, 
+                efficiency: d.laborCostPerHead > 0 ? d.kpiAch / d.laborCostPerHead : 0 
+            }))
+            .sort((a, b) => b.efficiency - a.efficiency);
+    }, [activeData]);
 
     const maxEff = Math.max(...sortedData.map(d => d.efficiency), 1);
 
     // AI提言用のグルーピング
-    const alertDepts = deptFinanceData.filter(d => d.pulse < 3.0 && d.laborCostPerHead > avgLaborCostPerHead);
-    const cautionDepts = deptFinanceData.filter(d => d.pulse < 3.0 && d.laborCostPerHead <= avgLaborCostPerHead);
-    const idealDepts = deptFinanceData.filter(d => d.pulse >= 3.0 && d.laborCostPerHead <= avgLaborCostPerHead);
+    const alertDepts = activeData.filter(d => d.pulse < 3.0 && d.laborCostPerHead > avgLaborCostPerHead);
+    const cautionDepts = activeData.filter(d => d.pulse < 3.0 && d.laborCostPerHead <= avgLaborCostPerHead);
+    const idealDepts = activeData.filter(d => d.pulse >= 3.0 && d.laborCostPerHead <= avgLaborCostPerHead);
 
-    const avgAch = deptFinanceData.length > 0 
-        ? Math.round(deptFinanceData.reduce((a, b) => a + b.kpiAch, 0) / deptFinanceData.length) 
+    const avgAch = activeData.length > 0 
+        ? Math.round(activeData.reduce((a, b) => a + b.kpiAch, 0) / activeData.length) 
         : 0;
+
+    const tabs = [
+        { id: 'dept', label: '部署別' },
+        { id: 'axis', label: `${secondaryAxisName || '担当領域'}別` }
+    ];
 
     return (
         <div className="space-y-8 animate-fadeIn">
@@ -129,13 +155,24 @@ export function LaborFinanceSection({
                 )}
             </div>
 
-            {/* セクション②：部署別 効率一覧テーブル */}
+            {/* セクション②：効率分析一覧テーブル */}
             <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
                 <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
-                    <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
-                        <Activity className="w-4 h-4 text-teal" />
-                        部署別 効率分析一覧
-                    </h3>
+                    <div className="flex items-center gap-6">
+                        <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                            <Activity className="w-4 h-4 text-teal" />
+                            {financeView === 'dept' ? '部署別' : `${secondaryAxisName || '担当領域'}別`} 効率分析一覧
+                        </h3>
+                        {hasAxisData && (
+                            <div className="flex items-center">
+                                <TabBar 
+                                    tabs={tabs} 
+                                    active={financeView} 
+                                    onChange={(id: any) => setFinanceView(id)} 
+                                />
+                            </div>
+                        )}
+                    </div>
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Efficiency Matrix</span>
                 </div>
                 <div className="overflow-x-auto">
@@ -235,7 +272,7 @@ export function LaborFinanceSection({
                             <span className="text-[8px] font-bold text-slate-400 uppercase">自律型高効率</span>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            {deptFinanceData.filter(d => d.pulse >= 3.0 && d.laborCostPerHead <= avgLaborCostPerHead).map(d => (
+                            {activeData.filter(d => d.pulse >= 3.0 && d.laborCostPerHead <= avgLaborCostPerHead).map(d => (
                                 <div key={d.id} className="px-3 py-2 bg-white border border-emerald-100 rounded-xl shadow-sm flex flex-col gap-0.5">
                                     <span className="text-xs font-bold text-slate-700">{d.name}</span>
                                     <span className="text-[9px] text-slate-400 font-bold">体温 {d.pulse.toFixed(1)} / {d.laborCostPerHead}万</span>
@@ -251,7 +288,7 @@ export function LaborFinanceSection({
                             <span className="text-[8px] font-bold text-slate-400 uppercase">高稼働・厚待遇</span>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            {deptFinanceData.filter(d => d.pulse >= 3.0 && d.laborCostPerHead > avgLaborCostPerHead).map(d => (
+                            {activeData.filter(d => d.pulse >= 3.0 && d.laborCostPerHead > avgLaborCostPerHead).map(d => (
                                 <div key={d.id} className="px-3 py-2 bg-white border border-indigo-100 rounded-xl shadow-sm flex flex-col gap-0.5">
                                     <span className="text-xs font-bold text-slate-700">{d.name}</span>
                                     <span className="text-[9px] text-slate-400 font-bold">体温 {d.pulse.toFixed(1)} / {d.laborCostPerHead}万</span>
@@ -267,7 +304,7 @@ export function LaborFinanceSection({
                             <span className="text-[8px] font-bold text-slate-400 uppercase">投資不足リスク</span>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            {deptFinanceData.filter(d => d.pulse < 3.0 && d.laborCostPerHead <= avgLaborCostPerHead).map(d => (
+                            {activeData.filter(d => d.pulse < 3.0 && d.laborCostPerHead <= avgLaborCostPerHead).map(d => (
                                 <div key={d.id} className="px-3 py-2 bg-white border border-amber-100 rounded-xl shadow-sm flex flex-col gap-0.5">
                                     <span className="text-xs font-bold text-slate-700">{d.name}</span>
                                     <span className="text-[9px] text-slate-400 font-bold">体温 {d.pulse.toFixed(1)} / {d.laborCostPerHead}万</span>
@@ -283,7 +320,7 @@ export function LaborFinanceSection({
                             <span className="text-[8px] font-bold text-slate-400 uppercase">構造的非能率</span>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            {deptFinanceData.filter(d => d.pulse < 3.0 && d.laborCostPerHead > avgLaborCostPerHead).map(d => (
+                            {activeData.filter(d => d.pulse < 3.0 && d.laborCostPerHead > avgLaborCostPerHead).map(d => (
                                 <div key={d.id} className="px-3 py-2 bg-white border border-rose-100 rounded-xl shadow-sm ring-1 ring-rose-100 flex flex-col gap-0.5">
                                     <span className="text-xs font-bold text-slate-700">{d.name}</span>
                                     <span className="text-[9px] text-slate-400 font-bold">体温 {d.pulse.toFixed(1)} / {d.laborCostPerHead}万</span>
