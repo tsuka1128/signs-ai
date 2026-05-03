@@ -47,10 +47,12 @@ function QuadrantScatterPlot({ data, avgPulse, avgCost }: { data: any[], avgPuls
     const height = 384; // h-96
     const padding = { top: 40, right: 100, bottom: 50, left: 60 };
 
-    // スケール計算（データの最小・最大から動的に算出）
-    const minPulse = 0;
-    const maxPulse = 5;
+    // Y軸スケール計算（データ連動）
+    const pulses = [...data.map(d => d.pulse), ...data.map(d => d.prevPulse)];
+    const minPulse = pulses.length > 0 ? Math.max(0, Math.min(...pulses) - 0.5) : 0;
+    const maxPulse = pulses.length > 0 ? Math.min(5, Math.max(...pulses) + 0.5) : 5;
     
+    // X軸スケール計算
     const costs = data.map(d => d.laborCostPerHead).filter(c => c > 0);
     const prevCosts = data.map(d => d.prevLaborCostPerHead).filter(c => c > 0);
     const allCosts = [...costs, ...prevCosts];
@@ -60,6 +62,10 @@ function QuadrantScatterPlot({ data, avgPulse, avgCost }: { data: any[], avgPuls
 
     const getX = (cost: number) => padding.left + ((cost - minCost) / (maxCost - minCost)) * (width - padding.left - padding.right);
     const getY = (pulse: number) => (height - padding.bottom) - ((pulse - minPulse) / (maxPulse - minPulse)) * (height - padding.top - padding.bottom);
+
+    // 目盛り用の数値（4等分）
+    const yTicks = [minPulse, minPulse + (maxPulse - minPulse) * 0.25, minPulse + (maxPulse - minPulse) * 0.5, minPulse + (maxPulse - minPulse) * 0.75, maxPulse];
+    const xTicks = [minCost, minCost + (maxCost - minCost) * 0.25, minCost + (maxCost - minCost) * 0.5, minCost + (maxCost - minCost) * 0.75, maxCost];
 
     return (
         <div className="relative bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden p-6">
@@ -95,9 +101,24 @@ function QuadrantScatterPlot({ data, avgPulse, avgCost }: { data: any[], avgPuls
                         </marker>
                     </defs>
 
-                    {/* 象限ライン（グリッド） */}
-                    <line x1={padding.left} y1={getY(avgPulse)} x2={width - padding.right} y2={getY(avgPulse)} stroke="#E2E8F0" strokeDasharray="4 4" strokeWidth="1" />
-                    <line x1={getX(avgCost)} y1={padding.top} x2={getX(avgCost)} y2={height - padding.bottom} stroke="#E2E8F0" strokeDasharray="4 4" strokeWidth="1" />
+                    {/* Y軸の目盛りとグリッド */}
+                    {yTicks.map((val, i) => (
+                        <g key={`ytick-${i}`}>
+                            <line x1={padding.left} y1={getY(val)} x2={width - padding.right} y2={getY(val)} stroke="#F1F5F9" strokeWidth="1" />
+                            <text x={padding.left - 8} y={getY(val) + 3} textAnchor="end" className="text-[9px] fill-slate-400 font-bold">{val.toFixed(1)}</text>
+                        </g>
+                    ))}
+
+                    {/* X軸の目盛り */}
+                    {xTicks.map((val, i) => (
+                        <g key={`xtick-${i}`}>
+                            <text x={getX(val)} y={height - padding.bottom + 15} textAnchor="middle" className="text-[9px] fill-slate-400 font-bold">{Math.round(val)}</text>
+                        </g>
+                    ))}
+
+                    {/* 象限ライン（平均値） */}
+                    <line x1={padding.left} y1={getY(avgPulse)} x2={width - padding.right} y2={getY(avgPulse)} stroke="#CBD5E1" strokeDasharray="4 4" strokeWidth="1" />
+                    <line x1={getX(avgCost)} y1={padding.top} x2={getX(avgCost)} y2={height - padding.bottom} stroke="#CBD5E1" strokeDasharray="4 4" strokeWidth="1" />
 
                     {/* 象限ラベル */}
                     <text x={padding.left + 10} y={padding.top + 20} className="text-[10px] font-black fill-emerald-600 uppercase tracking-widest opacity-40">自律型高効率</text>
@@ -105,12 +126,12 @@ function QuadrantScatterPlot({ data, avgPulse, avgCost }: { data: any[], avgPuls
                     <text x={padding.left + 10} y={height - padding.bottom - 10} className="text-[10px] font-black fill-amber-600 uppercase tracking-widest opacity-40">投資不足リスク</text>
                     <text x={width - padding.right - 80} y={height - padding.bottom - 10} className="text-[10px] font-black fill-rose-600 uppercase tracking-widest opacity-40">構造的非能率</text>
 
-                    {/* 軸ラベル */}
-                    <text x={width / 2} y={height - 10} textAnchor="middle" className="text-[9px] font-black fill-slate-400 uppercase tracking-[0.2em]">一人当たり単価 (万円)</text>
-                    <text x={15} y={height / 2} textAnchor="middle" transform={`rotate(-90, 15, ${height / 2})`} className="text-[9px] font-black fill-slate-400 uppercase tracking-[0.2em]">体温スコア</text>
+                    {/* 軸ラベル（横書き） */}
+                    <text x={width - padding.right + 10} y={height - padding.bottom + 15} className="text-[9px] font-black fill-slate-400 uppercase tracking-widest">単価(万)</text>
+                    <text x={padding.left} y={padding.top - 15} className="text-[9px] font-black fill-slate-400 uppercase tracking-widest">体温</text>
 
                     {/* データプロット */}
-                    {data.map(d => {
+                    {data.map((d, idx) => {
                         if (d.laborCostPerHead === 0) return null;
                         
                         const currX = getX(d.laborCostPerHead);
@@ -125,6 +146,9 @@ function QuadrantScatterPlot({ data, avgPulse, avgCost }: { data: any[], avgPuls
                         // 前月からの変化が一定以上の場合は矢印を表示
                         const hasSignificantChange = Math.abs(d.pulse - d.prevPulse) >= 0.1 || Math.abs(d.laborCostPerHead - d.prevLaborCostPerHead) >= 1;
 
+                        // ラベルの重なり防止（上下交互にずらす）
+                        const labelYOffset = (size / 2) + (idx % 2 === 0 ? 14 : 28);
+
                         return (
                             <g key={d.id} onMouseEnter={() => setHoveredId(d.id)} onMouseLeave={() => setHoveredId(null)} className="cursor-pointer">
                                 {hasSignificantChange && !isHovered && (
@@ -133,7 +157,7 @@ function QuadrantScatterPlot({ data, avgPulse, avgCost }: { data: any[], avgPuls
                                 
                                 <circle cx={currX} cy={currY} r={size / 2} fill={color} opacity={isHovered ? 1 : 0.8} stroke="white" strokeWidth="2" className="transition-all duration-300" />
                                 
-                                <text x={currX} y={currY + (size / 2) + 12} textAnchor="middle" className="text-[10px] font-bold fill-slate-700 pointer-events-none">{d.name}</text>
+                                <text x={currX} y={currY + labelYOffset} textAnchor="middle" className="text-[10px] font-bold fill-slate-700 pointer-events-none">{d.name}</text>
 
                                 {isHovered && (
                                     <g className="pointer-events-none">
