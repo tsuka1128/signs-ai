@@ -14,6 +14,8 @@ interface LaborFinanceSectionProps {
         totalLaborCost: number;
         kpiAch: number;
         pulse: number;
+        prevPulse: number;
+        prevLaborCostPerHead: number;
         headcount: number;
         laborRoi: number;
     }[];
@@ -24,12 +26,130 @@ interface LaborFinanceSectionProps {
         totalLaborCost: number;
         kpiAch: number;
         pulse: number;
+        prevPulse: number;
+        prevLaborCostPerHead: number;
         headcount: number;
         laborRoi: number;
     }[];
     avgLaborCostPerHead?: number;
     secondaryAxisName?: string;
     aiContent?: any;
+}
+
+/**
+ * 象限分析用の散布図（SVG実装）
+ */
+function QuadrantScatterPlot({ data, avgPulse, avgCost }: { data: any[], avgPulse: number, avgCost: number }) {
+    const [hoveredId, setHoveredId] = useState<string | null>(null);
+
+    // グラフの描画設定
+    const width = 800;
+    const height = 384; // h-96
+    const padding = { top: 40, right: 100, bottom: 50, left: 60 };
+
+    // スケール計算（データの最小・最大から動的に算出）
+    const minPulse = 0;
+    const maxPulse = 5;
+    
+    const costs = data.map(d => d.laborCostPerHead).filter(c => c > 0);
+    const prevCosts = data.map(d => d.prevLaborCostPerHead).filter(c => c > 0);
+    const allCosts = [...costs, ...prevCosts];
+    
+    const minCost = allCosts.length > 0 ? Math.max(0, Math.min(...allCosts) - 20) : 0;
+    const maxCost = allCosts.length > 0 ? Math.max(...allCosts) + 20 : 100;
+
+    const getX = (cost: number) => padding.left + ((cost - minCost) / (maxCost - minCost)) * (width - padding.left - padding.right);
+    const getY = (pulse: number) => (height - padding.bottom) - ((pulse - minPulse) / (maxPulse - minPulse)) * (height - padding.top - padding.bottom);
+
+    return (
+        <div className="relative bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden p-6">
+            <div className="flex items-center justify-between mb-4">
+                <div>
+                    <h3 className="text-base font-black text-slate-800 tracking-tight flex items-center gap-2">
+                        <Target className="w-5 h-5 text-teal" />
+                        体温 × コスト 象限分析
+                    </h3>
+                    <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-widest">Organizational Health vs. Cost Baseline</p>
+                </div>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-teal" />
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">ROI 100+</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-amber-400" />
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">ROI 60+</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-rose-500" />
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Under 60</span>
+                    </div>
+                </div>
+            </div>
+
+            <div className="relative" style={{ height: `${height}px` }}>
+                <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
+                    <defs>
+                        <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#CBD5E1" />
+                        </marker>
+                    </defs>
+
+                    {/* 象限ライン（グリッド） */}
+                    <line x1={padding.left} y1={getY(avgPulse)} x2={width - padding.right} y2={getY(avgPulse)} stroke="#E2E8F0" strokeDasharray="4 4" strokeWidth="1" />
+                    <line x1={getX(avgCost)} y1={padding.top} x2={getX(avgCost)} y2={height - padding.bottom} stroke="#E2E8F0" strokeDasharray="4 4" strokeWidth="1" />
+
+                    {/* 象限ラベル */}
+                    <text x={padding.left + 10} y={padding.top + 20} className="text-[10px] font-black fill-emerald-600 uppercase tracking-widest opacity-40">自律型高効率</text>
+                    <text x={width - padding.right - 80} y={padding.top + 20} className="text-[10px] font-black fill-indigo-600 uppercase tracking-widest opacity-40">高稼働・厚待遇</text>
+                    <text x={padding.left + 10} y={height - padding.bottom - 10} className="text-[10px] font-black fill-amber-600 uppercase tracking-widest opacity-40">投資不足リスク</text>
+                    <text x={width - padding.right - 80} y={height - padding.bottom - 10} className="text-[10px] font-black fill-rose-600 uppercase tracking-widest opacity-40">構造的非能率</text>
+
+                    {/* 軸ラベル */}
+                    <text x={width / 2} y={height - 10} textAnchor="middle" className="text-[9px] font-black fill-slate-400 uppercase tracking-[0.2em]">一人当たり単価 (万円)</text>
+                    <text x={15} y={height / 2} textAnchor="middle" transform={`rotate(-90, 15, ${height / 2})`} className="text-[9px] font-black fill-slate-400 uppercase tracking-[0.2em]">体温スコア</text>
+
+                    {/* データプロット */}
+                    {data.map(d => {
+                        if (d.laborCostPerHead === 0) return null;
+                        
+                        const currX = getX(d.laborCostPerHead);
+                        const currY = getY(d.pulse);
+                        const prevX = getX(d.prevLaborCostPerHead);
+                        const prevY = getY(d.prevPulse);
+                        
+                        const size = Math.max(28, Math.min(64, d.kpiAch * 0.5));
+                        const color = d.laborRoi >= 100 ? "#0D9488" : d.laborRoi >= 60 ? "#F59E0B" : "#EF4444";
+                        const isHovered = hoveredId === d.id;
+
+                        // 前月からの変化が一定以上の場合は矢印を表示
+                        const hasSignificantChange = Math.abs(d.pulse - d.prevPulse) >= 0.1 || Math.abs(d.laborCostPerHead - d.prevLaborCostPerHead) >= 1;
+
+                        return (
+                            <g key={d.id} onMouseEnter={() => setHoveredId(d.id)} onMouseLeave={() => setHoveredId(null)} className="cursor-pointer">
+                                {hasSignificantChange && !isHovered && (
+                                    <line x1={prevX} y1={prevY} x2={currX} y2={currY} stroke="#CBD5E1" strokeWidth="1.5" markerEnd="url(#arrow)" opacity="0.6" />
+                                )}
+                                
+                                <circle cx={currX} cy={currY} r={size / 2} fill={color} opacity={isHovered ? 1 : 0.8} stroke="white" strokeWidth="2" className="transition-all duration-300" />
+                                
+                                <text x={currX} y={currY + (size / 2) + 12} textAnchor="middle" className="text-[10px] font-bold fill-slate-700 pointer-events-none">{d.name}</text>
+
+                                {isHovered && (
+                                    <g className="pointer-events-none">
+                                        <rect x={currX + 15} y={currY - 50} width="120" height="60" rx="8" fill="#1E293B" opacity="0.95" />
+                                        <text x={currX + 25} y={currY - 35} className="text-[10px] font-black fill-white">{d.name}</text>
+                                        <text x={currX + 25} y={currY - 20} className="text-[9px] fill-slate-300">体温: {d.pulse.toFixed(1)} / KPI: {d.kpiAch}%</text>
+                                        <text x={currX + 25} y={currY - 8} className="text-[9px] fill-slate-300">単価: {d.laborCostPerHead}万 / ROI: {d.laborRoi}</text>
+                                    </g>
+                                )}
+                            </g>
+                        );
+                    })}
+                </svg>
+            </div>
+        </div>
+    );
 }
 
 export function LaborFinanceSection({ 
@@ -67,6 +187,10 @@ export function LaborFinanceSection({
 
     const avgAch = activeData.length > 0 
         ? Math.round(activeData.reduce((a, b) => a + b.kpiAch, 0) / activeData.length) 
+        : 0;
+
+    const avgPulse = activeData.length > 0 
+        ? activeData.reduce((a, b) => a + b.pulse, 0) / activeData.length 
         : 0;
 
     const tabs = [
@@ -248,88 +372,12 @@ export function LaborFinanceSection({
                 </div>
             </div>
 
-            {/* セクション③：象限分析 */}
-            <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm space-y-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h3 className="text-base font-black text-slate-800 tracking-tight flex items-center gap-2">
-                            <Target className="w-5 h-5 text-teal" />
-                            体温 × コスト 象限分析
-                        </h3>
-                        <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-widest">Organizational Health vs. Cost Baseline</p>
-                    </div>
-                    <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100">
-                        <span className="text-[9px] font-black text-slate-400 uppercase">全社平均</span>
-                        <span className="text-xs font-black text-slate-700">{avgLaborCostPerHead}万</span>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-slate-100 rounded-3xl overflow-hidden shadow-inner border border-slate-100">
-                    {/* Quarter 1: High Pulse, Low Cost */}
-                    <div className="bg-emerald-50/20 p-8 min-h-[140px] space-y-3">
-                        <div className="flex items-center justify-between">
-                            <span className="text-[9px] font-black text-emerald-600 bg-white px-2 py-0.5 rounded-full border border-emerald-100 uppercase tracking-widest">理想的</span>
-                            <span className="text-[8px] font-bold text-slate-400 uppercase">自律型高効率</span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {activeData.filter(d => d.pulse >= 3.0 && d.laborCostPerHead <= avgLaborCostPerHead).map(d => (
-                                <div key={d.id} className="px-3 py-2 bg-white border border-emerald-100 rounded-xl shadow-sm flex flex-col gap-0.5">
-                                    <span className="text-xs font-bold text-slate-700">{d.name}</span>
-                                    <span className="text-[9px] text-slate-400 font-bold">体温 {d.pulse.toFixed(1)} / {d.laborCostPerHead}万</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    
-                    {/* Quarter 2: High Pulse, High Cost */}
-                    <div className="bg-indigo-50/20 p-8 min-h-[140px] space-y-3 border-l border-slate-100">
-                        <div className="flex items-center justify-between">
-                            <span className="text-[9px] font-black text-indigo-600 bg-white px-2 py-0.5 rounded-full border border-indigo-100 uppercase tracking-widest">安定投資</span>
-                            <span className="text-[8px] font-bold text-slate-400 uppercase">高稼働・厚待遇</span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {activeData.filter(d => d.pulse >= 3.0 && d.laborCostPerHead > avgLaborCostPerHead).map(d => (
-                                <div key={d.id} className="px-3 py-2 bg-white border border-indigo-100 rounded-xl shadow-sm flex flex-col gap-0.5">
-                                    <span className="text-xs font-bold text-slate-700">{d.name}</span>
-                                    <span className="text-[9px] text-slate-400 font-bold">体温 {d.pulse.toFixed(1)} / {d.laborCostPerHead}万</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    
-                    {/* Quarter 3: Low Pulse, Low Cost */}
-                    <div className="bg-amber-50/20 p-8 min-h-[140px] space-y-3 border-t border-slate-100">
-                        <div className="flex items-center justify-between">
-                            <span className="text-[9px] font-black text-amber-600 bg-white px-2 py-0.5 rounded-full border border-amber-100 uppercase tracking-widest">要注意</span>
-                            <span className="text-[8px] font-bold text-slate-400 uppercase">投資不足リスク</span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {activeData.filter(d => d.pulse < 3.0 && d.laborCostPerHead <= avgLaborCostPerHead).map(d => (
-                                <div key={d.id} className="px-3 py-2 bg-white border border-amber-100 rounded-xl shadow-sm flex flex-col gap-0.5">
-                                    <span className="text-xs font-bold text-slate-700">{d.name}</span>
-                                    <span className="text-[9px] text-slate-400 font-bold">体温 {d.pulse.toFixed(1)} / {d.laborCostPerHead}万</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    
-                    {/* Quarter 4: Low Pulse, High Cost */}
-                    <div className="bg-rose-50/20 p-8 min-h-[140px] space-y-3 border-t border-l border-slate-100">
-                        <div className="flex items-center justify-between">
-                            <span className="text-[9px] font-black text-rose-600 bg-white px-2 py-0.5 rounded-full border border-rose-100 uppercase tracking-widest">警告域</span>
-                            <span className="text-[8px] font-bold text-slate-400 uppercase">構造的非能率</span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {activeData.filter(d => d.pulse < 3.0 && d.laborCostPerHead > avgLaborCostPerHead).map(d => (
-                                <div key={d.id} className="px-3 py-2 bg-white border border-rose-100 rounded-xl shadow-sm ring-1 ring-rose-100 flex flex-col gap-0.5">
-                                    <span className="text-xs font-bold text-slate-700">{d.name}</span>
-                                    <span className="text-[9px] text-slate-400 font-bold">体温 {d.pulse.toFixed(1)} / {d.laborCostPerHead}万</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {/* セクション③：象限分析（散布図） */}
+            <QuadrantScatterPlot 
+                data={activeData} 
+                avgPulse={avgPulse} 
+                avgCost={avgLaborCostPerHead} 
+            />
 
             {/* セクション④：AIアクション提言 */}
             <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden group">

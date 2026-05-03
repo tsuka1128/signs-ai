@@ -748,6 +748,17 @@ export function useDashboardData(
             totalLaborCost: d.totalLaborCost,
             kpiAch: d.kpiAch,
             pulse: d.pulse,
+            prevPulse: d.pulseHistory?.[11] ?? d.pulse,
+            prevLaborCostPerHead: (() => {
+                const prevResource = state.realResources.find(rr => 
+                    rr.department_id === d.id && 
+                    !rr.axis_id && 
+                    normalizeMonth(rr.recorded_month) === last13Months[11]
+                );
+                return prevResource?.labor_cost && prevResource?.head_count 
+                    ? Math.round((prevResource.labor_cost / prevResource.head_count / 10000) * 10) / 10 
+                    : d.laborCostPerHead;
+            })(),
             headcount: d.headHistory?.[12] || 0,
             laborRoi: d.totalLaborCost > 0 ? Math.round((d.kpiAch / (d.totalLaborCost / 1000000)) * 10) / 10 : 0
         }));
@@ -759,6 +770,16 @@ export function useDashboardData(
             totalLaborCost: a.totalLaborCost,
             kpiAch: a.kpiAch,
             pulse: a.pulse,
+            prevPulse: a.pulseHistory?.[11] ?? a.pulse,
+            prevLaborCostPerHead: (() => {
+                const prevResource = state.realResources.find(rr => 
+                    rr.axis_id === a.id && 
+                    normalizeMonth(rr.recorded_month) === last13Months[11]
+                );
+                return prevResource?.labor_cost && prevResource?.head_count 
+                    ? Math.round((prevResource.labor_cost / prevResource.head_count / 10000) * 10) / 10 
+                    : a.laborCostPerHead;
+            })(),
             headcount: a.headHistory?.[12] || 0,
             laborRoi: a.totalLaborCost > 0 ? Math.round((a.kpiAch / (a.totalLaborCost / 1000000)) * 10) / 10 : 0
         }));
