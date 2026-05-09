@@ -33,10 +33,11 @@ SignsAIは、Gallup社の「State of the Global Workplace」レポートが提�
 | `/password-update` | パスワード更新 |
 | `/onboarding` | 初回セットアップ（企業・部署・KPI登録） |
 | `/kpi` | KPI入力画面 |
+| `/form` | 匿名アンケート回答 |
 | `/survey` | アンケート管理（管理者向け） |
-| `/survey/[dept_id]` | 匿名アンケート回答フォーム（従業員向け） |
 | `/voice-check` | ボイスチェック |
 | `/settings` | 企業・プロフィール設定 |
+| `/marketing` | マーケティングLP |
 | `/privacy` | プライバシーポリシー |
 | `/terms` | 利用規約 |
 | `/docs` | ドキュメントハブ |
