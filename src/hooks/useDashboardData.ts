@@ -32,6 +32,7 @@ interface DashboardState {
     realKpiRecords: KpiRecord[];
     realResources: ResourceRecord[];
     realAiInsights: AiInsight[];
+    realActionItems: ActionItem[];
     realUsers: any[];
     realCustomQuestions: any[];
     latestSurveyMonth: string | null;

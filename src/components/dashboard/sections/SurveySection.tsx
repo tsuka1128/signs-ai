@@ -300,7 +300,7 @@ export function SurveySection({
                                             key={q.id}
                                             question={q.text}
                                             hint={q.hint}
-                                            score={curData.customScores?.[i] ?? 0}
+                                            score={data.customScores?.[i] ?? 0}
                                             prevScore={0}
                                             deviationDiff={undefined}
                                             allOrgsScores={undefined}
