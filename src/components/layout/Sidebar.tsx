@@ -180,7 +180,6 @@ export function Sidebar({
                             >
                                 <item.icon className={cn("w-3.5 h-3.5", isActive ? "text-teal" : "text-slate-300")} />
                                 {item.label}
-                                {item.pro && <span className="ml-auto text-[8px] bg-amber-50 text-amber-500 px-1.5 py-0.5 rounded-md font-black italic">PRO</span>}
                             </button>
                         );
                     })}
