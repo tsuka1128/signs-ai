@@ -284,31 +284,7 @@ export function SurveySection({
                             </div>
                         </div>
 
-                        {customQuestions.length > 0 && (
-                            <div className="space-y-4 mt-8">
-                                <div className="flex items-center gap-2">
-                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                                        オリジナル設問
-                                    </h3>
-                                    <span className="text-[9px] font-black bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full uppercase tracking-widest">
-                                        Custom
-                                    </span>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {customQuestions.map((q, i) => (
-                                        <SurveyQuestionCard
-                                            key={q.id}
-                                            question={q.text}
-                                            hint={q.hint}
-                                            score={data.customScores?.[i] ?? 0}
-                                            prevScore={0}
-                                            deviationDiff={undefined}
-                                            allOrgsScores={undefined}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                        </div>
                     </div>
 
                     {/* AI Voices (Abstracted Qualitative Comments) */}
@@ -402,6 +378,18 @@ export function SurveySection({
                                     />
                                 );
                             })}
+                            {customQuestions.map((q, i) => (
+                                <SurveyQuestionCard
+                                    key={q.id}
+                                    question={q.text}
+                                    hint={q.hint}
+                                    score={data.customScores?.[i] ?? 0}
+                                    prevScore={0}
+                                    deviationDiff={undefined}
+                                    allOrgsScores={undefined}
+                                    isCustom={true}
+                                />
+                            ))}
                         </div>
                     </div>
                 </>

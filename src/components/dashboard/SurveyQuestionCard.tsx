@@ -9,9 +9,10 @@ interface SurveyQuestionCardProps {
     prevScore?: number;
     deviationDiff?: number;
     allOrgsScores?: number[]; // 全社表示時に他の拠点のスコアをドット表示するため
+    isCustom?: boolean;       // カスタム設問フラグ
 }
 
-export function SurveyQuestionCard({ question, hint, score, prevScore, deviationDiff, allOrgsScores }: SurveyQuestionCardProps) {
+export function SurveyQuestionCard({ question, hint, score, prevScore, deviationDiff, allOrgsScores, isCustom }: SurveyQuestionCardProps) {
     const diff = prevScore ? score - prevScore : 0;
 
     const getScoreColor = (s: number) => {
@@ -34,6 +35,11 @@ export function SurveyQuestionCard({ question, hint, score, prevScore, deviation
                         <h4 className="text-sm font-bold text-slate-800 leading-snug group-hover:text-teal transition-colors">
                             {question}
                         </h4>
+                        {isCustom && (
+                            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-violet-50 text-violet-400">
+                                Custom
+                            </span>
+                        )}
                         {deviationDiff !== undefined && (
                             <span className={cn(
                                 "text-[9px] font-black px-1.5 py-0.5 rounded-md tabular-nums",
