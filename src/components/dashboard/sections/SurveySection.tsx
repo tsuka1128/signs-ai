@@ -7,7 +7,8 @@ import { SurveyQuestionCard } from "@/components/dashboard/SurveyQuestionCard";
 import { SurveyHistoryData } from "@/types/dashboard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
-import { FileQuestion, Lock, MessageCircle, TrendingUp, TrendingDown, MinusCircle, Sparkles } from "lucide-react";
+import { FileQuestion, Lock, MessageCircle, TrendingUp, TrendingDown, MinusCircle, Sparkles, ThumbsUp, ThumbsDown } from "lucide-react";
+import { LagCorrelationChart } from "@/components/dashboard/LagCorrelationChart";
 
 import { useState } from "react";
 
@@ -22,6 +23,7 @@ interface SurveySectionProps {
     setOrgView: (id: any) => void;
     monthLabels: string[];
     questions: any[];
+    displayDepts: any[];
 }
 
 export function SurveySection({
@@ -35,8 +37,24 @@ export function SurveySection({
     setOrgView,
     monthLabels,
     questions,
+    displayDepts,
 }: SurveySectionProps) {
     const [chartMode, setChartMode] = useState<'pulse' | 'deviation'>('pulse');
+    const [lag, setLag] = useState(1);
+    const [feedbackSent, setFeedbackSent] = useState<'accurate' | 'inaccurate' | null>(null);
+
+    const handleFeedback = async (type: 'accurate' | 'inaccurate') => {
+        setFeedbackSent(type);
+        await fetch('/api/ai/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                target_month: data.dataMonth || new Date().toISOString().slice(0, 7),
+                target_field: 'aiComment',
+                feedback_type: type,
+            }),
+        });
+    };
     const surveyViewId = (orgView === "product" || orgView === "dept" || orgView === "all") ? "all" : orgView;
 
     return (
@@ -190,6 +208,39 @@ export function SurveySection({
                         </div>
                     </div>
 
+                    {/* 時間ラグ相関チャート */}
+                    {displayDepts.length >= 2 && (
+                        <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-4">
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <h3 className="text-lg font-black text-slate-800 tracking-tight">
+                                        体温の「先行指標」としての効果
+                                    </h3>
+                                    <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">
+                                        今月の体温は、将来のKPIを予測するか？
+                                    </p>
+                                </div>
+                                <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
+                                    <button
+                                        onClick={() => setLag(1)}
+                                        className={cn(
+                                            "px-3 py-1.5 text-[10px] font-black rounded-lg transition-all",
+                                            lag === 1 ? "bg-white text-teal shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                        )}
+                                    >1ヶ月後</button>
+                                    <button
+                                        onClick={() => setLag(2)}
+                                        className={cn(
+                                            "px-3 py-1.5 text-[10px] font-black rounded-lg transition-all",
+                                            lag === 2 ? "bg-white text-teal shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                        )}
+                                    >2ヶ月後</button>
+                                </div>
+                            </div>
+                            <LagCorrelationChart depts={displayDepts} lag={lag} />
+                        </div>
+                    )}
+
                     {/* AI Analysis Card */}
                     <div className="relative overflow-hidden bg-white rounded-3xl p-8 border border-slate-100 shadow-sm transition-all hover:shadow-md">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-teal/5 rounded-full -mr-16 -mt-16 blur-3xl" />
@@ -205,6 +256,29 @@ export function SurveySection({
                                 <p className="text-sm text-slate-600 leading-relaxed font-medium">
                                     {data.aiComment}
                                 </p>
+                            </div>
+                            
+                            {/* フィードバック */}
+                            <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+                                <span className="text-[10px] text-slate-400 font-bold">この分析は参考になりましたか？</span>
+                                {feedbackSent ? (
+                                    <span className="text-[10px] font-black text-teal">フィードバックを送信しました ✓</span>
+                                ) : (
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handleFeedback('accurate')}
+                                            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-black text-slate-500 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-600 border border-slate-100 transition-all"
+                                        >
+                                            <ThumbsUp className="w-3 h-3" /> 参考になった
+                                        </button>
+                                        <button
+                                            onClick={() => handleFeedback('inaccurate')}
+                                            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-black text-slate-500 bg-slate-50 hover:bg-rose-50 hover:text-rose-500 border border-slate-100 transition-all"
+                                        >
+                                            <ThumbsDown className="w-3 h-3" /> 改善が必要
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

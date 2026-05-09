@@ -466,6 +466,23 @@ export function useDashboardData(
                 productivity: calculateProductivity(kpiAch, pulseScore),
                 pulse: Number(pulseScore.toFixed(1)),
                 pulseHistory,
+                kpiAchHistory: last13Months.map((month) => {
+                    const mRecs = state.realKpiRecords.filter(r => normalizeMonth(r.recorded_month) === normalizeMonth(month));
+                    let tAch = 0;
+                    let c = 0;
+                    mKpis.forEach(def => {
+                        const rec = mRecs.find(r =>
+                            r.kpi_definition_id === def.id &&
+                            r.axis_id === null &&
+                            (r.department_id === d.id || (r.department_id === null && def.owner_dept_id === d.id))
+                        );
+                        if (rec && rec.target_value !== null) {
+                            const ach = calculateAchievementRate(rec.value, rec.target_value, def.is_higher_better !== false);
+                            if (ach !== null) { tAch += ach; c++; }
+                        }
+                    });
+                    return c > 0 ? Math.round(tAch / c) : 0;
+                }),
                 weather: getWeatherFromPulse(pulseScore),
                 arrow: "flat",
                 kpiAch,
