@@ -1,3 +1,4 @@
+import { applyGuardrailsToAIResult } from "@/lib/ai-guardrails";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { createNotification } from "@/lib/notifications";
 import { generateAIInsight } from "@/lib/claude";
@@ -306,6 +307,14 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
             try {
                 const cleanJson = aiResultRaw.replace(/```json\n?|\n?```/g, "").trim();
                 aiResult = JSON.parse(cleanJson);
+
+                // ── AI ガードレール適用 ──
+                const { result: guardedResult, allWarnings } = applyGuardrailsToAIResult(aiResult);
+                aiResult = guardedResult;
+
+                if (allWarnings.length > 0) {
+                    console.warn(`[Guardrails Applied] Company: ${companyId}, Issues: ${allWarnings.length}`);
+                }
             } catch (jsonError) {
                 console.error("[AI JSON Parse Error]:", jsonError, "Raw Data:", aiResultRaw);
                 return NextResponse.json({ 

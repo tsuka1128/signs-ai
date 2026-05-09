@@ -81,6 +81,15 @@ export default function DashboardPage() {
     };
   }, [tab, state.realDepts, currentSurveyData, aiContent]);
 
+  // 異常検知バナーの表示判定
+  const anomalyAlert = useMemo(() => {
+    if (!aiContent?.risk_level || aiContent.risk_level === 'low') return null;
+    return {
+      level: aiContent.risk_level as 'medium' | 'high',
+      reason: aiContent.risk_reason || null,
+    };
+  }, [aiContent]);
+
   const selectedKpiDef = derived.displayKpis.find((k: any) => k.id === selKpi) || derived.displayKpis[0];
   const achRate = useMemo(() => {
     if (!selectedKpiDef || !selectedKpiDef.target) return null;
@@ -151,6 +160,47 @@ export default function DashboardPage() {
     >
       <TrialGuard>
         <div className="space-y-10">
+          {/* 異常検知バナー */}
+          {anomalyAlert && (
+            <div className={cn(
+              "rounded-2xl px-6 py-4 flex items-start gap-4 border animate-fadeIn",
+              anomalyAlert.level === 'high'
+                ? "bg-rose-50 border-rose-200"
+                : "bg-amber-50 border-amber-200"
+            )}>
+              <div className={cn(
+                "w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5",
+                anomalyAlert.level === 'high' ? "bg-rose-100" : "bg-amber-100"
+              )}>
+                <AlertTriangle className={cn(
+                  "w-4 h-4",
+                  anomalyAlert.level === 'high' ? "text-rose-500" : "text-amber-500"
+                )} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={cn(
+                  "text-xs font-black uppercase tracking-widest mb-1",
+                  anomalyAlert.level === 'high' ? "text-rose-500" : "text-amber-500"
+                )}>
+                  {anomalyAlert.level === 'high' ? '⚠️ 組織異常を検知' : '注意 — 要観察'}
+                </p>
+                <p className="text-sm font-medium text-slate-700 leading-relaxed">
+                  {anomalyAlert.reason || 'AI分析により、組織状態に注意が必要な兆候が検出されました。詳細はレポートセクションを確認してください。'}
+                </p>
+              </div>
+              <button
+                onClick={() => setSec('report')}
+                className={cn(
+                  "text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-xl flex-shrink-0 transition-all",
+                  anomalyAlert.level === 'high'
+                    ? "bg-rose-500 text-white hover:bg-rose-600"
+                    : "bg-amber-500 text-white hover:bg-amber-600"
+                )}
+              >
+                詳細を見る →
+              </button>
+            </div>
+          )}
           {sec === "report" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between border-b border-slate-50 pb-4">
