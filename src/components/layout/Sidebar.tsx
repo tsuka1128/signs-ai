@@ -150,7 +150,7 @@ export function Sidebar({
                 onClick={() => setIsProExpanded(!isProExpanded)}
                 className={cn(
                     "flex w-full items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all group",
-                    isProActive ? "text-teal" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                    isProActive ? "text-teal bg-teal/5" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
                 )}
             >
                 <Crown className={cn("w-4.5 h-4.5", isProActive ? "text-teal fill-teal" : "text-amber-400 fill-amber-400 group-hover:text-amber-500")} />
