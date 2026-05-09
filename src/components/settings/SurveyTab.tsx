@@ -197,7 +197,7 @@ export function SurveyTab({ companyId }: SurveyTabProps) {
                     <div>
                         <h4 className="text-sm font-black text-slate-800 flex items-center gap-2">
                             オリジナル質問
-                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-slate-200 text-slate-400">最大3問</Badge>
+                            <Badge className="text-[9px] px-1.5 py-0 border border-slate-200 text-slate-400 bg-transparent">最大3問</Badge>
                         </h4>
                         <p className="text-[11px] text-slate-400 font-bold mt-1">自社特有の課題や文化に合わせた質問を追加できます。</p>
                     </div>
@@ -235,7 +235,7 @@ export function SurveyTab({ companyId }: SurveyTabProps) {
                                         <div className="w-8 h-8 bg-slate-900 text-white rounded-xl flex items-center justify-center text-xs font-black">
                                             Q{12 + i}
                                         </div>
-                                        <Badge variant="secondary" className="text-[9px] px-2 py-0.5 bg-slate-100 text-slate-500 font-black tracking-widest uppercase">Custom</Badge>
+                                        <Badge className="text-[9px] px-2 py-0.5 bg-slate-100 text-slate-500 font-black tracking-widest uppercase">Custom</Badge>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <button
