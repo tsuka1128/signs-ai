@@ -203,7 +203,7 @@ function OnboardingContent() {
                 const now = new Date().toISOString();
                 const { data: invite, error: inviteError } = await supabase
                     .from("invitations")
-                    .select("*, companies(name, kpi_secondary_axis_name, departments(id, name), kpi_definitions(id, name), kpi_axes(id, name))")
+                    .select("*, companies(name, secondary_axis_name, departments(id, name), kpi_definitions(id, name), kpi_axes(id, name))")
                     .eq("token", token)
                     .eq("status", "pending")
                     .gt("expires_at", now)
@@ -225,7 +225,7 @@ function OnboardingContent() {
                         name: company.name,
                         departments: company.departments || [],
                         kpis: company.kpi_definitions || [],
-                        secondaryAxisName: company.kpi_secondary_axis_name || "担当領域",
+                        secondaryAxisName: company.secondary_axis_name || "担当領域",
                         axes: company.kpi_axes || [],
                     }
                 }));

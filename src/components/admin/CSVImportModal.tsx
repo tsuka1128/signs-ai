@@ -113,14 +113,14 @@ export function CSVImportModal({ companyId, type, onClose, onSuccess }: CSVImpor
             { data: existingAxes },
             { data: existingKpis }
         ] = await Promise.all([
-            supabase.from('companies').select('kpi_secondary_axis_name').eq('id', companyId).single(),
+            supabase.from('companies').select('secondary_axis_name').eq('id', companyId).single(),
             supabase.from('kpi_axes').select('*').eq('company_id', companyId),
             supabase.from('kpi_definitions').select('id, name').eq('company_id', companyId)
         ]);
 
         const kpiMap = new Map(existingKpis?.map(k => [k.name, k.id]));
         const axisMap = new Map(existingAxes?.map(a => [a.name, a.id]));
-        const secondaryAxisName = companyData?.kpi_secondary_axis_name || "第2軸";
+        const secondaryAxisName = companyData?.secondary_axis_name || "第2軸";
 
         // 2. CSVヘッダーの解析
         // ['対象月', '区分', '項目', 'KPI_1', 'KPI_1_目標', ...]

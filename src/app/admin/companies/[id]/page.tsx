@@ -422,7 +422,7 @@ export default function AdminCompanyDetailPage() {
                     <section className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden flex flex-col">
                         <header className="p-8 border-b border-slate-50 flex items-center justify-between">
                             <div>
-                                <h2 className="text-lg font-black text-slate-800 tracking-tight">{company.kpi_secondary_axis_name || "第2軸"}</h2>
+                                <h2 className="text-lg font-black text-slate-800 tracking-tight">{company.secondary_axis_name || "第2軸"}</h2>
                                 <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Secondary Axis Items ({axes.length})</p>
                             </div>
                             <button 

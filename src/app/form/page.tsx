@@ -96,7 +96,7 @@ function SurveyFormContent() {
                 setResolvedCompanyId(finalCompanyId);
                 setDepartments(surveyInfo.departments || []);
                 setAxes(surveyInfo.axes || []);
-                setSecondaryAxisName(surveyInfo.kpi_secondary_axis_name || "第2軸");
+                setSecondaryAxisName(surveyInfo.secondary_axis_name || "第2軸");
                 setDeadlineDay(surveyInfo.survey_deadline_day);
 
                 // 3. 重複回答チェック (LocalStorage)

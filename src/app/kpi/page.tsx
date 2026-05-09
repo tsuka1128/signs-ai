@@ -283,8 +283,8 @@ export default function KpiInputPage() {
         }
 
         // 企業設定（第2軸名称）取得
-        const { data: companyData } = await supabase.from('companies').select('kpi_secondary_axis_name').eq('id', effectiveId).single();
-        if (companyData) setSecondaryAxisName(companyData.kpi_secondary_axis_name || "第2軸");
+        const { data: companyData } = await supabase.from('companies').select('secondary_axis_name').eq('id', effectiveId).single();
+        if (companyData) setSecondaryAxisName(companyData.secondary_axis_name || "第2軸");
 
         // 第2軸項目取得
         const { data: axisData } = await supabase.from('kpi_axes').select('*').eq('company_id', effectiveId).order('sort_order', { ascending: true });

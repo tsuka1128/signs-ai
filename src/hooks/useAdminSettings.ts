@@ -292,7 +292,7 @@ export function useAdminSettings(companyId: string) {
 
             const kpiIds = kpis.map((k: any) => k.id);
             const records = await fetchAllKpiRecords(kpiIds);
-            const axisName = company.kpi_secondary_axis_name || "第2軸";
+            const axisName = company.secondary_axis_name || "第2軸";
 
             // DB側は YYYY-MM-01 形式で保存されている月リスト
             const monthsFull = getLastNMonths(13); // ["2025-04-01", ...]

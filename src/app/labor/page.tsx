@@ -95,13 +95,13 @@ function LaborInputContent() {
 
     // 企業設定・部署・第2軸の取得
     const [compRes, deptRes, axisRes, recordsRes] = await Promise.all([
-      supabase.from('companies').select('kpi_secondary_axis_name').eq('id', effectiveId).single(),
+      supabase.from('companies').select('secondary_axis_name').eq('id', effectiveId).single(),
       supabase.from('departments').select('id, name').eq('company_id', effectiveId).order('sort_order', { ascending: true }),
       supabase.from('kpi_axes').select('id, name').eq('company_id', effectiveId).order('sort_order', { ascending: true }),
       supabase.from('resource_records').select('*').eq('company_id', effectiveId)
     ]);
 
-    if (compRes.data) setSecondaryAxisName(compRes.data.kpi_secondary_axis_name || "第2軸");
+    if (compRes.data) setSecondaryAxisName(compRes.data.secondary_axis_name || "第2軸");
     setDepts(deptRes.data || []);
     setAxes(axisRes.data || []);
 
