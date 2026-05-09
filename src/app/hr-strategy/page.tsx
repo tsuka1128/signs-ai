@@ -182,12 +182,14 @@ export default function HrStrategyPage() {
             </div>
 
             {/* 凡例 */}
-            <p className="text-sm text-slate-500 mb-3">
-              改善することでKPIへの影響が大きい項目を上位に表示しています。
-              <span
-                className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-200 text-slate-500 text-[10px] font-bold cursor-help"
-                title="各設問の平均スコアと部署KPI達成率のピアソン相関係数。絶対値が大きいほど関連が強く、＋は高スコアがKPI向上に寄与、－は構造的な課題の可能性を示します。"
-              >?</span>
+            <p className="text-sm text-slate-500 mb-3 flex items-center gap-1.5">
+              KPI達成率との相関が強い設問を上位に表示しています。右（＋）が改善効果あり、左（－）は構造的な課題の可能性。
+              <span className="relative group inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-200 text-slate-500 text-[10px] font-bold cursor-help flex-shrink-0">
+                ?
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2.5 text-[11px] text-slate-600 bg-white border border-slate-200 rounded-lg shadow-lg invisible group-hover:visible z-50 leading-relaxed font-medium whitespace-normal pointer-events-none">
+                  各設問の平均スコアと部署KPI達成率のピアソン相関係数。絶対値が大きいほど関連が強く、＋は高スコアがKPI向上に寄与、－はスコアが高いのにKPIが低い構造的な課題の可能性を示します。
+                </span>
+              </span>
             </p>
 
             <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
@@ -205,11 +207,23 @@ export default function HrStrategyPage() {
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-bold text-slate-700 truncate">{d.text}</p>
                         <div className="mt-1.5 flex items-center gap-2">
-                          <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div
-                              className={cn("h-full rounded-full", isPositive ? "bg-teal-400" : "bg-rose-400")}
-                              style={{ width: `${barWidth}%` }}
-                            />
+                          <div className="flex-1 relative h-1.5">
+                            {/* 背景 */}
+                            <div className="absolute inset-0 bg-slate-100 rounded-full" />
+                            {/* 中央の基準線 */}
+                            <div className="absolute left-1/2 top-0 bottom-0 w-px bg-slate-300 z-10" />
+                            {/* バー本体 */}
+                            {isPositive ? (
+                              <div
+                                className="absolute top-0 bottom-0 bg-teal-400 rounded-r-full z-20"
+                                style={{ left: '50%', width: `${barWidth / 2}%` }}
+                              />
+                            ) : (
+                              <div
+                                className="absolute top-0 bottom-0 bg-rose-400 rounded-l-full z-20"
+                                style={{ right: '50%', width: `${barWidth / 2}%` }}
+                              />
+                            )}
                           </div>
                           <span className={cn("text-[11px] font-black w-12 text-right", isPositive ? "text-teal-600" : "text-rose-500")}>
                             {d.corr > 0 ? "+" : ""}{d.corr.toFixed(2)}
