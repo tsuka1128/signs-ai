@@ -20,8 +20,7 @@ import {
     ChevronRight,
     Search,
     Brain,
-    Wallet,
-    BrainCircuit
+    Wallet
 } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { useState, useEffect } from "react";
@@ -152,7 +151,7 @@ export function Sidebar({
                     isProActive ? "text-teal bg-teal/5" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
                 )}
             >
-                <BrainCircuit className={cn("w-4.5 h-4.5", isProActive ? "text-teal" : "text-slate-400 group-hover:text-slate-500")} />
+                <Users className={cn("w-4.5 h-4.5", isProActive ? "text-teal" : "text-slate-400 group-hover:text-slate-500")} />
                 人事戦略
                 <span className="text-[9px] font-black text-amber-500 border border-amber-300 rounded px-1 py-0.5 leading-none">Pro</span>
                 <div className="ml-auto">
