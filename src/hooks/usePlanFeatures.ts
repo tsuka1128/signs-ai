@@ -10,7 +10,8 @@ export type FeatureKey =
   | 'pdf_export' 
   | 'timelapse' 
   | 'policy_reflection'
-  | 'manual_ai_runs';
+  | 'manual_ai_runs'
+  | 'hr_strategy';
 
 export function usePlanFeatures() {
   const { company, plan, loading, isTrial, trialDaysRemaining } = useCompany();
@@ -33,7 +34,8 @@ export function usePlanFeatures() {
       'pdf_export': 'enable_pdf_export',
       'timelapse': 'enable_timelapse',
       'policy_reflection': 'enable_policy_reflection',
-      'manual_ai_runs': 'enable_manual_ai_runs'
+      'manual_ai_runs': 'enable_manual_ai_runs',
+      'hr_strategy': 'enable_labor_analytics'
     };
 
     const overrideKey = overrideKeyMap[feature];
@@ -62,6 +64,8 @@ export function usePlanFeatures() {
         // 基本的にどのプランでも回数制限はあるが、機能自体は存在。
         // ここではプランが取得できているかのみチェック（具体的な残数は limits.manualAiRuns で行うがゲートとしては true）
         return !!plan;
+      case 'hr_strategy':
+        return (plan?.enable_labor_analytics || company?.addon_labor_analytics || overrides.enable_labor_analytics) ?? false;
       default:
         return false;
     }

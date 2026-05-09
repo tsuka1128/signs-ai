@@ -62,7 +62,7 @@ export function useDashboardData(
             supabase.from('semantic_layers').select('*').eq('company_id', company.id).order('created_at', { ascending: false }),
             supabase.from('survey_responses').select('*, survey_answers(*)').eq('company_id', company.id),
             supabase.from('kpi_axes').select('*').eq('company_id', company.id).order('sort_order', { ascending: true }),
-            supabase.from('ai_insights').select('*').eq('company_id', company.id).order('created_at', { ascending: false }).limit(1),
+            supabase.from('ai_insights').select('*').eq('company_id', company.id).order('created_at', { ascending: false }).limit(10),
             supabase.from('action_items').select('*').eq('company_id', company.id).eq('is_archived', false).order('created_at', { ascending: false }),
             supabase.from('users').select('id, department_id, axis_id').eq('company_id', company.id)
         ]);
@@ -139,8 +139,12 @@ export function useDashboardData(
         loadData();
     }, [loadData]);
 
-    const latestAi = state.realAiInsights[0];
+    const latestAi = state.realAiInsights.find((i: any) => i.insight_type === 'full_report') ?? state.realAiInsights[0];
     const aiContent = latestAi?.content as any;
+
+    const latestHrInsight = state.realAiInsights.find((i: any) => i.insight_type === 'hr_strategy');
+    const hrStrategyContent = (latestHrInsight?.content as any)?.strategy as string | undefined;
+    const hrStrategyMonth = latestHrInsight?.target_month as string | undefined;
 
     // --- 全組織の統計データ計算 (偏差値用) ---
     const allOrgsStats = useMemo(() => {
@@ -840,7 +844,7 @@ export function useDashboardData(
     }, [state.realDepts, userRole, userDepartmentId]);
 
     return {
-        state: { ...state, isAnalyzing, last13Months, monthLabels, fullMonthLabels, aiContent, ...financialMetrics },
+        state: { ...state, isAnalyzing, last13Months, monthLabels, fullMonthLabels, aiContent, hrStrategyContent, hrStrategyMonth, ...financialMetrics },
         derived: { getCurrentSurveyData: currentSurveyData, displayDepts, displayKpis, displayAxes, deptTabs },
         handlers: { handleRunAnalyze, handleSaveSemantic, handleDeleteSemantic }
     };

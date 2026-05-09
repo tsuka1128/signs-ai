@@ -222,6 +222,23 @@ export function Sidebar({
                     <div className="space-y-1">
                         <p className="px-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.25em] mb-4">View</p>
                         {dashboardNav}
+                        {/* 人事戦略インサイト（PRO） */}
+                        {(userRole === 'super_admin' || userRole === 'admin') && (
+                            <Link
+                                href="/hr-strategy"
+                                onClick={() => setIsMobileOpen?.(false)}
+                                className={cn(
+                                    "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all group",
+                                    pathname === "/hr-strategy"
+                                        ? "text-teal bg-teal/5"
+                                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                                )}
+                            >
+                                <Users className={cn("w-4.5 h-4.5", pathname === "/hr-strategy" ? "text-teal" : "text-slate-400 group-hover:text-slate-500")} />
+                                人事戦略インサイト
+                                <span className="ml-auto text-[8px] bg-amber-50 text-amber-500 px-1.5 py-0.5 rounded-md font-black italic">PRO</span>
+                            </Link>
+                        )}
                     </div>
 
                     {/* Support Section */}

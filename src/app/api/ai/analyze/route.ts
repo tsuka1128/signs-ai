@@ -345,6 +345,49 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
         }, { onConflict: 'company_id, target_month, insight_type' });
 
         if (insertError) throw insertError;
+ 
+        // ---- hr_strategy の生成・保存（full_report と同一リクエスト内で実行）----
+        try {
+            const hrDeptSummary = (deptDetails ?? []).map((d: any) => {
+                const laborCostPerHead = (d.labor_cost && d.actual_headcount)
+                    ? Math.round(d.labor_cost / d.actual_headcount * 10) / 10
+                    : 0;
+                return `【${d.name}】体温:${d.avg_pulse} KPI:${d.kpi_details?.join(" / ") || "なし"} 1人あたり人件費:${laborCostPerHead}万円`;
+            }).join("\n");
+
+            const hrSystemPrompt = `あなたは人材マネジメントの専門家です。組織データを分析し、具体的かつ実行可能な人事戦略を提言してください。
+
+以下の3点を必ず含めてください：
+① リスク対応（緊急）：体温・KPIが低迷している部署への即時施策
+② エンゲージメント改善：体温低下の主因と優先改善項目  
+③ 中長期の人事戦略：体制・報酬・育成の観点での提言
+
+各セクションは3〜4行で簡潔に。全体で400字以内を目安にしてください。`;
+
+            const hrPrompt = `対象月: ${latestMonth}\n\n■ 部署別データ\n${hrDeptSummary || "データなし"}`;
+
+            const hrStrategy = await generateAIInsight(hrPrompt, {
+                systemPrompt: hrSystemPrompt,
+                maxTokens: 800,
+                model: sysSettings['default_model'],
+                temperature: 0.5,
+                apiKey: sysSettings['claude_api_key'],
+                signal: AbortSignal.timeout(20000),
+            });
+
+            await supabase.from('ai_insights').upsert({
+                company_id: companyId,
+                insight_type: 'hr_strategy',
+                target_month: latestMonth,
+                content: { strategy: hrStrategy },
+                model_used: sysSettings['default_model'] ?? 'claude-3-7-sonnet-20250219',
+                updated_at: new Date().toISOString(),
+            }, { onConflict: 'company_id, target_month, insight_type' });
+
+        } catch (hrError) {
+            // hr_strategy 生成失敗はメイン分析の成否に影響させない
+            console.error("[hr-strategy] 生成失敗（full_report は保存済み）:", hrError);
+        }
 
         // 通知を作成
         void (async () => {
