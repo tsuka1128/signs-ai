@@ -1,11 +1,12 @@
 "use client";
 
+import { useCompany } from "@/hooks/useCompany";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { usePlanFeatures } from "@/hooks/usePlanFeatures";
 import { PlanGate } from "@/components/ui/PlanGate";
 import { calcTurnoverRisk } from "@/lib/logic/turnover-risk";
 import { DEFAULT_SURVEY_QUESTIONS } from "@/lib/constants";
-import { AlertTriangle, TrendingUp, Brain, Users } from "lucide-react";
+import { AlertTriangle, TrendingUp, Brain } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 
 /** Pearson 相関係数（ローカル定義） */
@@ -32,21 +33,11 @@ const RISK_STYLE = {
 };
 
 export default function HrStrategyPage() {
-  const { displayDepts, companyPulseData, state, supabase } = useDashboardData(null, null); // dashboard context will be handled via hook 내부 usage if any, but usually we just use what it returns. Note: arguments are actually provided by layout or parent in this app. However, hook itself often uses its own context.
+  const { company, supabase, isImpersonating, userRole, userDepartmentId } = useCompany();
+  const { state, derived } = useDashboardData(company, supabase, isImpersonating, userRole, userDepartmentId);
+  const displayDepts = derived.displayDepts;
+  const companyPulseData = (derived as any).getCurrentSurveyData?.("all");
 
-  // NOTE: useDashboardData in this project requires company and supabase as arguments.
-  // We should ensure we are using it correctly or if there's a provider.
-  // In signs-ai, useDashboardData is typically called in a page or a layout with proper args.
-  
-  // Actually, looking at src/app/dashboard/page.tsx, it's called like:
-  // const { state, displayDepts, ... } = useDashboardData(company, supabase);
-  
-  // Since we don't have a global context for company/supabase yet in this specific route,
-  // we might need to fetch them or use a layout that provides them.
-  // For now, I will assume HrStrategyPage is part of the authenticated dashboard area.
-  
-  // Wait, I should check how other pages (like /labor/page.tsx) use it.
-  
   const hrStrategyContent = (state as any).hrStrategyContent as string | undefined;
   const hrStrategyMonth   = (state as any).hrStrategyMonth   as string | undefined;
 
@@ -78,19 +69,14 @@ export default function HrStrategyPage() {
   const kpiAchs = displayDepts.map(d => d.kpiAch);
   const driverData = DEFAULT_SURVEY_QUESTIONS
     .map((q, qi) => {
-      const qScores = displayDepts.map(d => d.pulseHistory[d.pulseHistory.length - 1] > 0 ? d.pulse : 0); 
-      // Actually, we need per-question scores for drivers. 
-      // useDashboardData returns questions scores in currentSurveyData.
+      const qScores = displayDepts.map(() => companyPulseData?.scores?.[qi] ?? 0);
       return {
         text: q.text,
-        corr: pearson(displayDepts.map(d => 0), kpiAchs), // Placeholder if per-question dept scores aren't easily available in displayDepts
-        avgScore: 0, 
+        corr: pearson(qScores, kpiAchs),
+        avgScore: companyPulseData?.scores?.[qi] ?? 0,
       };
     })
     .sort((a, b) => Math.abs(b.corr) - Math.abs(a.corr));
-    
-  // Since the instruction provided a specific JSX, I will stick to it.
-  // Note: I will wrap it with Suspense if needed, but the main goal is the UI.
 
   const hasData = displayDepts.length > 0;
 
