@@ -39,13 +39,16 @@ interface LaborFinanceSectionProps {
 /**
  * 象限分析用の散布図（SVG実装）
  */
+/**
+ * 象限分析用の散布図（SVG実装 - リデザイン版）
+ */
 function QuadrantScatterPlot({ data, avgPulse, avgCost }: { data: any[], avgPulse: number, avgCost: number }) {
     const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-    // グラフの描画設定
-    const width = 800;
-    const height = 384; // h-96
-    const padding = { top: 40, right: 100, bottom: 50, left: 60 };
+    // グラフの描画設定 (ScatterPlot.tsx 互換の正方形スタイル)
+    const W = 680;
+    const H = 680;
+    const PAD = { top: 60, right: 60, bottom: 80, left: 60 };
 
     // Y軸スケール計算（データ連動）
     const pulses = [...data.map(d => d.pulse), ...data.map(d => d.prevPulse)];
@@ -60,16 +63,28 @@ function QuadrantScatterPlot({ data, avgPulse, avgCost }: { data: any[], avgPuls
     const minCost = allCosts.length > 0 ? Math.max(0, Math.min(...allCosts) - 20) : 0;
     const maxCost = allCosts.length > 0 ? Math.max(...allCosts) + 20 : 100;
 
-    const getX = (cost: number) => padding.left + ((cost - minCost) / (maxCost - minCost)) * (width - padding.left - padding.right);
-    const getY = (pulse: number) => (height - padding.bottom) - ((pulse - minPulse) / (maxPulse - minPulse)) * (height - padding.top - padding.bottom);
+    const getX = (cost: number) => PAD.left + ((cost - minCost) / (maxCost - minCost)) * (W - PAD.left - PAD.right);
+    const getY = (pulse: number) => (H - PAD.bottom) - ((pulse - minPulse) / (maxPulse - minPulse)) * (H - PAD.top - PAD.bottom);
 
     // 目盛り用の数値（4等分）
     const yTicks = [minPulse, minPulse + (maxPulse - minPulse) * 0.25, minPulse + (maxPulse - minPulse) * 0.5, minPulse + (maxPulse - minPulse) * 0.75, maxPulse];
     const xTicks = [minCost, minCost + (maxCost - minCost) * 0.25, minCost + (maxCost - minCost) * 0.5, minCost + (maxCost - minCost) * 0.75, maxCost];
 
+    // 象限の設定
+    const quadrants = [
+        { x: PAD.left, y: PAD.top, w: getX(avgCost) - PAD.left, h: getY(avgPulse) - PAD.top,
+          color: "#ECFDF5", label: "自律型高効率", sub: "高体温×低コスト | 最も理想的な状態" },
+        { x: getX(avgCost), y: PAD.top, w: W - PAD.right - getX(avgCost), h: getY(avgPulse) - PAD.top,
+          color: "#EFF6FF", label: "高稼働・厚待遇", sub: "高体温×高コスト | 投資に見合う成果を要確認" },
+        { x: PAD.left, y: getY(avgPulse), w: getX(avgCost) - PAD.left, h: H - PAD.bottom - getY(avgPulse),
+          color: "#FFFBEB", label: "投資不足リスク", sub: "低体温×低コスト | 処遇改善を検討すべき領域" },
+        { x: getX(avgCost), y: getY(avgPulse), w: W - PAD.right - getX(avgCost), h: H - PAD.bottom - getY(avgPulse),
+          color: "#FFF1F2", label: "構造的非能率", sub: "低体温×高コスト | コスト構造の見直しが必要" },
+    ];
+
     return (
         <div className="relative bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden p-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-6">
                 <div>
                     <h3 className="text-base font-black text-slate-800 tracking-tight flex items-center gap-2">
                         <Target className="w-5 h-5 text-teal" />
@@ -77,99 +92,123 @@ function QuadrantScatterPlot({ data, avgPulse, avgCost }: { data: any[], avgPuls
                     </h3>
                     <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-widest">Organizational Health vs. Cost Baseline</p>
                 </div>
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full bg-teal" />
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">ROI 100+</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full bg-amber-400" />
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">ROI 60+</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full bg-rose-500" />
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Under 60</span>
-                    </div>
-                </div>
             </div>
 
-            <div className="relative" style={{ height: `${height}px` }}>
-                <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
+            <div className="relative mx-auto flex justify-center items-center" style={{ width: '100%', maxWidth: '680px', aspectRatio: '1/1' }}>
+                <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} className="overflow-visible">
                     <defs>
                         <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
                             <path d="M 0 0 L 10 5 L 0 10 z" fill="#CBD5E1" />
                         </marker>
                     </defs>
 
+                    {/* 象限の背景色とラベル */}
+                    {quadrants.map((q, i) => (
+                        <g key={`quad-${i}`}>
+                            <rect x={q.x} y={q.y} width={q.w} height={q.h} fill={q.color} opacity={0.4} />
+                            <text x={q.x + 12} y={q.y + 24} className="text-[10px] fill-slate-500 font-bold uppercase tracking-tight">{q.label}</text>
+                            <text x={q.x + 12} y={q.y + 38} className="text-[9px] fill-slate-400 font-medium">{q.sub}</text>
+                        </g>
+                    ))}
+
                     {/* Y軸の目盛りとグリッド */}
                     {yTicks.map((val, i) => (
                         <g key={`ytick-${i}`}>
-                            <line x1={padding.left} y1={getY(val)} x2={width - padding.right} y2={getY(val)} stroke="#F1F5F9" strokeWidth="1" />
-                            <text x={padding.left - 8} y={getY(val) + 3} textAnchor="end" className="text-[9px] fill-slate-400 font-bold">{val.toFixed(1)}</text>
+                            <line x1={PAD.left} y1={getY(val)} x2={W - PAD.right} y2={getY(val)} stroke="#F1F5F9" strokeWidth="1" />
+                            <text x={PAD.left - 8} y={getY(val) + 3} textAnchor="end" className="text-[9px] fill-slate-400 font-bold">{val.toFixed(1)}</text>
                         </g>
                     ))}
 
                     {/* X軸の目盛り */}
                     {xTicks.map((val, i) => (
                         <g key={`xtick-${i}`}>
-                            <text x={getX(val)} y={height - padding.bottom + 15} textAnchor="middle" className="text-[9px] fill-slate-400 font-bold">{Math.round(val)}</text>
+                            <text x={getX(val)} y={H - PAD.bottom + 20} textAnchor="middle" className="text-[9px] fill-slate-400 font-bold">{Math.round(val)}</text>
                         </g>
                     ))}
 
                     {/* 象限ライン（平均値） */}
-                    <line x1={padding.left} y1={getY(avgPulse)} x2={width - padding.right} y2={getY(avgPulse)} stroke="#CBD5E1" strokeDasharray="4 4" strokeWidth="1" />
-                    <line x1={getX(avgCost)} y1={padding.top} x2={getX(avgCost)} y2={height - padding.bottom} stroke="#CBD5E1" strokeDasharray="4 4" strokeWidth="1" />
+                    <line x1={PAD.left} y1={getY(avgPulse)} x2={W - PAD.right} y2={getY(avgPulse)} stroke="#CBD5E1" strokeDasharray="4 4" strokeWidth="1" />
+                    <line x1={getX(avgCost)} y1={PAD.top} x2={getX(avgCost)} y2={H - PAD.bottom} stroke="#CBD5E1" strokeDasharray="4 4" strokeWidth="1" />
 
-                    {/* 象限ラベル */}
-                    <text x={padding.left + 10} y={padding.top + 20} className="text-[10px] font-black fill-emerald-600 uppercase tracking-widest opacity-40">自律型高効率</text>
-                    <text x={width - padding.right - 80} y={padding.top + 20} className="text-[10px] font-black fill-indigo-600 uppercase tracking-widest opacity-40">高稼働・厚待遇</text>
-                    <text x={padding.left + 10} y={height - padding.bottom - 10} className="text-[10px] font-black fill-amber-600 uppercase tracking-widest opacity-40">投資不足リスク</text>
-                    <text x={width - padding.right - 80} y={height - padding.bottom - 10} className="text-[10px] font-black fill-rose-600 uppercase tracking-widest opacity-40">構造的非能率</text>
+                    {/* 軸ラベル */}
+                    <text x={W - PAD.right} y={H - PAD.bottom + 45} textAnchor="end" className="text-[10px] font-black fill-slate-400 uppercase tracking-[0.2em]">一人当たり単価 (万円)</text>
+                    <text x={PAD.left} y={PAD.top - 20} className="text-[10px] font-black fill-slate-400 uppercase tracking-[0.2em]">体温スコア</text>
 
-                    {/* 軸ラベル（横書き） */}
-                    <text x={width - padding.right + 10} y={height - padding.bottom + 15} className="text-[9px] font-black fill-slate-400 uppercase tracking-widest">単価(万)</text>
-                    <text x={padding.left} y={padding.top - 15} className="text-[9px] font-black fill-slate-400 uppercase tracking-widest">体温</text>
+                    {/* 凡例 */}
+                    <g transform={`translate(${W / 2 - 120}, ${H - 25})`}>
+                        <circle cx={0} cy={0} r={4} fill="#10B981" opacity={0.3} stroke="#10B981" strokeWidth={1} />
+                        <circle cx={0} cy={0} r={1.5} fill="#10B981" />
+                        <text x={10} y={4} className="text-[9px] fill-slate-400 font-bold">ROI 100+</text>
 
-                    {/* データプロット */}
-                    {data.map((d, idx) => {
-                        if (d.laborCostPerHead === 0) return null;
-                        
-                        const currX = getX(d.laborCostPerHead);
-                        const currY = getY(d.pulse);
-                        const prevX = getX(d.prevLaborCostPerHead);
-                        const prevY = getY(d.prevPulse);
-                        
-                        const size = Math.max(28, Math.min(64, d.kpiAch * 0.5));
-                        const color = d.laborRoi >= 100 ? "#0D9488" : d.laborRoi >= 60 ? "#F59E0B" : "#EF4444";
-                        const isHovered = hoveredId === d.id;
+                        <circle cx={80} cy={0} r={4} fill="#F59E0B" opacity={0.3} stroke="#F59E0B" strokeWidth={1} />
+                        <circle cx={80} cy={0} r={1.5} fill="#F59E0B" />
+                        <text x={90} y={4} className="text-[9px] fill-slate-400 font-bold">ROI 60+</text>
 
-                        // 前月からの変化が一定以上の場合は矢印を表示
-                        const hasSignificantChange = Math.abs(d.pulse - d.prevPulse) >= 0.1 || Math.abs(d.laborCostPerHead - d.prevLaborCostPerHead) >= 1;
+                        <circle cx={155} cy={0} r={4} fill="#EF4444" opacity={0.3} stroke="#EF4444" strokeWidth={1} />
+                        <circle cx={155} cy={0} r={1.5} fill="#EF4444" />
+                        <text x={165} y={4} className="text-[9px] fill-slate-400 font-bold">Under 60</text>
+                    </g>
 
-                        // ラベルの重なり防止（上下交互にずらす）
-                        const labelYOffset = (size / 2) + (idx % 2 === 0 ? 14 : 28);
+                    {/* データプロット（ホバー要素を最前面にするためソート） */}
+                    {[...data]
+                        .sort((a, b) => (a.id === hoveredId ? 1 : b.id === hoveredId ? -1 : 0))
+                        .map((d, idx) => {
+                            if (d.laborCostPerHead === 0) return null;
+                            
+                            const currX = getX(d.laborCostPerHead);
+                            const currY = getY(d.pulse);
+                            const prevX = getX(d.prevLaborCostPerHead);
+                            const prevY = getY(d.prevPulse);
+                            
+                            const col = d.laborRoi >= 100 ? "#10B981" : d.laborRoi >= 60 ? "#F59E0B" : "#EF4444";
+                            const r = Math.max(12, Math.min(48, d.kpiAch * 0.5));
+                            const isHovered = hoveredId === d.id;
 
-                        return (
-                            <g key={d.id} onMouseEnter={() => setHoveredId(d.id)} onMouseLeave={() => setHoveredId(null)} className="cursor-pointer">
-                                {hasSignificantChange && !isHovered && (
-                                    <line x1={prevX} y1={prevY} x2={currX} y2={currY} stroke="#CBD5E1" strokeWidth="1.5" markerEnd="url(#arrow)" opacity="0.6" />
-                                )}
-                                
-                                <circle cx={currX} cy={currY} r={size / 2} fill={color} opacity={isHovered ? 1 : 0.8} stroke="white" strokeWidth="2" className="transition-all duration-300" />
-                                
-                                <text x={currX} y={currY + labelYOffset} textAnchor="middle" className="text-[10px] font-bold fill-slate-700 pointer-events-none">{d.name}</text>
+                            // 前月からの変化が一定以上の場合は矢印を表示
+                            const hasSignificantChange = Math.abs(d.pulse - d.prevPulse) >= 0.1 || Math.abs(d.laborCostPerHead - d.prevLaborCostPerHead) >= 1;
 
-                                {isHovered && (
-                                    <g className="pointer-events-none">
-                                        <rect x={currX + 15} y={currY - 50} width="120" height="60" rx="8" fill="#1E293B" opacity="0.95" />
-                                        <text x={currX + 25} y={currY - 35} className="text-[10px] font-black fill-white">{d.name}</text>
-                                        <text x={currX + 25} y={currY - 20} className="text-[9px] fill-slate-300">体温: {d.pulse.toFixed(1)} / KPI: {d.kpiAch}%</text>
-                                        <text x={currX + 25} y={currY - 8} className="text-[9px] fill-slate-300">単価: {d.laborCostPerHead}万 / ROI: {d.laborRoi}</text>
-                                    </g>
-                                )}
-                            </g>
-                        );
-                    })}
+                            return (
+                                <g
+                                    key={d.id}
+                                    className="transition-transform duration-300 cursor-pointer group"
+                                    style={{ transform: `translate(${currX}px, ${currY}px)` }}
+                                    onMouseEnter={() => setHoveredId(d.id)}
+                                    onMouseLeave={() => setHoveredId(null)}
+                                >
+                                    {/* 軌跡矢印 (translateの外部で描画が必要なため、gの中では相対座標に注意) */}
+                                    {hasSignificantChange && !isHovered && (
+                                        <line x1={prevX - currX} y1={prevY - currY} x2={0} y2={0} stroke="#CBD5E1" strokeWidth="1.5" markerEnd="url(#arrow)" opacity="0.6" />
+                                    )}
+
+                                    {/* ヒットエリア */}
+                                    <circle cx={0} cy={0} r={r + 20} fill="transparent" />
+
+                                    {/* 外円（薄い） */}
+                                    <circle cx={0} cy={0} r={r} fill={col} opacity={0.15} stroke={col} strokeWidth={1.5}
+                                        className="transition-all duration-300 group-hover:opacity-40" />
+
+                                    {/* 中心ドット */}
+                                    <circle cx={0} cy={0} r={4} fill={col} />
+
+                                    {/* ホバーリング */}
+                                    <circle cx={0} cy={0} r={r + 4} fill="none" stroke={col} strokeWidth={1.5}
+                                        className="opacity-0 group-hover:opacity-70 transition-opacity duration-300 pointer-events-none"
+                                        strokeDasharray="3,2" />
+
+                                    {/* 部署名（常時表示・バブル上） */}
+                                    <text x={0} y={-r - 8} textAnchor="middle"
+                                        className="text-[11px] font-black fill-slate-800 tracking-tight pointer-events-none">
+                                        {d.name}
+                                    </text>
+
+                                    {/* ホバー時サブ情報 */}
+                                    <text x={0} y={r + 14} textAnchor="middle"
+                                        className="text-[9px] fill-slate-400 font-bold pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        体温 {d.pulse.toFixed(1)} | {d.laborCostPerHead}万 | ROI {d.laborRoi}
+                                    </text>
+                                </g>
+                            );
+                        })}
                 </svg>
             </div>
         </div>
