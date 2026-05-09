@@ -18,6 +18,7 @@ import { AxesTab } from "@/components/settings/AxesTab";
 import { MembersTab } from "@/components/settings/MembersTab";
 import { IntegrationTab } from "@/components/settings/IntegrationTab";
 import { AITab } from "@/components/settings/AITab";
+import { SurveyTab } from "@/components/settings/SurveyTab";
 
 // Modals
 import { MemberEditModal } from "@/components/settings/MemberEditModal";
@@ -60,6 +61,7 @@ export default function SettingsPage() {
                         { id: "kpi", label: "KPI" },
                         { id: "axis", label: "担当領域" },
                         { id: "ai", label: "AI分析" },
+                        { id: "survey", label: "ボイスチェック" },
                         { id: "users", label: "メンバー" },
                         { id: "integration", label: "Slack連携" }
                     ].map(t => (
@@ -136,6 +138,10 @@ export default function SettingsPage() {
                             plan={plan}
                             limits={limits}
                         />
+                    )}
+
+                    {activeTab === "survey" && (
+                        <SurveyTab companyId={state.company?.id || ""} />
                     )}
 
                     {activeTab === "users" && (

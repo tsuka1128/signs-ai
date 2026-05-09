@@ -105,10 +105,12 @@ function SurveyFormContent() {
                     setHasAnswered(true);
                 }
 
-                // 4. 設問取得 (これは public 許可されているためそのまま)
+                // 4. 設問取得 (標準問 + 自社カスタム問)
                 const { data: qData, error: qErr } = await supabase
                     .from('survey_questions')
                     .select('id, text, hint, sort_order')
+                    .or(`company_id.is.null,company_id.eq.${finalCompanyId}`)
+                    .eq('is_active', true)
                     .order('sort_order', { ascending: true });
 
                 if (qErr) throw qErr;
