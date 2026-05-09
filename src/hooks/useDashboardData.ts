@@ -747,7 +747,6 @@ export function useDashboardData(
     };
 
     const financialMetrics = useMemo(() => {
-        const latestMonth = last13Months[12];
         const deptsLabor = state.realDepts.map(d => {
             const res = findLatestResource(
                 state.realResources, last13Months, rr => rr.department_id === d.id
