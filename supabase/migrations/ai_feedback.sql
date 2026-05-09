@@ -13,9 +13,9 @@ CREATE TABLE IF NOT EXISTS ai_feedback (
 -- RLS
 ALTER TABLE ai_feedback ENABLE ROW LEVEL SECURITY;
 
--- 既存の get_my_company_id() 関数を利用することを前提とします
+-- get_my_company_id() 関数を利用してセキュアに分離
 CREATE POLICY "ai_feedback_select" ON ai_feedback
-    FOR SELECT USING (company_id = (SELECT company_id FROM users WHERE id = auth.uid()));
+    FOR SELECT USING (company_id = get_my_company_id());
 
 CREATE POLICY "ai_feedback_insert" ON ai_feedback
-    FOR INSERT WITH CHECK (company_id = (SELECT company_id FROM users WHERE id = auth.uid()));
+    FOR INSERT WITH CHECK (company_id = get_my_company_id());
