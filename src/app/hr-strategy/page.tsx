@@ -106,7 +106,7 @@ export default function HrStrategyPage() {
         avgScore: companyPulseData?.scores?.[qi] ?? 0,
       };
     })
-    .sort((a, b) => Math.abs(b.corr) - Math.abs(a.corr));
+    .sort((a, b) => b.corr - a.corr);
 
   const hasData = displayDepts.length > 0;
 
@@ -183,7 +183,7 @@ export default function HrStrategyPage() {
 
             {/* 凡例 */}
             <p className="text-sm text-slate-500 mb-3 flex items-center gap-1.5">
-              KPI達成率との相関が強い設問を上位に表示しています。右（＋）が改善効果あり、左（－）は構造的な課題の可能性。
+              改善するとKPIに直結する設問を上位に表示しています。上から優先的にアクションしてください。右（＋）が強化推奨、左（－）は構造的な課題の可能性。
               <span className="relative group inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-200 text-slate-500 text-[10px] font-bold cursor-help flex-shrink-0">
                 ?
                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2.5 text-[11px] text-slate-600 bg-white border border-slate-200 rounded-lg shadow-lg invisible group-hover:visible z-50 leading-relaxed font-medium whitespace-normal pointer-events-none">

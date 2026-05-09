@@ -71,7 +71,7 @@ export default function HrStrategyGuidePage() {
                     エンゲージメントドライバー分析
                 </h2>
                 <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                    11設問のスコアと部署KPI達成率の相関を計算し、<strong>「何がKPIに影響しているか」を数値で可視化</strong>します。感覚ではなくデータに基づいて、どこに手を打つべきかを判断できます。
+                    11設問のスコアと部署KPI達成率の相関を計算し、<strong>「何がKPIに影響しているか」を数値で可視化</strong>します。改善するとKPIに直結する設問を上位に表示しているため、上から順に対応を検討してください。
                 </p>
 
                 {/* バーの読み方 */}
