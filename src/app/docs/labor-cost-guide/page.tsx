@@ -91,22 +91,22 @@ export default function LaborCostGuidePage() {
                 </div>
             </section>
 
-            {/* Section ② 効率分析一覧テーブル */}
+            {/* Section ② 投資対効果 分析テーブル */}
             <section className="space-y-4">
                 <h2 id="efficiency-table" className="text-2xl font-black text-slate-900 flex items-center gap-3">
                     <BarChart3 className="w-7 h-7 text-indigo-500" />
-                    効率分析一覧テーブル
+                    投資対効果 分析テーブル
                 </h2>
                 <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                    部署ごとに単価・KPI達成率・体温・ROI・効率スコアを一覧で比較できます。部署別と担当領域別をタブで切り替えられます。
+                    部署ごとに単価・KPI達成率・体温・ROI・投資対効果スコアを一覧で比較できます。部署別と担当領域別をタブで切り替えられます。
                 </p>
                 <div className="overflow-hidden rounded-2xl border border-slate-100">
                     {[
                         { col: "単価（万）", desc: "一人当たり月次人件費。全社平均より高い場合はオレンジ色で表示されます。" },
                         { col: "KPI達成率", desc: "当月のKPI平均達成率。100%以上の場合はteal色で強調されます。" },
                         { col: "体温", desc: "最新月のボイスチェック平均スコア（1〜5）。3.0未満の行は薄い赤背景で警告表示されます。" },
-                        { col: "ROI", desc: "その部署単体の人件費ROI。高いほどコストパフォーマンスが良い状態です。" },
-                        { col: "効率スコア", desc: "ROIを5段階の●で視覚化。KPI達成率 ÷ 一人当たり単価で算出します。" },
+                        { col: "ROI", desc: "その部署単体の人件費ROI。高いほど人材投資が成果に結びついている状態です。" },
+                        { col: "投資対効果スコア", desc: "ROIを5段階の●で視覚化。KPI達成率 ÷ 一人当たり単価で算出します。" },
                     ].map((item, i) => (
                         <div key={i} className={`px-5 py-4 flex items-start gap-4 ${i !== 0 ? "border-t border-slate-100" : ""}`}>
                             <span className="text-xs font-black text-slate-700 w-32 flex-shrink-0">{item.col}</span>
@@ -117,16 +117,16 @@ export default function LaborCostGuidePage() {
                 <div className="rounded-xl bg-slate-50 border border-slate-100 px-5 py-4">
                     <p className="text-sm font-black text-slate-600 mb-1">読み方のポイント</p>
                     <p className="text-sm text-slate-500 font-medium leading-relaxed">
-                        体温が低い（赤背景）かつ単価が高い（オレンジ）部署が最優先の見直し対象です。逆に体温が高く効率スコアも高い部署は、投資が成果に結びついているモデルケースとして他部署の参考にしてください。
+                        体温が低い（赤背景）かつ単価が高い（オレンジ）部署が最優先の見直し対象です。逆に体温が高く投資対効果スコアも高い部署は、投資が成果に結びついているモデルケースとして他部署の参考にしてください。
                     </p>
                 </div>
             </section>
 
-            {/* Section ③ 体温 × コスト 象限分析 */}
+            {/* Section ③ 体温 × 人件費 象限分析 */}
             <section className="space-y-4">
                 <h2 id="quadrant" className="text-2xl font-black text-slate-900 flex items-center gap-3">
                     <Target className="w-7 h-7 text-teal-500" />
-                    体温 × コスト 象限分析
+                    体温 × 人件費 象限分析
                 </h2>
                 <p className="text-sm text-slate-600 font-medium leading-relaxed">
                     全部署を「体温（3.0を境界）」と「一人当たり単価（全社平均を境界）」で4象限に自動分類します。部署名がどの象限にあるかで、投資戦略の方向性がひと目でわかります。

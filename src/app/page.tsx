@@ -36,6 +36,13 @@ export default function DashboardPage() {
   const { company, loading: authLoading, supabase, isImpersonating, userRole, userDepartmentId } = useCompany();
   const { state, derived, handlers } = useDashboardData(company, supabase, isImpersonating, userRole, userDepartmentId);
 
+  // URLパラメータ sec から初期表示セクションを取得
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlSec = params.get('sec');
+    if (urlSec) setSec(urlSec);
+  }, []);
+
   // マネージャーの場合、初期表示を「全社」から自部署に切り替える
   useEffect(() => {
     if (userRole === 'manager' && userDepartmentId && tab === 'all') {

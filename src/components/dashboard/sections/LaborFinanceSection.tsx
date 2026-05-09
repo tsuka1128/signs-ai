@@ -90,13 +90,13 @@ function QuadrantScatterPlot({ data }: { data: any[] }) {
     // 象限の設定（中央点ベース）
     const quadrants = [
         { x: PAD.left, y: PAD.top, w: midX_coord - PAD.left, h: midY_coord - PAD.top,
-          color: "#ECFDF5", label: "自律型高効率", sub: "高体温×低コスト | 少ない投資で高い自律性を維持" },
+          color: "#ECFDF5", label: "自律型高効率", sub: "高体温×低単価 | 人材投資が成果に直結している状態" },
         { x: midX_coord, y: PAD.top, w: W - PAD.right - midX_coord, h: midY_coord - PAD.top,
-          color: "#EFF6FF", label: "高稼働・積極投資", sub: "高体温×高コスト | 投資に見合う成果を要確認" },
+          color: "#EFF6FF", label: "高稼働・積極投資", sub: "高体温×高単価 | 手厚い投資が組織活性に結びついている状態" },
         { x: PAD.left, y: midY_coord, w: midX_coord - PAD.left, h: H - PAD.bottom - midY_coord,
-          color: "#FFFBEB", label: "停滞リスク", sub: "低体温×低コスト | 組織疲弊と投資不足の懸念" },
+          color: "#FFFBEB", label: "停滞リスク", sub: "低体温×低単価 | 人材投資の拡充を検討すべき状態" },
         { x: midX_coord, y: midY_coord, w: W - PAD.right - midX_coord, h: H - PAD.bottom - midY_coord,
-          color: "#FFF1F2", label: "構造的課題", sub: "低体温×高コスト | 抜本的な構造改革が必要" },
+          color: "#FFF1F2", label: "構造的課題", sub: "低体温×高単価 | 投資と組織活性のバランス見直しが必要" },
     ];
 
     return (
@@ -105,9 +105,9 @@ function QuadrantScatterPlot({ data }: { data: any[] }) {
                 <div>
                     <h3 className="text-base font-black text-slate-800 tracking-tight flex items-center gap-2">
                         <Target className="w-5 h-5 text-teal" />
-                        体温 × コスト 象限分析
+                        体温 × 人件費 象限分析
                     </h3>
-                    <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-widest">Organizational Health vs. Cost Baseline</p>
+                    <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-widest">Organizational Health vs. Investment</p>
                 </div>
                 
                 {/* Time Lapse UI */}
@@ -388,7 +388,7 @@ export function LaborFinanceSection({
                     <div className="flex items-center gap-6">
                         <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
                             <Activity className="w-4 h-4 text-teal" />
-                            {financeView === 'dept' ? '部署別' : `${secondaryAxisName || '担当領域'}別`} 効率分析一覧
+                            {financeView === 'dept' ? '部署別' : `${secondaryAxisName || '担当領域'}別`} 投資対効果 分析テーブル
                         </h3>
                         {hasAxisData && (
                             <div className="flex items-center">
@@ -551,7 +551,7 @@ export function LaborFinanceSection({
 
                     <div className="flex items-center gap-2 text-[9px] text-slate-400 font-bold italic">
                         <Info className="w-3 h-3" />
-                        ※ 全部署の体温-KPI相関（傾き: {improvementSim.slope.toFixed(1)}%/pt）に基づき、コストボリュームを加味して算出しています。
+                        ※ 全部署の体温-KPI相関（傾き: {improvementSim.slope.toFixed(1)}%/pt）に基づき、人件費規模を加味して算出しています。
                     </div>
                 </div>
             )}
@@ -572,7 +572,7 @@ export function LaborFinanceSection({
                     <div className="space-y-6">
                         <div className="text-lg font-bold text-slate-100 leading-relaxed max-w-2xl italic border-l-4 border-teal-500 pl-6">
                             {aiContent?.deep_report?.correlation || 
-                             `現在の全社人件費ROI分析に基づき、各部署のコンディションとコスト構造の最適化に向けたアクションを提示します。`}
+                             `現在の全社人件費ROI分析に基づき、各部署のコンディションと人材投資の最適化に向けたアクションを提示します。`}
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
@@ -580,9 +580,9 @@ export function LaborFinanceSection({
                                 <div className="bg-white/5 backdrop-blur-sm p-4 rounded-2xl border border-white/5 flex items-start gap-4">
                                     <span className="text-lg">🔴</span>
                                     <div className="space-y-1">
-                                        <div className="text-xs font-black text-rose-400 uppercase tracking-widest">警告域：高コスト・低体温</div>
+                                        <div className="text-xs font-black text-rose-400 uppercase tracking-widest">警告域：高単価・低体温</div>
                                         <div className="text-sm font-bold text-slate-200">
-                                            [{alertDepts.map(d => d.name).join(", ")}] → マネージャーとの1on1実施を推奨
+                                            [{alertDepts.map(d => d.name).join(", ")}] → 投資と組織活性のバランス見直しが必要
                                         </div>
                                     </div>
                                 </div>
