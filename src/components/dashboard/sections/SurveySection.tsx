@@ -283,8 +283,6 @@ export function SurveySection({
                                 )}
                             </div>
                         </div>
-
-                        </div>
                     </div>
 
                     {/* AI Voices (Abstracted Qualitative Comments) */}
