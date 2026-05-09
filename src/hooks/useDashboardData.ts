@@ -73,7 +73,7 @@ export function useDashboardData(
         if (!company) return;
 
         // Step 1: 基本データをフェッチ
-        const [d, k, s, r, a, ai, act, users] = await Promise.all([
+        const [d, k, s, r, a, ai, act, users, cq] = await Promise.all([
             supabase.from('departments').select('*').eq('company_id', company.id).order('sort_order', { ascending: true }),
             supabase.from('kpi_definitions').select('*').eq('company_id', company.id).order('sort_order', { ascending: true }),
             supabase.from('semantic_layers').select('*').eq('company_id', company.id).order('created_at', { ascending: false }),
