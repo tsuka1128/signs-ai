@@ -92,8 +92,6 @@ export default function SettingsPage() {
                         <DepartmentsTab 
                             depts={state.depts}
                             setDepts={handlers.setDepts}
-                            getHistoryTrend={handlers.getHistoryTrend}
-                            handleOpenHistory={handlers.handleOpenHistory}
                             handleDeleteDept={handlers.handleDeleteDept}
                             handleAddDept={handlers.handleAddDept}
                             handleSaveAllDepts={handlers.handleSaveAllDepts}
@@ -119,11 +117,8 @@ export default function SettingsPage() {
                                 setSecondaryAxisName={handlers.setSecondaryAxisName}
                                 company={state.company}
                                 setCompany={handlers.setCompany}
-                                kpis={state.kpis}
                                 axes={state.axes}
                                 setAxes={handlers.setAxes}
-                                getHistoryTrend={handlers.getHistoryTrend}
-                                handleOpenHistory={handlers.handleOpenHistory}
                                 handleDeleteAxis={handlers.handleDeleteAxis}
                                 handleAddAxis={handlers.handleAddAxis}
                                 handleSaveAllAxes={handlers.handleSaveAllAxes}

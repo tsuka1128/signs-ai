@@ -28,13 +28,7 @@ export function useSettingsData() {
     const [inviteDeptId, setInviteDeptId] = useState("");
     const [inviteAxisId, setInviteAxisId] = useState("");
     const [inviteSlackUserId, setInviteSlackUserId] = useState("");
-    const [resources, setResources] = useState<ResourceRecord[] | any[]>([]);
 
-    // History Modal State
-    const [historyModalOpen, setHistoryModalOpen] = useState(false);
-    const [historyTarget, setHistoryTarget] = useState<{ type: 'dept' | 'axis', id: string, name: string } | null>(null);
-    const [tempHistory, setTempHistory] = useState<any[]>([]);
-    const [isSavingHistory, setIsSavingHistory] = useState(false);
 
     // Editing user state
     const [editingUser, setEditingUser] = useState<User | any>(null);
@@ -80,14 +74,13 @@ export function useSettingsData() {
             return;
         }
 
-        const [comp, d, k, a, u, i, res] = await Promise.all([
+        const [comp, d, k, a, u, i] = await Promise.all([
             supabase.from('companies').select('*, plans(name)').eq('id', targetId).single(),
             supabase.from('departments').select('*').eq('company_id', targetId).order('sort_order', { ascending: true }),
             supabase.from('kpi_definitions').select('*').eq('company_id', targetId).order('sort_order', { ascending: true }),
             supabase.from('kpi_axes').select('*').eq('company_id', targetId).order('sort_order', { ascending: true }),
             supabase.from('users').select('*').eq('company_id', targetId),
-            supabase.from('invitations').select('*').eq('company_id', targetId).eq('status', 'pending'),
-            supabase.from('resource_records').select('*').eq('company_id', targetId)
+            supabase.from('invitations').select('*').eq('company_id', targetId).eq('status', 'pending')
         ]);
 
         if (comp.data) {
@@ -100,7 +93,6 @@ export function useSettingsData() {
         if (a.data) setAxes(a.data);
         if (u.data) setUsers(u.data);
         if (i.data) setInvitations(i.data);
-        if (res.data) setResources(res.data);
 
         setLoading(false);
     }, [router]);
@@ -449,91 +441,6 @@ export function useSettingsData() {
         }
     };
 
-    const handleOpenHistory = (type: 'dept' | 'axis', id: string, name: string) => {
-        if (id.startsWith("new_")) {
-            alert("新規追加した項目です。先に「すべて保存」をクリックして確定させてから、履歴を入力してください。");
-            return;
-        }
-        setHistoryTarget({ type, id, name });
-
-        const masterItem = type === 'dept' 
-            ? depts.find(d => d.id === id) 
-            : axes.find(a => a.id === id);
-        const currentHeadcount = masterItem?.headcount || 0;
-
-        const months = [];
-        const now = new Date();
-        for (let i = 11; i >= 0; i--) {
-            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
-            const existing = resources.find(r => r.recorded_month === m && (type === 'dept' ? r.department_id === id : r.axis_id === id));
-            
-            const initialHeadcount = existing ? existing.head_count : (i === 0 ? currentHeadcount : 0);
-            
-            months.push({ 
-                month: m, 
-                head_count: initialHeadcount, 
-                labor_cost: existing?.labor_cost || 0 
-            });
-        }
-        setTempHistory(months);
-        setHistoryModalOpen(true);
-    };
-
-    const handleSaveHistory = async () => {
-        if (!historyTarget || !company?.id) return;
-        setIsSavingHistory(true);
-        const supabase = createClient();
-        try {
-            const upserts = tempHistory.map(h => ({
-                company_id: company.id,
-                department_id: historyTarget.type === 'dept' ? historyTarget.id : null,
-                axis_id: historyTarget.type === 'axis' ? historyTarget.id : null,
-                recorded_month: h.month,
-                head_count: h.head_count,
-                labor_cost: h.labor_cost || null
-            }));
-            const { error } = await supabase.from('resource_records').upsert(upserts as any, {
-                onConflict: 'company_id, department_id, axis_id, recorded_month'
-            });
-            if (error) throw error;
-
-            const now = new Date();
-            const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-            const latestRecord = upserts.find(u => u.recorded_month === currentMonthStr);
-            
-            if (latestRecord) {
-                if (historyTarget.type === 'dept') {
-                    await supabase.from('departments').update({ headcount: latestRecord.head_count }).eq('id', historyTarget.id);
-                    setDepts(prev => prev.map(d => d.id === historyTarget.id ? { ...d, headcount: latestRecord.head_count } : d));
-                } else {
-                    await supabase.from('kpi_axes').update({ headcount: latestRecord.head_count }).eq('id', historyTarget.id);
-                    setAxes(prev => prev.map(a => a.id === historyTarget.id ? { ...a, headcount: latestRecord.head_count } : a));
-                }
-            }
-
-            alert("履歴を保存しました");
-            const { data } = await supabase.from('resource_records').select('*').eq('company_id', company.id);
-            if (data) setResources(data);
-            setHistoryModalOpen(false);
-        } catch (err: any) {
-            alert(`保存に失敗しました: ${err.message}`);
-        } finally {
-            setIsSavingHistory(false);
-        }
-    };
-
-    const getHistoryTrend = useCallback((id: string, type: 'dept' | 'axis') => {
-        const now = new Date();
-        const trend = [];
-        for (let i = 5; i >= 0; i--) {
-            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
-            const existing = resources.find(r => r.recorded_month === m && (type === 'dept' ? r.department_id === id : r.axis_id === id));
-            trend.push(existing?.head_count || 0);
-        }
-        return trend;
-    }, [resources]);
 
     const handleStartEditUser = (u: User) => {
         setEditingUser(u);
@@ -628,18 +535,17 @@ export function useSettingsData() {
     return {
         state: {
             loading, isAnalyzing, company, depts, kpis, axes, secondaryAxisName, users, invitations, inviteEmail,
-            copied, inviteDeptId, inviteAxisId, inviteSlackUserId, resources, historyModalOpen,
-            historyTarget, tempHistory, isSavingHistory, editingUser, editForm, inviteRole
+            copied, inviteDeptId, inviteAxisId, inviteSlackUserId, editingUser, editForm, inviteRole
         },
         handlers: {
             setCompany, setDepts, setKpis, setAxes, setSecondaryAxisName, setInviteEmail, setInviteDeptId,
             setInviteRole,
-            setInviteAxisId, setInviteSlackUserId, setTempHistory, setHistoryModalOpen, setEditForm, setEditingUser,
+            setInviteAxisId, setInviteSlackUserId, setEditForm, setEditingUser,
             handleCopyId, handleSaveCompany, handleSaveIntegration, handleTestClientSlackWebhook,
             handleTestMemberSlack, handleAddDept, handleSaveAllDepts, handleDeleteDept, handleAddKpi,
             handleSaveAllKpis, handleDeleteKpi, handleAddAxis, handleSaveAllAxes, handleDeleteAxis,
             handleInvite, handleDeleteInvitation, handleResendInvitation, handleCopyInviteLink,
-            handleOpenHistory, handleSaveHistory, getHistoryTrend, handleStartEditUser,
+            handleStartEditUser,
             handleSaveUserDetail, handleDeleteUser, handleRunAnalyze, handleRemindVoiceCheck,
             handlePreviewNotification, handleRemindKpi
         },

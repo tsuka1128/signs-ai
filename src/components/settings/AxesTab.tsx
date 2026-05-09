@@ -13,8 +13,6 @@ interface AxesTabProps {
     kpis: any[];
     axes: any[];
     setAxes: (axes: any[]) => void;
-    getHistoryTrend: (id: string, type: 'dept' | 'axis') => number[];
-    handleOpenHistory: (type: 'dept' | 'axis', id: string, name: string) => void;
     handleDeleteAxis: (id: string) => void;
     handleAddAxis: () => void;
     handleSaveAllAxes: () => void;
@@ -29,8 +27,6 @@ export const AxesTab = ({
     kpis,
     axes,
     setAxes,
-    getHistoryTrend,
-    handleOpenHistory,
     handleDeleteAxis,
     handleAddAxis,
     handleSaveAllAxes,

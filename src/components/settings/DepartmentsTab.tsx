@@ -9,8 +9,6 @@ import { usePlanFeatures } from "@/hooks/usePlanFeatures";
 interface DepartmentsTabProps {
     depts: any[];
     setDepts: (depts: any[]) => void;
-    getHistoryTrend: (id: string, type: 'dept' | 'axis') => number[];
-    handleOpenHistory: (type: 'dept' | 'axis', id: string, name: string) => void;
     handleDeleteDept: (id: string) => void;
     handleAddDept: () => void;
     handleSaveAllDepts: () => void;
@@ -20,8 +18,6 @@ interface DepartmentsTabProps {
 export const DepartmentsTab = ({
     depts,
     setDepts,
-    getHistoryTrend,
-    handleOpenHistory,
     handleDeleteDept,
     handleAddDept,
     handleSaveAllDepts,

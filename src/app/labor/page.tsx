@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PlanGate } from "@/components/ui/PlanGate";
 import { Badge } from "@/components/ui/Badge";
 import { Loading } from "@/components/ui/Loading";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { createClient } from "@/lib/supabase";
-import { Building2, Save, ArrowLeft, Users, DollarSign, Wallet, HelpCircle, AlertTriangle } from "lucide-react";
+import { Building2, Save, ArrowLeft, Users, DollarSign, Wallet, HelpCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { HelpLink } from "@/components/ui/HelpLink";
 
@@ -34,7 +34,6 @@ export default function LaborPage() {
 }
 
 function LaborInputContent() {
-  const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [companyId, setCompanyId] = useState<string | null>(null);
@@ -209,19 +208,22 @@ function LaborInputContent() {
         </div>
 
         <div className="flex items-center gap-3">
-          <HelpLink href="/docs/labor-input" className="hidden md:flex" />
+          <HelpLink href="/docs/kpi-input" className="hidden md:flex" />
           <button
             onClick={handleSave}
             disabled={isSaving}
             className={cn(
               "flex items-center gap-2 px-8 py-3 rounded-2xl font-black text-sm transition-all shadow-lg shadow-slate-200",
-              isSaved ? "bg-teal text-white" : "bg-slate-800 text-white hover:bg-slate-700 active:scale-95 disabled:opacity-50"
+              isSaved ? "bg-teal text-white shadow-teal-200" : "bg-slate-800 text-white hover:bg-slate-700 active:scale-95 disabled:opacity-50"
             )}
           >
             {isSaving ? (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : isSaved ? (
-              "保存しました ✓"
+              <>
+                <CheckCircle2 className="w-4 h-4" />
+                保存完了
+              </>
             ) : (
               <>
                 <Save className="w-4 h-4" />
@@ -232,10 +234,23 @@ function LaborInputContent() {
         </div>
       </div>
 
+      {/* Toast-like notification for errors or status */}
       {saveError && (
-        <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-600 text-sm font-bold animate-in slide-in-from-top-2">
-          <AlertTriangle className="w-5 h-5" />
-          {saveError}
+        <div className="fixed bottom-8 right-8 z-[100] animate-in slide-in-from-bottom-4 fade-in duration-300">
+          <div className="bg-rose-500 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-rose-400">
+            <AlertTriangle className="w-5 h-5" />
+            <span className="font-bold text-sm">{saveError}</span>
+            <button onClick={() => setSaveError(null)} className="ml-2 hover:opacity-70">✕</button>
+          </div>
+        </div>
+      )}
+
+      {isSaved && (
+        <div className="fixed bottom-8 right-8 z-[100] animate-in slide-in-from-bottom-4 fade-in duration-300">
+          <div className="bg-teal-500 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-teal-400">
+            <CheckCircle2 className="w-5 h-5" />
+            <span className="font-bold text-sm">人件費・人数データを保存しました</span>
+          </div>
         </div>
       )}
 
@@ -275,10 +290,18 @@ function LaborInputContent() {
         )}
       </div>
 
-      {/* Input Table */}
+      {/* Input Table or Empty State */}
       <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto custom-scrollbar relative">
-          <table className="w-full text-left border-collapse table-fixed" style={{ minWidth: "1800px" }}>
+        {currentItems.length === 0 ? (
+          <div className="p-20">
+            <EmptyState 
+              title={activeTab === 'dept' ? "部署が登録されていません" : `${secondaryAxisName}が登録されていません`}
+              description="設定ページから項目を追加すると、人件費と人数の入力が可能になります。"
+            />
+          </div>
+        ) : (
+          <div className="overflow-x-auto custom-scrollbar relative">
+            <table className="w-full text-left border-collapse table-fixed" style={{ minWidth: "1800px" }}>
             <thead>
               <tr>
                 <th className="sticky left-0 top-0 z-40 w-[240px] bg-slate-50 border-b border-r border-slate-200 p-4 shadow-[2px_0_12px_-4px_rgba(0,0,0,0.05)] text-center">
@@ -305,7 +328,7 @@ function LaborInputContent() {
             <tbody>
               {currentItems.map((item) => (
                 <tr key={item.id} className="group">
-                  <td className="sticky left-0 z-30 bg-white group-hover:bg-slate-50 border-b border-r border-slate-200 p-4 shadow-[2px_0_12_px_-4px_rgba(0,0,0,0.05)] transition-colors">
+                  <td className="sticky left-0 z-30 bg-white group-hover:bg-slate-50 border-b border-r border-slate-200 p-4 shadow-[2px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors">
                     <div className="flex flex-col">
                       <span className="text-[14px] font-bold text-slate-800 leading-tight mb-0.5">{item.name}</span>
                       <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">{activeTab === 'dept' ? 'Department' : secondaryAxisName}</span>
@@ -356,6 +379,7 @@ function LaborInputContent() {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* Common Styles */}
