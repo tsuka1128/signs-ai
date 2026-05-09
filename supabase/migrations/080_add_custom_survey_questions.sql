@@ -1,61 +1,40 @@
-確認完了です。
+-- supabase/migrations/080_add_custom_survey_questions.sql
 
----
+DO $$ 
+BEGIN 
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='survey_questions' AND column_name='company_id') THEN
+    ALTER TABLE survey_questions ADD COLUMN company_id UUID REFERENCES companies(id) ON DELETE CASCADE;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='survey_questions' AND column_name='is_active') THEN
+    ALTER TABLE survey_questions ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE;
+  END IF;
+END $$;
 
-**PR #70 レビュー結果：CHANGES REQUESTED（要修正2件）**
+-- 既存の標準11問は company_id = NULL のまま
 
----
+-- RLS 更新
+DROP POLICY IF EXISTS "survey_questions_public_read" ON survey_questions;
+DROP POLICY IF EXISTS "survey_questions_select" ON survey_questions;
+DROP POLICY IF EXISTS "survey_questions_admin_insert" ON survey_questions;
+DROP POLICY IF EXISTS "survey_questions_admin_update" ON survey_questions;
+DROP POLICY IF EXISTS "survey_questions_admin_delete" ON survey_questions;
 
-### 🚨 BLOCKER①：`realActionItems` を interface から誤削除
+CREATE POLICY "survey_questions_select" ON survey_questions
+  FOR SELECT USING (
+    company_id IS NULL
+    OR company_id = get_my_company_id()
+  );
 
-`useDashboardData.ts` の diff：
+CREATE POLICY "survey_questions_admin_insert" ON survey_questions
+  FOR INSERT WITH CHECK (
+    company_id = get_my_company_id()
+    AND (SELECT role FROM users WHERE id = auth.uid()) IN ('admin','super_admin')
+  );
 
-```diff
--    realActionItems: ActionItem[];
-     realUsers: any[];
-+    realCustomQuestions: any[];
-```
+CREATE POLICY "survey_questions_admin_update" ON survey_questions
+  FOR UPDATE USING (company_id = get_my_company_id())
+  WITH CHECK (company_id = get_my_company_id());
 
-`realActionItems: ActionItem[]` が `DashboardState` interface から消えているが、初期値と `setState` では今も使われている。TypeScript エラーになりビルドが壊れる。
-
-修正：この行の削除を取り消す（`realCustomQuestions` の追加と `realActionItems` の削除は無関係なので、`realActionItems` は残す）：
-
-```ts
-interface DashboardState {
-    // ...
-    realAiInsights: AiInsight[];
-    realActionItems: ActionItem[];   // ← 復活させる
-    realUsers: any[];
-    realCustomQuestions: any[];
-}
-```
-
----
-
-### 🚨 BLOCKER②：`curData` が未定義
-
-`SurveySection.tsx` の追加コード：
-
-```tsx
-score={curData.customScores?.[i] ?? 0}
-```
-
-`curData` という変数はコンポーネント内に存在しない（main の `SurveySection.tsx` に `curData` の定義なし）。props の名前は `data` なので、実行時に `ReferenceError` になる。
-
-修正：
-
-```tsx
-score={data.customScores?.[i] ?? 0}
-```
-
----
-
-### ✅ 問題なし
-
-- `String(a.question_id) === String(cq.id)` の型安全な比較 ✓
-- `state.realCustomQuestions` を useMemo 依存配列に追加済み ✓
-- サブタイトルの動的カウント `questions.length + customQuestions.length` ✓
-- カスタム設問ゼロ時は非表示（既存ユーザー影響なし） ✓
-- `customScores` の return・型定義への追加 ✓
-
-2点修正して再プッシュしてください。
+CREATE POLICY "survey_questions_admin_delete" ON survey_questions
+  FOR DELETE USING (company_id = get_my_company_id());
