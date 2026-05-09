@@ -20,7 +20,6 @@ import { IntegrationTab } from "@/components/settings/IntegrationTab";
 import { AITab } from "@/components/settings/AITab";
 
 // Modals
-import { HistoryModal } from "@/components/settings/HistoryModal";
 import { MemberEditModal } from "@/components/settings/MemberEditModal";
 
 export default function SettingsPage() {
@@ -186,16 +185,6 @@ export default function SettingsPage() {
                 </div>
 
             {/* Modals outside of main content for better layering */}
-            {state.historyModalOpen && (
-                <HistoryModal 
-                    historyTarget={state.historyTarget}
-                    setHistoryModalOpen={handlers.setHistoryModalOpen}
-                    tempHistory={state.tempHistory}
-                    setTempHistory={handlers.setTempHistory}
-                    handleSaveHistory={handlers.handleSaveHistory}
-                    isSavingHistory={state.isSavingHistory}
-                />
-            )}
 
             {state.editingUser && (
                 <MemberEditModal 

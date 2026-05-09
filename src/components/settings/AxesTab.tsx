@@ -1,7 +1,8 @@
 "use client";
 
-import { Layers, Users, GripVertical, TrendingUp, Trash2, Plus, Save } from "lucide-react";
+import { Layers, Users, GripVertical, TrendingUp, Trash2, Plus, Save, ArrowRight } from "lucide-react";
 import { Reorder } from "framer-motion";
+import Link from "next/link";
 import { cn } from "@/lib/utils/index";
 
 interface AxesTabProps {
@@ -71,8 +72,22 @@ export const AxesTab = ({
                 </div>
 
                 <div className="space-y-4">
-                    <div className="ml-1 mb-2">
+                    <div className="ml-1 mb-2 space-y-4">
                         <h3 className="text-sm font-bold text-slate-700 mb-1">{secondaryAxisName}の項目一覧</h3>
+                        
+                        <Link href="/labor" className="flex items-center justify-between p-4 bg-amber-50 border border-amber-100 rounded-2xl hover:bg-amber-100 transition-all group">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                                    <TrendingUp className="w-5 h-5 text-amber-500" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-amber-900 leading-none mb-1">{secondaryAxisName}別の人件費・人数を管理</p>
+                                    <p className="text-[10px] font-bold text-amber-600/80 uppercase tracking-widest">Labor Cost & Headcount History by {secondaryAxisName}</p>
+                                </div>
+                            </div>
+                            <ArrowRight className="w-5 h-5 text-amber-400 transition-transform group-hover:translate-x-1" />
+                        </Link>
+
                         <p className="text-[10px] text-slate-400">※ 各領域の人数は、システムに登録されているメンバー数（アカウント数）と自動的に連動しています。</p>
                     </div>
                     <Reorder.Group axis="y" values={axes} onReorder={setAxes} className="space-y-4">
@@ -106,46 +121,6 @@ export const AxesTab = ({
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="flex flex-col items-center gap-1.5 min-w-[70px] pt-2 sm:pt-0 group">
-                                    <div className="h-6 w-full flex items-center justify-center px-1">
-                                        <svg className="w-full h-full overflow-visible" viewBox="0 0 60 20">
-                                            <defs>
-                                                <linearGradient id={`gradient-axis-${a.id}`} x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="0%" stopColor="rgb(20, 184, 166)" stopOpacity="0.4" />
-                                                    <stop offset="100%" stopColor="rgb(20, 184, 166)" stopOpacity="0" />
-                                                </linearGradient>
-                                            </defs>
-                                            {(() => {
-                                                const trend = getHistoryTrend(a.id, 'axis');
-                                                const max = Math.max(...trend, a.headcount || 1);
-                                                const min = Math.min(...trend);
-                                                const range = max - min || 1;
-                                                const points = trend.map((v, i) => `${(i / (trend.length - 1)) * 60},${20 - ((v - min) / range) * 16 - 2}`);
-                                                const pathData = `M ${points.join(' L ')}`;
-                                                const areaData = `${pathData} L 60,20 L 0,20 Z`;
-                                                return (
-                                                    <>
-                                                        <path d={areaData} fill={`url(#gradient-axis-${a.id})`} className="opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                                        <path d={pathData} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-teal/40 group-hover:text-teal transition-colors" />
-                                                    </>
-                                                );
-                                            })()}
-                                        </svg>
-                                    </div>
-                                    <button
-                                        onClick={() => handleOpenHistory('axis', a.id, a.name)}
-                                        className={cn(
-                                            "flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl transition-all shadow-sm",
-                                            a.id.startsWith("new_") 
-                                                ? "bg-slate-50 text-slate-300 cursor-not-allowed border border-slate-100" 
-                                                : "text-teal hover:text-white bg-teal/5 hover:bg-teal border border-teal/20"
-                                        )}
-                                        title={a.id.startsWith("new_") ? "先に「すべて保存」をクリックしてください" : ""}
-                                    >
-                                        <TrendingUp className="w-3 h-3" />
-                                        詳細・履歴
-                                    </button>
                                 </div>
                                 <div className="flex justify-end pt-2 sm:pt-0">
                                     <button

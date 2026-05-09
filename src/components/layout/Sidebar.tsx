@@ -19,7 +19,8 @@ import {
     ChevronDown,
     ChevronRight,
     Search,
-    Brain
+    Brain,
+    Wallet
 } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { useState, useEffect } from "react";
@@ -27,6 +28,7 @@ import { createClient } from "@/lib/supabase";
 import { Badge } from "@/components/ui/Badge";
 import { signOut } from "@/lib/auth";
 import { DOCS_MENU } from "@/lib/docs-menu";
+import { usePlanFeatures } from "@/hooks/usePlanFeatures";
 
 interface SidebarProps {
     currentSection?: string;
@@ -56,6 +58,7 @@ export function Sidebar({
 }: SidebarProps) {
     const pathname = usePathname();
     const supabase = createClient();
+    const { canUse } = usePlanFeatures();
     const [companyName, setCompanyName] = useState("");
     const [userInitial, setUserInitial] = useState("?");
     const [userRole, setUserRole] = useState<string>("player");
@@ -348,6 +351,17 @@ export function Sidebar({
                                         >
                                             <Settings className="w-4 h-4 text-slate-400" />
                                             設定管理
+                                        </Link>
+                                    )}
+                                    {(userRole === 'super_admin' || userRole === 'admin') && canUse('labor_analytics') && (
+                                        <Link 
+                                            href="/labor"
+                                            onClick={() => { setIsManageOpen(false); setIsMobileOpen?.(false); }}
+                                            className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all hover:text-slate-900"
+                                        >
+                                            <Wallet className="w-4 h-4 text-slate-400" />
+                                            人件費入力
+                                            <span className="ml-auto text-[8px] bg-amber-50 text-amber-500 px-1.5 py-0.5 rounded-md font-black italic">PRO</span>
                                         </Link>
                                     )}
                                 </div>
