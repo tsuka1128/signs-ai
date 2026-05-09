@@ -115,7 +115,10 @@ export function useSettingsData() {
             website_url: company.website_url,
             secondary_axis_name: secondaryAxisName,
             secondary_axis_size_kpi_id: company.secondary_axis_size_kpi_id,
-            survey_deadline_day: company.survey_deadline_day
+            survey_deadline_day: company.survey_deadline_day,
+            industry: company.industry || null,
+            size_category: company.size_category || null,
+            fiscal_year_start_month: company.fiscal_year_start_month || 1
         }).eq('id', company.id);
 
         if (!error) alert("企業情報を保存しました");
