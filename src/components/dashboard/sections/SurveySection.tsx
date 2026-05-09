@@ -23,6 +23,7 @@ interface SurveySectionProps {
     setOrgView: (id: any) => void;
     monthLabels: string[];
     questions: any[];
+    customQuestions: any[];
     displayDepts: any[];
 }
 
@@ -37,6 +38,7 @@ export function SurveySection({
     setOrgView,
     monthLabels,
     questions,
+    customQuestions,
     displayDepts,
 }: SurveySectionProps) {
     const [chartMode, setChartMode] = useState<'pulse' | 'deviation'>('pulse');
@@ -70,7 +72,7 @@ export function SurveySection({
                                 </Badge>
                             )}
                         </h1>
-                        <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-[0.1em]">11の問いから紐解く現場の真実</p>
+                        <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-[0.1em]">{questions.length + customQuestions.length}の問いから紐解く現場の真実</p>
                     </div>
                 </div>
                 <div className="flex flex-col gap-4">
@@ -281,6 +283,32 @@ export function SurveySection({
                                 )}
                             </div>
                         </div>
+
+                        {customQuestions.length > 0 && (
+                            <div className="space-y-4 mt-8">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                                        オリジナル設問
+                                    </h3>
+                                    <span className="text-[9px] font-black bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full uppercase tracking-widest">
+                                        Custom
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {customQuestions.map((q, i) => (
+                                        <SurveyQuestionCard
+                                            key={q.id}
+                                            question={q.text}
+                                            hint={q.hint}
+                                            score={curData.customScores?.[i] ?? 0}
+                                            prevScore={0}
+                                            deviationDiff={undefined}
+                                            allOrgsScores={undefined}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* AI Voices (Abstracted Qualitative Comments) */}

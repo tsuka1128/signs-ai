@@ -51,6 +51,7 @@ export interface SurveyHistoryData {
     viewName: string;
     scores: number[];
     prevScores: number[];
+    customScores: number[];
     pulse: number;
     pulseHistory: number[];
     aiComment: string;

@@ -308,6 +308,7 @@ export default function DashboardPage() {
               setOrgView={setOrgView}
               monthLabels={state.monthLabels}
               questions={DEFAULT_SURVEY_QUESTIONS}
+              customQuestions={state.realCustomQuestions}
               displayDepts={derived.displayDepts}
             />
           )}

@@ -32,8 +32,8 @@ interface DashboardState {
     realKpiRecords: KpiRecord[];
     realResources: ResourceRecord[];
     realAiInsights: AiInsight[];
-    realActionItems: ActionItem[];
     realUsers: any[];
+    realCustomQuestions: any[];
     latestSurveyMonth: string | null;
     latestKpiMonth: string | null;
 }
@@ -57,6 +57,7 @@ export function useDashboardData(
         realAiInsights: [],
         realActionItems: [],
         realUsers: [],
+        realCustomQuestions: [],
         latestSurveyMonth: null,
         latestKpiMonth: null
     });
@@ -79,7 +80,8 @@ export function useDashboardData(
             supabase.from('kpi_axes').select('*').eq('company_id', company.id).order('sort_order', { ascending: true }),
             supabase.from('ai_insights').select('*').eq('company_id', company.id).order('created_at', { ascending: false }).limit(10),
             supabase.from('action_items').select('*').eq('company_id', company.id).eq('is_archived', false).order('created_at', { ascending: false }),
-            supabase.from('users').select('id, department_id, axis_id').eq('company_id', company.id)
+            supabase.from('users').select('id, department_id, axis_id').eq('company_id', company.id),
+            supabase.from('survey_questions').select('id, text, hint, sort_order').eq('company_id', company.id).eq('is_active', true).order('sort_order', { ascending: true })
         ]);
 
         const kpiIds = (k.data || []).map((def: any) => def.id);
@@ -145,6 +147,7 @@ export function useDashboardData(
             realAiInsights: ai.data || [],
             realActionItems: act.data || [],
             realUsers: users.data || [],
+            realCustomQuestions: cq.data || [],
             latestSurveyMonth,
             latestKpiMonth
         });
@@ -328,6 +331,19 @@ export function useDashboardData(
             return monthAnswers.reduce((sum, a) => sum + (a as any).score, 0) / monthAnswers.length;
         });
 
+        // カスタム設問スコア（question_id で紐付け）
+        const customQScores = state.realCustomQuestions.map(cq => {
+            const scoresForQ: number[] = [];
+            latestResponses.forEach(r => {
+                const ans = r.survey_answers || [];
+                const match = ans.find((a: any) => String(a.question_id) === String(cq.id));
+                if (match) scoresForQ.push(match.score);
+            });
+            return scoresForQ.length
+                ? scoresForQ.reduce((sum, s) => sum + s, 0) / scoresForQ.length
+                : 0;
+        });
+
         let comment = aiContent?.summary || "回答データが蓄積されていません。";
         if (!aiContent && avgPulse > 0) {
             const lowScoreQ = qScores.map((s, i) => ({ s, i })).filter(x => x.s > 0 && x.s < 3.0).sort((a, b) => a.s - b.s)[0];
@@ -378,6 +394,7 @@ export function useDashboardData(
             viewName, 
             scores: qScores, 
             prevScores: prevQScores, 
+            customScores: customQScores,
             pulse: avgPulse, 
             pulseHistory, 
             deviationHistory,
@@ -391,7 +408,7 @@ export function useDashboardData(
             questionDeviations,
             allOrgsStats: latestStats // 全社比較用（最新分のみ渡す）
         };
-    }, [state.realResponses, state.realDepts, state.realAxes, state.realUsers, state.latestSurveyMonth, last13Months, aiContent, allOrgsStats]);
+    }, [state.realResponses, state.realDepts, state.realAxes, state.realUsers, state.realCustomQuestions, state.latestSurveyMonth, last13Months, aiContent, allOrgsStats]);
 
     const displayDepts = useMemo(() => {
         let depts = state.realDepts;
