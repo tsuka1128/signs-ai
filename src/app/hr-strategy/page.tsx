@@ -93,11 +93,13 @@ export default function HrStrategyPage() {
       return order[a.risk.topSeverity] - order[b.risk.topSeverity];
     });
 
-  // エンゲージメントドライバー（全社設問スコア × 部署KPI達成率の相関）
+  // エンゲージメントドライバー（部署別設問スコア × 部署KPI達成率の相関）
   const kpiAchs = displayDepts.map(d => d.kpiAch);
+  const deptSurveyData = displayDepts.map(d => (derived as any).getCurrentSurveyData?.(d.id));
+
   const driverData = DEFAULT_SURVEY_QUESTIONS
     .map((q, qi) => {
-      const qScores = displayDepts.map(() => companyPulseData?.scores?.[qi] ?? 0);
+      const qScores = deptSurveyData.map(data => data?.scores?.[qi] ?? 0);
       return {
         text: q.text,
         corr: pearson(qScores, kpiAchs),
@@ -119,7 +121,7 @@ export default function HrStrategyPage() {
               <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-0.5 rounded-md tracking-widest uppercase">PRO</span>
               <h1 className="text-2xl font-black text-slate-800 tracking-tight">人事戦略インサイト</h1>
             </div>
-            <p className="text-slate-400 text-sm font-medium">離職リスクの早期検知・エンゲージメント改善・AI人事戦略提言</p>
+            <p className="text-slate-400 text-sm font-medium">組織コンディションの早期検知・エンゲージメント改善・AI人事戦略提言</p>
           </div>
 
           {/* Section ①: リスクアラート */}
