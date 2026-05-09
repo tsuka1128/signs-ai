@@ -14,8 +14,8 @@ interface LaborFinanceSectionProps {
         totalLaborCost: number;
         kpiAch: number;
         pulse: number;
-        prevPulse: number;
-        prevLaborCostPerHead: number;
+        pulseHistory: number[];
+        laborCostHistory: number[];
         headcount: number;
         laborRoi: number;
     }[];
@@ -26,8 +26,8 @@ interface LaborFinanceSectionProps {
         totalLaborCost: number;
         kpiAch: number;
         pulse: number;
-        prevPulse: number;
-        prevLaborCostPerHead: number;
+        pulseHistory: number[];
+        laborCostHistory: number[];
         headcount: number;
         laborRoi: number;
     }[];
@@ -39,24 +39,42 @@ interface LaborFinanceSectionProps {
 /**
  * 象限分析用の散布図（SVG実装 - リデザイン版）
  */
-function QuadrantScatterPlot({ data, avgPulse, avgCost }: { data: any[], avgPulse: number, avgCost: number }) {
+function QuadrantScatterPlot({ data }: { data: any[] }) {
     const [hoveredId, setHoveredId] = useState<string | null>(null);
+    const [tlOffset, setTlOffset] = useState(0);
+
+    const timeLapseOptions = [
+        { id: 0,  label: "現在" },
+        { id: 1,  label: "1ヶ月前" },
+        { id: 3,  label: "3ヶ月前" },
+        { id: 6,  label: "6ヶ月前" },
+        { id: 12, label: "1年前" },
+    ];
 
     // グラフの描画設定 (ScatterPlot.tsx 互換の正方形スタイル)
     const W = 680;
     const H = 680;
     const PAD = { top: 60, right: 60, bottom: 80, left: 60 };
 
-    // Y軸スケール計算（データ連動）
-    const pulses = [...data.map(d => d.pulse), ...data.map(d => d.prevPulse)];
-    const minPulse = pulses.length > 0 ? Math.max(0, Math.min(...pulses) - 0.5) : 0;
-    const maxPulse = pulses.length > 0 ? Math.min(5, Math.max(...pulses) + 0.5) : 5;
+    // 境界線（物理的な中央点）
+    const midX_coord = PAD.left + (W - PAD.left - PAD.right) / 2;
+    const midY_coord = PAD.top + (H - PAD.top - PAD.bottom) / 2;
+
+    // データの抽出（Time Lapse 適用後）
+    const histIndex = 12 - tlOffset;
+    const displayData = data.map(d => ({
+        ...d,
+        pulse: d.pulseHistory?.[histIndex] ?? d.pulse,
+        laborCostPerHead: d.laborCostHistory?.[histIndex] ?? d.laborCostPerHead,
+    })).filter(d => d.laborCostPerHead > 0);
+
+    // Y軸スケール計算（全履歴データから計算してスケールを固定する）
+    const allPulses = data.flatMap(d => d.pulseHistory || []);
+    const minPulse = allPulses.length > 0 ? Math.max(0, Math.min(...allPulses) - 0.5) : 0;
+    const maxPulse = allPulses.length > 0 ? Math.min(5, Math.max(...allPulses) + 0.5) : 5;
     
     // X軸スケール計算
-    const costs = data.map(d => d.laborCostPerHead).filter(c => c > 0);
-    const prevCosts = data.map(d => d.prevLaborCostPerHead).filter(c => c > 0);
-    const allCosts = [...costs, ...prevCosts];
-    
+    const allCosts = data.flatMap(d => d.laborCostHistory || []).filter(c => c > 0);
     const minCost = allCosts.length > 0 ? Math.max(0, Math.min(...allCosts) - 20) : 0;
     const maxCost = allCosts.length > 0 ? Math.max(...allCosts) + 20 : 100;
 
@@ -67,15 +85,15 @@ function QuadrantScatterPlot({ data, avgPulse, avgCost }: { data: any[], avgPuls
     const yTicks = [minPulse, minPulse + (maxPulse - minPulse) * 0.25, minPulse + (maxPulse - minPulse) * 0.5, minPulse + (maxPulse - minPulse) * 0.75, maxPulse];
     const xTicks = [minCost, minCost + (maxCost - minCost) * 0.25, minCost + (maxCost - minCost) * 0.5, minCost + (maxCost - minCost) * 0.75, maxCost];
 
-    // 象限の設定
+    // 象限の設定（中央点ベース）
     const quadrants = [
-        { x: PAD.left, y: PAD.top, w: getX(avgCost) - PAD.left, h: getY(avgPulse) - PAD.top,
+        { x: PAD.left, y: PAD.top, w: midX_coord - PAD.left, h: midY_coord - PAD.top,
           color: "#ECFDF5", label: "自律型高効率", sub: "高体温×低コスト | 最も理想的な状態" },
-        { x: getX(avgCost), y: PAD.top, w: W - PAD.right - getX(avgCost), h: getY(avgPulse) - PAD.top,
+        { x: midX_coord, y: PAD.top, w: W - PAD.right - midX_coord, h: midY_coord - PAD.top,
           color: "#EFF6FF", label: "高稼働・厚待遇", sub: "高体温×高コスト | 投資に見合う成果を要確認" },
-        { x: PAD.left, y: getY(avgPulse), w: getX(avgCost) - PAD.left, h: H - PAD.bottom - getY(avgPulse),
+        { x: PAD.left, y: midY_coord, w: midX_coord - PAD.left, h: H - PAD.bottom - midY_coord,
           color: "#FFFBEB", label: "投資不足リスク", sub: "低体温×低コスト | 処遇改善を検討すべき領域" },
-        { x: getX(avgCost), y: getY(avgPulse), w: W - PAD.right - getX(avgCost), h: H - PAD.bottom - getY(avgPulse),
+        { x: midX_coord, y: midY_coord, w: W - PAD.right - midX_coord, h: H - PAD.bottom - midY_coord,
           color: "#FFF1F2", label: "構造的非能率", sub: "低体温×高コスト | コスト構造の見直しが必要" },
     ];
 
@@ -89,16 +107,26 @@ function QuadrantScatterPlot({ data, avgPulse, avgCost }: { data: any[], avgPuls
                     </h3>
                     <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-widest">Organizational Health vs. Cost Baseline</p>
                 </div>
+                
+                {/* Time Lapse UI */}
+                <div className="flex bg-slate-100 p-1 rounded-full text-[10px] font-black">
+                    {timeLapseOptions.map(opt => (
+                        <button
+                            key={opt.id}
+                            onClick={() => setTlOffset(opt.id)}
+                            className={cn(
+                                "px-3 py-1.5 rounded-full transition-all duration-300 uppercase tracking-widest",
+                                tlOffset === opt.id ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                            )}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             <div className="relative mx-auto flex justify-center items-center" style={{ width: '100%', maxWidth: '680px', aspectRatio: '1/1' }}>
                 <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} className="overflow-visible">
-                    <defs>
-                        <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
-                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#CBD5E1" />
-                        </marker>
-                    </defs>
-
                     {/* 象限の背景色とラベル */}
                     {quadrants.map((q, i) => (
                         <g key={`quad-${i}`}>
@@ -123,9 +151,9 @@ function QuadrantScatterPlot({ data, avgPulse, avgCost }: { data: any[], avgPuls
                         </g>
                     ))}
 
-                    {/* 象限ライン（平均値） */}
-                    <line x1={PAD.left} y1={getY(avgPulse)} x2={W - PAD.right} y2={getY(avgPulse)} stroke="#CBD5E1" strokeDasharray="4 4" strokeWidth="1" />
-                    <line x1={getX(avgCost)} y1={PAD.top} x2={getX(avgCost)} y2={H - PAD.bottom} stroke="#CBD5E1" strokeDasharray="4 4" strokeWidth="1" />
+                    {/* 象限境界線（物理的な中央点） */}
+                    <line x1={PAD.left} y1={midY_coord} x2={W - PAD.right} y2={midY_coord} stroke="#CBD5E1" strokeDasharray="4 4" strokeWidth="1" />
+                    <line x1={midX_coord} y1={PAD.top} x2={midX_coord} y2={H - PAD.bottom} stroke="#CBD5E1" strokeDasharray="4 4" strokeWidth="1" />
 
                     {/* 軸ラベル */}
                     <text x={W - PAD.right} y={H - PAD.bottom + 45} textAnchor="end" className="text-[10px] font-black fill-slate-400 uppercase tracking-[0.2em]">一人当たり単価 (万円)</text>
@@ -147,36 +175,24 @@ function QuadrantScatterPlot({ data, avgPulse, avgCost }: { data: any[], avgPuls
                     </g>
 
                     {/* データプロット（ホバー要素を最前面にするためソート） */}
-                    {[...data]
+                    {[...displayData]
                         .sort((a, b) => (a.id === hoveredId ? 1 : b.id === hoveredId ? -1 : 0))
                         .map((d) => {
-                            if (d.laborCostPerHead === 0) return null;
-                            
                             const currX = getX(d.laborCostPerHead);
                             const currY = getY(d.pulse);
-                            const prevX = getX(d.prevLaborCostPerHead);
-                            const prevY = getY(d.prevPulse);
                             
                             const col = d.laborRoi >= 100 ? "#10B981" : d.laborRoi >= 60 ? "#F59E0B" : "#EF4444";
                             const r = Math.max(12, Math.min(48, d.kpiAch * 0.5));
                             const isHovered = hoveredId === d.id;
 
-                            // 前月からの変化が一定以上の場合は矢印を表示
-                            const hasSignificantChange = Math.abs(d.pulse - d.prevPulse) >= 0.1 || Math.abs(d.laborCostPerHead - d.prevLaborCostPerHead) >= 1;
-
                             return (
                                 <g
                                     key={d.id}
-                                    className="transition-transform duration-300 cursor-pointer group"
+                                    className="transition-all duration-500 cursor-pointer group"
                                     style={{ transform: `translate(${currX}px, ${currY}px)` }}
                                     onMouseEnter={() => setHoveredId(d.id)}
                                     onMouseLeave={() => setHoveredId(null)}
                                 >
-                                    {/* 軌跡矢印 (translateの外部で描画が必要なため、gの中では相対座標に注意) */}
-                                    {hasSignificantChange && !isHovered && (
-                                        <line x1={prevX - currX} y1={prevY - currY} x2={0} y2={0} stroke="#CBD5E1" strokeWidth="1.5" markerEnd="url(#arrow)" opacity="0.6" />
-                                    )}
-
                                     {/* ヒットエリア */}
                                     <circle cx={0} cy={0} r={r + 20} fill="transparent" />
 
@@ -240,18 +256,10 @@ export function LaborFinanceSection({
 
     const maxEff = Math.max(...sortedData.map(d => d.efficiency), 1);
 
-    // AI提言用のグルーピング
+    // AI提言用のグルーピング（データ平均ではなく基準値で判定）
     const alertDepts = activeData.filter(d => d.pulse < 3.0 && d.laborCostPerHead > avgLaborCostPerHead);
     const cautionDepts = activeData.filter(d => d.pulse < 3.0 && d.laborCostPerHead <= avgLaborCostPerHead);
     const idealDepts = activeData.filter(d => d.pulse >= 3.0 && d.laborCostPerHead <= avgLaborCostPerHead);
-
-    const avgAch = activeData.length > 0 
-        ? Math.round(activeData.reduce((a, b) => a + b.kpiAch, 0) / activeData.length) 
-        : 0;
-
-    const avgPulse = activeData.length > 0 
-        ? activeData.reduce((a, b) => a + b.pulse, 0) / activeData.length 
-        : 0;
 
     const tabs = [
         { id: 'dept', label: '部署別' },
@@ -433,11 +441,7 @@ export function LaborFinanceSection({
             </div>
 
             {/* セクション③：象限分析（散布図） */}
-            <QuadrantScatterPlot 
-                data={activeData} 
-                avgPulse={avgPulse} 
-                avgCost={avgLaborCostPerHead} 
-            />
+            <QuadrantScatterPlot data={activeData} />
 
             {/* セクション④：AIアクション提言 */}
             <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden group">
@@ -455,7 +459,7 @@ export function LaborFinanceSection({
                     <div className="space-y-6">
                         <div className="text-lg font-bold text-slate-100 leading-relaxed max-w-2xl italic border-l-4 border-teal-500 pl-6">
                             {aiContent?.deep_report?.correlation || 
-                             `現在の全社ROI ${laborRoi.toFixed(1)} は、${avgLaborCostPerHead}万円の投資に対して平均KPI達成率 ${avgAch}% を実現しています。`}
+                             `現在の全社人件費ROI分析に基づき、各部署のコンディションとコスト構造の最適化に向けたアクションを提示します。`}
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
