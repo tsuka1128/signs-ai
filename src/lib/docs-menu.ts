@@ -12,6 +12,7 @@ import {
     LayoutDashboard,
     TrendingUp,
     Workflow,
+    Crown,
 } from "lucide-react";
 
 export type DocsMenuItem = {
@@ -58,6 +59,12 @@ export const DOCS_MENU: DocsMenuGroup[] = [
             { title: "アクション管理の使い方", href: "/docs/action-guide", icon: CheckSquare },
             { title: "マトリックスの見方", href: "/docs/bubble-chart-guide", icon: BarChart3 },
             { title: "マトリックスが示す成長の軌跡", href: "/docs/growth-steps", icon: TrendingUp },
+        ],
+    },
+    {
+        title: "Pro 機能",
+        items: [
+            { title: "人事戦略インサイトの使い方", href: "/docs/hr-strategy-guide", icon: Crown },
         ],
     },
     {

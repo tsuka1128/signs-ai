@@ -873,5 +873,33 @@
     "icon": "HelpCircle",
     "category": "サポート",
     "content": "+ ); }"
+  },
+  {
+    "title": "人事戦略インサイトの使い方",
+    "href": "/docs/hr-strategy-guide",
+    "icon": "Crown",
+    "category": "Pro 機能",
+    "content": "KPIと組織体温を掛け合わせ、離職リスクの予兆検知・エンゲージメント改善・AI人事戦略提言を行うProプラン専用機能です。"
+  },
+  {
+    "title": "人事戦略インサイト > リスクアラート",
+    "href": "/docs/hr-strategy-guide#risk-alerts",
+    "icon": "Crown",
+    "category": "Pro 機能",
+    "content": "各部署の体温・KPI・回答率を自動分析し、緊急・警告・注意の3段階でアラートを表示します。"
+  },
+  {
+    "title": "人事戦略インサイト > エンゲージメントドライバー分析",
+    "href": "/docs/hr-strategy-guide#driver-analysis",
+    "icon": "Crown",
+    "category": "Pro 機能",
+    "content": "11設問スコアとKPI達成率の相関係数を計算し、KPIへの影響が強い設問を順に表示します。右が正の相関（改善効果あり）、左が負の相関（構造的課題の可能性）。"
+  },
+  {
+    "title": "人事戦略インサイト > AI人事戦略提言",
+    "href": "/docs/hr-strategy-guide#ai-insight",
+    "icon": "Crown",
+    "category": "Pro 機能",
+    "content": "月次AI分析実行時に人事戦略専用の提言が自動生成されます。追加操作は不要です。"
   }
 ]
