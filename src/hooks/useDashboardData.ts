@@ -746,6 +746,14 @@ export function useDashboardData(
             name: d.name,
             laborCostPerHead: d.laborCostPerHead,
             totalLaborCost: d.totalLaborCost,
+            totalLaborCostHistory: last13Months.map(month => {
+                const res = state.realResources.find(rr => 
+                    rr.department_id === d.id && 
+                    !rr.axis_id && 
+                    normalizeMonth(rr.recorded_month) === month
+                );
+                return res?.labor_cost ? Math.round(res.labor_cost / 10000) : 0;
+            }),
             kpiAch: d.kpiAch,
             pulse: d.pulse,
             pulseHistory: d.pulseHistory ?? [],
@@ -768,6 +776,13 @@ export function useDashboardData(
             name: a.name,
             laborCostPerHead: a.laborCostPerHead,
             totalLaborCost: a.totalLaborCost,
+            totalLaborCostHistory: last13Months.map(month => {
+                const res = state.realResources.find(rr => 
+                    rr.axis_id === a.id && 
+                    normalizeMonth(rr.recorded_month) === month
+                );
+                return res?.labor_cost ? Math.round(res.labor_cost / 10000) : 0;
+            }),
             kpiAch: a.kpiAch,
             pulse: a.pulse,
             pulseHistory: a.pulseHistory ?? [],

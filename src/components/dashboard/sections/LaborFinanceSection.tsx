@@ -12,6 +12,7 @@ interface LaborFinanceSectionProps {
         name: string;
         laborCostPerHead: number;
         totalLaborCost: number;
+        totalLaborCostHistory: number[];
         kpiAch: number;
         pulse: number;
         pulseHistory: number[];
@@ -24,6 +25,7 @@ interface LaborFinanceSectionProps {
         name: string;
         laborCostPerHead: number;
         totalLaborCost: number;
+        totalLaborCostHistory: number[];
         kpiAch: number;
         pulse: number;
         pulseHistory: number[];
@@ -65,18 +67,18 @@ function QuadrantScatterPlot({ data }: { data: any[] }) {
     const displayData = data.map(d => ({
         ...d,
         pulse: d.pulseHistory?.[histIndex] ?? d.pulse,
-        laborCostPerHead: d.laborCostHistory?.[histIndex] ?? d.laborCostPerHead,
-    })).filter(d => d.laborCostPerHead > 0);
+        totalLaborCostAtTime: d.totalLaborCostHistory?.[histIndex] ?? Math.round(d.totalLaborCost / 10000),
+    })).filter(d => d.totalLaborCostAtTime > 0);
 
     // Y軸スケール計算（全履歴データから計算してスケールを固定する）
     const allPulses = data.flatMap(d => d.pulseHistory || []);
     const minPulse = allPulses.length > 0 ? Math.max(0, Math.min(...allPulses) - 0.5) : 0;
     const maxPulse = allPulses.length > 0 ? Math.min(5, Math.max(...allPulses) + 0.5) : 5;
     
-    // X軸スケール計算
-    const allCosts = data.flatMap(d => d.laborCostHistory || []).filter(c => c > 0);
-    const minCost = allCosts.length > 0 ? Math.max(0, Math.min(...allCosts) - 20) : 0;
-    const maxCost = allCosts.length > 0 ? Math.max(...allCosts) + 20 : 100;
+    // X軸スケール計算（総人件費ベース、万円）
+    const allTotalCosts = data.flatMap(d => d.totalLaborCostHistory || []).filter(c => c > 0);
+    const minCost = allTotalCosts.length > 0 ? Math.max(0, Math.min(...allTotalCosts) - 100) : 0;
+    const maxCost = allTotalCosts.length > 0 ? Math.max(...allTotalCosts) + 100 : 5000;
 
     const getX = (cost: number) => PAD.left + ((cost - minCost) / (maxCost - minCost)) * (W - PAD.left - PAD.right);
     const getY = (pulse: number) => (H - PAD.bottom) - ((pulse - minPulse) / (maxPulse - minPulse)) * (H - PAD.top - PAD.bottom);
@@ -88,13 +90,13 @@ function QuadrantScatterPlot({ data }: { data: any[] }) {
     // 象限の設定（中央点ベース）
     const quadrants = [
         { x: PAD.left, y: PAD.top, w: midX_coord - PAD.left, h: midY_coord - PAD.top,
-          color: "#ECFDF5", label: "自律型高効率", sub: "高体温×低コスト | 最も理想的な状態" },
+          color: "#ECFDF5", label: "自律型高効率", sub: "高体温×低コスト | 少ない投資で高い自律性を維持" },
         { x: midX_coord, y: PAD.top, w: W - PAD.right - midX_coord, h: midY_coord - PAD.top,
-          color: "#EFF6FF", label: "高稼働・厚待遇", sub: "高体温×高コスト | 投資に見合う成果を要確認" },
+          color: "#EFF6FF", label: "高稼働・積極投資", sub: "高体温×高コスト | 投資に見合う成果を要確認" },
         { x: PAD.left, y: midY_coord, w: midX_coord - PAD.left, h: H - PAD.bottom - midY_coord,
-          color: "#FFFBEB", label: "投資不足リスク", sub: "低体温×低コスト | 処遇改善を検討すべき領域" },
+          color: "#FFFBEB", label: "停滞リスク", sub: "低体温×低コスト | 組織疲弊と投資不足の懸念" },
         { x: midX_coord, y: midY_coord, w: W - PAD.right - midX_coord, h: H - PAD.bottom - midY_coord,
-          color: "#FFF1F2", label: "構造的非能率", sub: "低体温×高コスト | コスト構造の見直しが必要" },
+          color: "#FFF1F2", label: "構造的課題", sub: "低体温×高コスト | 抜本的な構造改革が必要" },
     ];
 
     return (
@@ -156,7 +158,7 @@ function QuadrantScatterPlot({ data }: { data: any[] }) {
                     <line x1={midX_coord} y1={PAD.top} x2={midX_coord} y2={H - PAD.bottom} stroke="#CBD5E1" strokeDasharray="4 4" strokeWidth="1" />
 
                     {/* 軸ラベル */}
-                    <text x={W - PAD.right} y={H - PAD.bottom + 45} textAnchor="end" className="text-[10px] font-black fill-slate-400 uppercase tracking-[0.2em]">一人当たり単価 (万円)</text>
+                    <text x={W - PAD.right} y={H - PAD.bottom + 45} textAnchor="end" className="text-[10px] font-black fill-slate-400 uppercase tracking-[0.2em]">総人件費 (万円)</text>
                     <text x={PAD.left} y={PAD.top - 20} className="text-[10px] font-black fill-slate-400 uppercase tracking-[0.2em]">体温スコア</text>
 
                     {/* 凡例 */}
@@ -178,7 +180,7 @@ function QuadrantScatterPlot({ data }: { data: any[] }) {
                     {[...displayData]
                         .sort((a, b) => (a.id === hoveredId ? 1 : b.id === hoveredId ? -1 : 0))
                         .map((d) => {
-                            const currX = getX(d.laborCostPerHead);
+                            const currX = getX(d.totalLaborCostAtTime);
                             const currY = getY(d.pulse);
                             
                             const col = d.laborRoi >= 100 ? "#10B981" : d.laborRoi >= 60 ? "#F59E0B" : "#EF4444";
@@ -217,7 +219,7 @@ function QuadrantScatterPlot({ data }: { data: any[] }) {
                                     {/* ホバー時サブ情報 */}
                                     <text x={0} y={r + 14} textAnchor="middle"
                                         className="text-[9px] fill-slate-400 font-bold pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                        体温 {d.pulse.toFixed(1)} | {d.laborCostPerHead}万 | ROI {d.laborRoi}
+                                        体温 {d.pulse.toFixed(1)} | {d.totalLaborCostAtTime.toLocaleString()}万 | ROI {d.laborRoi}
                                     </text>
                                 </g>
                             );
@@ -239,6 +241,7 @@ export function LaborFinanceSection({
     aiContent 
 }: LaborFinanceSectionProps) {
     const [financeView, setFinanceView] = useState<'dept' | 'axis'>('dept');
+    const [simDelta, setSimDelta] = useState(0.5);
     const hasDistRate = laborDistRate > 0;
     const hasAxisData = axisFinanceData.length > 0;
 
@@ -255,6 +258,38 @@ export function LaborFinanceSection({
     }, [activeData]);
 
     const maxEff = Math.max(...sortedData.map(d => d.efficiency), 1);
+
+    // 体温改善シミュレーション
+    const improvementSim = useMemo(() => {
+        if (activeData.length < 2) return null;
+
+        // 体温 → KPI達成率 の線形回帰（傾きのみ）
+        const avgPulse = activeData.reduce((s, d) => s + d.pulse, 0) / activeData.length;
+        const avgKpi   = activeData.reduce((s, d) => s + d.kpiAch, 0) / activeData.length;
+        const num = activeData.reduce((s, d) => s + (d.pulse - avgPulse) * (d.kpiAch - avgKpi), 0);
+        const den = activeData.reduce((s, d) => s + (d.pulse - avgPulse) ** 2, 0);
+        let slope = den > 0 ? num / den : 10; // 体温1pt当たりのKPI改善率(%)
+        slope = Math.max(slope, 0); // 逆相関の場合は0でクランプ
+
+        // 部署別シミュレーション
+        const deptSims = activeData
+            .map(d => {
+                const currentPulse = d.pulse;
+                const targetPulse  = Math.min(5.0, currentPulse + simDelta);
+                const pulseGain    = targetPulse - currentPulse;
+                const kpiGain      = Math.round(pulseGain * slope * 10) / 10; // %
+                const laborCost万  = Math.round(d.totalLaborCost / 10000);
+                const valueGain万  = Math.round(laborCost万 * kpiGain / 100);
+                return { ...d, targetPulse, pulseGain, kpiGain, valueGain万, laborCost万 };
+            })
+            .sort((a, b) => a.pulse - b.pulse); // 体温が低い（伸び代がある）順
+
+        const totalValue万 = deptSims.reduce((s, d) => s + d.valueGain万, 0);
+        const totalCost万  = deptSims.reduce((s, d) => s + d.laborCost万, 0);
+        const ratePercent  = totalCost万 > 0 ? Math.round((totalValue万 / totalCost万) * 100 * 10) / 10 : 0;
+
+        return { slope, deptSims, totalValue万, totalCost万, ratePercent };
+    }, [activeData, simDelta]);
 
     // AI提言用のグルーピング（データ平均ではなく基準値で判定）
     const alertDepts = activeData.filter(d => d.pulse < 3.0 && d.laborCostPerHead > avgLaborCostPerHead);
@@ -443,7 +478,85 @@ export function LaborFinanceSection({
             {/* セクション③：象限分析（散布図） */}
             <QuadrantScatterPlot data={activeData} />
 
-            {/* セクション④：AIアクション提言 */}
+            {/* セクション④：体温改善シミュレーター */}
+            {improvementSim && (
+                <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-8">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="text-base font-black text-slate-800 tracking-tight flex items-center gap-2">
+                                <Sun className="w-5 h-5 text-amber-500" />
+                                体温改善シミュレーター
+                            </h3>
+                            <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-widest">IMPROVEMENT IMPACT SIMULATOR</p>
+                        </div>
+                    </div>
+
+                    <div className="bg-slate-50 rounded-2xl p-6 space-y-6">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div className="space-y-3 flex-1">
+                                <div className="flex items-center justify-between text-xs font-black text-slate-600 uppercase tracking-widest">
+                                    <span>体温の改善幅を選択</span>
+                                    <span className="text-teal bg-teal-50 px-2 py-0.5 rounded-full">+{simDelta.toFixed(1)}pt</span>
+                                </div>
+                                <input 
+                                    type="range" 
+                                    min="0.1" 
+                                    max="2.0" 
+                                    step="0.1" 
+                                    value={simDelta}
+                                    onChange={(e) => setSimDelta(parseFloat(e.target.value))}
+                                    className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-teal"
+                                />
+                                <div className="flex justify-between text-[10px] text-slate-400 font-bold">
+                                    <span>0.1</span>
+                                    <span>2.0</span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm text-center min-w-[140px]">
+                                    <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">推定改善価値</div>
+                                    <div className="text-2xl font-black text-teal tracking-tighter">+{improvementSim.totalValue万.toLocaleString()}<span className="text-xs ml-0.5">万円</span></div>
+                                </div>
+                                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm text-center min-w-[140px]">
+                                    <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">総人件費比</div>
+                                    <div className="text-2xl font-black text-teal tracking-tighter">+{improvementSim.ratePercent}%</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <Activity className="w-4 h-4" />
+                                部署別インパクト内訳
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {improvementSim.deptSims.map(d => (
+                                    <div key={d.id} className="bg-white/50 border border-slate-100 rounded-xl p-3 flex items-center justify-between hover:bg-white transition-colors">
+                                        <div className="space-y-1">
+                                            <div className="text-xs font-black text-slate-800">{d.name}</div>
+                                            <div className="text-[10px] text-slate-400 font-bold">
+                                                体温 {d.pulse.toFixed(1)} → {d.targetPulse.toFixed(1)} (+{d.pulseGain.toFixed(1)})
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-xs font-black text-teal">+{d.valueGain万.toLocaleString()}万</div>
+                                            <div className="text-[10px] text-slate-400 font-bold">+KPI {d.kpiGain}%</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-[9px] text-slate-400 font-bold italic">
+                        <Info className="w-3 h-3" />
+                        ※ 全部署の体温-KPI相関（傾き: {improvementSim.slope.toFixed(1)}%/pt）に基づき、コストボリュームを加味して算出しています。
+                    </div>
+                </div>
+            )}
+
+            {/* セクション⑤：AIアクション提言 */}
             <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                     <Coins className="w-32 h-32" />
