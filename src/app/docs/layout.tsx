@@ -6,10 +6,27 @@ import { ChevronRight, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { DOCS_MENU } from "@/lib/docs-menu";
+import { useEffect, useState } from "react";
+import { useCompany } from "@/hooks/useCompany";
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const isFullWidth = pathname === "/docs/flow";
+    const { company, supabase } = useCompany();
+    const [hasLaborData, setHasLaborData] = useState(false);
+
+    useEffect(() => {
+        if (!company || !supabase) return;
+        supabase
+            .from('resource_records')
+            .select('labor_cost')
+            .eq('company_id', company.id)
+            .gt('labor_cost', 0)
+            .limit(1)
+            .then(({ data }: any) => {
+                setHasLaborData((data?.length ?? 0) > 0);
+            });
+    }, [company, supabase]);
 
     const flatItems = DOCS_MENU.flatMap(group => group.items);
     const currentIndex = flatItems.findIndex(item => item.href === pathname);
@@ -63,7 +80,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
 
     if (isFullWidth) {
         return (
-            <AppLayout bare>
+            <AppLayout bare hasLaborData={hasLaborData}>
                 {children}
                 <div className="px-6 md:px-12 pb-12 mx-auto max-w-4xl w-full">
                     {paginationAndFooter}
@@ -73,7 +90,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
     }
 
     return (
-        <AppLayout>
+        <AppLayout hasLaborData={hasLaborData}>
             <div className="mx-auto max-w-4xl">
                 {children}
                 {paginationAndFooter}
