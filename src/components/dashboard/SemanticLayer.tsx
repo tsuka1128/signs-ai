@@ -238,7 +238,7 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
                                     <div className="flex items-center gap-2 mb-1.5">
                                         <h6 className="text-xs font-bold text-slate-700">{dept.name}</h6>
                                         <span className="text-[9px] text-slate-400 font-bold px-2 py-0.5 bg-slate-200/50 rounded-full">
-                                            トーン: {aiContent?.insights_by_dept?.[dept.id]?.tone || ['前向き・行動喚起', '冷静・品質重視', '共感・伴走', '構造的・警告的'][idx % 4]}
+                                            トーン: {aiContent?.insights_by_dept?.[dept.id]?.tone || '分析待ち'}
                                         </span>
                                     </div>
                                     <div className="text-[11px] text-slate-600 leading-relaxed font-medium">
@@ -271,7 +271,7 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
                                                 );
                                             }
                                             return (
-                                                <p>※現在AIエンジン未接続です。定期分析が行われると、ここに「{dept.name}」の状況に寄り添った専用の翻訳メッセージが自動生成されます。</p>
+                                                <p className="italic text-slate-400">AI分析を実行すると、「{dept.name}」の専用メッセージが表示されます。</p>
                                             );
                                         })()}
                                     </div>

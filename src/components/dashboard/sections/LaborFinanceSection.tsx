@@ -41,7 +41,7 @@ interface LaborFinanceSectionProps {
 /**
  * 象限分析用の散布図（SVG実装 - リデザイン版）
  */
-function QuadrantScatterPlot({ data }: { data: any[] }) {
+function QuadrantScatterPlot({ data, aiContent, avgLaborCostPerHead }: { data: any[], aiContent?: any, avgLaborCostPerHead: number }) {
     const [hoveredId, setHoveredId] = useState<string | null>(null);
     const [tlOffset, setTlOffset] = useState(0);
 
@@ -226,6 +226,34 @@ function QuadrantScatterPlot({ data }: { data: any[] }) {
                         })}
                 </svg>
             </div>
+
+            {/* 象限解説 */}
+            {(() => {
+                const ideal   = data.filter(d => d.pulse >= 3.0 && d.laborCostPerHead <= avgLaborCostPerHead);
+                const invest  = data.filter(d => d.pulse >= 3.0 && d.laborCostPerHead > avgLaborCostPerHead);
+                const caution = data.filter(d => d.pulse < 3.0 && d.laborCostPerHead <= avgLaborCostPerHead);
+                const danger  = data.filter(d => d.pulse < 3.0 && d.laborCostPerHead > avgLaborCostPerHead);
+
+                const lines: string[] = [];
+                if (ideal.length > 0)
+                    lines.push(`${ideal.map((d: any) => d.name).join('・')} は体温・コストともに良好な「理想的」の象限にあります`);
+                if (invest.length > 0)
+                    lines.push(`${invest.map((d: any) => d.name).join('・')} は体温が高く人件費も平均を上回る「安定投資」の状態です`);
+                if (caution.length > 0)
+                    lines.push(`${caution.map((d: any) => d.name).join('・')} は体温が低く人件費も平均以下の「要注意」の象限に位置しています`);
+                if (danger.length > 0)
+                    lines.push(`${danger.map((d: any) => d.name).join('・')} は体温が低いにもかかわらず人件費が平均を超えており「警告域」にあります`);
+
+                const description = aiContent?.quadrant_description || (lines.length > 0 ? lines.join("。") + "。" : "");
+                if (!description) return null;
+
+                return (
+                    <div className="flex items-start gap-3 bg-slate-50 rounded-2xl px-5 py-4 border border-slate-100 mt-6">
+                        <Info className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-slate-500 font-medium leading-relaxed">{description}</p>
+                    </div>
+                );
+            })()}
         </div>
     );
 }
@@ -476,7 +504,11 @@ export function LaborFinanceSection({
             </div>
 
             {/* セクション③：象限分析（散布図） */}
-            <QuadrantScatterPlot data={activeData} />
+            <QuadrantScatterPlot 
+                data={activeData} 
+                aiContent={aiContent} 
+                avgLaborCostPerHead={avgLaborCostPerHead} 
+            />
 
             {/* セクション④：体温改善シミュレーター */}
             {improvementSim && (
@@ -572,7 +604,7 @@ export function LaborFinanceSection({
                     <div className="space-y-6">
                         <div className="text-lg font-bold text-slate-100 leading-relaxed max-w-2xl italic border-l-4 border-teal-500 pl-6">
                             {aiContent?.deep_report?.correlation || 
-                             `現在の全社人件費ROI分析に基づき、各部署のコンディションと人材投資の最適化に向けたアクションを提示します。`}
+                             "AI分析を実行すると、体温とKPIの相関・人件費ROIに関する詳細な考察がここに表示されます。"}
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">

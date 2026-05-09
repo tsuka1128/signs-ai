@@ -347,12 +347,35 @@ export function useDashboardData(
 
         let comment = aiContent?.summary || "回答データが蓄積されていません。";
         if (!aiContent && avgPulse > 0) {
-            const lowScoreQ = qScores.map((s, i) => ({ s, i })).filter(x => x.s > 0 && x.s < 3.0).sort((a, b) => a.s - b.s)[0];
-            if (lowScoreQ) {
-                comment = `${questions[lowScoreQ.i].text} のスコアが低迷しています。環境改善の検討が必要です。`;
-            } else {
-                comment = "全体的に良好な体温が維持されています。";
+            const validScores = qScores.map((s, i) => ({ s, i })).filter(x => x.s > 0);
+            const lowScores = validScores.filter(x => x.s < 3.0).sort((a, b) => a.s - b.s);
+            const highScores = validScores.filter(x => x.s >= 4.0).sort((a, b) => b.s - a.s);
+            const prevPulse = prevQScores.length > 0 ? prevQScores.reduce((sum, s) => sum + s, 0) / prevQScores.filter(s => s > 0).length : 0;
+            const trend = prevPulse > 0 ? (avgPulse > prevPulse + 0.1 ? "上昇" : avgPulse < prevPulse - 0.1 ? "低下" : "横ばい") : null;
+
+            const parts: string[] = [];
+            
+            // 体温レベル
+            if (avgPulse >= 4.0) parts.push("全体的に高い体温が維持されています");
+            else if (avgPulse >= 3.0) parts.push("体温は標準的な水準です");
+            else parts.push("体温がやや低い状態にあります");
+            
+            // トレンド
+            if (trend) parts.push(`（前月比：${trend}）`);
+            
+            // 課題設問
+            if (lowScores.length > 0) {
+                const names = lowScores.slice(0, 2).map(x => questions[x.i]?.text || "").filter(Boolean);
+                if (names.length > 0) parts.push(`特に「${names.join("」「")}」のスコアが低く、注目が必要です`);
             }
+            
+            // 強み設問
+            if (highScores.length > 0 && lowScores.length === 0) {
+                const name = questions[highScores[0].i]?.text || "";
+                if (name) parts.push(`「${name}」が高評価です`);
+            }
+
+            comment = parts.join("。") + "。";
         }
 
         const defaultVoiceTopics = [

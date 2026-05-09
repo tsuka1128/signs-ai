@@ -81,8 +81,15 @@ export default function DashboardPage() {
 
     return {
       title: dept.name,
-      tone: deptInsight?.tone || ["前向き・行動喚起", "冷静・品質重視", "共感・伴走", "構造的・警告的"][deptIdx % 4],
-      text: deptInsight?.text || `「${dept.name}」の直近の体温とKPI達成状況に基づく分析です。AIによる分析を実行すると専用の診断テキストが表示されます。`,
+      tone: deptInsight?.tone || "分析待ち",
+      text: deptInsight?.text || (() => {
+        const d = derived.displayDepts.find((d: any) => d.id === dept.id);
+        if (!d) return "AI分析を実行すると、この部署の専用メッセージが表示されます。";
+        const pulseLabel = d.pulse >= 4.0 ? "良好" : d.pulse >= 3.0 ? "標準的" : d.pulse > 0 ? "やや低め" : null;
+        const kpiLabel = d.kpiAch >= 100 ? "KPI達成" : d.kpiAch > 0 ? `KPI達成率${d.kpiAch}%` : null;
+        if (!pulseLabel) return "AI分析を実行すると、この部署の専用メッセージが表示されます。";
+        return `現在「${dept.name}」の体温は${pulseLabel}な水準です。${kpiLabel ? kpiLabel + "。" : ""}AI分析を実行すると、方針を踏まえたより詳細な診断が表示されます。`;
+      })(),
       weather,
       trend
     };
@@ -233,9 +240,26 @@ export default function DashboardPage() {
                         <h5 className="text-xs font-bold text-slate-700">AI方針翻訳 — {dept.name}</h5>
                         <span className="text-[9px] text-white font-bold px-2 py-0.5 bg-teal/80 rounded-full shadow-sm shadow-teal/20">最新の通知</span>
                       </div>
-                      <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-                        ※現在AIエンジン未接続です。フェーズ7以降、ここに「{dept.name}」の直近のコンディション（体温）と全社方針を掛け合わせた、専用の翻訳メッセージが毎月自動生成されます。
+                  {(() => {
+                    const deptInsight = aiContent?.insights_by_dept?.[dept.id];
+                    if (deptInsight?.text) {
+                      return (
+                        <div className="space-y-2">
+                          {deptInsight.tone && (
+                            <span className="inline-block text-[9px] text-teal-600 font-black px-2 py-0.5 bg-teal-50 rounded-full border border-teal-100">
+                              {deptInsight.tone}
+                            </span>
+                          )}
+                          <p className="text-[11px] text-slate-700 leading-relaxed font-medium">{deptInsight.text}</p>
+                        </div>
+                      );
+                    }
+                    return (
+                      <p className="text-[11px] text-slate-400 leading-relaxed font-medium italic">
+                        AI分析を実行すると、「{dept.name}」の体温と全社方針を掛け合わせた専用メッセージが表示されます。
                       </p>
+                    );
+                  })()}
                     </div>
                   );
                 })()}
