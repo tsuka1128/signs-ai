@@ -80,7 +80,6 @@ export function Sidebar({
     });
     const [isManageOpen, setIsManageOpen] = useState(false);
 
-    const isDashboardActive = pathname === "/";
     const isDocsActive = pathname.startsWith("/docs");
 
     const toggleDocsGroup = (title: string) => {
