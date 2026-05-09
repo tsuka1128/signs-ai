@@ -147,7 +147,7 @@ export function Sidebar({
         );
     };
 
-    const proNav = (userRole === 'super_admin' || userRole === 'admin') ? (
+    const proNav = (userRole === 'super_admin' || userRole === 'admin' || userRole === 'executive') ? (
         <div className="space-y-1">
             <button
                 onClick={() => setIsProExpanded(!isProExpanded)}
