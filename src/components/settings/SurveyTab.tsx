@@ -66,7 +66,9 @@ export function SurveyTab({ companyId }: SurveyTabProps) {
     const handleAddQuestion = () => {
         if (questions.length >= 3) return;
 
-        const nextOrder = 12 + questions.length;
+        const nextOrder = questions.length > 0
+            ? Math.max(...questions.map(q => q.sort_order)) + 1
+            : 12;
         const newQ: Question = {
             id: crypto.randomUUID(),
             text: "",
@@ -117,13 +119,21 @@ export function SurveyTab({ companyId }: SurveyTabProps) {
 
             // 画面上のリストに存在しない（削除された）DB上の設問を消す
             const currentIds = validQuestions.map(q => q.id);
-            const { error: deleteErr } = await supabase
-                .from('survey_questions')
-                .delete()
-                .eq('company_id', companyId)
-                .not('id', 'in', `(${currentIds.join(',')})`);
-
-            if (deleteErr) throw deleteErr;
+            
+            if (currentIds.length === 0) {
+                const { error: deleteErr } = await supabase
+                    .from('survey_questions')
+                    .delete()
+                    .eq('company_id', companyId);
+                if (deleteErr) throw deleteErr;
+            } else {
+                const { error: deleteErr } = await supabase
+                    .from('survey_questions')
+                    .delete()
+                    .eq('company_id', companyId)
+                    .not('id', 'in', `(${currentIds.join(',')})`);
+                if (deleteErr) throw deleteErr;
+            }
 
             setQuestions(validQuestions);
             setMessage({ type: 'success', text: "設問設定を保存しました。" });
