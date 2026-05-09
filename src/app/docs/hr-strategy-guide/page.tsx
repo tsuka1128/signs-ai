@@ -114,7 +114,7 @@ export default function HrStrategyGuidePage() {
                     <Brain className="w-7 h-7 text-violet-500" />
                     AI 人事戦略提言
                 </h2>
-                <p className="text-sm text-violet-700 font-medium leading-relaxed">
+                <p className="text-sm text-slate-600 font-medium leading-relaxed">
                     月次AI分析の実行時に、通常のAIインサイトとは別に人事戦略専用の提言が自動生成されます。リスクアラート・KPI達成状況・部署体温などを総合的に判断し、具体的なアクション提案を提示します。
                 </p>
                 <div className="rounded-2xl bg-violet-50 border border-violet-100 px-6 py-5">
