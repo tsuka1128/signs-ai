@@ -209,7 +209,7 @@ export function SurveySection({
                     </div>
 
                     {/* 時間ラグ相関チャート */}
-                    {displayDepts.length >= 2 && (
+                    {displayDepts.length >= 1 && (
                         <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-4">
                             <div className="flex items-start justify-between">
                                 <div>
