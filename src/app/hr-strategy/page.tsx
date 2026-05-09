@@ -45,6 +45,7 @@ export default function HrStrategyPage() {
   const { state, derived } = useDashboardData(company, supabase, isImpersonating, userRole, userDepartmentId);
   const displayDepts = derived.displayDepts;
   const companyPulseData = (derived as any).getCurrentSurveyData?.("all");
+  const hasLaborData = displayDepts.some((d: any) => d.totalLaborCost > 0);
 
   const hrStrategyContent = (state as any).hrStrategyContent as string | undefined;
   const hrStrategyMonth   = (state as any).hrStrategyMonth   as string | undefined;
@@ -53,7 +54,7 @@ export default function HrStrategyPage() {
 
   if (!canUse("hr_strategy")) {
     return (
-      <AppLayout>
+      <AppLayout hasLaborData={hasLaborData}>
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-8">
           <PlanGate feature="hr_strategy" requiredPlan="Pro">
             <div className="h-40" />
@@ -74,7 +75,7 @@ export default function HrStrategyPage() {
     .filter(d => d.pulseHistory.some(p => p > 0))
     .map(d => {
       const responseRate = d.masterHeadcount > 0
-        ? Math.round(((d as any).respondentsCount / d.masterHeadcount) * 100)
+        ? Math.round((d.respondentsCount / d.masterHeadcount) * 100)
         : 0;
       return {
         ...d,
@@ -108,7 +109,7 @@ export default function HrStrategyPage() {
   const hasData = displayDepts.length > 0;
 
   return (
-    <AppLayout>
+    <AppLayout hasLaborData={hasLaborData}>
       <div className="min-h-screen bg-slate-50">
         <div className="max-w-4xl mx-auto px-6 py-10 space-y-10">
 
