@@ -7,6 +7,21 @@ import { normalizeMonth, getLastNMonths, getMonthLabels, getFullMonthLabels } fr
 import { DEFAULT_SURVEY_QUESTIONS } from "@/lib/constants";
 import { calculateAchievementRate, calculateProductivity, getWeatherFromPulse, calculateGrowthRate } from "@/lib/logic/kpi-engine";
 
+/**
+ * 指定した部署/軸の resource_records から、最新月のデータを取得する（当月未入力時はフォールバック）
+ */
+function findLatestResource(
+    resources: any[],
+    months: string[],
+    filter: (rr: any) => boolean
+): any | null {
+    for (const month of [...months].reverse()) {
+        const found = resources.find(rr => filter(rr) && normalizeMonth(rr.recorded_month) === month);
+        if (found) return found;
+    }
+    return null;
+}
+
 interface DashboardState {
     realDepts: Department[];
     realKpis: any[];
@@ -428,7 +443,9 @@ export function useDashboardData(
                 return res ? res.head_count : 0;
             });
             const activeUserCount = state.realUsers.filter(u => u.department_id === d.id).length;
-            const latestResource = state.realResources.find(rr => rr.department_id === d.id && normalizeMonth(rr.recorded_month) === latestMonth);
+            const latestResource = findLatestResource(
+                state.realResources, last13Months, rr => rr.department_id === d.id
+            );
             const latestLabor = latestResource?.labor_cost || 0;
             const latestActualHead = latestResource?.head_count || activeUserCount;
             const laborCostPerHead = (latestLabor > 0 && latestActualHead > 0) ? Math.round((latestLabor / latestActualHead / 10000) * 10) / 10 : 0;
@@ -590,7 +607,9 @@ export function useDashboardData(
                 return res ? res.head_count : 0;
             });
             const activeUserCount = state.realUsers.filter(u => u.axis_id === axis.id).length;
-            const latestResource = state.realResources.find(rr => rr.axis_id === axis.id && normalizeMonth(rr.recorded_month) === latestMonth);
+            const latestResource = findLatestResource(
+                state.realResources, last13Months, rr => rr.axis_id === axis.id
+            );
             const latestLabor = latestResource?.labor_cost || 0;
             const latestActualHead = latestResource?.head_count || activeUserCount;
             const laborCostPerHead = (latestLabor > 0 && latestActualHead > 0) ? Math.round((latestLabor / latestActualHead / 10000) * 10) / 10 : 0;
@@ -730,11 +749,15 @@ export function useDashboardData(
     const financialMetrics = useMemo(() => {
         const latestMonth = last13Months[12];
         const deptsLabor = state.realDepts.map(d => {
-            const res = state.realResources.find(rr => rr.department_id === d.id && normalizeMonth(rr.recorded_month) === latestMonth);
+            const res = findLatestResource(
+                state.realResources, last13Months, rr => rr.department_id === d.id
+            );
             return res?.labor_cost || 0;
         });
         const axesLabor = state.realAxes.map(a => {
-            const res = state.realResources.find(rr => rr.axis_id === a.id && normalizeMonth(rr.recorded_month) === latestMonth);
+            const res = findLatestResource(
+                state.realResources, last13Months, rr => rr.axis_id === a.id
+            );
             return res?.labor_cost || 0;
         });
 
