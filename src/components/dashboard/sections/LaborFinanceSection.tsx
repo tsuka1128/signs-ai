@@ -37,9 +37,6 @@ interface LaborFinanceSectionProps {
 }
 
 /**
- * 象限分析用の散布図（SVG実装）
- */
-/**
  * 象限分析用の散布図（SVG実装 - リデザイン版）
  */
 function QuadrantScatterPlot({ data, avgPulse, avgCost }: { data: any[], avgPulse: number, avgCost: number }) {
@@ -152,7 +149,7 @@ function QuadrantScatterPlot({ data, avgPulse, avgCost }: { data: any[], avgPuls
                     {/* データプロット（ホバー要素を最前面にするためソート） */}
                     {[...data]
                         .sort((a, b) => (a.id === hoveredId ? 1 : b.id === hoveredId ? -1 : 0))
-                        .map((d, idx) => {
+                        .map((d) => {
                             if (d.laborCostPerHead === 0) return null;
                             
                             const currX = getX(d.laborCostPerHead);
