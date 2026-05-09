@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
                     name: "株式会社 TAION (デモ)",
                     plan_id: freePlan.id,
                     status: "active",
-                    kpi_secondary_axis_name: "ブランド / エリア"
+                    secondary_axis_name: "ブランド / エリア"
                 }).select("id").single();
                 if (cErr || !company) throw new Error("デモ企業の作成に失敗しました");
 
