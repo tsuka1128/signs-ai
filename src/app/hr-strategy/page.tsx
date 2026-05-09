@@ -176,10 +176,24 @@ export default function HrStrategyPage() {
 
           {/* Section ②: エンゲージメントドライバー分析 */}
           <section>
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-3">
               <TrendingUp className="w-4.5 h-4.5 text-teal-500" />
               <h2 className="text-base font-black text-slate-700">エンゲージメントドライバー分析</h2>
-              <span className="text-[11px] text-slate-400 font-medium ml-1">設問スコアとKPI達成率の相関</span>
+            </div>
+
+            {/* 凡例 */}
+            <div className="mb-4 px-4 py-3 bg-slate-50 rounded-xl border border-slate-100 text-[11px] text-slate-500 font-medium leading-relaxed">
+              <p>各設問スコアと部署KPI達成率の相関を示します。<span className="font-black text-slate-700">絶対値が大きいほど影響が強く</span>、上位に表示されます。</p>
+              <div className="flex gap-4 mt-1.5">
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-teal-400" />
+                  <span><span className="font-black text-teal-700">正の相関（+）</span>：スコアが高い部署ほどKPIも高い傾向 → 業績を押し上げるドライバー</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-rose-400" />
+                  <span><span className="font-black text-rose-600">負の相関（-）</span>：スコアが高くてもKPIが低い傾向 → 構造的な課題の可能性</span>
+                </span>
+              </div>
             </div>
 
             <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">

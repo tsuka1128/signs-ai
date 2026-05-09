@@ -20,7 +20,8 @@ import {
     ChevronRight,
     Search,
     Brain,
-    Wallet
+    Wallet,
+    Crown
 } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { useState, useEffect } from "react";
@@ -43,7 +44,6 @@ const DASHBOARD_SUB_ITEMS = [
     { id: "matrix", label: "マトリックス", icon: AreaChart },
     { id: "kpi", label: "KPI推移", icon: BarChart3 },
     { id: "org", label: "組織のKPI", icon: Target },
-    { id: "finance", label: "人件費ROI", icon: Rocket, pro: true },
     { id: "survey", label: "組織の体温", icon: Thermometer },
     { id: "action", label: "アクション", icon: CheckCircle2 },
     { id: "semantic", label: "組織方針", icon: BookOpen },
@@ -222,8 +222,40 @@ export function Sidebar({
                     <div className="space-y-1">
                         <p className="px-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.25em] mb-4">View</p>
                         {dashboardNav}
-                        {/* 人事戦略インサイト（PRO） */}
-                        {(userRole === 'super_admin' || userRole === 'admin') && (
+                    </div>
+
+                    {/* PRO Section */}
+                    {(userRole === 'super_admin' || userRole === 'admin') && canUse('labor_analytics') && (
+                        <div className="space-y-1">
+                            <p className="px-4 text-[10px] font-black text-amber-400 uppercase tracking-[0.25em] mb-4 flex items-center gap-1.5">
+                                <Crown className="w-3 h-3 fill-amber-400" />
+                                Pro
+                            </p>
+
+                            {/* 人件費ROI（ダッシュボードのfinanceセクションへスクロール） */}
+                            {hasLaborData && (
+                                <button
+                                    onClick={() => {
+                                        if (!isDashboardActive) {
+                                            window.location.href = '/?sec=finance';
+                                        } else {
+                                            onSectionChange?.('finance');
+                                            setIsMobileOpen?.(false);
+                                        }
+                                    }}
+                                    className={cn(
+                                        "flex w-full items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all group",
+                                        isDashboardActive && currentSection === 'finance'
+                                            ? "text-teal bg-teal/5"
+                                            : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                                    )}
+                                >
+                                    <Rocket className={cn("w-4.5 h-4.5", isDashboardActive && currentSection === 'finance' ? "text-teal" : "text-slate-400 group-hover:text-slate-500")} />
+                                    人件費ROI
+                                </button>
+                            )}
+
+                            {/* 人事戦略 */}
                             <Link
                                 href="/hr-strategy"
                                 onClick={() => setIsMobileOpen?.(false)}
@@ -236,10 +268,9 @@ export function Sidebar({
                             >
                                 <Users className={cn("w-4.5 h-4.5", pathname === "/hr-strategy" ? "text-teal" : "text-slate-400 group-hover:text-slate-500")} />
                                 人事戦略
-                                <span className="ml-auto text-[8px] bg-amber-50 text-amber-500 px-1.5 py-0.5 rounded-md font-black italic">PRO</span>
                             </Link>
-                        )}
-                    </div>
+                        </div>
+                    )}
 
                     {/* Support Section */}
                     <div className="space-y-1">
