@@ -65,6 +65,7 @@ export const DOCS_MENU: DocsMenuGroup[] = [
         title: "Pro 機能",
         items: [
             { title: "人事戦略インサイトの使い方", href: "/docs/hr-strategy-guide", icon: Crown },
+            { title: "人件費分析の使い方",         href: "/docs/labor-cost-guide",   icon: Crown },
         ],
     },
     {

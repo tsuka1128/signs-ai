@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Crown, AlertTriangle, TrendingUp, Brain, BarChart3 } from "lucide-react";
+import { ArrowRight, Crown, AlertTriangle, TrendingUp, Brain, BarChart3, PieChart } from "lucide-react";
 
 export default function HrStrategyGuidePage() {
     return (
@@ -172,17 +172,29 @@ export default function HrStrategyGuidePage() {
             {/* Section ③ 人件費分析 */}
             <section className="space-y-4">
                 <h2 id="labor-cost" className="text-2xl font-black text-slate-900 flex items-center gap-3">
-                    <BarChart3 className="w-7 h-7 text-indigo-500" />
+                    <PieChart className="w-7 h-7 text-indigo-500" />
                     人件費分析
                 </h2>
                 <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                    部署ごとの人件費・一人当たり人件費・KPI達成率を横断的に比較できます。ダッシュボードの「人件費分析」セクション（サイドバーの「人事戦略 &gt; 人件費分析」）から確認できます。
-                </p>
-                <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                    人件費データは KPI設定画面から「第2軸」として登録します。詳細は
-                    <Link href="/docs/kpi-setup" className="text-teal font-bold hover:underline ml-1">KPIの設定と入力</Link>
+                    部署ごとの人件費・ROI・体温を横断的に分析できます。サイドバーの「人事戦略 → 人件費分析」から開いてください。
+                    詳しい使い方は
+                    <Link href="/docs/labor-cost-guide" className="text-teal font-bold hover:underline ml-1">人件費分析の使い方</Link>
                     を参照してください。
                 </p>
+                <div className="rounded-2xl bg-slate-50 border border-slate-100 px-6 py-5 space-y-3">
+                    <div className="flex items-start gap-3">
+                        <span className="w-2 h-2 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                        <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                            <strong>人件費ROI：</strong>投資対効果（KPI達成率 ÷ 人件費）を可視化。
+                        </p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                        <span className="w-2 h-2 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                        <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                            <strong>象限分析：</strong>コストと体温で部署を分類し、投資戦略を決定。
+                        </p>
+                    </div>
+                </div>
             </section>
 
             {/* Section ④ AI 人事戦略提言 */}

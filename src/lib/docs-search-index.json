@@ -901,5 +901,33 @@
     "icon": "Crown",
     "category": "Pro 機能",
     "content": "月次AI分析実行時に人事戦略専用の提言が自動生成されます。追加操作は不要です。"
+  },
+  {
+    "title": "人件費分析の使い方",
+    "href": "/docs/labor-cost-guide",
+    "icon": "Crown",
+    "category": "Pro 機能",
+    "content": "人件費ROI・象限分析・体温改善シミュレーターなど、人件費とKPI・体温を掛け合わせて投資対効果を可視化するProプラン専用機能。"
+  },
+  {
+    "title": "人件費分析 > 人件費ROI",
+    "href": "/docs/labor-cost-guide#summary-kpi",
+    "icon": "Crown",
+    "category": "Pro 機能",
+    "content": "平均KPI達成率を総人件費で割った独自指標。数値が高いほど少ない人件費で高い成果を上げている。"
+  },
+  {
+    "title": "人件費分析 > 象限分析",
+    "href": "/docs/labor-cost-guide#quadrant",
+    "icon": "Crown",
+    "category": "Pro 機能",
+    "content": "体温と一人当たり単価で全部署を4象限（理想的・安定投資・要注意・警告域）に分類。投資戦略の方向性をひと目で把握できる。"
+  },
+  {
+    "title": "人件費分析 > 体温改善シミュレーター",
+    "href": "/docs/labor-cost-guide#simulator",
+    "icon": "Crown",
+    "category": "Pro 機能",
+    "content": "体温改善幅をスライダーで設定すると、推定改善価値（万円）と部署別インパクトをリアルタイム試算。施策投資の費用対効果検討に使用。"
   }
 ]
