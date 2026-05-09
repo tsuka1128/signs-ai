@@ -22,29 +22,31 @@ SignsAIは、Gallup社の「State of the Global Workplace」レポートが提�
 
 ## 3. 画面・機能一覧
 
-### 3-1. ユーザー向け主要画面
+### 3-1. 主な画面一覧
 
-| URL | 画面名 | 役割 |
-|---|---|---|
-| `/` | トップダッシュボード | KPIと体温のクロス分析、AI診断、重要指標の俯瞰 |
-| `/login` / `/register` | 認証 | Google OAuth / メールパスワードによるログイン・新規登録 |
-| `/forgot-password` | パスワード再設定 | パスワードリセットの申請 |
-| `/password-update` | パスワード更新 | 認証メール経由での新しいパスワード設定 |
-| `/onboarding` | オンボーディング | 企業情報・部署・KPI・組織方針の初期設定ウィザード |
-| `/kpi` | KPI入力画面 | 月次の業績データの投入・過去推移の確認 |
-| `/survey` | アンケート管理 | 従業員へのアンケート配布状況の確認・集計実行 |
-| `/survey/[dept_id]` | アンケート回答 | 従業員が回答する匿名アンケートフォーム（ログイン不要） |
-| `/settings` | 企業設定 | 企業基本情報、プロフィール管理、プラン確認 |
-| `/voice-check` | ボイスチェック | AIによる定性フィードバックの深掘り・壁打ち |
-| `/docs` | ドキュメントハブ | 導入ガイド、PDCAサイクル、指標の解釈など14以上のヘルプ記事 |
-| `/privacy` / `/terms` | 法務情報 | プライバシーポリシーおよび利用規約 |
+| URL | 説明 |
+|---|---|
+| `/` | トップダッシュボード（KPI×体温分析、AI診断） |
+| `/login` | ログイン |
+| `/register` | 新規登録 |
+| `/forgot-password` | パスワードリセット申請 |
+| `/password-update` | パスワード更新 |
+| `/onboarding` | 初回セットアップ（企業・部署・KPI登録） |
+| `/kpi` | KPI入力画面 |
+| `/survey` | アンケート管理（管理者向け） |
+| `/survey/[dept_id]` | 匿名アンケート回答フォーム（従業員向け） |
+| `/voice-check` | ボイスチェック |
+| `/settings` | 企業・プロフィール設定 |
+| `/privacy` | プライバシーポリシー |
+| `/terms` | 利用規約 |
+| `/docs` | ドキュメントハブ |
+| `/admin` | システム管理者ダッシュボード（Antigravity社内用） |
 
-### 3-2. 管理・インフラ
+### 3-2. インフラ・連携
 
-| URL | 画面名 | 役割 |
-|---|---|---|
-| `/admin` | 管理者ポータル | 運営専用。全テナント管理・売上・アラート監視 |
-| `/auth/callback` | OAuth連携 | 外部認証プロバイダーからのリダイレクト処理 |
+| URL | 役割 |
+|---|---|
+| `/auth/callback` | OAuth連携リダイレクト処理 |
 
 ---
 
@@ -60,7 +62,7 @@ npm install
 
 ### 4-2. 環境変数の設定
 
-`.env.local` を作成し、以下のプレースホルダーを適切な値（管理者に確認）に置換して設定してください。
+`.env.local` を作成し、以下の項目を設定してください。
 
 ```bash
 # Supabase
@@ -76,37 +78,27 @@ GOOGLE_SERVICE_ACCOUNT_EMAIL=<your-service-account-email>
 GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 ```
 
-### 4-3. 開発サーバーの起動
+### 4-3. Google OAuth の設定（任意）
 
-```bash
-npm run dev
-```
+Googleログインを有効にする場合は、[Google Cloud Console](https://console.cloud.google.com/apis/credentials) で OAuth 2.0 クライアント ID を作成し、リダイレクト URI に `http://localhost:3000/auth/callback` を追加してください。
 
 ---
 
-## 5. デプロイと運用
-
-### 5-1. デプロイ手順
+## 5. デプロイ手順
 
 1. 変更をステージング（ファイル/ディレクトリを明示すること）
    ```bash
-   git add src/ docs/ public/
+   git add <変更したファイルを明示>
    ```
 2. コミット
    ```bash
-   git commit -m "feat: 新機能の追加"
+   git commit -m "feat: ..."
    ```
 3. GitHub へプッシュ
    ```bash
    git push origin <branch-name>
    ```
 4. Vercel でデプロイ状況を確認
-
-### 5-2. Supabase / Google OAuth 設定
-
-本番環境（Vercel）で認証を正常に動作させるため、以下の Redirect URLs を登録してください。
-- `https://signs-ai.vercel.app/auth/callback`
-- `http://localhost:3000/auth/callback` (ローカル開発用)
 
 ---
 
