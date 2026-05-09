@@ -12,18 +12,18 @@ DROP POLICY IF EXISTS "survey_questions_public_read" ON survey_questions;
 CREATE POLICY "survey_questions_select" ON survey_questions
   FOR SELECT USING (
     company_id IS NULL
-    OR company_id = (SELECT company_id FROM users WHERE id = auth.uid())
+    OR company_id = get_my_company_id()
   );
 
 CREATE POLICY "survey_questions_admin_insert" ON survey_questions
   FOR INSERT WITH CHECK (
-    company_id = (SELECT company_id FROM users WHERE id = auth.uid())
+    company_id = get_my_company_id()
     AND (SELECT role FROM users WHERE id = auth.uid()) IN ('admin','super_admin')
   );
 
 CREATE POLICY "survey_questions_admin_update" ON survey_questions
-  FOR UPDATE USING (company_id = (SELECT company_id FROM users WHERE id = auth.uid()))
-  WITH CHECK (company_id = (SELECT company_id FROM users WHERE id = auth.uid()));
+  FOR UPDATE USING (company_id = get_my_company_id())
+  WITH CHECK (company_id = get_my_company_id());
 
 CREATE POLICY "survey_questions_admin_delete" ON survey_questions
-  FOR DELETE USING (company_id = (SELECT company_id FROM users WHERE id = auth.uid()));
+  FOR DELETE USING (company_id = get_my_company_id());
