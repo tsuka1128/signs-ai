@@ -50,6 +50,7 @@ export function applyGuardrails(text: string, fieldName: string): GuardrailResul
 
     // 1. 因果 → 相関 の自動変換
     for (const [pattern, replacement] of CAUSATION_TO_CORRELATION) {
+        pattern.lastIndex = 0;
         if (pattern.test(filtered)) {
             warnings.push(`[CAUSATION_CONVERTED] ${fieldName}: "${pattern.source}" を相関表現に変換`);
             filtered = filtered.replace(pattern, replacement);
