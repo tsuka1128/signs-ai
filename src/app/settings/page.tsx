@@ -117,6 +117,7 @@ export default function SettingsPage() {
                                 setSecondaryAxisName={handlers.setSecondaryAxisName}
                                 company={state.company}
                                 setCompany={handlers.setCompany}
+                                kpis={state.kpis}
                                 axes={state.axes}
                                 setAxes={handlers.setAxes}
                                 handleDeleteAxis={handlers.handleDeleteAxis}
