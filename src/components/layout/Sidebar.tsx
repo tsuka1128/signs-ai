@@ -235,7 +235,7 @@ export function Sidebar({
                                 )}
                             >
                                 <Users className={cn("w-4.5 h-4.5", pathname === "/hr-strategy" ? "text-teal" : "text-slate-400 group-hover:text-slate-500")} />
-                                人事戦略インサイト
+                                人事戦略
                                 <span className="ml-auto text-[8px] bg-amber-50 text-amber-500 px-1.5 py-0.5 rounded-md font-black italic">PRO</span>
                             </Link>
                         )}

@@ -1,17 +1,35 @@
 /**
- * 離職リスクスコア算出ロジック
- * 入力はすべて useDashboardData の displayDepts から取得可能。新規DBクエリ不要。
+ * リスクアラート算出ロジック
+ * 離職リスクに限らず、組織の異常を検知してアラートタグとして返す。
  */
 
-export type RiskLevel = "high" | "medium" | "low";
+export type AlertSeverity = "critical" | "warning" | "info";
 
-export interface TurnoverRiskResult {
-  score: number;    // 0–100（高いほど離職リスク大）
-  level: RiskLevel;
-  factors: string[];
+export interface RiskAlert {
+  label: string;
+  severity: AlertSeverity;
 }
 
-/** 直近3ヶ月の体温トレンド（傾き）を計算。負値 = 低下傾向 */
+export interface RiskAlertResult {
+  alerts: RiskAlert[];
+  /** 最も深刻な severity（カードの色決定に使う） */
+  topSeverity: AlertSeverity | "none";
+}
+
+/**
+ * 直近1ヶ月の体温変化量（前月比）を計算
+ * 負値 = 低下
+ */
+function pulseMonthOverMonth(pulseHistory: number[]): number {
+  const cur  = pulseHistory[pulseHistory.length - 1] || 0;
+  const prev = pulseHistory[pulseHistory.length - 2] || 0;
+  if (cur === 0 || prev === 0) return 0;
+  return cur - prev;
+}
+
+/**
+ * 直近3ヶ月の体温トレンド（傾き）。負値 = 低下傾向
+ */
 function pulseTrend(pulseHistory: number[]): number {
   const recent = pulseHistory.slice(-3).filter(v => v > 0);
   if (recent.length < 2) return 0;
@@ -24,47 +42,75 @@ function pulseTrend(pulseHistory: number[]): number {
 }
 
 /**
- * @param pulseHistory       13ヶ月の体温スコア配列（0=データなし）
- * @param kpiAch             直近月のKPI達成率（%）
- * @param laborCostPerHead   1人あたり人件費（万円）
+ * @param pulseHistory        13ヶ月の体温スコア配列（0=データなし）
+ * @param kpiAch              直近月のKPI達成率（%）
+ * @param laborCostPerHead    1人あたり人件費（万円）
  * @param avgLaborCostPerHead 全社平均1人あたり人件費（0なら比較しない）
+ * @param responseRate        回答率（%、0なら比較しない）
  */
-export function calcTurnoverRisk(
+export function calcRiskAlerts(
   pulseHistory: number[],
   kpiAch: number,
   laborCostPerHead: number,
-  avgLaborCostPerHead: number
-): TurnoverRiskResult {
-  let score = 0;
-  const factors: string[] = [];
+  avgLaborCostPerHead: number,
+  responseRate: number,
+): RiskAlertResult {
+  const alerts: RiskAlert[] = [];
 
-  // ① 現在体温（最大40点）
   const currentPulse = pulseHistory[pulseHistory.length - 1] || 0;
-  if (currentPulse > 0) {
-    if (currentPulse < 2.5)      { score += 40; factors.push("体温が危険域"); }
-    else if (currentPulse < 3.0) { score += 28; factors.push("体温が低迷"); }
-    else if (currentPulse < 3.5) { score += 14; }
-  }
-
-  // ② 体温トレンド（最大25点）
+  const mom = pulseMonthOverMonth(pulseHistory);
   const trend = pulseTrend(pulseHistory);
-  if (trend < -0.3)      { score += 25; factors.push("体温が3ヶ月連続低下"); }
-  else if (trend < -0.1) { score += 12; factors.push("体温が低下傾向"); }
 
-  // ③ KPI達成率（最大20点）
-  if (kpiAch > 0) {
-    if (kpiAch < 60)      { score += 20; factors.push("KPI未達が深刻"); }
-    else if (kpiAch < 80) { score += 10; factors.push("KPI達成率が低迷"); }
+  // ── 体温アラート ──────────────────────────────
+  if (currentPulse > 0 && currentPulse < 2.5) {
+    alerts.push({ label: "体温が危険域", severity: "critical" });
+  } else if (currentPulse > 0 && currentPulse < 3.0) {
+    alerts.push({ label: "体温が低迷", severity: "warning" });
   }
 
-  // ④ 1人あたり人件費が全社平均を大幅下回る（最大15点）
+  if (mom <= -0.8) {
+    alerts.push({ label: "体温が急落（前月比 -0.8以上）", severity: "critical" });
+  } else if (mom <= -0.5) {
+    alerts.push({ label: "体温が急落（前月比 -0.5以上）", severity: "warning" });
+  } else if (mom <= -0.3) {
+    alerts.push({ label: "体温が低下傾向", severity: "info" });
+  }
+
+  if (trend < -0.3 && mom > -0.5) {
+    // 急落アラートと重複しない場合のみ
+    alerts.push({ label: "体温が3ヶ月連続低下", severity: "warning" });
+  }
+
+  // ── KPI アラート ──────────────────────────────
+  if (kpiAch > 0 && kpiAch < 60) {
+    alerts.push({ label: "KPI未達が深刻", severity: "critical" });
+  } else if (kpiAch > 0 && kpiAch < 80) {
+    alerts.push({ label: "KPI達成率が低迷", severity: "warning" });
+  }
+
+  // ── 回答率アラート ────────────────────────────
+  if (responseRate > 0 && responseRate < 50) {
+    alerts.push({ label: "回答率が低下", severity: "warning" });
+  } else if (responseRate > 0 && responseRate < 70) {
+    alerts.push({ label: "回答率がやや低い", severity: "info" });
+  }
+
+  // ── 報酬水準アラート ──────────────────────────
   if (avgLaborCostPerHead > 0 && laborCostPerHead > 0) {
     const ratio = laborCostPerHead / avgLaborCostPerHead;
-    if (ratio < 0.75)      { score += 15; factors.push("報酬水準が平均を大幅下回る"); }
-    else if (ratio < 0.90) { score += 7;  factors.push("報酬水準がやや低い"); }
+    if (ratio < 0.75) {
+      alerts.push({ label: "報酬水準が平均を大幅下回る", severity: "warning" });
+    } else if (ratio < 0.90) {
+      alerts.push({ label: "報酬水準がやや低い", severity: "info" });
+    }
   }
 
-  score = Math.min(100, score);
-  const level: RiskLevel = score >= 60 ? "high" : score >= 30 ? "medium" : "low";
-  return { score, level, factors };
+  // topSeverity を決定
+  const topSeverity: RiskAlertResult["topSeverity"] =
+    alerts.some(a => a.severity === "critical") ? "critical" :
+    alerts.some(a => a.severity === "warning")  ? "warning"  :
+    alerts.some(a => a.severity === "info")      ? "info"     :
+    "none";
+
+  return { alerts, topSeverity };
 }

@@ -5,7 +5,7 @@ import { useCompany } from "@/hooks/useCompany";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { usePlanFeatures } from "@/hooks/usePlanFeatures";
 import { PlanGate } from "@/components/ui/PlanGate";
-import { calcTurnoverRisk } from "@/lib/logic/turnover-risk";
+import { calcRiskAlerts } from "@/lib/logic/turnover-risk";
 import { DEFAULT_SURVEY_QUESTIONS } from "@/lib/constants";
 import { AlertTriangle, TrendingUp, Brain } from "lucide-react";
 import { cn } from "@/lib/utils/index";
@@ -27,10 +27,17 @@ function pearson(xs: number[], ys: number[]): number {
   return den === 0 ? 0 : Math.round((num / den) * 100) / 100;
 }
 
-const RISK_STYLE = {
-  high:   { bg: "bg-rose-50",    border: "border-rose-200",   badge: "bg-rose-100 text-rose-700",    dot: "bg-rose-500",   label: "高リスク" },
-  medium: { bg: "bg-amber-50",   border: "border-amber-200",  badge: "bg-amber-100 text-amber-700",  dot: "bg-amber-400",  label: "中リスク" },
-  low:    { bg: "bg-emerald-50", border: "border-emerald-200",badge: "bg-emerald-100 text-emerald-700",dot: "bg-emerald-400",label: "低リスク" },
+const CARD_STYLE = {
+  critical: { bg: "bg-rose-50",    border: "border-rose-200",   dot: "bg-rose-500" },
+  warning:  { bg: "bg-amber-50",   border: "border-amber-200",  dot: "bg-amber-400" },
+  info:     { bg: "bg-sky-50",     border: "border-sky-100",    dot: "bg-sky-400"  },
+  none:     { bg: "bg-emerald-50", border: "border-emerald-100",dot: "bg-emerald-400" },
+};
+
+const TAG_STYLE = {
+  critical: "bg-rose-100 text-rose-700",
+  warning:  "bg-amber-100 text-amber-700",
+  info:     "bg-sky-100 text-sky-600",
 };
 
 export default function HrStrategyPage() {
@@ -62,11 +69,28 @@ export default function HrStrategyPage() {
     return vals.length > 0 ? vals.reduce((s, v) => s + v, 0) / vals.length : 0;
   })();
 
-  // 離職リスクスコア（部署別・リスク降順）
+  // リスクアラート（部署別・深刻度順）
   const riskData = displayDepts
     .filter(d => d.pulseHistory.some(p => p > 0))
-    .map(d => ({ ...d, risk: calcTurnoverRisk(d.pulseHistory, d.kpiAch, d.laborCostPerHead, avgLaborCostPerHead) }))
-    .sort((a, b) => b.risk.score - a.risk.score);
+    .map(d => {
+      const responseRate = d.masterHeadcount > 0
+        ? Math.round(((d as any).respondentsCount / d.masterHeadcount) * 100)
+        : 0;
+      return {
+        ...d,
+        risk: calcRiskAlerts(
+          d.pulseHistory,
+          d.kpiAch,
+          d.laborCostPerHead,
+          avgLaborCostPerHead,
+          responseRate,
+        ),
+      };
+    })
+    .sort((a, b) => {
+      const order: Record<string, number> = { critical: 0, warning: 1, info: 2, none: 3 };
+      return order[a.risk.topSeverity] - order[b.risk.topSeverity];
+    });
 
   // エンゲージメントドライバー（全社設問スコア × 部署KPI達成率の相関）
   const kpiAchs = displayDepts.map(d => d.kpiAch);
@@ -97,11 +121,11 @@ export default function HrStrategyPage() {
             <p className="text-slate-400 text-sm font-medium">離職リスクの早期検知・エンゲージメント改善・AI人事戦略提言</p>
           </div>
 
-          {/* Section ①: 離職リスクアラート */}
+          {/* Section ①: リスクアラート */}
           <section>
             <div className="flex items-center gap-2 mb-4">
               <AlertTriangle className="w-4.5 h-4.5 text-rose-500" />
-              <h2 className="text-base font-black text-slate-700">離職リスクアラート</h2>
+              <h2 className="text-base font-black text-slate-700">リスクアラート</h2>
             </div>
 
             {!hasData || riskData.length === 0 ? (
@@ -111,22 +135,25 @@ export default function HrStrategyPage() {
             ) : (
               <div className="space-y-3">
                 {riskData.map(d => {
-                  const s = RISK_STYLE[d.risk.level as keyof typeof RISK_STYLE] || RISK_STYLE.low;
+                  const c = CARD_STYLE[d.risk.topSeverity as keyof typeof CARD_STYLE];
                   return (
-                    <div key={d.id} className={cn("rounded-2xl border p-5 flex items-start gap-4", s.bg, s.border)}>
-                      <div className={cn("w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0", s.dot)} />
+                    <div key={d.id} className={cn("rounded-2xl border p-5 flex items-start gap-4", c.bg, c.border)}>
+                      <div className={cn("w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0", c.dot)} />
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3 mb-2">
+                        <div className="flex items-center gap-2 mb-2">
                           <span className="font-black text-slate-800 text-sm">{d.name}</span>
-                          <span className={cn("text-[10px] font-black px-2 py-0.5 rounded-lg", s.badge)}>
-                            {s.label} {d.risk.score}点
-                          </span>
                         </div>
                         <div className="flex flex-wrap gap-1.5">
-                          {d.risk.factors.length > 0
-                            ? d.risk.factors.map(f => (
-                                <span key={f} className="text-[11px] bg-white/70 text-slate-600 border border-slate-200 px-2.5 py-0.5 rounded-full font-medium">
-                                  {f}
+                          {d.risk.alerts.length > 0
+                            ? d.risk.alerts.map(a => (
+                                <span
+                                  key={a.label}
+                                  className={cn(
+                                    "text-[11px] px-2.5 py-0.5 rounded-full font-medium",
+                                    TAG_STYLE[a.severity as keyof typeof TAG_STYLE]
+                                  )}
+                                >
+                                  {a.label}
                                 </span>
                               ))
                             : <span className="text-[11px] text-slate-400">特記事項なし</span>
