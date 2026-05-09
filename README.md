@@ -2,18 +2,55 @@
 
 組織の「体温」を可視化するダッシュボードアプリ。KPIと現場の声を組み合わせ、AIが経営者向けに組織状態を分析・提案します。
 
-## 技術スタック
+## 1. 核心的な設計思想 (Core Philosophy)
 
-- **フレームワーク:** Next.js 16 (App Router)
-- **認証 / DB:** Supabase (Google OAuth)
-- **デプロイ:** Vercel
-- **スタイリング:** Tailwind CSS
+SignsAIは、Gallup社の「State of the Global Workplace」レポートが提唱する**「エンゲージメント（体温）が経営KPIを左右する」**という構造的課題を解決するためのプロダクトです。
+
+- **KPI × 体温のクロス分析**: 業績（数字）と組織状態（感情）を分離せず、一つのダッシュボードで統合管理します。
+- **マネージャーへの意思決定支援**: チームのエンゲージメント分散の70%を決定づけるマネージャーに対し、AIが「今、何をすべきか」を断言します。
+- **予兆（Signs）管理**: 問題が顕在化する前の微かな変化を捉え、先行指標による組織運営を可能にします。
+
+詳細な設計思想と理論的根拠については、[docs/PHILOSOPHY.md](docs/PHILOSOPHY.md) を参照してください。
+
+## 2. 技術スタック
+
+- **フレームワーク**: Next.js 16 (App Router)
+- **認証 / DB**: Supabase (PostgreSQL, Auth, RLS)
+- **AI**: Claude API (Anthropic)
+- **スタイリング**: Tailwind CSS
+- **デプロイ**: Vercel
+
+## 3. 画面・機能一覧
+
+### 3-1. ユーザー向け主要画面
+
+| URL | 画面名 | 役割 |
+|---|---|---|
+| `/` | トップダッシュボード | KPIと体温のクロス分析、AI診断、重要指標の俯瞰 |
+| `/login` / `/register` | 認証 | Google OAuth / メールパスワードによるログイン・新規登録 |
+| `/forgot-password` | パスワード再設定 | パスワードリセットの申請 |
+| `/password-update` | パスワード更新 | 認証メール経由での新しいパスワード設定 |
+| `/onboarding` | オンボーディング | 企業情報・部署・KPI・組織方針の初期設定ウィザード |
+| `/kpi` | KPI入力画面 | 月次の業績データの投入・過去推移の確認 |
+| `/survey` | アンケート管理 | 従業員へのアンケート配布状況の確認・集計実行 |
+| `/survey/[dept_id]` | アンケート回答 | 従業員が回答する匿名アンケートフォーム（ログイン不要） |
+| `/settings` | 企業設定 | 企業基本情報、プロフィール管理、プラン確認 |
+| `/voice-check` | ボイスチェック | AIによる定性フィードバックの深掘り・壁打ち |
+| `/docs` | ドキュメントハブ | 導入ガイド、PDCAサイクル、指標の解釈など14以上のヘルプ記事 |
+| `/privacy` / `/terms` | 法務情報 | プライバシーポリシーおよび利用規約 |
+
+### 3-2. 管理・インフラ
+
+| URL | 画面名 | 役割 |
+|---|---|---|
+| `/admin` | 管理者ポータル | 運営専用。全テナント管理・売上・アラート監視 |
+| `/auth/callback` | OAuth連携 | 外部認証プロバイダーからのリダイレクト処理 |
 
 ---
 
-## ローカル開発環境のセットアップ
+## 4. 開発環境のセットアップ
 
-### 1. リポジトリのクローン
+### 4-1. リポジトリのクローンとインストール
 
 ```bash
 git clone https://github.com/tsuka1128/signs-ai.git
@@ -21,97 +58,63 @@ cd signs-ai
 npm install
 ```
 
-### 2. 環境変数の設定
+### 4-2. 環境変数の設定
 
-プロジェクトルートに `.env.local` を作成し、以下を記載：
+`.env.local` を作成し、以下のプレースホルダーを適切な値（管理者に確認）に置換して設定してください。
 
-```env
-# Supabase 接続情報（.co ドメインに注意）
-NEXT_PUBLIC_SUPABASE_URL=https://vefupudpxsmxvuwxhhbo.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<Supabase の anon key>
+```bash
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://<your-project-id>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
+SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
 
-# Google OAuth（Supabase Auth 経由で使用）
-GOOGLE_CLIENT_ID=<Google Cloud Console の クライアントID>
-GOOGLE_CLIENT_SECRET=<Google Cloud Console の クライアントシークレット>
+# Anthropic (Claude API)
+ANTHROPIC_API_KEY=<your-claude-api-key>
+
+# Google Cloud (Service Account for Sheets API)
+GOOGLE_SERVICE_ACCOUNT_EMAIL=<your-service-account-email>
+GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 ```
 
-> ⚠️ `.env.local` は `.gitignore` に含まれています。絶対にコミットしないでください。
-
-### 3. 開発サーバーの起動
+### 4-3. 開発サーバーの起動
 
 ```bash
 npm run dev
 ```
 
-[http://localhost:3000](http://localhost:3000) でアクセスできます。
+---
+
+## 5. デプロイと運用
+
+### 5-1. デプロイ手順
+
+1. 変更をステージング（ファイル/ディレクトリを明示すること）
+   ```bash
+   git add src/ docs/ public/
+   ```
+2. コミット
+   ```bash
+   git commit -m "feat: 新機能の追加"
+   ```
+3. GitHub へプッシュ
+   ```bash
+   git push origin <branch-name>
+   ```
+4. Vercel でデプロイ状況を確認
+
+### 5-2. Supabase / Google OAuth 設定
+
+本番環境（Vercel）で認証を正常に動作させるため、以下の Redirect URLs を登録してください。
+- `https://signs-ai.vercel.app/auth/callback`
+- `http://localhost:3000/auth/callback` (ローカル開発用)
 
 ---
 
-## 本番環境へのデプロイ手順
+## 6. ドキュメント
 
-### ① Vercel への環境変数の追加
+詳細な仕様については `docs/` ディレクトリ内の各ファイルを参照してください。
 
-Vercel ダッシュボード → `signs-ai` プロジェクト → **Settings** → **Environment Variables** で以下を登録：
-
-| Key | Value |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://vefupudpxsmxvuwxhhbo.supabase.co`（`.co` に注意） |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase の anon key |
-
-登録後、最新の Deployment を **Redeploy** する。
-
----
-
-### ② Supabase の Redirect URL 設定
-
-[Supabase ダッシュボード → Authentication → URL Configuration](https://supabase.com/dashboard/project/vefupudpxsmxvuwxhhbo/auth/url-configuration) を開き、**Redirect URLs** に以下を追加：
-
-```
-https://signs-ai.vercel.app/auth/callback
-http://localhost:3000/auth/callback  ← ローカル開発用（既存）
-```
-
----
-
-### ③ Google Cloud Console の OAuth 設定
-
-[Google Cloud Console → OAuth 2.0 クライアント](https://console.cloud.google.com/apis/credentials/oauthclient/884101511390-0171nu8bsf9np85m2r4b5fd9rlaberkn.apps.googleusercontent.com) を開き、**承認済みのリダイレクト URI** に以下を追加：
-
-```
-https://signs-ai.vercel.app/auth/callback
-http://localhost:3000/auth/callback  ← ローカル開発用（既存）
-```
-
----
-
-### ④ GitHub → Vercel 自動デプロイ
-
-`main` ブランチへのプッシュで Vercel が自動デプロイします。
-
-```bash
-git add -A
-git commit -m "feat: ..."
-git push origin main
-```
-
----
-
-## 主な画面一覧
-
-| URL | 説明 |
-|---|---|
-| `/` | ダッシュボード（メイン画面） |
-| `/login` | ログイン画面（Google OAuth） |
-| `/onboarding` | 初回セットアップ（企業・部署・KPI登録） |
-| `/settings` | 組織情報管理（企業・部署・KPI の編集） |
-| `/kpi` | 毎月のKPI入力 |
-| `/form` | 匿名アンケート回答 |
-| `/marketing` | マーケティング LP |
-
----
-
-## 注意事項
-
-- Supabase URL は **`.supabase.co`**（`.com` ではない）
-- 環境変数追加後は必ず **Redeploy** すること
-- `signs-ai.vercel.app` でログインするには上記 ②③ の設定が必要
+- [PHILOSOPHY.md](docs/PHILOSOPHY.md): 設計思想と理論的根拠
+- [signs-ai-requirements.md](docs/signs-ai-requirements.md): MVP 要件定義書
+- [database-schema.md](docs/database-schema.md): データベース設計
+- [rls-policies.md](docs/rls-policies.md): セキュリティ（行レベル分離）設計
