@@ -716,9 +716,23 @@ export function useDashboardData(
                     });
                     const avgAch = c > 0 ? tAch / c : 0;
                     return calculateProductivity(avgAch, pulseHistory[idx]);
-                })
+                }),
+                kpiAchHistory: last13Months.map((month) => {
+                    const mRecsMonth = state.realKpiRecords.filter(r =>
+                        normalizeMonth(r.recorded_month) === normalizeMonth(month) &&
+                        r.axis_id === axis.id
+                    );
+                    let tAch = 0, c = 0;
+                    mRecsMonth.forEach(rec => {
+                        const def = state.realKpis.find(k => k.id === rec.kpi_definition_id);
+                        const ach = calculateAchievementRate(rec.value, rec.target_value, def?.is_higher_better !== false);
+                        if (ach !== null) { tAch += ach; c++; }
+                    });
+                    return c > 0 ? Math.round(tAch / c) : 0;
+                }),
             };
         });
+
     }, [state.realAxes, state.realResponses, state.realKpiRecords, state.realKpis, state.realResources, company, last13Months]);
 
     const handleRunAnalyze = async () => {
