@@ -1,10 +1,11 @@
 "use client";
 
 import { TabBar } from "@/components/ui/TabBar";
+import { AxisComparisonSection } from "@/components/dashboard/AxisComparisonSection";
 import { OrganizationCard } from "@/components/dashboard/OrganizationCard";
 import { FeedbackItem } from "@/components/dashboard/FeedbackItem";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Users, Package } from "lucide-react";
+import { Users } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 
 interface OrganizationSectionProps {
@@ -97,68 +98,61 @@ export function OrganizationSection({
                 active={orgView}
                 onChange={setOrgView}
             />
+
             <div className="space-y-4 pt-2">
-                {(orgView === "dept" ? displayDepts : displayAxes).length > 0 ? (
-                    (orgView === "dept" ? displayDepts : displayAxes).map((d: any, i: number) => (
-                        <OrganizationCard
-                            key={i}
-                            name={d.name}
-                            head={d.head}
-                            pulse={d.pulse}
-                            weather={d.weather}
-                            arrow={d.arrow || "flat"}
-                            kpis={d.kpis}
-                            laborCostPerHead={d.laborCostPerHead}
-                            isStale={d.isStale}
-                            dataMonth={d.dataMonth}
+                {orgView === "dept" ? (
+                    /* 部署別：既存のカード一覧（変更なし） */
+                    displayDepts.length > 0 ? (
+                        displayDepts.map((d: any, i: number) => (
+                            <OrganizationCard key={i} {...d} />
+                        ))
+                    ) : (
+                        <EmptyState
+                            title="部署が登録されていません"
+                            description="部署を登録することで、組織ごとの熱量やKPIを可視化できます。"
+                            actionLabel="設定を開く"
+                            actionHref="/onboarding"
+                            icon={<Users className="w-12 h-12 text-slate-200" />}
                         />
-                    ))
+                    )
                 ) : (
-                    <EmptyState
-                        title={orgView === "dept" ? "部署が登録されていません" : `${secondaryAxisName}が登録されていません`}
-                        description={orgView === "dept"
-                            ? "部署を登録することで、組織ごとの熱量やKPIを可視化できます。"
-                            : `${secondaryAxisName}ごとの分析を行うには、設定から項目を追加してください。`}
-                        actionLabel="設定を開く"
-                        actionHref="/onboarding" // または /settings
-                        icon={orgView === "dept" ? <Users className="w-12 h-12 text-slate-200" /> : <Package className="w-12 h-12 text-slate-200" />}
+                    /* 担当領域別：新しい比較分析ビュー */
+                    <AxisComparisonSection
+                        axes={displayAxes}
+                        secondaryAxisName={secondaryAxisName}
+                        aiContent={aiContent}
                     />
                 )}
             </div>
 
-            {/* 下層：組織への問いかけ */}
-            <div className="bg-slate-50/50 rounded-2xl border border-slate-100 px-6 py-5 space-y-4">
-                <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                        組織として話したいこと
-                    </span>
+            {/* 下層：組織への問いかけ（部署ビューの時のみ表示） */}
+            {orgView === "dept" && (
+                <div className="bg-slate-50/50 rounded-2xl border border-slate-100 px-6 py-5 space-y-4">
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            組織として話したいこと
+                        </span>
+                    </div>
+
+                    {/* 部署間フィードバック */}
+                    {aiContent?.department_feedback?.length > 0 ? (
+                        <div className="space-y-2">
+                            {aiContent.department_feedback.map((f: any, i: number) => (
+                                <FeedbackItem key={i} from={f.from_dept} to={f.to_dept}
+                                    type={f.type === "positive" || f.type === "warning" || f.type === "alert" || f.type === "info" ? f.type : "info"}
+                                    text={f.text}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        /* フォールバック：データがない場合は汎用の問いかけ */
+                        <div className="space-y-3 text-sm text-slate-500 font-medium leading-relaxed">
+                            <p>💭 各部署のKPIの達成状況を見て、何か気づいたことはありますか？うまくいっている部署の工夫を、組織全体で共有できると良いかもしれません。</p>
+                            <p>💭 体温とKPIのバランスはいかがでしょうか。どちらか一方に偏っている部署があれば、その背景について話し合ってみる価値があります。</p>
+                        </div>
+                    )}
                 </div>
-
-                {/* 部署間フィードバック */}
-                {aiContent?.department_feedback?.length > 0 ? (
-                    <div className="space-y-2">
-                        {aiContent.department_feedback.map((f: any, i: number) => (
-                            <FeedbackItem key={i} from={f.from_dept} to={f.to_dept}
-                                type={f.type === "positive" || f.type === "warning" || f.type === "alert" || f.type === "info" ? f.type : "info"}
-                                text={f.text}
-                            />
-                        ))}
-                    </div>
-                ) : (
-                    /* フォールバック：データがない場合は汎用の問いかけ */
-                    <div className="space-y-3 text-sm text-slate-500 font-medium leading-relaxed">
-                        <p>💭 各部署のKPIの達成状況を見て、何か気づいたことはありますか？うまくいっている部署の工夫を、組織全体で共有できると良いかもしれません。</p>
-                        <p>💭 体温とKPIのバランスはいかがでしょうか。どちらか一方に偏っている部署があれば、その背景について話し合ってみる価値があります。</p>
-                    </div>
-                )}
-
-                {/* 担当領域別のAIコメント（product view の場合） */}
-                {orgView === "product" && aiContent?.deep_report?.strategic_alignment && (
-                    <div className="text-sm text-slate-600 leading-relaxed bg-white p-4 rounded-xl border border-slate-100 mt-2">
-                        {aiContent.deep_report.strategic_alignment}
-                    </div>
-                )}
-            </div>
+            )}
         </div>
     );
 }
