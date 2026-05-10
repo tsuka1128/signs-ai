@@ -128,10 +128,10 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-slate-50 bg-slate-50/30">
                     <h3 className="text-sm font-black text-slate-800 tracking-tight">
-                        {secondaryAxisName}別 KPIランキング
+                        {secondaryAxisName}別 KPI 実績値ランキング
                     </h3>
                     <p className="text-[10px] text-slate-400 font-bold mt-0.5 uppercase tracking-widest">
-                        各指標の領域間比較
+                        バー = 実績値の大小 ｜ 右端 = 目標達成率
                     </p>
                 </div>
                 <div className="p-6 space-y-10">
@@ -171,7 +171,13 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
                                                     <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                                         <div className="h-full rounded-full transition-all duration-700" style={{ width: `${barWidth}%`, backgroundColor: color }} />
                                                     </div>
-                                                    <span className="text-xs font-black tabular-nums w-10 shrink-0 text-right" style={{ color }}>{ach}%</span>
+                                                    <span className={cn(
+                                                        "text-xs font-black tabular-nums w-10 shrink-0 text-right",
+                                                        ach >= 100 ? "text-emerald-500" :
+                                                        ach >= 80  ? "text-amber-500"  : "text-rose-500"
+                                                    )}>
+                                                        {ach}%
+                                                    </span>
                                                 </div>
                                             );
                                         })}
