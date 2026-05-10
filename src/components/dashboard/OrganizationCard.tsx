@@ -95,7 +95,7 @@ export function OrganizationCard({ name, head, pulse, weather, arrow, kpis, labo
                     <div className="px-5 py-4">
                         {secondaryKpis.length > 0 ? (
                             /* 補助KPIがある場合：左右2カラム */
-                            <div className="flex gap-6 items-start">
+                            <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start">
                                 {/* 左：代表KPI（大） */}
                                 <div className="flex-1 space-y-1.5 min-w-0">
                                     <div className="flex items-center gap-2">
@@ -138,10 +138,10 @@ export function OrganizationCard({ name, head, pulse, weather, arrow, kpis, labo
                                 </div>
 
                                 {/* 縦区切り */}
-                                <div className="w-px self-stretch bg-slate-100 shrink-0" />
+                                <div className="hidden md:block w-px self-stretch bg-slate-100 shrink-0" />
 
                                 {/* 右：補助KPI（中サイズ・縦並び） */}
-                                <div className="flex flex-col gap-3 shrink-0 w-[220px]">
+                                <div className="grid grid-cols-2 md:grid-cols-1 gap-3 w-full md:w-[220px] md:shrink-0">
                                     {visibleSecondary.map((k, i) => {
                                         const achColor = k.ach === null ? "text-slate-400"
                                             : k.ach >= 100 ? "text-emerald-500"
