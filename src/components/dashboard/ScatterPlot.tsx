@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 interface ScatterData {
     id: string;
@@ -73,8 +74,10 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
         gray: "#94A3B8",
         dark: "#1E293B"
     };
-
+    
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => { setMounted(true); }, []);
 
     const renderChart = () => (
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto font-sans select-none relative">
@@ -228,7 +231,7 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
             </div>
 
             {/* ライトボックス（モーダル）表示 */}
-            {isModalOpen && (
+            {isModalOpen && mounted && createPortal(
                 <div className="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setIsModalOpen(false)}>
                     <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4 md:p-6 relative shadow-2xl touch-pan-y" onClick={e => e.stopPropagation()}>
                         <div className="flex flex-col gap-4 mb-4">
@@ -289,7 +292,8 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
                             {renderChart()}
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </>
     );
