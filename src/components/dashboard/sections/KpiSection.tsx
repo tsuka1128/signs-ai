@@ -44,13 +44,10 @@ export function KpiSection({
                         {displayKpis.map(k => (
                             <div key={k.id} className="flex-shrink-0">
                                 <KpiSummaryCard
-                                    id={k.id}
                                     name={k.name}
-                                    val={k.val}
+                                    value={String(k.val)}
                                     unit={k.unit}
-                                    prev={k.prev}
-                                    target={k.target}
-                                    active={selKpi === k.id}
+                                    isActive={selKpi === k.id}
                                     onClick={() => setSelKpi(k.id)}
                                 />
                             </div>
