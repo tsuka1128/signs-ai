@@ -154,9 +154,14 @@ export default function HrStrategyPage() {
         r.department_id === dept.id &&
         normalizeMonth(r.recorded_month) === monthStr
       );
-      const answers = responses.flatMap((r: any) => r.survey_answers || []);
-      const match = answers.find((a: any) => String(a.question_id) === String(q.id));
-      return match?.score ?? 0;
+      const scores: number[] = [];
+      responses.forEach((r: any) => {
+        const ans = r.survey_answers || [];
+        const match = ans.find((a: any) => String(a.question_id) === String(q.id));
+        if (match?.score) scores.push(match.score);
+      });
+      if (scores.length === 0) return 0;
+      return scores.reduce((s: number, v: number) => s + v, 0) / scores.length;
     });
     return {
       text: q.text,
