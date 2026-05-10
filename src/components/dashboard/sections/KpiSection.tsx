@@ -192,7 +192,8 @@ export function KpiSection({
                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-slate-100 shadow-sm">Analysis View</span>
                             </div>
                         </div>
-                        <div className="overflow-x-auto">
+                        <div className="relative">
+                            <div className="overflow-x-auto sm:overflow-visible">
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-slate-50/50">
@@ -304,6 +305,7 @@ export function KpiSection({
                                 </tbody>
                             </table>
                         </div>
+                    </div>
                     </div>
                 </>
             ) : (
