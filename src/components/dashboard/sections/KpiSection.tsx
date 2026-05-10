@@ -181,7 +181,7 @@ export function KpiSection({
                         <div className="px-6 py-5 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
                             <h3 className="text-sm font-black text-slate-800 tracking-tight flex items-center gap-2">
                                 <TrendingDown className="w-4 h-4 text-slate-400" />
-                                部署別 KPI 達成の質と設定健全性
+                                部署別 KPI コンディション診断
                             </h3>
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Analysis View</span>
                         </div>
@@ -192,7 +192,7 @@ export function KpiSection({
                                         <th className="py-3 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">部署</th>
                                         <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">達成率</th>
                                         <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">体温</th>
-                                        <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">達成の質</th>
+                                        <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">コンディション診断</th>
                                         <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">目標設定の評価</th>
                                     </tr>
                                 </thead>

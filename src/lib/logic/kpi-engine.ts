@@ -44,7 +44,7 @@ export function calculateGrowthRate(current: number, previous: number): number |
     return Math.round((current / previous) * 100);
 }
 
-/** KPI達成の"質"を4象限で判定 */
+/** KPI達成の"質"を4象限で判定（コンディション診断） */
 export type KpiQuality = "healthy" | "burnout" | "structural" | "potential";
 
 export function calcKpiQuality(kpiAch: number, pulse: number): KpiQuality {
@@ -59,10 +59,10 @@ export function calcKpiQuality(kpiAch: number, pulse: number): KpiQuality {
 export const KPI_QUALITY_META: Record<KpiQuality, {
   label: string; icon: string; color: string; bg: string; description: string;
 }> = {
-  healthy:    { label: "健全達成",    icon: "✅", color: "text-emerald-600", bg: "bg-emerald-50", description: "KPI達成かつ体温も良好。横展開できるベストプラクティスが存在する可能性。" },
-  burnout:    { label: "焼き付き達成", icon: "⚠️", color: "text-amber-600",  bg: "bg-amber-50",  description: "KPIを達成しているが体温が低下。無理な稼働が継続している可能性。早期介入を推奨。" },
-  structural: { label: "構造課題",    icon: "🔴", color: "text-rose-600",   bg: "bg-rose-50",   description: "KPI未達かつ体温も低下。目標・リソース・戦略のいずれかに根本的な問題がある可能性。" },
-  potential:  { label: "余力あり",    icon: "💡", color: "text-sky-600",    bg: "bg-sky-50",    description: "体温は高いがKPI未達。目標設定のミスマッチか、能力を活かせていない可能性。" },
+  healthy:    { label: "健全（達成）", icon: "✅", color: "text-emerald-600", bg: "bg-emerald-50", description: "KPI達成かつ体温も良好。横展開できるベストプラクティスが存在する可能性。" },
+  burnout:    { label: "焼き付き（達成）", icon: "⚠️", color: "text-amber-600",  bg: "bg-amber-50",  description: "KPIを達成しているが体温が低下。無理な稼働が継続している可能性。早期介入を推奨。" },
+  structural: { label: "構造課題（未達）", icon: "🔴", color: "text-rose-600",   bg: "bg-rose-50",   description: "KPI未達かつ体温も低下。目標・リソース・戦略のいずれかに根本的な問題がある可能性。" },
+  potential:  { label: "余力あり（未達）", icon: "💡", color: "text-sky-600",    bg: "bg-sky-50",    description: "体温は高いがKPI未達。目標設定のミスマッチか、能力を活かせていない可能性。" },
 };
 
 /** KPI設定の"健全性"を判定（過去13ヶ月の達成率分布から） */

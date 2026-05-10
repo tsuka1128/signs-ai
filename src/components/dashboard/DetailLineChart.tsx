@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { calcKpiQuality, KPI_QUALITY_META } from "@/lib/logic/kpi-engine";
 
 interface DetailLineChartProps {
     data: number[];
@@ -181,36 +182,19 @@ export function DetailLineChart({
                 />
 
                 {/* 各月のデータポイントを描画 */}
-                {points.map((p, i) => {
-                    const pulse = pulseHistory[i] ?? 0;
-                    const achRate = targetData[i] ? (p.v / targetData[i]) * 100 : 0;
-                    // 焼き付き達成判定: 達成率80%以上 かつ 体温3.5未満
-                    const isBurnout = achRate >= 80 && pulse > 0 && pulse < 3.5;
-
-                    return (
-                        <g key={i}>
-                            <circle
-                                cx={p.x}
-                                cy={p.y}
-                                r={hoveredIndex === i ? 6 : (p.v > 0 ? 4 : 2)}
-                                fill={hoveredIndex === i ? color : (p.v > 0 ? color : "#CBD5E1")}
-                                stroke="white"
-                                strokeWidth={hoveredIndex === i ? 2 : 0}
-                                className="transition-all duration-200"
-                            />
-                            {isBurnout && (
-                                <text 
-                                    x={p.x} y={p.y - 12} 
-                                    textAnchor="middle" 
-                                    className="text-[10px] animate-bounce select-none"
-                                    style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.1))" }}
-                                >
-                                    ⚠️
-                                </text>
-                            )}
-                        </g>
-                    );
-                })}
+                {points.map((p, i) => (
+                    <g key={i}>
+                        <circle
+                            cx={p.x}
+                            cy={p.y}
+                            r={hoveredIndex === i ? 6 : (p.v > 0 ? 4 : 2)}
+                            fill={hoveredIndex === i ? color : (p.v > 0 ? color : "#CBD5E1")}
+                            stroke="white"
+                            strokeWidth={hoveredIndex === i ? 2 : 0}
+                            className="transition-all duration-200"
+                        />
+                    </g>
+                ))}
 
                 {/* X-Axis Labels */}
                 {labels.map((label, i) => {
@@ -282,6 +266,22 @@ export function DetailLineChart({
                                         {(targetData[hoveredIndex] || 0) > 0 ? Math.round(((data[hoveredIndex] || 0) / (targetData[hoveredIndex] || 0)) * 100) : 0}%
                                     </span>
                                 </div>
+                                {pulseHistory[hoveredIndex] > 0 && (
+                                    <div className="flex justify-between items-center gap-3 pt-1 mt-1 border-t border-slate-50">
+                                        <span className="text-[9px] text-slate-400 font-bold">コンディション</span>
+                                        {(() => {
+                                            const ach = targetData[hoveredIndex] ? ((data[hoveredIndex] || 0) / (targetData[hoveredIndex] || 0)) * 100 : 0;
+                                            const pulse = pulseHistory[hoveredIndex];
+                                            const quality = calcKpiQuality(ach, pulse);
+                                            const meta = KPI_QUALITY_META[quality];
+                                            return (
+                                                <span className={`text-[10px] font-black ${meta.color}`}>
+                                                    {meta.icon} {meta.label}
+                                                </span>
+                                            );
+                                        })()}
+                                    </div>
+                                )}
                             </>
                         )}
                     </div>
