@@ -135,63 +135,75 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
                     </p>
                 </div>
                 <div className="p-6 space-y-10">
-                    {allKpiNames.map(kpiName => (
-                        <div key={kpiName} className="space-y-3">
-                            <div className="flex items-center gap-2">
-                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                    {kpiName}
-                                </h4>
-                                {kpiName === primaryKpiName && (
-                                    <span className="text-[8px] font-black bg-teal/5 text-teal px-1.5 py-0.5 rounded uppercase">
-                                        代表指標
-                                    </span>
-                                )}
-                            </div>
-                            <div className="space-y-3">
-                                {[...axes]
-                                    .map(ax => ({ ax, kpi: ax.kpis?.find((k: any) => k.name === kpiName) }))
-                                    .filter(({ kpi }) => kpi)
-                                    .sort((a, b) => (b.kpi.ach ?? 0) - (a.kpi.ach ?? 0))
-                                    .map(({ ax, kpi }, rankIdx) => {
-                                        const color = axisColorMap.get(ax.id) ?? AXIS_COLORS[0];
-                                        const ach = kpi.ach ?? 0;
-                                        return (
-                                            <div key={ax.id} className="flex items-center gap-3">
-                                                {/* 順位 */}
-                                                <span className="text-[10px] font-black text-slate-300 w-4 shrink-0 text-right">
-                                                    {rankIdx + 1}
-                                                </span>
-                                                {/* カラードット */}
-                                                <div
-                                                    className="w-2 h-2 rounded-full shrink-0"
-                                                    style={{ backgroundColor: color }}
-                                                />
-                                                {/* 領域名 */}
-                                                <span className="text-xs font-bold text-slate-700 w-24 shrink-0 truncate">
-                                                    {ax.name}
-                                                </span>
-                                                {/* 実績値 */}
-                                                <span className="text-xs font-black text-slate-600 w-20 shrink-0 text-right tabular-nums">
-                                                    {kpi.val}
-                                                </span>
-                                                {/* バー */}
-                                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    {allKpiNames.map(kpiName => {
+                        const entries = [...axes]
+                            .map(ax => ({ ax, kpi: ax.kpis?.find((k: any) => k.name === kpiName) }))
+                            .filter(({ kpi }) => kpi);
+
+                        // 実績値の数値を抽出（「2,158万円」「5件」など非数値文字を除去）
+                        const numericVals = entries.map(({ kpi }) =>
+                            parseFloat(String(kpi.val ?? "0").replace(/[^0-9.]/g, "")) || 0
+                        );
+                        const maxNumericVal = Math.max(...numericVals, 1);
+
+                        return (
+                            <div key={kpiName} className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                        {kpiName}
+                                    </h4>
+                                    {kpiName === primaryKpiName && (
+                                        <span className="text-[8px] font-black bg-teal/5 text-teal px-1.5 py-0.5 rounded uppercase">
+                                            代表指標
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="space-y-3">
+                                    {entries
+                                        .sort((a, b) => (b.kpi.ach ?? 0) - (a.kpi.ach ?? 0))
+                                        .map(({ ax, kpi }, rankIdx) => {
+                                            const color = axisColorMap.get(ax.id) ?? AXIS_COLORS[0];
+                                            const ach = kpi.ach ?? 0;
+                                            const numVal = parseFloat(String(kpi.val ?? "0").replace(/[^0-9.]/g, "")) || 0;
+                                            const barWidth = (numVal / maxNumericVal) * 100;
+
+                                            return (
+                                                <div key={ax.id} className="flex items-center gap-3">
+                                                    {/* 順位 */}
+                                                    <span className="text-[10px] font-black text-slate-300 w-4 shrink-0 text-right">
+                                                        {rankIdx + 1}
+                                                    </span>
+                                                    {/* カラードット */}
                                                     <div
-                                                        className="h-full rounded-full transition-all duration-700"
-                                                        style={{
-                                                            width: `${Math.min(ach, 100)}%`,
-                                                            backgroundColor: color
-                                                        }}
+                                                        className="w-2 h-2 rounded-full shrink-0"
+                                                        style={{ backgroundColor: color }}
                                                     />
+                                                    {/* 領域名 */}
+                                                    <span className="text-xs font-bold text-slate-700 w-24 shrink-0 truncate">
+                                                        {ax.name}
+                                                    </span>
+                                                    {/* 実績値 */}
+                                                    <span className="text-xs font-black text-slate-600 w-20 shrink-0 text-right tabular-nums">
+                                                        {kpi.val}
+                                                    </span>
+                                                    {/* バー: 実績値の相対比で幅を決める */}
+                                                    <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full rounded-full transition-all duration-700"
+                                                            style={{
+                                                                width: `${barWidth}%`,
+                                                                backgroundColor: color
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    {/* 達成率 */}
+                                                    <span
+                                                        className="text-xs font-black tabular-nums w-10 shrink-0 text-right"
+                                                        style={{ color }}
+                                                    >
+                                                        {ach}%
+                                                    </span>
                                                 </div>
-                                                {/* 達成率 */}
-                                                <span
-                                                    className="text-xs font-black tabular-nums w-10 shrink-0 text-right"
-                                                    style={{ color }}
-                                                >
-                                                    {ach}%
-                                                </span>
-                                            </div>
                                         );
                                     })}
                             </div>
