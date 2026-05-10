@@ -192,16 +192,9 @@ export default function HrStrategyPage() {
 
           {/* Section ②: エンゲージメントドライバー分析 */}
           <section>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4.5 h-4.5 text-teal-500" />
-                <h2 className="text-base font-black text-slate-700">エンゲージメントドライバー分析</h2>
-              </div>
-              {panelN > 0 && (
-                <span className="text-[10px] text-slate-400 font-medium">
-                  n={panelN} データ点
-                </span>
-              )}
+            <div className="flex items-center gap-2 mb-3">
+              <TrendingUp className="w-4.5 h-4.5 text-teal-500" />
+              <h2 className="text-base font-black text-slate-700">エンゲージメントドライバー分析</h2>
             </div>
 
             {/* 凡例 */}
