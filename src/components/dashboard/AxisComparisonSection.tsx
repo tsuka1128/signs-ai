@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils/index";
 import { OrganizationCard } from "@/components/dashboard/OrganizationCard";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { WeatherIcon } from "@/components/ui/WeatherIcon";
+import { calcKpiQuality, KPI_QUALITY_META } from "@/lib/logic/kpi-engine";
 import { ChevronDown, ChevronUp, Package } from "lucide-react";
 
 // 領域ごとのカラーパレット（最大8領域まで対応）
@@ -25,18 +27,24 @@ interface AxisComparisonSectionProps {
 }
 
 export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: AxisComparisonSectionProps) {
-    // 代表KPIの達成率で降順ソート
-    const rankedAxes = [...axes].sort((a, b) => {
-        const achA = a.kpis?.[0]?.ach ?? a.kpiAch ?? 0;
-        const achB = b.kpis?.[0]?.ach ?? b.kpiAch ?? 0;
-        return achB - achA;
-    });
+    // 領域ごとの色を固定するマップ
+    const axisColorMap = useMemo(() => {
+        const map = new Map<string, string>();
+        axes.forEach((axis, idx) => {
+            map.set(axis.id, AXIS_COLORS[idx % AXIS_COLORS.length]);
+        });
+        return map;
+    }, [axes]);
 
-    // 代表KPI名（全領域で同じKPIを持つため最初の領域から取得）
+    // 全領域に存在する全てのKPI名を取得（重複なし）
+    const allKpiNames = useMemo(() => {
+        const names = new Set<string>();
+        axes.forEach(ax => ax.kpis?.forEach((k: any) => names.add(k.name)));
+        return Array.from(names);
+    }, [axes]);
+
+    // 代表KPI名（最初のKPI）
     const primaryKpiName = axes.find(a => a.kpis?.[0])?.kpis?.[0]?.name ?? "代表KPI";
-
-    // 最大達成率（バーの100%基準）
-    const maxAch = Math.max(...rankedAxes.map(a => a.kpis?.[0]?.ach ?? a.kpiAch ?? 0), 1);
 
     // トレンドチャート用データ（直近6ヶ月）
     const trendMonths = 6;
@@ -60,61 +68,135 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
 
     return (
         <div className="space-y-6">
-            {/* Block 1: 達成率ランキング */}
+            {/* Block 0: 領域コンディション一覧（横スクロール） */}
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+                {axes.map((axis) => {
+                    const color = axisColorMap.get(axis.id) ?? AXIS_COLORS[0];
+                    const quality = calcKpiQuality(axis.kpiAch ?? 0, axis.pulse ?? 0);
+                    const meta = KPI_QUALITY_META[quality];
+                    return (
+                        <div
+                            key={axis.id}
+                            className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3 flex flex-col items-center gap-2 shrink-0 min-w-[120px]"
+                        >
+                            {/* 領域識別カラー帯 */}
+                            <div
+                                className="w-full h-1 rounded-full mb-1"
+                                style={{ backgroundColor: color }}
+                            />
+                            {/* 天気アイコン */}
+                            <WeatherIcon
+                                type={axis.pulse === 0 ? "cloud" : axis.weather}
+                                size={28}
+                                className={axis.pulse === 0 ? "opacity-20 grayscale" : ""}
+                            />
+                            {/* 領域名 */}
+                            <span className="text-xs font-black text-slate-700 text-center leading-tight truncate w-full">
+                                {axis.name}
+                            </span>
+                            {/* コンディション診断 */}
+                            {axis.pulse > 0 && axis.kpiAch > 0 ? (
+                                <span className={cn(
+                                    "text-[9px] font-black px-2 py-0.5 rounded-full whitespace-nowrap",
+                                    meta.bg, meta.color
+                                )}>
+                                    {meta.icon} {meta.label}
+                                </span>
+                            ) : (
+                                <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-slate-50 text-slate-300">
+                                    データ不足
+                                </span>
+                            )}
+                            {/* 体温 */}
+                            <div className="flex flex-col items-center mt-1">
+                                <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">体温</span>
+                                <span className={cn(
+                                    "text-base font-black tabular-nums",
+                                    axis.pulse >= 3.8 ? "text-emerald-500" :
+                                    axis.pulse >= 3.0 ? "text-amber-500" :
+                                    axis.pulse > 0    ? "text-rose-500" : "text-slate-300"
+                                )}>
+                                    {axis.pulse > 0 ? axis.pulse.toFixed(1) : "-"}
+                                </span>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Block 1: KPI別達成率ランキング */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-slate-50 bg-slate-50/30">
                     <h3 className="text-sm font-black text-slate-800 tracking-tight">
-                        {secondaryAxisName}別 達成率ランキング
+                        {secondaryAxisName}別 KPIランキング
                     </h3>
                     <p className="text-[10px] text-slate-400 font-bold mt-0.5 uppercase tracking-widest">
-                        代表指標: {primaryKpiName}
+                        各指標の領域間比較
                     </p>
                 </div>
-                <div className="p-6 space-y-4">
-                    {rankedAxes.map((axis, idx) => {
-                        const ach = axis.kpis?.[0]?.ach ?? axis.kpiAch ?? 0;
-                        const val = axis.kpis?.[0]?.val ?? "-";
-                        const color = AXIS_COLORS[idx % AXIS_COLORS.length];
-                        const barWidth = maxAch > 0 ? Math.min((ach / maxAch) * 100, 100) : 0;
-                        const achColor = ach >= 100 ? "text-emerald-500" : ach >= 80 ? "text-amber-500" : "text-rose-500";
-
-                        return (
-                            <div key={axis.id} className="flex items-center gap-4">
-                                {/* 順位 */}
-                                <span className="text-[11px] font-black text-slate-300 w-4 shrink-0 text-right">
-                                    {idx + 1}
-                                </span>
-                                {/* カラードット */}
-                                <div
-                                    className="w-2.5 h-2.5 rounded-full shrink-0"
-                                    style={{ backgroundColor: color }}
-                                />
-                                {/* 領域名 */}
-                                <span className="text-sm font-bold text-slate-700 w-28 shrink-0 truncate">
-                                    {axis.name}
-                                </span>
-                                {/* バー */}
-                                <div className="flex-1 relative h-2 bg-slate-100 rounded-full overflow-hidden">
-                                    <div
-                                        className="absolute inset-y-0 left-0 rounded-full transition-all duration-1000"
-                                        style={{ width: `${barWidth}%`, backgroundColor: color }}
-                                    />
-                                </div>
-                                {/* 値 */}
-                                <span className="text-xs font-black text-slate-500 w-20 shrink-0 text-right">
-                                    {val}
-                                </span>
-                                {/* 達成率 */}
-                                <span className={cn("text-sm font-black tabular-nums w-12 shrink-0 text-right", achColor)}>
-                                    {ach}%
-                                </span>
-                                {/* 体温 */}
-                                <span className="text-[10px] font-bold text-slate-400 w-10 shrink-0 text-right">
-                                    🌡 {axis.pulse > 0 ? axis.pulse.toFixed(1) : "-"}
-                                </span>
+                <div className="p-6 space-y-10">
+                    {allKpiNames.map(kpiName => (
+                        <div key={kpiName} className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                    {kpiName}
+                                </h4>
+                                {kpiName === primaryKpiName && (
+                                    <span className="text-[8px] font-black bg-teal/5 text-teal px-1.5 py-0.5 rounded uppercase">
+                                        代表指標
+                                    </span>
+                                )}
                             </div>
-                        );
-                    })}
+                            <div className="space-y-3">
+                                {[...axes]
+                                    .map(ax => ({ ax, kpi: ax.kpis?.find((k: any) => k.name === kpiName) }))
+                                    .filter(({ kpi }) => kpi)
+                                    .sort((a, b) => (b.kpi.ach ?? 0) - (a.kpi.ach ?? 0))
+                                    .map(({ ax, kpi }, rankIdx) => {
+                                        const color = axisColorMap.get(ax.id) ?? AXIS_COLORS[0];
+                                        const ach = kpi.ach ?? 0;
+                                        return (
+                                            <div key={ax.id} className="flex items-center gap-3">
+                                                {/* 順位 */}
+                                                <span className="text-[10px] font-black text-slate-300 w-4 shrink-0 text-right">
+                                                    {rankIdx + 1}
+                                                </span>
+                                                {/* カラードット */}
+                                                <div
+                                                    className="w-2 h-2 rounded-full shrink-0"
+                                                    style={{ backgroundColor: color }}
+                                                />
+                                                {/* 領域名 */}
+                                                <span className="text-xs font-bold text-slate-700 w-24 shrink-0 truncate">
+                                                    {ax.name}
+                                                </span>
+                                                {/* 実績値 */}
+                                                <span className="text-xs font-black text-slate-600 w-20 shrink-0 text-right tabular-nums">
+                                                    {kpi.val}
+                                                </span>
+                                                {/* バー */}
+                                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full rounded-full transition-all duration-700"
+                                                        style={{
+                                                            width: `${Math.min(ach, 100)}%`,
+                                                            backgroundColor: color
+                                                        }}
+                                                    />
+                                                </div>
+                                                {/* 達成率 */}
+                                                <span
+                                                    className="text-xs font-black tabular-nums w-10 shrink-0 text-right"
+                                                    style={{ color }}
+                                                >
+                                                    {ach}%
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
 
@@ -132,11 +214,11 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
                         </div>
                         {/* 凡例 */}
                         <div className="flex flex-wrap gap-x-3 gap-y-1 sm:justify-end">
-                            {axes.map((axis, idx) => (
+                            {axes.map((axis) => (
                                 <div key={axis.id} className="flex items-center gap-1.5">
                                     <div
                                         className="w-3 h-0.5 rounded-full"
-                                        style={{ backgroundColor: AXIS_COLORS[idx % AXIS_COLORS.length] }}
+                                        style={{ backgroundColor: axisColorMap.get(axis.id) ?? AXIS_COLORS[0] }}
                                     />
                                     <span className="text-[10px] font-bold text-slate-400 truncate max-w-[80px]">
                                         {axis.name}
@@ -146,7 +228,7 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
                         </div>
                     </div>
                     <div className="px-6 py-5">
-                        <TrendChart axes={recentHistory} trendMonths={trendMonths} colors={AXIS_COLORS} />
+                        <TrendChart axes={recentHistory} trendMonths={trendMonths} colorMap={axisColorMap} />
                     </div>
                 </div>
             )}
@@ -180,7 +262,7 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
 }
 
 /* ─── トレンドチャート（SVG）─────────────────────────── */
-function TrendChart({ axes, trendMonths, colors }: { axes: any[]; trendMonths: number; colors: string[] }) {
+function TrendChart({ axes, trendMonths, colorMap }: { axes: any[]; trendMonths: number; colorMap: Map<string, string> }) {
     const W = 600, H = 120, PAD = { top: 8, bottom: 20, left: 32, right: 16 };
     const chartW = W - PAD.left - PAD.right;
     const chartH = H - PAD.top - PAD.bottom;
@@ -217,13 +299,13 @@ function TrendChart({ axes, trendMonths, colors }: { axes: any[]; trendMonths: n
                 )}
 
                 {/* 各領域のライン */}
-                {axes.map((axis, idx) => {
+                {axes.map((axis) => {
                     const vals = axis.recentAch as number[];
                     const validPoints = vals.map((v, i) => ({ v, i })).filter(p => p.v > 0);
                     if (validPoints.length < 2) return null;
 
                     const points = validPoints.map(p => `${toX(p.i)},${toY(p.v)}`).join(" ");
-                    const color = colors[idx % colors.length];
+                    const color = colorMap.get(axis.id) ?? AXIS_COLORS[0];
 
                     return (
                         <g key={axis.id}>
