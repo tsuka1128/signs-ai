@@ -204,11 +204,12 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
                                                         {ach}%
                                                     </span>
                                                 </div>
-                                        );
-                                    })}
+                                            );
+                                        })}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
 
