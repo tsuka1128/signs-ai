@@ -192,21 +192,47 @@ export default function HrStrategyPage() {
 
           {/* Section ②: エンゲージメントドライバー分析 */}
           <section>
-            <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="w-4.5 h-4.5 text-teal-500" />
-              <h2 className="text-base font-black text-slate-700">エンゲージメントドライバー分析</h2>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4.5 h-4.5 text-teal-500" />
+                <h2 className="text-base font-black text-slate-700">エンゲージメントドライバー分析</h2>
+              </div>
+              {panelN > 0 && (
+                <span className="text-[10px] text-slate-400 font-medium">
+                  n={panelN} データ点
+                </span>
+              )}
             </div>
 
             {/* 凡例 */}
-            <p className="text-sm text-slate-500 mb-3 flex items-center gap-1.5">
-              改善するとKPIに直結する設問を上位に表示しています。上から優先的にアクションしてください。右（＋）が強化推奨、左（－）は構造的な課題の可能性。
-              <span className="relative group inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-200 text-slate-500 text-[10px] font-bold cursor-help flex-shrink-0">
-                ?
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2.5 text-[11px] text-slate-600 bg-white border border-slate-200 rounded-lg shadow-lg invisible group-hover:visible z-50 leading-relaxed font-medium whitespace-normal pointer-events-none">
-                  各設問の平均スコアと部署KPI達成率のピアソン相関係数。絶対値が大きいほど関連が強く、＋は高スコアがKPI向上に寄与、－はスコアが高いのにKPIが低い構造的な課題の可能性を示します。
+            <div className="mb-3 space-y-2">
+              <p className="text-sm text-slate-500 flex items-center gap-1.5">
+                スコアを上げるとKPI達成率が改善しやすい設問を上位に表示しています。
+                <span className="relative group inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-200 text-slate-500 text-[10px] font-bold cursor-help flex-shrink-0">
+                  ?
+                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-3 text-[11px] text-slate-600 bg-white border border-slate-200 rounded-lg shadow-lg invisible group-hover:visible z-50 leading-relaxed font-medium whitespace-normal pointer-events-none space-y-2">
+                    <span className="block font-black text-slate-700">相関係数とは？</span>
+                    <span className="block">各設問のスコアと部署KPI達成率の関連の強さを −1〜＋1 で表した値です。</span>
+                    <span className="block space-y-1">
+                      <span className="flex gap-2"><span className="text-teal-600 font-black">＋1 に近い</span><span>スコアが高い部署ほどKPIも高い（強化推奨）</span></span>
+                      <span className="flex gap-2"><span className="font-black text-slate-400"> 0 に近い</span><span>スコアとKPIに直線的な関係がない</span></span>
+                      <span className="flex gap-2"><span className="text-rose-500 font-black">－1 に近い</span><span>スコアが高いのにKPIが低い（構造的課題の可能性）</span></span>
+                    </span>
+                    <span className="block text-slate-400">過去13ヶ月 × 全部署のデータを使用。蓄積されるほど精度が上がります。</span>
+                  </span>
                 </span>
-              </span>
-            </p>
+              </p>
+              {/* バー軸ラベル */}
+              <div className="flex items-center gap-2 px-1">
+                <span className="text-[10px] font-black text-rose-400 w-4 text-right shrink-0">−1</span>
+                <div className="flex-1 flex justify-between text-[9px] font-bold text-slate-300 px-1">
+                  <span>負の相関</span>
+                  <span>0</span>
+                  <span>正の相関</span>
+                </div>
+                <span className="text-[10px] font-black text-teal-500 w-12 text-right shrink-0">＋1</span>
+              </div>
+            </div>
 
             <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
               {driverData.every(d => d.avgScore === 0) ? (
