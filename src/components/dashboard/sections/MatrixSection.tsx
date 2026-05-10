@@ -116,7 +116,7 @@ export function MatrixSection({
                         </div>
                     </div>
                 </div>
-                <div className="px-4">
+                <div className="px-4 max-w-[680px] mx-auto">
                     {currentMatData.length > 0 ? (
                         <ScatterPlot
                             data={scatterData}
