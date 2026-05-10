@@ -91,8 +91,8 @@ export function KpiSection({
                                     </div>
                                 </div>
 
-                                <div className="p-8 pb-12 flex-1 flex flex-col justify-center min-h-[260px]">
-                                    <div className="h-[180px] w-full">
+                                <div className="p-8 pb-16 flex-1 flex flex-col justify-center min-h-[300px]">
+                                    <div className="h-[200px] w-full">
                                         <DetailLineChart
                                             data={selectedKpiDef.prev || []}
                                             targetData={selectedKpiDef.targetHistory || []}
@@ -164,8 +164,8 @@ export function KpiSection({
                     )}
 
                     {/* 部署別 KPI コンディション診断テーブル */}
-                    <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden mt-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <div className="px-8 py-6 border-b border-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/30">
+                    <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm mt-6 animate-in fade-in slide-in-from-bottom-4 duration-700 relative z-10">
+                        <div className="px-8 py-6 border-b border-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/30 rounded-t-[32px]">
                             <h3 className="text-sm font-black text-slate-800 tracking-tight flex items-center gap-2">
                                 <TrendingDown className="w-4 h-4 text-slate-400" />
                                 部署別 KPI コンディション診断
@@ -181,7 +181,7 @@ export function KpiSection({
                                         <div key={g.key} className="flex items-center gap-1.5 group/g relative">
                                             <div className={`w-1.5 h-1.5 rounded-full ${g.dot}`} />
                                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-help">{g.label}</span>
-                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-56 p-4 bg-slate-800 text-white text-[11px] rounded-2xl shadow-2xl hidden group-hover/g:block z-50 leading-relaxed font-medium animate-in fade-in zoom-in-95">
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-56 p-4 bg-slate-800 text-white text-[11px] rounded-2xl shadow-2xl hidden group-hover/g:block z-[100] leading-relaxed font-medium animate-in fade-in zoom-in-95">
                                                 <div className="font-black mb-1 border-b border-slate-700 pb-1">{g.label}</div>
                                                 {KPI_QUALITY_META[g.key as KpiQuality].description}
                                             </div>
