@@ -81,7 +81,8 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
     useEffect(() => { setMounted(true); }, []);
 
     const renderChart = () => (
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto font-sans select-none relative">
+        <>
+            <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto font-sans select-none relative">
             {/* Quadrants */}
             {quads.map((q, i) => (
                 <g key={i}>
@@ -221,11 +222,11 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
             <div className="absolute top-1/2 left-10 -translate-y-1/2 w-56 bg-slate-800 text-white p-4 rounded-2xl shadow-2xl text-[10px] leading-relaxed z-[50] animate-in fade-in slide-in-from-left-2 duration-200">
                 <div className="font-bold text-white mb-2 flex items-center gap-1.5">一人当たり生産性</div>
                 <div className="bg-slate-900/80 p-2 rounded-lg font-mono text-[9px] text-emerald-400 mb-2.5 border border-slate-700">
-                    主担当KPIの達成率 × 体温係数
+                    KPI達成率 × (体温スコア ÷ 3.0)
                 </div>
                 <div className="text-slate-300">
-                    ※ 部署ごとに追っているKPIが異なるため、<span className="font-bold text-white">「達成率」</span>で標準化。<br />
-                    そこに<span className="font-bold text-white">組織体温（無理をしていないか）</span>を掛け合わせることで、全部署を同列の軸で比較評価します。
+                    部署ごとに異なるKPIを<span className="font-bold text-white">「達成率」</span>で統一。
+                    体温スコア3.0点を係数1.0の基準とし、それを上回るほど生産性が高く評価されます。
                 </div>
             </div>
         )}
@@ -263,14 +264,14 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
                                             <span>縦軸: 一人当たり生産性</span>
                                             <div className="relative group/calc text-left">
                                                 <button className="w-3.5 h-3.5 rounded-full bg-slate-200 text-slate-500 hover:bg-slate-300 hover:text-slate-600 flex items-center justify-center text-[9px] font-black cursor-help transition-colors select-none">?</button>
-                                                <div className="absolute bottom-full left-0 mb-2 w-56 bg-slate-800 text-white p-3.5 rounded-xl shadow-xl text-[10px] leading-relaxed break-normal whitespace-normal hidden group-hover/calc:block group-focus-within/calc:block z-[10001] normal-case tracking-normal animate-in fade-in zoom-in-95 font-medium">
+                                                <div className="absolute bottom-full left-0 mb-2 w-56 md:w-64 bg-slate-800 text-white p-3.5 rounded-xl shadow-xl text-[10px] leading-relaxed break-normal whitespace-normal hidden group-hover/calc:block group-focus-within/calc:block z-[10001] normal-case tracking-normal animate-in fade-in zoom-in-95 font-medium">
                                                     <div className="font-bold text-white mb-2 flex items-center gap-1.5">生産性スコアの計算式</div>
                                                     <div className="bg-slate-900/80 p-2 rounded-lg font-mono text-[10px] text-emerald-400 mb-2.5 border border-slate-700">
-                                                        主担当KPIの達成率 × 体温係数
+                                                        KPI達成率 × (体温スコア ÷ 3.0)
                                                     </div>
                                                     <div className="text-slate-300">
-                                                        ※ 各部署のKPIが異なるため、<span className="font-bold text-white">「目標の達成率」</span>で標準化。<br />
-                                                        そこに<span className="font-bold text-white">組織体温（無理をしていないか）</span>を掛け合わせることで、バックオフィスを含む全社のチームを同列のY軸で比較評価します。
+                                                        部署ごとに異なるKPIを<span className="font-bold text-white">「達成率」</span>で統一。
+                                                        体温スコア3.0点を係数1.0の基準とし、それを上回るほど生産性が高く評価されます。
                                                     </div>
                                                 </div>
                                             </div>

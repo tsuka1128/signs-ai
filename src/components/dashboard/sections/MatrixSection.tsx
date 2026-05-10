@@ -62,11 +62,11 @@ export function MatrixSection({
                                         <div className="absolute bottom-full left-0 mb-2 w-56 bg-slate-800 text-white p-3.5 rounded-xl shadow-xl text-[10px] leading-relaxed break-normal whitespace-normal hidden group-hover/calc:block z-[150] normal-case tracking-normal animate-in fade-in zoom-in-95 font-medium">
                                             <div className="font-bold text-white mb-2 flex items-center gap-1.5"><TrendingDown className="w-4 h-4 text-emerald-400" />生産性スコアの計算式</div>
                                             <div className="bg-slate-900/80 p-2 rounded-lg font-mono text-[9px] text-emerald-400 mb-2.5 border border-slate-700">
-                                                主担当KPIの達成率 × 体温係数
+                                                KPI達成率 × (体温スコア ÷ 3.0)
                                             </div>
                                             <div className="text-slate-200">
-                                                ※ 各部署のKPIが異なるため、<span className="font-bold text-white">「目標の達成率」</span>で標準化、。<br />
-                                                そこに<span className="font-bold text-white">組織体温（無理をしていないか）</span>を掛け合わせることで、部署を同列の軸で評価します。
+                                                部署ごとに異なるKPIを<span className="font-bold text-white">「達成率」</span>で統一。
+                                                体温スコア3.0点を係数1.0の基準とし、それを上回るほど生産性が高く評価されます。
                                             </div>
                                         </div>
                                     </div>
