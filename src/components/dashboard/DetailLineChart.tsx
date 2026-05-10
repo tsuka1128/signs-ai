@@ -10,6 +10,7 @@ interface DetailLineChartProps {
     unit?: string;
     color?: string;
     height?: number;
+    pulseHistory?: number[];
 }
 
 export function DetailLineChart({
@@ -19,7 +20,8 @@ export function DetailLineChart({
     fullLabels = [],
     unit = "",
     color = "#10B981",
-    height = 140
+    height = 140,
+    pulseHistory = [],
 }: DetailLineChartProps) {
     const width = 600;
     const padding = { top: 20, right: 30, bottom: 35, left: 30 };
@@ -118,6 +120,26 @@ export function DetailLineChart({
                 {/* Grid Lines */}
                 <line x1={padding.left} y1={padding.top + chartHeight} x2={padding.left + chartWidth} y2={padding.top + chartHeight} stroke="#F1F5F9" strokeWidth={1} />
 
+                {/* 体温ヒートマップ（月ごとの背景色） */}
+                {pulseHistory.length > 0 && pulseHistory.map((pulse, mi) => {
+                    if (pulse <= 0) return null;
+                    const x = padding.left + (pulseHistory.length > 1 ? (mi / (pulseHistory.length - 1)) * chartWidth : 0.5 * chartWidth);
+                    const barW = chartWidth / Math.max(1, pulseHistory.length - 1);
+                    
+                    // 背景色の選定
+                    const bgColor = pulse >= 3.8 ? "#D1FAE5"  // 緑: 高体温
+                                  : pulse >= 3.0 ? "#FEF9C3"  // 黄: 普通
+                                  : "#FEE2E2";                 // 赤: 低体温
+                    
+                    return (
+                        <rect
+                            key={mi}
+                            x={x - barW/2} y={padding.top} width={barW} height={chartHeight}
+                            fill={bgColor} opacity={0.35}
+                        />
+                    );
+                })}
+
                 {/* Hover Vertical Line */}
                 {hoveredIndex !== null && (
                     <line
@@ -159,18 +181,36 @@ export function DetailLineChart({
                 />
 
                 {/* 各月のデータポイントを描画 */}
-                {points.map((p, i) => (
-                    <circle
-                        key={i}
-                        cx={p.x}
-                        cy={p.y}
-                        r={hoveredIndex === i ? 6 : (p.v > 0 ? 4 : 2)}
-                        fill={hoveredIndex === i ? color : (p.v > 0 ? color : "#CBD5E1")}
-                        stroke="white"
-                        strokeWidth={hoveredIndex === i ? 2 : 0}
-                        className="transition-all duration-200"
-                    />
-                ))}
+                {points.map((p, i) => {
+                    const pulse = pulseHistory[i] ?? 0;
+                    const achRate = targetData[i] ? (p.v / targetData[i]) * 100 : 0;
+                    // 焼き付き達成判定: 達成率80%以上 かつ 体温3.5未満
+                    const isBurnout = achRate >= 80 && pulse > 0 && pulse < 3.5;
+
+                    return (
+                        <g key={i}>
+                            <circle
+                                cx={p.x}
+                                cy={p.y}
+                                r={hoveredIndex === i ? 6 : (p.v > 0 ? 4 : 2)}
+                                fill={hoveredIndex === i ? color : (p.v > 0 ? color : "#CBD5E1")}
+                                stroke="white"
+                                strokeWidth={hoveredIndex === i ? 2 : 0}
+                                className="transition-all duration-200"
+                            />
+                            {isBurnout && (
+                                <text 
+                                    x={p.x} y={p.y - 12} 
+                                    textAnchor="middle" 
+                                    className="text-[10px] animate-bounce select-none"
+                                    style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.1))" }}
+                                >
+                                    ⚠️
+                                </text>
+                            )}
+                        </g>
+                    );
+                })}
 
                 {/* X-Axis Labels */}
                 {labels.map((label, i) => {

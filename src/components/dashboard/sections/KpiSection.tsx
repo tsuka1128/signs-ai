@@ -6,8 +6,12 @@ import { KpiSummaryCard } from "@/components/dashboard/KpiSummaryCard";
 import { DetailLineChart } from "@/components/dashboard/DetailLineChart";
 import { KpiDisplayData } from "@/types/dashboard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, TrendingDown } from "lucide-react";
 import { HelpLink } from "@/components/ui/HelpLink";
+import {
+  calcKpiQuality, KPI_QUALITY_META,
+  calcKpiSetHealth, KPI_SET_HEALTH_META,
+} from "@/lib/logic/kpi-engine";
 
 interface KpiSectionProps {
     displayKpis: KpiDisplayData[];
@@ -17,6 +21,7 @@ interface KpiSectionProps {
     achRate: number | null;
     monthLabels: string[];
     fullMonthLabels: string[];
+    displayDepts: any[];
 }
 
 export function KpiSection({
@@ -27,11 +32,35 @@ export function KpiSection({
     achRate,
     monthLabels,
     fullMonthLabels,
+    displayDepts,
 }: KpiSectionProps) {
     return (
-        <div className="space-y-4">
+        <div className="space-y-6">
             {displayKpis.length > 0 ? (
                 <>
+                    {/* 全社サマリーバッジ（セクションの最上部に追加） */}
+                    {(() => {
+                        const counts = { healthy: 0, burnout: 0, structural: 0, potential: 0 };
+                        displayDepts.forEach((d: any) => {
+                            const q = calcKpiQuality(d.kpiAch || 0, d.pulse || 0);
+                            counts[q]++;
+                        });
+                        const items = [
+                            { key: "healthy", label: "健全達成", color: "bg-emerald-100 text-emerald-700" },
+                            { key: "burnout", label: "焼き付き", color: "bg-amber-100  text-amber-700" },
+                            { key: "structural", label: "構造課題", color: "bg-rose-100   text-rose-700" },
+                            { key: "potential", label: "余力あり", color: "bg-sky-100    text-sky-700" },
+                        ] as const;
+                        return (
+                            <div className="flex flex-wrap gap-2 mb-2 px-1">
+                                {items.map(item => counts[item.key] > 0 && (
+                                    <span key={item.key} className={`text-[11px] font-black px-3 py-1.5 rounded-full ${item.color} shadow-sm border border-white`}>
+                                        {item.label} {counts[item.key]}部署
+                                    </span>
+                                ))}
+                            </div>
+                        );
+                    })()}
                     {/* KPI Summary Row */}
                     <div className="flex gap-2 overflow-x-auto pt-2 pb-2 mt-[-8px] scrollbar-hide">
                         {displayKpis.map(k => (
@@ -94,6 +123,10 @@ export function KpiSection({
                                             fullLabels={fullMonthLabels}
                                             unit={selectedKpiDef.unit}
                                             color={(selectedKpiDef.prev && selectedKpiDef.prev.length >= 12 && selectedKpiDef.prev[11] >= (selectedKpiDef.prev[10] ?? 0)) ? "#10B981" : "#EF4444"}
+                                            pulseHistory={(() => {
+                                                const dept = displayDepts.find(d => d.name === selectedKpiDef.dept);
+                                                return dept?.pulseHistory || [];
+                                            })()}
                                         />
                                     </div>
                                 </div>
@@ -142,6 +175,92 @@ export function KpiSection({
                             </div>
                         </>
                     )}
+
+                    {/* 達成の質・目標設定健全性一覧テーブル */}
+                    <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden mt-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <div className="px-6 py-5 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
+                            <h3 className="text-sm font-black text-slate-800 tracking-tight flex items-center gap-2">
+                                <TrendingDown className="w-4 h-4 text-slate-400" />
+                                部署別 KPI 達成の質と設定健全性
+                            </h3>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Analysis View</span>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-slate-50/50">
+                                        <th className="py-3 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">部署</th>
+                                        <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">達成率</th>
+                                        <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">体温</th>
+                                        <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">達成の質</th>
+                                        <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">目標設定の評価</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {displayDepts.map((d: any) => {
+                                        const quality = calcKpiQuality(d.kpiAch || 0, d.pulse || 0);
+                                        const qMeta = KPI_QUALITY_META[quality];
+                                        const setHealth = calcKpiSetHealth(d.kpiAchHistory ?? []);
+                                        const shMeta = KPI_SET_HEALTH_META[setHealth];
+
+                                        return (
+                                            <tr key={d.id} className="group hover:bg-slate-50/50 transition-colors border-b border-slate-50">
+                                                <td className="py-4 px-6">
+                                                    <span className="text-sm font-bold text-slate-700">{d.name}</span>
+                                                </td>
+                                                <td className="py-4 px-4">
+                                                    <span className={cn(
+                                                        "text-sm font-black tabular-nums",
+                                                        (d.kpiAch || 0) >= 100 ? "text-emerald-500" : (d.kpiAch || 0) >= 80 ? "text-slate-700" : "text-rose-500"
+                                                    )}>
+                                                        {d.kpiAch || 0}%
+                                                    </span>
+                                                </td>
+                                                <td className="py-4 px-4 text-center">
+                                                    <span className={cn(
+                                                        "text-xs font-bold px-2 py-0.5 rounded-lg",
+                                                        (d.pulse || 0) >= 3.8 ? "bg-emerald-50 text-emerald-600" : (d.pulse || 0) >= 3.0 ? "bg-amber-50 text-amber-600" : "bg-rose-50 text-rose-600"
+                                                    )}>
+                                                        {d.pulse || 0}
+                                                    </span>
+                                                </td>
+
+                                                {/* 達成の質 */}
+                                                <td className="py-4 px-4">
+                                                    <div className="relative group/quality inline-block">
+                                                        <span className={`text-[11px] font-black px-3 py-1 rounded-full cursor-help shadow-sm border border-white ${qMeta.bg} ${qMeta.color}`}>
+                                                            {qMeta.icon} {qMeta.label}
+                                                        </span>
+                                                        <div className="absolute bottom-full left-0 mb-2 w-64 p-4 bg-slate-800 text-white text-[11px] rounded-2xl shadow-2xl hidden group-hover/quality:block z-[60] leading-relaxed font-medium animate-in fade-in zoom-in-95">
+                                                            <div className="font-black mb-1 border-b border-slate-700 pb-1">{qMeta.label}</div>
+                                                            {qMeta.description}
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                {/* 設定健全性 */}
+                                                <td className="py-4 px-4">
+                                                    {setHealth !== "optimal" ? (
+                                                        <div className="relative group/sethealth inline-block">
+                                                            <span className={`text-[11px] font-black cursor-help flex items-center gap-1 ${shMeta.color}`}>
+                                                                <span className="text-base">⚑</span> {shMeta.label}
+                                                            </span>
+                                                            <div className="absolute bottom-full left-0 mb-2 w-64 p-4 bg-slate-800 text-white text-[11px] rounded-2xl shadow-2xl hidden group-hover/sethealth:block z-[60] leading-relaxed font-medium animate-in fade-in zoom-in-95">
+                                                                <div className="font-black mb-1 border-b border-slate-700 pb-1">{shMeta.label}</div>
+                                                                {shMeta.description}
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-[11px] font-bold text-slate-300">適正範囲内</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </>
             ) : (
                 <EmptyState

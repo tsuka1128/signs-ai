@@ -306,6 +306,7 @@ export default function DashboardPage() {
               achRate={achRate}
               monthLabels={state.monthLabels}
               fullMonthLabels={state.fullMonthLabels}
+              displayDepts={derived.displayDepts}
             />
           )}
 
