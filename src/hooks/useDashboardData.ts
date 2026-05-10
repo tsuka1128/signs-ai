@@ -355,13 +355,11 @@ export function useDashboardData(
 
             const parts: string[] = [];
             
-            // 体温レベル
-            if (avgPulse >= 4.0) parts.push("全体的に高い体温が維持されています");
-            else if (avgPulse >= 3.0) parts.push("体温は標準的な水準です");
-            else parts.push("体温がやや低い状態にあります");
-            
-            // トレンド
-            if (trend) parts.push(`（前月比：${trend}）`);
+            // 体温レベル + トレンド
+            const trendSuffix = trend ? `（前月比：${trend}）` : "";
+            if (avgPulse >= 4.0) parts.push(`全体的に高い体温が維持されています${trendSuffix}`);
+            else if (avgPulse >= 3.0) parts.push(`体温は標準的な水準です${trendSuffix}`);
+            else parts.push(`体温がやや低い状態にあります${trendSuffix}`);
             
             // 課題設問
             if (lowScores.length > 0) {
