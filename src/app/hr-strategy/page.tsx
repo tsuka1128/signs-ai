@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useCompany } from "@/hooks/useCompany";
 import { useDashboardData } from "@/hooks/useDashboardData";
@@ -422,7 +422,7 @@ export default function HrStrategyPage() {
                     );
                   })}
                   <div className="flex items-center gap-1.5 ml-auto">
-                    <div className="w-6 h-1.5 rounded-full bg-indigo-400 opacity-60" />
+                    <div className="w-6 h-0 border-t-2 border-dashed border-indigo-400 opacity-60" />
                     <span className="text-[10px] font-bold text-slate-500">KPI達成率</span>
                   </div>
                 </div>
