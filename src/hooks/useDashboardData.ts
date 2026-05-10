@@ -699,9 +699,12 @@ export function useDashboardData(
                         name: def.name,
                         val: `${(rec.value || 0).toLocaleString()}${def.unit || ''}`,
                         ach: (rec.target_value && rec.target_value > 0) ? Math.round((rec.value / rec.target_value) * 100) : 0,
-                        type: "stack"
+                        type: "stack",
+                        isPrimary: def.id === company?.secondary_axis_size_kpi_id
                     };
-                }).filter(Boolean).slice(0, 3) as any[],
+                }).filter(Boolean)
+                  .sort((a: any, b: any) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0))
+                  .slice(0, 3) as any[],
                 productivityHistory: last13Months.map((month, idx) => {
                     const mRecsMonth = state.realKpiRecords.filter(r => normalizeMonth(r.recorded_month) === normalizeMonth(month) && r.axis_id === axis.id);
                     let tAch = 0;
