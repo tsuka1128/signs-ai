@@ -55,8 +55,8 @@ export function KpiSection({
                     </div>
 
                     {selectedKpiDef && (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4 duration-700">
-                            {/* Left: Detailed Chart & Stats */}
+                        <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-700">
+                            {/* Detailed Chart & Stats (Full Width) */}
                             <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden flex flex-col">
                                 <div className="p-8 pb-4 border-b border-slate-50 bg-slate-50/20">
                                     <div className="flex justify-between items-start">
@@ -91,8 +91,8 @@ export function KpiSection({
                                     </div>
                                 </div>
 
-                                <div className="p-8 flex-1 flex flex-col justify-center min-h-[220px]">
-                                    <div className="h-[160px] w-full">
+                                <div className="p-8 pb-12 flex-1 flex flex-col justify-center min-h-[260px]">
+                                    <div className="h-[180px] w-full">
                                         <DetailLineChart
                                             data={selectedKpiDef.prev || []}
                                             targetData={selectedKpiDef.targetHistory || []}
@@ -127,8 +127,8 @@ export function KpiSection({
                                 )}
                             </div>
 
-                            {/* Right: Voices Details */}
-                            <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm space-y-6 flex flex-col overflow-hidden">
+                            {/* Voices Details (Full Width below chart) */}
+                            <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm space-y-6 overflow-hidden">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-2xl bg-teal/5 flex items-center justify-center">
@@ -141,7 +141,7 @@ export function KpiSection({
                                     </div>
                                     <Badge className="bg-slate-50 text-slate-400 border-none tracking-widest text-[9px] uppercase font-black px-3 py-1">匿名アンケート</Badge>
                                 </div>
-                                <div className="flex-1 space-y-3 overflow-y-auto max-h-[360px] pr-2 custom-scrollbar">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {selectedKpiDef.voices && selectedKpiDef.voices.length > 0 ? (
                                         selectedKpiDef.voices.map((v: any, i: number) => {
                                             const moodColor = v.mood === "sun" ? "bg-emerald-50/50 border-emerald-100" : v.mood === "rain" ? "bg-rose-50/50 border-rose-100" : "bg-amber-50/50 border-amber-100";
@@ -153,7 +153,7 @@ export function KpiSection({
                                             );
                                         })
                                     ) : (
-                                        <div className="h-full flex flex-col items-center justify-center py-20 opacity-40">
+                                        <div className="col-span-full flex flex-col items-center justify-center py-10 opacity-40">
                                             <BarChart3 className="w-12 h-12 text-slate-200 mb-4" />
                                             <p className="text-sm text-slate-400 italic font-medium">このKPIに関連するボイスはまだありません。</p>
                                         </div>
