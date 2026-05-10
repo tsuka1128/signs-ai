@@ -97,7 +97,7 @@ export default function HrStrategyPage() {
   const kpiAchs = displayDepts.map(d => d.kpiAch);
   const deptSurveyData = displayDepts.map(d => (derived as any).getCurrentSurveyData?.(d.id));
 
-  const driverData = DEFAULT_SURVEY_QUESTIONS
+  const standardDriverData = DEFAULT_SURVEY_QUESTIONS
     .map((q, qi) => {
       const qScores = deptSurveyData.map(data => data?.scores?.[qi] ?? 0);
       return {
@@ -106,10 +106,8 @@ export default function HrStrategyPage() {
         avgScore: companyPulseData?.scores?.[qi] ?? 0,
         isCustom: false,
       };
-    })
-    .sort((a, b) => b.corr - a.corr);
+    });
 
-  // カスタム設問の相関データ
   const customQuestions = (state as any).realCustomQuestions as any[] ?? [];
   const customDriverData = customQuestions
     .map((q: any, ci: number) => {
@@ -120,8 +118,11 @@ export default function HrStrategyPage() {
         avgScore: (companyPulseData as any)?.customScores?.[ci] ?? 0,
         isCustom: true,
       };
-    })
-    .sort((a: any, b: any) => b.corr - a.corr);
+    });
+
+  // 標準設問とカスタム設問を corr で一括ソート
+  const driverData = [...standardDriverData, ...customDriverData]
+    .sort((a, b) => b.corr - a.corr);
 
   const hasData = displayDepts.length > 0;
 
@@ -213,96 +214,51 @@ export default function HrStrategyPage() {
                   アンケートデータが蓄積されると表示されます
                 </div>
               ) : (
-                <>
-                  {driverData.map((d, idx) => {
-                    const isPositive = d.corr >= 0;
-                    const barWidth = Math.round(Math.abs(d.corr) * 100);
-                    return (
-                      <div key={idx} className={cn("flex items-center gap-4 px-5 py-3.5", idx !== 0 && "border-t border-slate-50")}>
-                        <span className="text-[11px] font-black text-slate-400 w-4">{idx + 1}</span>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-xs font-bold text-slate-700 truncate">{d.text}</p>
-                            {d.isCustom && (
-                              <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-violet-50 text-violet-400 shrink-0">
-                                Custom
-                              </span>
+                driverData.map((d, idx) => {
+                  const isPositive = d.corr >= 0;
+                  const barWidth = Math.round(Math.abs(d.corr) * 100);
+                  return (
+                    <div key={idx} className={cn("flex items-center gap-4 px-5 py-3.5", idx !== 0 && "border-t border-slate-50")}>
+                      <span className="text-[11px] font-black text-slate-400 w-4">{idx + 1}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs font-bold text-slate-700 truncate">{d.text}</p>
+                          {d.isCustom && (
+                            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-violet-50 text-violet-400 shrink-0">
+                              Custom
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-1.5 flex items-center gap-2">
+                          <div className="flex-1 relative h-1.5">
+                            {/* 背景 */}
+                            <div className="absolute inset-0 bg-slate-100 rounded-full" />
+                            {/* 中央の基準線 */}
+                            <div className="absolute left-1/2 top-0 bottom-0 w-px bg-slate-300 z-10" />
+                            {/* バー本体 */}
+                            {isPositive ? (
+                              <div
+                                className="absolute top-0 bottom-0 bg-teal-400 rounded-r-full z-20"
+                                style={{ left: '50%', width: `${barWidth / 2}%` }}
+                              />
+                            ) : (
+                              <div
+                                className="absolute top-0 bottom-0 bg-rose-400 rounded-l-full z-20"
+                                style={{ right: '50%', width: `${barWidth / 2}%` }}
+                              />
                             )}
                           </div>
-                          <div className="mt-1.5 flex items-center gap-2">
-                            <div className="flex-1 relative h-1.5">
-                              {/* 背景 */}
-                              <div className="absolute inset-0 bg-slate-100 rounded-full" />
-                              {/* 中央の基準線 */}
-                              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-slate-300 z-10" />
-                              {/* バー本体 */}
-                              {isPositive ? (
-                                <div
-                                  className="absolute top-0 bottom-0 bg-teal-400 rounded-r-full z-20"
-                                  style={{ left: '50%', width: `${barWidth / 2}%` }}
-                                />
-                              ) : (
-                                <div
-                                  className="absolute top-0 bottom-0 bg-rose-400 rounded-l-full z-20"
-                                  style={{ right: '50%', width: `${barWidth / 2}%` }}
-                                />
-                              )}
-                            </div>
-                            <span className={cn("text-[11px] font-black w-12 text-right", isPositive ? "text-teal-600" : "text-rose-500")}>
-                              {d.corr > 0 ? "+" : ""}{d.corr.toFixed(2)}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="text-xs text-slate-400 w-12 text-right flex-shrink-0">
-                          avg <span className="font-black text-slate-600">{d.avgScore > 0 ? d.avgScore.toFixed(1) : "-"}</span>
+                          <span className={cn("text-[11px] font-black w-12 text-right", isPositive ? "text-teal-600" : "text-rose-500")}>
+                            {d.corr > 0 ? "+" : ""}{d.corr.toFixed(2)}
+                          </span>
                         </div>
                       </div>
-                    );
-                  })}
-
-                  {/* カスタム設問セクション */}
-                  {customDriverData.length > 0 && (
-                    <>
-                      <div className="flex items-center gap-2 px-5 py-2 border-t border-slate-100 bg-slate-50/50">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">オリジナル設問</span>
-                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-violet-50 text-violet-400 uppercase tracking-widest">
-                          Custom
-                        </span>
+                      <div className="text-xs text-slate-400 w-12 text-right flex-shrink-0">
+                        avg <span className="font-black text-slate-600">{d.avgScore > 0 ? d.avgScore.toFixed(1) : "-"}</span>
                       </div>
-                      {customDriverData.map((d: any, idx: number) => {
-                        const isPositive = d.corr >= 0;
-                        const barWidth = Math.round(Math.abs(d.corr) * 100);
-                        return (
-                          <div key={`custom-${idx}`} className="flex items-center gap-4 px-5 py-3.5 border-t border-slate-50">
-                            <span className="text-[11px] font-black text-slate-400 w-4">{idx + 1}</span>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-bold text-slate-700 truncate">{d.text}</p>
-                              <div className="mt-1.5 flex items-center gap-2">
-                                <div className="flex-1 relative h-1.5">
-                                  <div className="absolute inset-0 bg-slate-100 rounded-full" />
-                                  <div className="absolute left-1/2 top-0 bottom-0 w-px bg-slate-300 z-10" />
-                                  {isPositive ? (
-                                    <div className="absolute top-0 bottom-0 bg-teal-400 rounded-r-full z-20"
-                                      style={{ left: '50%', width: `${barWidth / 2}%` }} />
-                                  ) : (
-                                    <div className="absolute top-0 bottom-0 bg-rose-400 rounded-l-full z-20"
-                                      style={{ right: '50%', width: `${barWidth / 2}%` }} />
-                                  )}
-                                </div>
-                                <span className={cn("text-[11px] font-black w-12 text-right", isPositive ? "text-teal-600" : "text-rose-500")}>
-                                  {d.corr > 0 ? "+" : ""}{d.corr.toFixed(2)}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="text-xs text-slate-400 w-12 text-right flex-shrink-0">
-                              avg <span className="font-black text-slate-600">{d.avgScore > 0 ? d.avgScore.toFixed(1) : "-"}</span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </>
-                  )}
-                </>
+                    </div>
+                  );
+                })
               )}
             </div>
             <p className="mt-2 text-[11px] text-slate-400 font-medium px-1">
