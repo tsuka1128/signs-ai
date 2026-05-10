@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils/index";
 import { OrganizationCard } from "@/components/dashboard/OrganizationCard";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { WeatherIcon } from "@/components/ui/WeatherIcon";
 import { ChevronDown, ChevronUp, Package } from "lucide-react";
 
 // 領域ごとのカラーパレット（最大8領域まで対応）
@@ -18,6 +19,23 @@ const AXIS_COLORS = [
     "#f97316", // orange
 ];
 
+/* ─── ロジック: コンディション診断 ─────────────────────── */
+const KPI_QUALITY_META = {
+    healthy: { label: "健全達成", icon: "✨", color: "text-emerald-600", bg: "bg-emerald-50" },
+    warning: { label: "構造課題", icon: "⚠️", color: "text-amber-600", bg: "bg-amber-50" },
+    alert:   { label: "燃え尽き", icon: "🔥", color: "text-rose-600", bg: "bg-rose-50" },
+    critical: { label: "要再建", icon: "🚨", color: "text-rose-700", bg: "bg-rose-100" },
+    unknown: { label: "-", icon: "", color: "text-slate-400", bg: "bg-slate-50" }
+};
+
+function calcKpiQuality(ach: number, pulse: number) {
+    if (ach >= 100 && pulse >= 3.5) return "healthy";
+    if (ach >= 100 && pulse < 3.5)  return "alert";
+    if (ach < 100 && pulse >= 3.5)  return "warning";
+    if (ach < 100 && pulse < 3.5)   return "critical";
+    return "unknown";
+}
+
 interface AxisComparisonSectionProps {
     axes: any[];
     secondaryAxisName: string;
@@ -25,6 +43,15 @@ interface AxisComparisonSectionProps {
 }
 
 export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: AxisComparisonSectionProps) {
+    // 領域ごとの色を固定するマップ（idxベースで一度決めると一貫性が保たれる）
+    const axisColorMap = useMemo(() => {
+        const map = new Map<string, string>();
+        axes.forEach((axis, idx) => {
+            map.set(axis.id, AXIS_COLORS[idx % AXIS_COLORS.length]);
+        });
+        return map;
+    }, [axes]);
+
     // 代表KPIの達成率で降順ソート
     const rankedAxes = [...axes].sort((a, b) => {
         const achA = a.kpis?.[0]?.ach ?? a.kpiAch ?? 0;
@@ -60,6 +87,62 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
 
     return (
         <div className="space-y-6">
+            {/* Block 0: 領域コンディション一覧（横スクロール） */}
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+                {axes.map((axis) => {
+                    const color = axisColorMap.get(axis.id) ?? AXIS_COLORS[0];
+                    const quality = calcKpiQuality(axis.kpiAch ?? 0, axis.pulse ?? 0);
+                    const meta = KPI_QUALITY_META[quality as keyof typeof KPI_QUALITY_META] || KPI_QUALITY_META.unknown;
+                    return (
+                        <div
+                            key={axis.id}
+                            className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3 flex flex-col items-center gap-2 shrink-0 min-w-[120px]"
+                        >
+                            {/* 領域識別カラー帯 */}
+                            <div
+                                className="w-full h-1 rounded-full mb-1"
+                                style={{ backgroundColor: color }}
+                            />
+                            {/* 天気アイコン */}
+                            <WeatherIcon
+                                type={axis.pulse === 0 ? "cloud" : axis.weather}
+                                size={28}
+                                className={axis.pulse === 0 ? "opacity-20 grayscale" : ""}
+                            />
+                            {/* 領域名 */}
+                            <span className="text-xs font-black text-slate-700 text-center leading-tight truncate w-full">
+                                {axis.name}
+                            </span>
+                            {/* コンディション診断 */}
+                            {axis.pulse > 0 && axis.kpiAch > 0 ? (
+                                <span className={cn(
+                                    "text-[9px] font-black px-2 py-0.5 rounded-full whitespace-nowrap",
+                                    meta.bg, meta.color
+                                )}>
+                                    {meta.icon} {meta.label}
+                                </span>
+                            ) : (
+                                <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-slate-50 text-slate-300">
+                                    データ不足
+                                </span>
+                            )}
+                            {/* 体温 */}
+                            <div className="flex flex-col items-center mt-1">
+                                <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">体温</span>
+                                <span className={cn(
+                                    "text-base font-black tabular-nums",
+                                    axis.pulse >= 3.8 ? "text-emerald-500" :
+                                    axis.pulse >= 3.0 ? "text-amber-500" :
+                                    axis.pulse > 0    ? "text-rose-500" : "text-slate-300"
+                                )}>
+                                    {axis.pulse > 0 ? axis.pulse.toFixed(1) : "-"}
+                                </span>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
             {/* Block 1: 達成率ランキング */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-slate-50 bg-slate-50/30">
@@ -74,7 +157,7 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
                     {rankedAxes.map((axis, idx) => {
                         const ach = axis.kpis?.[0]?.ach ?? axis.kpiAch ?? 0;
                         const val = axis.kpis?.[0]?.val ?? "-";
-                        const color = AXIS_COLORS[idx % AXIS_COLORS.length];
+                        const color = axisColorMap.get(axis.id) ?? AXIS_COLORS[0];
                         const barWidth = maxAch > 0 ? Math.min((ach / maxAch) * 100, 100) : 0;
                         const achColor = ach >= 100 ? "text-emerald-500" : ach >= 80 ? "text-amber-500" : "text-rose-500";
 
@@ -100,18 +183,17 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
                                         style={{ width: `${barWidth}%`, backgroundColor: color }}
                                     />
                                 </div>
-                                {/* 値 */}
-                                <span className="text-xs font-black text-slate-500 w-20 shrink-0 text-right">
-                                    {val}
-                                </span>
-                                {/* 達成率 */}
-                                <span className={cn("text-sm font-black tabular-nums w-12 shrink-0 text-right", achColor)}>
-                                    {ach}%
-                                </span>
-                                {/* 体温 */}
-                                <span className="text-[10px] font-bold text-slate-400 w-10 shrink-0 text-right">
-                                    🌡 {axis.pulse > 0 ? axis.pulse.toFixed(1) : "-"}
-                                </span>
+                                {/* 値と達成率（2段表示でコンパクトに） */}
+                                <div className="flex flex-col items-end shrink-0 w-28">
+                                    <span className="text-xs font-black text-slate-700 tabular-nums leading-tight">
+                                        {val}
+                                    </span>
+                                    {ach > 0 && (
+                                        <span className={cn("text-[11px] font-black tabular-nums leading-tight", achColor)}>
+                                            {ach}%
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         );
                     })}
@@ -132,11 +214,11 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
                         </div>
                         {/* 凡例 */}
                         <div className="flex flex-wrap gap-x-3 gap-y-1 sm:justify-end">
-                            {axes.map((axis, idx) => (
+                            {axes.map((axis) => (
                                 <div key={axis.id} className="flex items-center gap-1.5">
                                     <div
                                         className="w-3 h-0.5 rounded-full"
-                                        style={{ backgroundColor: AXIS_COLORS[idx % AXIS_COLORS.length] }}
+                                        style={{ backgroundColor: axisColorMap.get(axis.id) ?? AXIS_COLORS[0] }}
                                     />
                                     <span className="text-[10px] font-bold text-slate-400 truncate max-w-[80px]">
                                         {axis.name}
@@ -146,7 +228,7 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
                         </div>
                     </div>
                     <div className="px-6 py-5">
-                        <TrendChart axes={recentHistory} trendMonths={trendMonths} colors={AXIS_COLORS} />
+                        <TrendChart axes={recentHistory} trendMonths={trendMonths} colorMap={axisColorMap} />
                     </div>
                 </div>
             )}
@@ -180,7 +262,7 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
 }
 
 /* ─── トレンドチャート（SVG）─────────────────────────── */
-function TrendChart({ axes, trendMonths, colors }: { axes: any[]; trendMonths: number; colors: string[] }) {
+function TrendChart({ axes, trendMonths, colorMap }: { axes: any[]; trendMonths: number; colorMap: Map<string, string> }) {
     const W = 600, H = 120, PAD = { top: 8, bottom: 20, left: 32, right: 16 };
     const chartW = W - PAD.left - PAD.right;
     const chartH = H - PAD.top - PAD.bottom;
@@ -217,13 +299,13 @@ function TrendChart({ axes, trendMonths, colors }: { axes: any[]; trendMonths: n
                 )}
 
                 {/* 各領域のライン */}
-                {axes.map((axis, idx) => {
+                {axes.map((axis) => {
                     const vals = axis.recentAch as number[];
                     const validPoints = vals.map((v, i) => ({ v, i })).filter(p => p.v > 0);
                     if (validPoints.length < 2) return null;
 
                     const points = validPoints.map(p => `${toX(p.i)},${toY(p.v)}`).join(" ");
-                    const color = colors[idx % colors.length];
+                    const color = colorMap.get(axis.id) ?? AXIS_COLORS[0];
 
                     return (
                         <g key={axis.id}>
