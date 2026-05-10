@@ -137,6 +137,7 @@ export default function SettingsPage() {
                             company={state.company}
                             plan={plan}
                             limits={limits}
+                            displayDepts={state.displayDepts}
                         />
                     )}
 

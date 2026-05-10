@@ -8,7 +8,6 @@ import { SurveyHistoryData } from "@/types/dashboard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { FileQuestion, Lock, MessageCircle, TrendingUp, TrendingDown, MinusCircle, Sparkles, ThumbsUp, ThumbsDown } from "lucide-react";
-import { LagCorrelationChart } from "@/components/dashboard/LagCorrelationChart";
 
 import { useState } from "react";
 
@@ -42,7 +41,6 @@ export function SurveySection({
     displayDepts,
 }: SurveySectionProps) {
     const [chartMode, setChartMode] = useState<'pulse' | 'deviation'>('pulse');
-    const [lag, setLag] = useState(1);
     const [feedbackSent, setFeedbackSent] = useState<'accurate' | 'inaccurate' | null>(null);
 
     const handleFeedback = async (type: 'accurate' | 'inaccurate') => {
@@ -210,38 +208,6 @@ export function SurveySection({
                         </div>
                     </div>
 
-                    {/* 時間ラグ相関チャート */}
-                    {displayDepts.length >= 1 && (
-                        <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-4">
-                            <div className="flex items-start justify-between">
-                                <div>
-                                    <h3 className="text-lg font-black text-slate-800 tracking-tight">
-                                        体温の「先行指標」としての効果
-                                    </h3>
-                                    <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">
-                                        今月の体温は、将来のKPIを予測するか？
-                                    </p>
-                                </div>
-                                <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
-                                    <button
-                                        onClick={() => setLag(1)}
-                                        className={cn(
-                                            "px-3 py-1.5 text-[10px] font-black rounded-lg transition-all",
-                                            lag === 1 ? "bg-white text-teal shadow-sm" : "text-slate-400 hover:text-slate-600"
-                                        )}
-                                    >1ヶ月後</button>
-                                    <button
-                                        onClick={() => setLag(2)}
-                                        className={cn(
-                                            "px-3 py-1.5 text-[10px] font-black rounded-lg transition-all",
-                                            lag === 2 ? "bg-white text-teal shadow-sm" : "text-slate-400 hover:text-slate-600"
-                                        )}
-                                    >2ヶ月後</button>
-                                </div>
-                            </div>
-                            <LagCorrelationChart depts={displayDepts} lag={lag} />
-                        </div>
-                    )}
 
                     {/* AI Analysis Card */}
                     <div className="relative overflow-hidden bg-white rounded-3xl p-8 border border-slate-100 shadow-sm transition-all hover:shadow-md">

@@ -3,6 +3,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { Company, Department, KpiDefinition, KpiAxis, User, Invitation, ResourceRecord } from "@/types/database";
 import { UserRole } from "@/lib/constants";
+import { getLastNMonths, normalizeMonth } from "@/lib/utils/date";
+import { calculateAchievementRate } from "@/lib/logic/kpi-engine";
 
 export function useSettingsData() {
     const router = useRouter();
@@ -39,6 +41,8 @@ export function useSettingsData() {
         axis_id: "",
         role: "player"
     });
+
+    const [displayDepts, setDisplayDepts] = useState<any[]>([]);
 
     const loadSettings = useCallback(async () => {
         setLoading(true);
@@ -93,6 +97,40 @@ export function useSettingsData() {
         if (a.data) setAxes(a.data);
         if (u.data) setUsers(u.data);
         if (i.data) setInvitations(i.data);
+
+        // --- 先行指標チャート用の最小限の履歴データ加工 ---
+        const last13 = getLastNMonths(13);
+        const [responses, records] = await Promise.all([
+            supabase.from('survey_responses').select('*, survey_answers(score)').eq('company_id', targetId).in('recorded_month', last13),
+            supabase.from('kpi_records').select('*').in('kpi_definition_id', (k.data || []).map(def => def.id)).in('recorded_month', last13)
+        ]);
+
+        const historyDepts = (d.data || []).map(dept => {
+            const pulseHistory = last13.map(month => {
+                const monthRes = (responses.data || []).filter(r => r.department_id === dept.id && normalizeMonth(r.recorded_month) === month);
+                const answers = monthRes.flatMap(r => r.survey_answers || []);
+                return answers.length > 0 ? answers.reduce((s, a) => s + (a as any).score, 0) / answers.length : 0;
+            });
+
+            const kpiAchHistory = last13.map(month => {
+                const deptKpis = (k.data || []).filter(def => def.owner_dept_id === dept.id);
+                const monthRecs = (records.data || []).filter(r => r.axis_id === null && normalizeMonth(r.recorded_month) === month && (r.department_id === dept.id || (r.department_id === null && deptKpis.some(dk => dk.id === r.kpi_definition_id))));
+                
+                let totalAch = 0;
+                let count = 0;
+                deptKpis.forEach(def => {
+                    const rec = monthRecs.find(r => r.kpi_definition_id === def.id);
+                    if (rec && rec.target_value !== null) {
+                        const ach = calculateAchievementRate(rec.value, rec.target_value, def.is_higher_better !== false);
+                        if (ach !== null) { totalAch += ach; count++; }
+                    }
+                });
+                return count > 0 ? Math.round(totalAch / count) : 0;
+            });
+
+            return { id: dept.id, pulseHistory, kpiAchHistory };
+        });
+        setDisplayDepts(historyDepts);
 
         setLoading(false);
     }, [router]);
@@ -538,7 +576,7 @@ export function useSettingsData() {
     return {
         state: {
             loading, isAnalyzing, company, depts, kpis, axes, secondaryAxisName, users, invitations, inviteEmail,
-            copied, inviteDeptId, inviteAxisId, inviteSlackUserId, editingUser, editForm, inviteRole
+            copied, inviteDeptId, inviteAxisId, inviteSlackUserId, editingUser, editForm, inviteRole, displayDepts
         },
         handlers: {
             setCompany, setDepts, setKpis, setAxes, setSecondaryAxisName, setInviteEmail, setInviteDeptId,
