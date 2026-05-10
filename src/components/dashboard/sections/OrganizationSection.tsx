@@ -4,7 +4,7 @@ import { TabBar } from "@/components/ui/TabBar";
 import { OrganizationCard } from "@/components/dashboard/OrganizationCard";
 import { FeedbackItem } from "@/components/dashboard/FeedbackItem";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Users, Package, Link2 } from "lucide-react";
+import { Users, Package } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 
 interface OrganizationSectionProps {

@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { WeatherIcon } from "@/components/ui/WeatherIcon";
 import { Arrow } from "@/components/ui/Arrow";
@@ -212,6 +214,8 @@ function ObservationComment({ pulse, primaryAch }: { pulse: number; primaryAch: 
         text = "体温は整っています。KPIの目標設定や外部環境について、チームで話し合ってみる価値があるかも。";
     } else if (pulseMid && achieved) {
         text = "達成できています。最近の体温の変化も観察しておくと、先手が打てるかもしれません。";
+    } else if (pulseMid && warming) {
+        text = "着実に進んでいます。達成まであと一歩、何かサポートできることはないでしょうか。";
     } else if (pulseMid && !warming) {
         text = "体温・達成率ともに踏ん張りどころ。背景について一緒に考えるタイミングかもしれません。";
     } else if (!pulseMid && achieved) {
