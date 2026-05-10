@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils/index";
 import { OrganizationCard } from "@/components/dashboard/OrganizationCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { WeatherIcon } from "@/components/ui/WeatherIcon";
+import { calcKpiQuality, KPI_QUALITY_META } from "@/lib/logic/kpi-engine";
 import { ChevronDown, ChevronUp, Package } from "lucide-react";
 
 // 領域ごとのカラーパレット（最大8領域まで対応）
@@ -19,23 +20,6 @@ const AXIS_COLORS = [
     "#f97316", // orange
 ];
 
-/* ─── ロジック: コンディション診断 ─────────────────────── */
-const KPI_QUALITY_META = {
-    healthy: { label: "健全達成", icon: "✨", color: "text-emerald-600", bg: "bg-emerald-50" },
-    warning: { label: "構造課題", icon: "⚠️", color: "text-amber-600", bg: "bg-amber-50" },
-    alert:   { label: "燃え尽き", icon: "🔥", color: "text-rose-600", bg: "bg-rose-50" },
-    critical: { label: "要再建", icon: "🚨", color: "text-rose-700", bg: "bg-rose-100" },
-    unknown: { label: "-", icon: "", color: "text-slate-400", bg: "bg-slate-50" }
-};
-
-function calcKpiQuality(ach: number, pulse: number) {
-    if (ach >= 100 && pulse >= 3.5) return "healthy";
-    if (ach >= 100 && pulse < 3.5)  return "alert";
-    if (ach < 100 && pulse >= 3.5)  return "warning";
-    if (ach < 100 && pulse < 3.5)   return "critical";
-    return "unknown";
-}
-
 interface AxisComparisonSectionProps {
     axes: any[];
     secondaryAxisName: string;
@@ -43,7 +27,7 @@ interface AxisComparisonSectionProps {
 }
 
 export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: AxisComparisonSectionProps) {
-    // 領域ごとの色を固定するマップ（idxベースで一度決めると一貫性が保たれる）
+    // 領域ごとの色を固定するマップ
     const axisColorMap = useMemo(() => {
         const map = new Map<string, string>();
         axes.forEach((axis, idx) => {
@@ -52,18 +36,15 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
         return map;
     }, [axes]);
 
-    // 代表KPIの達成率で降順ソート
-    const rankedAxes = [...axes].sort((a, b) => {
-        const achA = a.kpis?.[0]?.ach ?? a.kpiAch ?? 0;
-        const achB = b.kpis?.[0]?.ach ?? b.kpiAch ?? 0;
-        return achB - achA;
-    });
+    // 全領域に存在する全てのKPI名を取得（重複なし）
+    const allKpiNames = useMemo(() => {
+        const names = new Set<string>();
+        axes.forEach(ax => ax.kpis?.forEach((k: any) => names.add(k.name)));
+        return Array.from(names);
+    }, [axes]);
 
-    // 代表KPI名（全領域で同じKPIを持つため最初の領域から取得）
+    // 代表KPI名（最初のKPI）
     const primaryKpiName = axes.find(a => a.kpis?.[0])?.kpis?.[0]?.name ?? "代表KPI";
-
-    // 最大達成率（バーの100%基準）
-    const maxAch = Math.max(...rankedAxes.map(a => a.kpis?.[0]?.ach ?? a.kpiAch ?? 0), 1);
 
     // トレンドチャート用データ（直近6ヶ月）
     const trendMonths = 6;
@@ -92,7 +73,7 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
                 {axes.map((axis) => {
                     const color = axisColorMap.get(axis.id) ?? AXIS_COLORS[0];
                     const quality = calcKpiQuality(axis.kpiAch ?? 0, axis.pulse ?? 0);
-                    const meta = KPI_QUALITY_META[quality as keyof typeof KPI_QUALITY_META] || KPI_QUALITY_META.unknown;
+                    const meta = KPI_QUALITY_META[quality];
                     return (
                         <div
                             key={axis.id}
@@ -143,60 +124,79 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
                 })}
             </div>
 
-            {/* Block 1: 達成率ランキング */}
+            {/* Block 1: KPI別達成率ランキング */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-slate-50 bg-slate-50/30">
                     <h3 className="text-sm font-black text-slate-800 tracking-tight">
-                        {secondaryAxisName}別 達成率ランキング
+                        {secondaryAxisName}別 KPIランキング
                     </h3>
                     <p className="text-[10px] text-slate-400 font-bold mt-0.5 uppercase tracking-widest">
-                        代表指標: {primaryKpiName}
+                        各指標の領域間比較
                     </p>
                 </div>
-                <div className="p-6 space-y-4">
-                    {rankedAxes.map((axis, idx) => {
-                        const ach = axis.kpis?.[0]?.ach ?? axis.kpiAch ?? 0;
-                        const val = axis.kpis?.[0]?.val ?? "-";
-                        const color = axisColorMap.get(axis.id) ?? AXIS_COLORS[0];
-                        const barWidth = maxAch > 0 ? Math.min((ach / maxAch) * 100, 100) : 0;
-                        const achColor = ach >= 100 ? "text-emerald-500" : ach >= 80 ? "text-amber-500" : "text-rose-500";
-
-                        return (
-                            <div key={axis.id} className="flex items-center gap-4">
-                                {/* 順位 */}
-                                <span className="text-[11px] font-black text-slate-300 w-4 shrink-0 text-right">
-                                    {idx + 1}
-                                </span>
-                                {/* カラードット */}
-                                <div
-                                    className="w-2.5 h-2.5 rounded-full shrink-0"
-                                    style={{ backgroundColor: color }}
-                                />
-                                {/* 領域名 */}
-                                <span className="text-sm font-bold text-slate-700 w-28 shrink-0 truncate">
-                                    {axis.name}
-                                </span>
-                                {/* バー */}
-                                <div className="flex-1 relative h-2 bg-slate-100 rounded-full overflow-hidden">
-                                    <div
-                                        className="absolute inset-y-0 left-0 rounded-full transition-all duration-1000"
-                                        style={{ width: `${barWidth}%`, backgroundColor: color }}
-                                    />
-                                </div>
-                                {/* 値と達成率（2段表示でコンパクトに） */}
-                                <div className="flex flex-col items-end shrink-0 w-28">
-                                    <span className="text-xs font-black text-slate-700 tabular-nums leading-tight">
-                                        {val}
+                <div className="p-6 space-y-10">
+                    {allKpiNames.map(kpiName => (
+                        <div key={kpiName} className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                    {kpiName}
+                                </h4>
+                                {kpiName === primaryKpiName && (
+                                    <span className="text-[8px] font-black bg-teal/5 text-teal px-1.5 py-0.5 rounded uppercase">
+                                        代表指標
                                     </span>
-                                    {ach > 0 && (
-                                        <span className={cn("text-[11px] font-black tabular-nums leading-tight", achColor)}>
-                                            {ach}%
-                                        </span>
-                                    )}
-                                </div>
+                                )}
                             </div>
-                        );
-                    })}
+                            <div className="space-y-3">
+                                {[...axes]
+                                    .map(ax => ({ ax, kpi: ax.kpis?.find((k: any) => k.name === kpiName) }))
+                                    .filter(({ kpi }) => kpi)
+                                    .sort((a, b) => (b.kpi.ach ?? 0) - (a.kpi.ach ?? 0))
+                                    .map(({ ax, kpi }, rankIdx) => {
+                                        const color = axisColorMap.get(ax.id) ?? AXIS_COLORS[0];
+                                        const ach = kpi.ach ?? 0;
+                                        return (
+                                            <div key={ax.id} className="flex items-center gap-3">
+                                                {/* 順位 */}
+                                                <span className="text-[10px] font-black text-slate-300 w-4 shrink-0 text-right">
+                                                    {rankIdx + 1}
+                                                </span>
+                                                {/* カラードット */}
+                                                <div
+                                                    className="w-2 h-2 rounded-full shrink-0"
+                                                    style={{ backgroundColor: color }}
+                                                />
+                                                {/* 領域名 */}
+                                                <span className="text-xs font-bold text-slate-700 w-24 shrink-0 truncate">
+                                                    {ax.name}
+                                                </span>
+                                                {/* 実績値 */}
+                                                <span className="text-xs font-black text-slate-600 w-20 shrink-0 text-right tabular-nums">
+                                                    {kpi.val}
+                                                </span>
+                                                {/* バー */}
+                                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full rounded-full transition-all duration-700"
+                                                        style={{
+                                                            width: `${Math.min(ach, 100)}%`,
+                                                            backgroundColor: color
+                                                        }}
+                                                    />
+                                                </div>
+                                                {/* 達成率 */}
+                                                <span
+                                                    className="text-xs font-black tabular-nums w-10 shrink-0 text-right"
+                                                    style={{ color }}
+                                                >
+                                                    {ach}%
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
 
