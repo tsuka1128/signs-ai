@@ -59,7 +59,7 @@ export function MatrixSection({
                                     <span>縦軸: 一人当たり生産性</span>
                                     <div className="relative group/calc text-left">
                                         <button className="w-3.5 h-3.5 rounded-full bg-slate-200 text-slate-500 hover:bg-slate-300 hover:text-slate-600 flex items-center justify-center text-[9px] font-black cursor-help transition-colors select-none">?</button>
-                                        <div className="absolute top-full left-0 mt-2 w-56 bg-slate-800 text-white p-3.5 rounded-xl shadow-xl text-[10px] leading-relaxed break-normal whitespace-normal hidden group-hover/calc:block z-[150] normal-case tracking-normal animate-in fade-in zoom-in-95 font-medium">
+                                        <div className="absolute bottom-full left-0 mb-2 w-56 bg-slate-800 text-white p-3.5 rounded-xl shadow-xl text-[10px] leading-relaxed break-normal whitespace-normal hidden group-hover/calc:block z-[150] normal-case tracking-normal animate-in fade-in zoom-in-95 font-medium">
                                             <div className="font-bold text-white mb-2 flex items-center gap-1.5"><TrendingDown className="w-4 h-4 text-emerald-400" />生産性スコアの計算式</div>
                                             <div className="bg-slate-900/80 p-2 rounded-lg font-mono text-[9px] text-emerald-400 mb-2.5 border border-slate-700">
                                                 主担当KPIの達成率 × 体温係数

@@ -229,7 +229,7 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
 
             {/* ライトボックス（モーダル）表示 */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-[200] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setIsModalOpen(false)}>
+                <div className="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setIsModalOpen(false)}>
                     <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4 md:p-6 relative shadow-2xl touch-pan-y" onClick={e => e.stopPropagation()}>
                         <div className="flex flex-col gap-4 mb-4">
                             <div className="flex items-start justify-between">
@@ -238,9 +238,9 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
                                     <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-slate-400 font-bold mt-1 px-1 uppercase tracking-tight">
                                         <div className="flex items-center gap-1">
                                             <span>縦軸: 一人当たり生産性</span>
-                                            <div className="relative group/calc">
-                                                <button className="w-3.5 h-3.5 rounded-full bg-slate-200 text-slate-500 hover:bg-slate-300 hover:text-slate-600 flex items-center justify-center text-[9px] font-black cursor-help transition-colors">?</button>
-                                                <div className="absolute top-full left-0 mt-2 w-56 md:w-64 bg-slate-800 text-white p-3.5 rounded-xl shadow-xl text-[10px] leading-relaxed break-normal whitespace-normal hidden group-hover/calc:block group-focus-within/calc:block z-[400] normal-case tracking-normal transition-all animate-in fade-in zoom-in-95">
+                                            <div className="relative group/calc text-left">
+                                                <button className="w-3.5 h-3.5 rounded-full bg-slate-200 text-slate-500 hover:bg-slate-300 hover:text-slate-600 flex items-center justify-center text-[9px] font-black cursor-help transition-colors select-none">?</button>
+                                                <div className="absolute bottom-full left-0 mb-2 w-56 bg-slate-800 text-white p-3.5 rounded-xl shadow-xl text-[10px] leading-relaxed break-normal whitespace-normal hidden group-hover/calc:block group-focus-within/calc:block z-[10001] normal-case tracking-normal animate-in fade-in zoom-in-95 font-medium">
                                                     <div className="font-bold text-white mb-2 flex items-center gap-1.5">生産性スコアの計算式</div>
                                                     <div className="bg-slate-900/80 p-2 rounded-lg font-mono text-[10px] text-emerald-400 mb-2.5 border border-slate-700">
                                                         主担当KPIの達成率 × 体温係数
