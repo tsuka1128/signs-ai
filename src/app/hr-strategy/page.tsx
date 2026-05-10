@@ -97,32 +97,21 @@ export default function HrStrategyPage() {
   const kpiAchs = displayDepts.map(d => d.kpiAch);
   const deptSurveyData = displayDepts.map(d => (derived as any).getCurrentSurveyData?.(d.id));
 
-  const standardDriverData = DEFAULT_SURVEY_QUESTIONS
-    .map((q, qi) => {
-      const qScores = deptSurveyData.map(data => data?.scores?.[qi] ?? 0);
-      return {
-        text: q.text,
-        corr: pearson(qScores, kpiAchs),
-        avgScore: companyPulseData?.scores?.[qi] ?? 0,
-        isCustom: false,
-      };
-    });
-
-  const customQuestions = (state as any).realCustomQuestions as any[] ?? [];
-  const customDriverData = customQuestions
-    .map((q: any, ci: number) => {
-      const qScores = deptSurveyData.map((data: any) => data?.customScores?.[ci] ?? 0);
-      return {
-        text: q.text,
-        corr: pearson(qScores, kpiAchs),
-        avgScore: (companyPulseData as any)?.customScores?.[ci] ?? 0,
-        isCustom: true,
-      };
-    });
-
-  // 標準設問とカスタム設問を corr で一括ソート
-  const driverData = [...standardDriverData, ...customDriverData]
-    .sort((a, b) => b.corr - a.corr);
+  // 全設問（標準 + カスタム）を統合して相関データを計算
+  const driverData = [
+    ...DEFAULT_SURVEY_QUESTIONS.map((q, qi) => ({
+      text: q.text,
+      corr: pearson(deptSurveyData.map(data => data?.scores?.[qi] ?? 0), kpiAchs),
+      avgScore: companyPulseData?.scores?.[qi] ?? 0,
+      isCustom: false,
+    })),
+    ...((state as any).realCustomQuestions as any[] ?? []).map((q: any, ci: number) => ({
+      text: q.text,
+      corr: pearson(deptSurveyData.map((data: any) => data?.customScores?.[ci] ?? 0), kpiAchs),
+      avgScore: (companyPulseData as any)?.customScores?.[ci] ?? 0,
+      isCustom: true,
+    }))
+  ].sort((a, b) => b.corr - a.corr);
 
   const hasData = displayDepts.length > 0;
 
