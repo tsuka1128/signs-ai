@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { cn } from "@/lib/utils/index";
+import { cn } from "@/lib/utils";
 import { OrganizationCard } from "@/components/dashboard/OrganizationCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { WeatherIcon } from "@/components/ui/WeatherIcon";
@@ -140,7 +140,6 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
                             .map(ax => ({ ax, kpi: ax.kpis?.find((k: any) => k.name === kpiName) }))
                             .filter(({ kpi }) => kpi);
 
-                        // 実績値の数値を抽出（「2,158万円」「5件」など非数値文字を除去）
                         const numericVals = entries.map(({ kpi }) =>
                             parseFloat(String(kpi.val ?? "0").replace(/[^0-9.]/g, "")) || 0
                         );
@@ -149,13 +148,9 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
                         return (
                             <div key={kpiName} className="space-y-3">
                                 <div className="flex items-center gap-2">
-                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                        {kpiName}
-                                    </h4>
+                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{kpiName}</h4>
                                     {kpiName === primaryKpiName && (
-                                        <span className="text-[8px] font-black bg-teal/5 text-teal px-1.5 py-0.5 rounded uppercase">
-                                            代表指標
-                                        </span>
+                                        <span className="text-[8px] font-black bg-teal/5 text-teal px-1.5 py-0.5 rounded uppercase">代表指標</span>
                                     )}
                                 </div>
                                 <div className="space-y-3">
@@ -169,40 +164,14 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
 
                                             return (
                                                 <div key={ax.id} className="flex items-center gap-3">
-                                                    {/* 順位 */}
-                                                    <span className="text-[10px] font-black text-slate-300 w-4 shrink-0 text-right">
-                                                        {rankIdx + 1}
-                                                    </span>
-                                                    {/* カラードット */}
-                                                    <div
-                                                        className="w-2 h-2 rounded-full shrink-0"
-                                                        style={{ backgroundColor: color }}
-                                                    />
-                                                    {/* 領域名 */}
-                                                    <span className="text-xs font-bold text-slate-700 w-24 shrink-0 truncate">
-                                                        {ax.name}
-                                                    </span>
-                                                    {/* 実績値 */}
-                                                    <span className="text-xs font-black text-slate-600 w-20 shrink-0 text-right tabular-nums">
-                                                        {kpi.val}
-                                                    </span>
-                                                    {/* バー: 実績値の相対比で幅を決める */}
+                                                    <span className="text-[10px] font-black text-slate-300 w-4 shrink-0 text-right">{rankIdx + 1}</span>
+                                                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                                                    <span className="text-xs font-bold text-slate-700 w-24 shrink-0 truncate">{ax.name}</span>
+                                                    <span className="text-xs font-black text-slate-600 w-20 shrink-0 text-right tabular-nums">{kpi.val}</span>
                                                     <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                        <div
-                                                            className="h-full rounded-full transition-all duration-700"
-                                                            style={{
-                                                                width: `${barWidth}%`,
-                                                                backgroundColor: color
-                                                            }}
-                                                        />
+                                                        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${barWidth}%`, backgroundColor: color }} />
                                                     </div>
-                                                    {/* 達成率 */}
-                                                    <span
-                                                        className="text-xs font-black tabular-nums w-10 shrink-0 text-right"
-                                                        style={{ color }}
-                                                    >
-                                                        {ach}%
-                                                    </span>
+                                                    <span className="text-xs font-black tabular-nums w-10 shrink-0 text-right" style={{ color }}>{ach}%</span>
                                                 </div>
                                             );
                                         })}
