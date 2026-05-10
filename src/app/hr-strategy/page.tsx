@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useCompany } from "@/hooks/useCompany";
 import { useDashboardData } from "@/hooks/useDashboardData";
@@ -140,8 +140,9 @@ export default function HrStrategyPage() {
       text: q.text,
       corr: pearson(xs, ys),
       avgScore: companyPulseData?.scores?.[qi] ?? 0,
-      isCustom: false,
+      isCustom: false as const,
       n,
+      qi,
     };
   });
 
@@ -167,14 +168,51 @@ export default function HrStrategyPage() {
       text: q.text,
       corr: pearson(xs, ys),
       avgScore: (companyPulseData as any)?.customScores?.[ci] ?? 0,
-      isCustom: true,
+      isCustom: true as const,
       n,
+      questionId: q.id,
     };
   });
 
   // 一括ソート
   const driverData = [...standardDriverData, ...customDriverData]
     .sort((a, b) => b.corr - a.corr);
+
+  // 部署別ドライバー推移 用
+  const [selectedDeptId, setSelectedDeptId] = useState<string>("");
+  const activeDeptId = selectedDeptId || displayDepts[0]?.id || "";
+
+  // 全社ドライバー上位3件（ソート済みの先頭）
+  const top3Drivers = driverData.slice(0, 3);
+
+  // 選択部署の月別スコア（上位3設問分）
+  const top3MonthlyScores: number[][] = top3Drivers.map(driver => {
+    return last13Months.map(monthStr => {
+      const responses = realResponses.filter((r: any) =>
+        r.department_id === activeDeptId &&
+        normalizeMonth(r.recorded_month) === monthStr
+      );
+      if (responses.length === 0) return 0;
+      const scores: number[] = [];
+      if (!driver.isCustom && driver.qi !== undefined) {
+        responses.forEach((r: any) => {
+          const ans = r.survey_answers || [];
+          if (ans[driver.qi!]?.score) scores.push(ans[driver.qi!].score);
+        });
+      } else if (driver.isCustom && (driver as any).questionId) {
+        responses.forEach((r: any) => {
+          const ans = r.survey_answers || [];
+          const match = ans.find((a: any) => String(a.question_id) === String((driver as any).questionId));
+          if (match?.score) scores.push(match.score);
+        });
+      }
+      return scores.length ? scores.reduce((s, v) => s + v, 0) / scores.length : 0;
+    });
+  });
+
+  // 選択部署の KPI 月別達成率
+  const activeDept = displayDepts.find((d: any) => d.id === activeDeptId);
+  const activeDeptKpiHistory: number[] = (activeDept as any)?.kpiAchHistory ?? new Array(13).fill(0);
 
   // データ点数（全設問共通、標準設問の最大値を代表値として使用）
   const panelN = standardDriverData[0]?.n ?? 0;
@@ -345,7 +383,137 @@ export default function HrStrategyPage() {
             </p>
           </section>
 
-          {/* Section ③: AI 人事戦略提言 */}
+          {/* Section ③: 部署別ドライバー推移 */}
+          {hasData && top3Drivers.length > 0 && displayDepts.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="w-4.5 h-4.5 text-indigo-400" />
+                <h2 className="text-base font-black text-slate-700">部署別ドライバー推移</h2>
+              </div>
+
+              {/* 部署タブ */}
+              <div className="flex gap-2 mb-4 flex-wrap">
+                {displayDepts.map((d: any) => (
+                  <button
+                    key={d.id}
+                    onClick={() => setSelectedDeptId(d.id)}
+                    className={cn(
+                      "text-xs font-black px-3 py-1.5 rounded-full border transition-colors",
+                      activeDeptId === d.id
+                        ? "bg-indigo-500 text-white border-indigo-500"
+                        : "bg-white text-slate-500 border-slate-200 hover:border-indigo-300"
+                    )}
+                  >
+                    {d.name}
+                  </button>
+                ))}
+              </div>
+
+              <div className="bg-white rounded-2xl border border-slate-100 p-6 space-y-4">
+                {/* 凡例 */}
+                <div className="flex flex-wrap gap-4">
+                  {top3Drivers.map((d, i) => {
+                    const colors = ["#14b8a6", "#8b5cf6", "#f59e0b"];
+                    return (
+                      <div key={i} className="flex items-center gap-1.5">
+                        <div className="w-6 h-0.5 rounded-full" style={{ backgroundColor: colors[i] }} />
+                        <span className="text-[10px] font-bold text-slate-500 max-w-[120px] truncate">{d.text}</span>
+                      </div>
+                    );
+                  })}
+                  <div className="flex items-center gap-1.5 ml-auto">
+                    <div className="w-6 h-1.5 rounded-full bg-indigo-400 opacity-60" />
+                    <span className="text-[10px] font-bold text-slate-500">KPI達成率</span>
+                  </div>
+                </div>
+
+                {/* SVGチャート */}
+                {(() => {
+                  const COLORS = ["#14b8a6", "#8b5cf6", "#f59e0b"];
+                  const W = 600, H = 200;
+                  const pad = { top: 16, right: 40, bottom: 32, left: 32 };
+                  const cW = W - pad.left - pad.right;
+                  const cH = H - pad.top - pad.bottom;
+                  const months = last13Months.length;
+
+                  const xPos = (i: number) => pad.left + (months > 1 ? (i / (months - 1)) * cW : cW / 2);
+
+                  // スコアを 0-100% に正規化して KPI と同スケールで描画
+                  const normalizeScore = (s: number) => (s / 5) * 100;
+
+                  // 全値の最大（KPI が 100 超えることもある）
+                  const allVals = [
+                    ...top3MonthlyScores.flat().map(normalizeScore),
+                    ...activeDeptKpiHistory
+                  ].filter(v => v > 0);
+                  const maxVal = Math.max(...allVals, 100);
+
+                  const yPos = (v: number) => pad.top + cH - (v / maxVal) * cH;
+
+                  const toPath = (vals: number[]) =>
+                    vals.map((v, i) => `${i === 0 ? "M" : "L"} ${xPos(i)} ${yPos(v)}`).join(" ");
+
+                  // 表示する月ラベル（3ヶ月おき）
+                  const labels = last13Months.map(m => m.slice(5, 7) + "月");
+
+                  return (
+                    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto select-none">
+                      {/* グリッド */}
+                      {[0, 25, 50, 75, 100].map(v => (
+                        <g key={v}>
+                          <line
+                            x1={pad.left} y1={yPos(v)} x2={pad.left + cW} y2={yPos(v)}
+                            stroke="#F1F5F9" strokeWidth={1}
+                          />
+                          <text x={pad.left - 4} y={yPos(v) + 3} textAnchor="end"
+                            className="text-[9px] fill-slate-300 font-bold">{v}</text>
+                        </g>
+                      ))}
+
+                      {/* KPI 達成率（塗り面積） */}
+                      <path
+                        d={`${toPath(activeDeptKpiHistory)} L ${xPos(months - 1)} ${pad.top + cH} L ${xPos(0)} ${pad.top + cH} Z`}
+                        fill="#818cf8" fillOpacity={0.08}
+                      />
+                      <path
+                        d={toPath(activeDeptKpiHistory)}
+                        fill="none" stroke="#818cf8" strokeWidth={2.5} strokeLinecap="round"
+                        strokeDasharray="6 3"
+                      />
+
+                      {/* 設問スコア3本 */}
+                      {top3MonthlyScores.map((scores, li) => (
+                        <path
+                          key={li}
+                          d={toPath(scores.map(normalizeScore))}
+                          fill="none"
+                          stroke={COLORS[li]}
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      ))}
+
+                      {/* X軸ラベル */}
+                      {labels.map((label, i) => {
+                        if (i % 3 !== 0 && i !== months - 1) return null;
+                        return (
+                          <text key={i} x={xPos(i)} y={H - 6} textAnchor="middle"
+                            className="text-[9px] fill-slate-400 font-bold">{label}</text>
+                        );
+                      })}
+                    </svg>
+                  );
+                })()}
+
+                <p className="text-[10px] text-slate-400 font-medium">
+                  ※ 設問スコアは 5点満点を 100% に換算して表示。KPI達成率と同スケールで比較できます。
+                </p>
+              </div>
+            </section>
+          )}
+
+          {/* Section ④: AI 人事戦略提言 */}
           <section>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
