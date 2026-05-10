@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useCompany } from "@/hooks/useCompany";
 import { useDashboardData } from "@/hooks/useDashboardData";
@@ -9,6 +10,7 @@ import { calcRiskAlerts } from "@/lib/logic/turnover-risk";
 import { DEFAULT_SURVEY_QUESTIONS } from "@/lib/constants";
 import { AlertTriangle, TrendingUp, Brain } from "lucide-react";
 import { cn } from "@/lib/utils/index";
+import { getLastNMonths, normalizeMonth } from "@/lib/utils/date";
 
 /** Pearson 相関係数（ローカル定義） */
 function pearson(xs: number[], ys: number[]): number {
@@ -26,6 +28,8 @@ function pearson(xs: number[], ys: number[]): number {
   );
   return den === 0 ? 0 : Math.round((num / den) * 100) / 100;
 }
+
+const last13Months = getLastNMonths(13);
 
 const CARD_STYLE = {
   critical: { bg: "bg-rose-50",    border: "border-rose-200",   dot: "bg-rose-500" },
@@ -94,24 +98,81 @@ export default function HrStrategyPage() {
     });
 
   // エンゲージメントドライバー（部署別設問スコア × 部署KPI達成率の相関）
-  const kpiAchs = displayDepts.map(d => d.kpiAch);
-  const deptSurveyData = displayDepts.map(d => (derived as any).getCurrentSurveyData?.(d.id));
+  // パネルデータ（部署 × 月）で xs/ys ペアを構築するヘルパー
+  const realResponses = (state as any).realResponses as any[];
 
-  // 全設問（標準 + カスタム）を統合して相関データを計算
-  const driverData = [
-    ...DEFAULT_SURVEY_QUESTIONS.map((q, qi) => ({
+  const buildPairs = (
+    getQScore: (dept: any, monthIdx: number) => number
+  ): { xs: number[]; ys: number[]; n: number } => {
+    const xs: number[] = [];
+    const ys: number[] = [];
+    displayDepts.forEach((dept: any) => {
+      const kpiHistory: number[] = dept.kpiAchHistory ?? [];
+      for (let mi = 0; mi < last13Months.length; mi++) {
+        const qScore = getQScore(dept, mi);
+        const kpiAch = kpiHistory[mi] ?? 0;
+        if (qScore > 0 && kpiAch > 0) {
+          xs.push(qScore);
+          ys.push(kpiAch);
+        }
+      }
+    });
+    return { xs, ys, n: xs.length };
+  };
+
+  // 標準設問
+  const standardDriverData = DEFAULT_SURVEY_QUESTIONS.map((q, qi) => {
+    const { xs, ys, n } = buildPairs((dept, mi) => {
+      const monthStr = last13Months[mi];
+      const responses = realResponses.filter((r: any) =>
+        r.department_id === dept.id &&
+        normalizeMonth(r.recorded_month) === monthStr
+      );
+      const scores: number[] = [];
+      responses.forEach((r: any) => {
+        const ans = r.survey_answers || [];
+        if (ans[qi]?.score) scores.push(ans[qi].score);
+      });
+      if (scores.length === 0) return 0;
+      return scores.reduce((s: number, v: number) => s + v, 0) / scores.length;
+    });
+    return {
       text: q.text,
-      corr: pearson(deptSurveyData.map(data => data?.scores?.[qi] ?? 0), kpiAchs),
+      corr: pearson(xs, ys),
       avgScore: companyPulseData?.scores?.[qi] ?? 0,
       isCustom: false,
-    })),
-    ...((state as any).realCustomQuestions as any[] ?? []).map((q: any, ci: number) => ({
+      n,
+    };
+  });
+
+  // カスタム設問
+  const customQuestions = (state as any).realCustomQuestions as any[] ?? [];
+  const customDriverData = customQuestions.map((q: any, ci: number) => {
+    const { xs, ys, n } = buildPairs((dept, mi) => {
+      const monthStr = last13Months[mi];
+      const responses = realResponses.filter((r: any) =>
+        r.department_id === dept.id &&
+        normalizeMonth(r.recorded_month) === monthStr
+      );
+      const answers = responses.flatMap((r: any) => r.survey_answers || []);
+      const match = answers.find((a: any) => String(a.question_id) === String(q.id));
+      return match?.score ?? 0;
+    });
+    return {
       text: q.text,
-      corr: pearson(deptSurveyData.map((data: any) => data?.customScores?.[ci] ?? 0), kpiAchs),
+      corr: pearson(xs, ys),
       avgScore: (companyPulseData as any)?.customScores?.[ci] ?? 0,
       isCustom: true,
-    }))
-  ].sort((a, b) => b.corr - a.corr);
+      n,
+    };
+  });
+
+  // 一括ソート
+  const driverData = [...standardDriverData, ...customDriverData]
+    .sort((a, b) => b.corr - a.corr);
+
+  // データ点数（全設問共通、標準設問の最大値を代表値として使用）
+  const panelN = standardDriverData[0]?.n ?? 0;
 
   const hasData = displayDepts.length > 0;
 
@@ -186,15 +247,19 @@ export default function HrStrategyPage() {
               <h2 className="text-base font-black text-slate-700">エンゲージメントドライバー分析</h2>
             </div>
 
-            {/* 凡例 */}
             <p className="text-sm text-slate-500 mb-3 flex items-center gap-1.5">
               改善するとKPIに直結する設問を上位に表示しています。上から優先的にアクションしてください。右（＋）が強化推奨、左（－）は構造的な課題の可能性。
               <span className="relative group inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-200 text-slate-500 text-[10px] font-bold cursor-help flex-shrink-0">
                 ?
                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2.5 text-[11px] text-slate-600 bg-white border border-slate-200 rounded-lg shadow-lg invisible group-hover:visible z-50 leading-relaxed font-medium whitespace-normal pointer-events-none">
-                  各設問の平均スコアと部署KPI達成率のピアソン相関係数。絶対値が大きいほど関連が強く、＋は高スコアがKPI向上に寄与、－はスコアが高いのにKPIが低い構造的な課題の可能性を示します。
+                  過去13ヶ月の全部署のデータに基づき、各設問の平均スコアと部署KPI達成率のピアソン相関係数を算出。絶対値が大きいほど関連が強く、＋は高スコアがKPI向上に寄与、－はスコアが高いのにKPIが低い構造的な課題の可能性を示します。
                 </span>
               </span>
+              {panelN > 0 && (
+                <span className="ml-auto text-[10px] text-slate-400 font-medium shrink-0">
+                  n={panelN} データ点
+                </span>
+              )}
             </p>
 
             <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
