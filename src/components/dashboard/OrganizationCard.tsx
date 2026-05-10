@@ -93,159 +93,115 @@ export function OrganizationCard({ name, head, pulse, weather, arrow, kpis, labo
             {primaryKpi && (
                 <div className="divide-y divide-slate-50">
                     <div className="px-5 py-4">
-                        {secondaryKpis.length > 0 ? (
-                            /* 補助KPIがある場合：左右2カラム */
-                            <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start">
-                                {/* 左：代表KPI（大） */}
-                                <div className="flex-1 space-y-1.5 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-tight">
-                                            {primaryKpi.name}
-                                        </span>
-                                        <span className="text-[8px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider">
-                                            {primaryKpi.type === "stack" ? "積上" : primaryKpi.type === "rate" ? "率" : "抑制"}
-                                        </span>
+                        <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start">
+
+                            {/* 代表KPI（補助KPIの有無に関わらず常に同じ表示） */}
+                            <div className="flex-1 space-y-1.5 min-w-0">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-tight">
+                                        {primaryKpi.name}
+                                    </span>
+                                    <span className="text-[8px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider">
+                                        {primaryKpi.type === "stack" ? "積上" : primaryKpi.type === "rate" ? "率" : "抑制"}
+                                    </span>
+                                    {secondaryKpis.length > 0 && (
                                         <span className="text-[9px] text-teal font-black bg-teal/5 px-1.5 py-0.5 rounded-md">
                                             代表指標
                                         </span>
-                                    </div>
-                                    <div className="flex items-end justify-between gap-2">
-                                        <div className="text-2xl font-black text-slate-800 tabular-nums leading-tight">
-                                            {primaryKpi.val}
-                                        </div>
-                                        {primaryKpi.ach !== null && (
-                                            <div className={cn(
-                                                "text-3xl font-black tabular-nums shrink-0",
-                                                primaryKpi.ach >= 100 ? "text-emerald-500" : primaryKpi.ach >= 80 ? "text-amber-500" : "text-rose-500"
-                                            )}>
-                                                {primaryKpi.ach}%
-                                            </div>
-                                        )}
-                                    </div>
-                                    {primaryKpi.ach !== null && (
-                                        <div className="space-y-1 pt-1">
-                                            <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                <div
-                                                    className={cn(
-                                                        "h-full rounded-full transition-all duration-1000",
-                                                        primaryKpi.ach >= 100 ? "bg-emerald-400" : primaryKpi.ach >= 80 ? "bg-amber-400" : "bg-rose-400"
-                                                    )}
-                                                    style={{ width: `${Math.min(primaryKpi.ach, 120) / 1.2}%` }}
-                                                />
-                                            </div>
-                                        </div>
                                     )}
                                 </div>
-
-                                {/* 縦区切り */}
-                                <div className="hidden md:block w-px self-stretch bg-slate-100 shrink-0" />
-
-                                {/* 右：補助KPI（中サイズ・縦並び） */}
-                                <div className="grid grid-cols-2 md:grid-cols-1 gap-3 w-full md:w-[220px] md:shrink-0">
-                                    {visibleSecondary.map((k, i) => {
-                                        const achColor = k.ach === null ? "text-slate-400"
-                                            : k.ach >= 100 ? "text-emerald-500"
-                                            : k.ach >= 80  ? "text-amber-500"
-                                            : "text-rose-500";
-                                        const achBg = k.ach === null ? "bg-slate-200"
-                                            : k.ach >= 100 ? "bg-emerald-400"
-                                            : k.ach >= 80  ? "bg-amber-400"
-                                            : "bg-rose-400";
-                                        return (
-                                            <div key={i} className="space-y-1">
-                                                <div className="flex items-center justify-between gap-2">
-                                                    <span className="text-[10px] font-black text-slate-400 tracking-tight truncate">
-                                                        {k.name}
-                                                    </span>
-                                                    <span className="text-[8px] bg-slate-100 text-slate-500 px-1 py-0.5 rounded font-bold uppercase shrink-0">
-                                                        {k.type === "stack" ? "積上" : k.type === "rate" ? "率" : "抑制"}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-end justify-between gap-2">
-                                                    <span className="text-sm font-black text-slate-700 tabular-nums">
-                                                        {k.val}
-                                                    </span>
-                                                    {k.ach !== null && (
-                                                        <span className={cn("text-xs font-black tabular-nums shrink-0", achColor)}>
-                                                            {k.ach}%
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                {k.ach !== null && (
-                                                    <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
-                                                        <div
-                                                            className={cn("h-full rounded-full transition-all duration-1000", achBg)}
-                                                            style={{ width: `${Math.min(k.ach, 120) / 1.2}%` }}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                    {/* 折りたたみボタン */}
-                                    {hiddenCount > 0 && (
-                                        <button
-                                            onClick={() => setShowAllKpis(true)}
-                                            className="text-[10px] font-black text-teal bg-teal/5 border border-teal/10 px-3 py-1.5 rounded-xl hover:bg-teal/10 transition-colors text-left"
-                                        >
-                                            +{hiddenCount}件を表示
-                                        </button>
-                                    )}
-                                    {showAllKpis && secondaryKpis.length > 2 && (
-                                        <button
-                                            onClick={() => setShowAllKpis(false)}
-                                            className="text-[10px] font-black text-slate-400 bg-slate-100 px-3 py-1.5 rounded-xl hover:bg-slate-200 transition-colors text-left"
-                                        >
-                                            折りたたむ
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        ) : (
-                            /* 補助KPIがない場合：既存の1カラムレイアウト（変更なし） */
-                            <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1 space-y-1.5">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-tight">
-                                            {primaryKpi.name}
-                                        </span>
-                                        <span className="text-[8px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider">
-                                            {primaryKpi.type === "stack" ? "積上" : primaryKpi.type === "rate" ? "率" : "抑制"}
-                                        </span>
-                                    </div>
+                                {/* 値と達成率を横並び（右端に飛ばさない） */}
+                                <div className="flex items-end gap-3">
                                     <div className="text-2xl font-black text-slate-800 tabular-nums leading-tight">
                                         {primaryKpi.val}
                                     </div>
                                     {primaryKpi.ach !== null && (
-                                        <div className="space-y-1 pt-1 max-w-[240px]">
-                                            <div className="flex justify-between items-center text-[9px] font-bold tracking-tight">
-                                                <span className="text-slate-400">達成率</span>
-                                                <span className={cn(
-                                                    primaryKpi.ach >= 100 ? "text-emerald-500" : primaryKpi.ach >= 80 ? "text-amber-500" : "text-rose-500"
-                                                )}>{primaryKpi.ach}%</span>
-                                            </div>
-                                            <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                <div
-                                                    className={cn(
-                                                        "h-full rounded-full transition-all duration-1000",
-                                                        primaryKpi.ach >= 100 ? "bg-emerald-400" : primaryKpi.ach >= 80 ? "bg-amber-400" : "bg-rose-400"
-                                                    )}
-                                                    style={{ width: `${Math.min(primaryKpi.ach, 120) / 1.2}%` }}
-                                                />
-                                            </div>
+                                        <div className={cn(
+                                            "text-3xl font-black tabular-nums leading-tight",
+                                            primaryKpi.ach >= 100 ? "text-emerald-500" : primaryKpi.ach >= 80 ? "text-amber-500" : "text-rose-500"
+                                        )}>
+                                            {primaryKpi.ach}%
                                         </div>
                                     )}
                                 </div>
                                 {primaryKpi.ach !== null && (
-                                    <div className={cn(
-                                        "text-3xl font-black tabular-nums shrink-0",
-                                        primaryKpi.ach >= 100 ? "text-emerald-500" : primaryKpi.ach >= 80 ? "text-amber-500" : "text-rose-500"
-                                    )}>
-                                        {primaryKpi.ach}%
+                                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                        <div
+                                            className={cn(
+                                                "h-full rounded-full transition-all duration-1000",
+                                                primaryKpi.ach >= 100 ? "bg-emerald-400" : primaryKpi.ach >= 80 ? "bg-amber-400" : "bg-rose-400"
+                                            )}
+                                            style={{ width: `${Math.min(primaryKpi.ach, 120) / 1.2}%` }}
+                                        />
                                     </div>
                                 )}
                             </div>
-                        )}
+
+                            {/* 補助KPI（ある場合のみ） */}
+                            {secondaryKpis.length > 0 && (
+                                <>
+                                    <div className="hidden md:block w-px self-stretch bg-slate-100 shrink-0" />
+                                    <div className="grid grid-cols-2 md:grid-cols-1 gap-3 w-full md:w-[220px] md:shrink-0">
+                                        {visibleSecondary.map((k, i) => {
+                                            const achColor = k.ach === null ? "text-slate-400"
+                                                : k.ach >= 100 ? "text-emerald-500"
+                                                : k.ach >= 80  ? "text-amber-500"
+                                                : "text-rose-500";
+                                            const achBg = k.ach === null ? "bg-slate-200"
+                                                : k.ach >= 100 ? "bg-emerald-400"
+                                                : k.ach >= 80  ? "bg-amber-400"
+                                                : "bg-rose-400";
+                                            return (
+                                                <div key={i} className="space-y-1">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <span className="text-[10px] font-black text-slate-400 tracking-tight truncate">
+                                                            {k.name}
+                                                        </span>
+                                                        <span className="text-[8px] bg-slate-100 text-slate-500 px-1 py-0.5 rounded font-bold uppercase shrink-0">
+                                                            {k.type === "stack" ? "積上" : k.type === "rate" ? "率" : "抑制"}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-end justify-between gap-2">
+                                                        <span className="text-sm font-black text-slate-700 tabular-nums">
+                                                            {k.val}
+                                                        </span>
+                                                        {k.ach !== null && (
+                                                            <span className={cn("text-xs font-black tabular-nums shrink-0", achColor)}>
+                                                                {k.ach}%
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {k.ach !== null && (
+                                                        <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
+                                                            <div
+                                                                className={cn("h-full rounded-full transition-all duration-1000", achBg)}
+                                                                style={{ width: `${Math.min(k.ach, 120) / 1.2}%` }}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                        {hiddenCount > 0 && (
+                                            <button
+                                                onClick={() => setShowAllKpis(true)}
+                                                className="text-[10px] font-black text-teal bg-teal/5 border border-teal/10 px-3 py-1.5 rounded-xl hover:bg-teal/10 transition-colors text-left"
+                                            >
+                                                +{hiddenCount}件を表示
+                                            </button>
+                                        )}
+                                        {showAllKpis && secondaryKpis.length > 2 && (
+                                            <button
+                                                onClick={() => setShowAllKpis(false)}
+                                                className="text-[10px] font-black text-slate-400 bg-slate-100 px-3 py-1.5 rounded-xl hover:bg-slate-200 transition-colors text-left"
+                                            >
+                                                折りたたむ
+                                            </button>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
 
                     {/* 観察コメント */}
