@@ -201,7 +201,32 @@ export function KpiSection({
                                         <th className="py-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">達成率</th>
                                         <th className="py-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">体温</th>
                                         <th className="py-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">コンディション診断</th>
-                                        <th className="py-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">目標設定の評価</th>
+                                        <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                                            <div className="flex items-center gap-1.5">
+                                                <span>目標設定の評価</span>
+                                                <div className="relative group/sethelp">
+                                                    <button className="w-3.5 h-3.5 rounded-full bg-slate-200 text-slate-500 hover:bg-slate-300 hover:text-slate-600 flex items-center justify-center text-[9px] font-black cursor-help transition-colors select-none">?</button>
+                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-slate-800 text-white text-[11px] rounded-2xl shadow-2xl hidden group-hover/sethelp:block z-[60] leading-relaxed font-medium animate-in fade-in zoom-in-95 whitespace-normal normal-case tracking-normal">
+                                                        <div className="font-black text-white mb-2 border-b border-slate-700 pb-1.5">目標設定の健全性</div>
+                                                        <p className="text-slate-300 mb-2">過去13ヶ月のKPI達成率の平均から、目標値の難易度が適切かを自動判定します。</p>
+                                                        <div className="space-y-1.5">
+                                                            <div className="flex items-start gap-2">
+                                                                <span className="text-violet-400 font-black shrink-0">⚑ 低すぎる可能性</span>
+                                                                <span className="text-slate-400">平均達成率が115%超。目標がチャレンジングでない可能性。</span>
+                                                            </div>
+                                                            <div className="flex items-start gap-2">
+                                                                <span className="text-rose-400 font-black shrink-0">⚑ 高すぎる可能性</span>
+                                                                <span className="text-slate-400">平均達成率が65%未満。体温への影響も要確認。</span>
+                                                            </div>
+                                                            <div className="flex items-start gap-2">
+                                                                <span className="text-slate-400 font-black shrink-0">適正</span>
+                                                                <span className="text-slate-400">達成率が適切な範囲（65〜115%）で推移。</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
