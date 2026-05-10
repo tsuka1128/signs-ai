@@ -183,6 +183,7 @@ export default function HrStrategyPage() {
   const ALL_DEPTS_ID = "__all__";
   const activeDeptId = selectedDeptId || ALL_DEPTS_ID;
   const activeDept = displayDepts.find((d: any) => d.id === activeDeptId);
+  const top3Drivers = driverData.slice(0, 3);
 
   // 全部署平均 or 選択部署
   const top3MonthlyScores: number[][] = top3Drivers.map(driver => {
