@@ -55,6 +55,7 @@ export default function HrStrategyPage() {
   const hrStrategyMonth   = (state as any).hrStrategyMonth   as string | undefined;
 
   const { canUse } = usePlanFeatures();
+  const [selectedDeptId, setSelectedDeptId] = useState<string>("");
 
   if (!canUse("hr_strategy")) {
     return (
@@ -179,7 +180,6 @@ export default function HrStrategyPage() {
     .sort((a, b) => b.corr - a.corr);
 
   // 部署別ドライバー推移 用
-  const [selectedDeptId, setSelectedDeptId] = useState<string>("");
   const activeDeptId = selectedDeptId || displayDepts[0]?.id || "";
 
   // 全社ドライバー上位3件（ソート済みの先頭）
