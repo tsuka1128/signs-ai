@@ -38,29 +38,6 @@ export function KpiSection({
         <div className="space-y-6">
             {displayKpis.length > 0 ? (
                 <>
-                    {/* 全社サマリーバッジ（セクションの最上部に追加） */}
-                    {(() => {
-                        const counts = { healthy: 0, burnout: 0, structural: 0, potential: 0 };
-                        displayDepts.forEach((d: any) => {
-                            const q = calcKpiQuality(d.kpiAch || 0, d.pulse || 0);
-                            counts[q]++;
-                        });
-                        const items = [
-                            { key: "healthy", label: "健全達成", color: "bg-emerald-100 text-emerald-700" },
-                            { key: "burnout", label: "焼き付き", color: "bg-amber-100  text-amber-700" },
-                            { key: "structural", label: "構造課題", color: "bg-rose-100   text-rose-700" },
-                            { key: "potential", label: "余力あり", color: "bg-sky-100    text-sky-700" },
-                        ] as const;
-                        return (
-                            <div className="flex flex-wrap gap-2 mb-2 px-1">
-                                {items.map(item => counts[item.key] > 0 && (
-                                    <span key={item.key} className={`text-[11px] font-black px-3 py-1.5 rounded-full ${item.color} shadow-sm border border-white`}>
-                                        {item.label} {counts[item.key]}部署
-                                    </span>
-                                ))}
-                            </div>
-                        );
-                    })()}
                     {/* KPI Summary Row */}
                     <div className="flex gap-2 overflow-x-auto pt-2 pb-2 mt-[-8px] scrollbar-hide">
                         {displayKpis.map(k => (
@@ -108,14 +85,26 @@ export function KpiSection({
                                     <div className="text-right">
                                         <div className="flex items-baseline gap-1.5 justify-end">
                                             <span className="text-5xl font-black text-slate-800 tabular-nums tracking-tighter">{Number(selectedKpiDef?.val || 0).toLocaleString()}</span>
-                                            <span className="text-lg font-bold text-slate-400">{selectedKpiDef?.unit}</span>
+                            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                                <div className="p-8 pb-4">
+                                    <div className="flex justify-between items-start">
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-3">
+                                                <h3 className="text-xl font-bold text-slate-800">{selectedKpiDef.name}</h3>
+                                                <HelpLink href="/docs/kpi-setup" label="KPI設定・入力ガイド" />
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="flex items-baseline gap-1.5 justify-end">
+                                                <span className="text-5xl font-black text-slate-800 tabular-nums tracking-tighter">{Number(selectedKpiDef?.val || 0).toLocaleString()}</span>
+                                                <span className="text-lg font-bold text-slate-400">{selectedKpiDef?.unit}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="space-y-3">
-                                    <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">1年推移</div>
-                                    <div className="h-40 w-full">
+                                <div className="p-8">
+                                    <div className="h-[180px] w-full">
                                         <DetailLineChart
                                             data={selectedKpiDef.prev || []}
                                             targetData={selectedKpiDef.targetHistory || []}
@@ -132,7 +121,7 @@ export function KpiSection({
                                 </div>
 
                                 {achRate !== null && (
-                                    <div className="space-y-4 pt-4 border-t border-slate-50">
+                                    <div className="p-8 pt-0 space-y-4 border-t border-slate-50 pt-8">
                                         <div className="flex justify-between items-center text-[11px] font-black uppercase tracking-widest">
                                             <span className="text-slate-400">目標進捗</span>
                                             <span className={achRate >= 100 ? "text-emerald-500" : "text-rose-500"}>{achRate}%</span>
@@ -183,13 +172,33 @@ export function KpiSection({
                                 <TrendingDown className="w-4 h-4 text-slate-400" />
                                 部署別 KPI コンディション診断
                             </h3>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Analysis View</span>
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-3">
+                                    {[
+                                        { key: "healthy", label: "健全", dot: "bg-emerald-500" },
+                                        { key: "burnout", label: "焼き付き", dot: "bg-amber-500" },
+                                        { key: "structural", label: "構造課題", dot: "bg-rose-500" },
+                                        { key: "potential", label: "余力あり", dot: "bg-sky-500" },
+                                    ].map(g => (
+                                        <div key={g.key} className="flex items-center gap-1.5 group/g relative">
+                                            <div className={`w-1.5 h-1.5 rounded-full ${g.dot}`} />
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{g.label}</span>
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-slate-800 text-white text-[10px] rounded-xl shadow-xl hidden group-hover/g:block z-50 leading-relaxed font-medium">
+                                                {KPI_QUALITY_META[g.key as KpiQuality].description}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="w-px h-3 bg-slate-200" />
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Analysis View</span>
+                            </div>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-slate-50/50">
                                         <th className="py-3 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">部署</th>
+                                        <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">担当KPI</th>
                                         <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">達成率</th>
                                         <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">体温</th>
                                         <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">コンディション診断</th>
@@ -202,11 +211,17 @@ export function KpiSection({
                                         const qMeta = KPI_QUALITY_META[quality];
                                         const setHealth = calcKpiSetHealth(d.kpiAchHistory ?? []);
                                         const shMeta = KPI_SET_HEALTH_META[setHealth];
+                                        
+                                        // 部署が担当しているKPIを探す
+                                        const deptKpi = displayKpis.find(k => k.dept === d.name);
 
                                         return (
                                             <tr key={d.id} className="group hover:bg-slate-50/50 transition-colors border-b border-slate-50">
                                                 <td className="py-4 px-6">
                                                     <span className="text-sm font-bold text-slate-700">{d.name}</span>
+                                                </td>
+                                                <td className="py-4 px-4">
+                                                    <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200/50">{deptKpi?.name || "---"}</span>
                                                 </td>
                                                 <td className="py-4 px-4">
                                                     <span className={cn(
