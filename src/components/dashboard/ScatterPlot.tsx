@@ -77,6 +77,7 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
     
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const [showAxisHelp, setShowAxisHelp] = useState(false);
     useEffect(() => { setMounted(true); }, []);
 
     const renderChart = () => (
@@ -176,10 +177,14 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
 
             <g transform={`rotate(-90,12,${H / 2 - 25}) translate(12, ${H / 2 - 25})`}>
                 <text x={0} y={0} textAnchor="middle" className="text-[10px] fill-slate-400 font-bold uppercase tracking-widest">一人当たり生産性 →</text>
-                <g className="cursor-help group/axis-help">
+                <g 
+                    className="cursor-help group/axis-help"
+                    onMouseEnter={() => setShowAxisHelp(true)}
+                    onMouseLeave={() => setShowAxisHelp(false)}
+                >
+                    <circle cx={65} cy={-3} r={12} fill="transparent" /> {/* ヒットエリア拡大 */}
                     <circle cx={65} cy={-3} r={6} fill="#F1F5F9" className="group-hover/axis-help:fill-slate-200 transition-colors" />
-                    <text x={65} y={0} textAnchor="middle" className="text-[8px] font-black fill-slate-500">?</text>
-                    <title>一人当たり生産性 = KPI達成率 × 体温係数</title>
+                    <text x={65} y={0} textAnchor="middle" className="text-[8px] font-black fill-slate-500 italic">?</text>
                 </g>
             </g>
 
@@ -210,7 +215,22 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
                 </g>
             </g>
         </svg>
-    );
+        
+        {/* 軸の解説ツールチップ（HTML） */}
+        {showAxisHelp && (
+            <div className="absolute top-1/2 left-10 -translate-y-1/2 w-56 bg-slate-800 text-white p-4 rounded-2xl shadow-2xl text-[10px] leading-relaxed z-[50] animate-in fade-in slide-in-from-left-2 duration-200">
+                <div className="font-bold text-white mb-2 flex items-center gap-1.5">一人当たり生産性</div>
+                <div className="bg-slate-900/80 p-2 rounded-lg font-mono text-[9px] text-emerald-400 mb-2.5 border border-slate-700">
+                    主担当KPIの達成率 × 体温係数
+                </div>
+                <div className="text-slate-300">
+                    ※ 部署ごとに追っているKPIが異なるため、<span className="font-bold text-white">「達成率」</span>で標準化。<br />
+                    そこに<span className="font-bold text-white">組織体温（無理をしていないか）</span>を掛け合わせることで、全部署を同列の軸で比較評価します。
+                </div>
+            </div>
+        )}
+    </>
+);
 
     return (
         <>
