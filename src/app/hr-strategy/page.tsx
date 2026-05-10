@@ -180,39 +180,47 @@ export default function HrStrategyPage() {
     .sort((a, b) => b.corr - a.corr);
 
   // 部署別ドライバー推移 用
-  const activeDeptId = selectedDeptId || displayDepts[0]?.id || "";
+  const ALL_DEPTS_ID = "__all__";
+  const activeDeptId = selectedDeptId || ALL_DEPTS_ID;
+  const activeDept = displayDepts.find((d: any) => d.id === activeDeptId);
 
-  // 全社ドライバー上位3件（ソート済みの先頭）
-  const top3Drivers = driverData.slice(0, 3);
-
-  // 選択部署の月別スコア（上位3設問分）
+  // 全部署平均 or 選択部署
   const top3MonthlyScores: number[][] = top3Drivers.map(driver => {
     return last13Months.map(monthStr => {
-      const responses = realResponses.filter((r: any) =>
-        r.department_id === activeDeptId &&
-        normalizeMonth(r.recorded_month) === monthStr
-      );
-      if (responses.length === 0) return 0;
+      const targetResponses = activeDeptId === ALL_DEPTS_ID
+        ? realResponses.filter((r: any) => normalizeMonth(r.recorded_month) === monthStr)
+        : realResponses.filter((r: any) =>
+            r.department_id === activeDeptId &&
+            normalizeMonth(r.recorded_month) === monthStr
+          );
+      if (targetResponses.length === 0) return 0;
       const scores: number[] = [];
-      if (!driver.isCustom && driver.qi !== undefined) {
-        responses.forEach((r: any) => {
-          const ans = r.survey_answers || [];
-          if (ans[driver.qi!]?.score) scores.push(ans[driver.qi!].score);
-        });
-      } else if (driver.isCustom && (driver as any).questionId) {
-        responses.forEach((r: any) => {
-          const ans = r.survey_answers || [];
+      targetResponses.forEach((r: any) => {
+        const ans = r.survey_answers || [];
+        if (!driver.isCustom && driver.qi !== undefined) {
+          if (ans[driver.qi]?.score) scores.push(ans[driver.qi].score);
+        } else if (driver.isCustom && (driver as any).questionId) {
           const match = ans.find((a: any) => String(a.question_id) === String((driver as any).questionId));
           if (match?.score) scores.push(match.score);
-        });
-      }
+        }
+      });
       return scores.length ? scores.reduce((s, v) => s + v, 0) / scores.length : 0;
     });
   });
 
-  // 選択部署の KPI 月別達成率
-  const activeDept = displayDepts.find((d: any) => d.id === activeDeptId);
-  const activeDeptKpiHistory: number[] = (activeDept as any)?.kpiAchHistory ?? new Array(13).fill(0);
+  const activeDeptKpiHistory: number[] =
+    activeDeptId === ALL_DEPTS_ID
+      ? last13Months.map((_, mi) => {
+          const vals = displayDepts
+            .map((d: any) => (d.kpiAchHistory ?? [])[mi] ?? 0)
+            .filter((v: number) => v > 0);
+          return vals.length ? vals.reduce((s: number, v: number) => s + v, 0) / vals.length : 0;
+        })
+      : (activeDept as any)?.kpiAchHistory ?? new Array(13).fill(0);
+
+  // KPI名（全体時は非表示）
+  const activeKpiName: string | undefined =
+    activeDeptId === ALL_DEPTS_ID ? undefined : (activeDept as any)?.kpiName || undefined;
 
   // データ点数（全設問共通、標準設問の最大値を代表値として使用）
   const panelN = standardDriverData[0]?.n ?? 0;
@@ -393,6 +401,18 @@ export default function HrStrategyPage() {
 
               {/* 部署タブ */}
               <div className="flex gap-2 mb-4 flex-wrap">
+                {/* 全体タブ */}
+                <button
+                  onClick={() => setSelectedDeptId(ALL_DEPTS_ID)}
+                  className={cn(
+                    "text-xs font-black px-3 py-1.5 rounded-full border transition-colors",
+                    activeDeptId === ALL_DEPTS_ID
+                      ? "bg-slate-700 text-white border-slate-700"
+                      : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
+                  )}
+                >
+                  全体
+                </button>
                 {displayDepts.map((d: any) => (
                   <button
                     key={d.id}
@@ -409,7 +429,7 @@ export default function HrStrategyPage() {
                 ))}
               </div>
 
-              <div className="bg-white rounded-2xl border border-slate-100 p-6 space-y-4">
+              <div className="bg-white rounded-2xl border border-slate-100 p-6 space-y-6">
                 {/* 凡例 */}
                 <div className="flex flex-wrap gap-4">
                   {top3Drivers.map((d, i) => {
@@ -425,6 +445,19 @@ export default function HrStrategyPage() {
                     <div className="w-6 h-0 border-t-2 border-dashed border-indigo-400 opacity-60" />
                     <span className="text-[10px] font-bold text-slate-500">KPI達成率</span>
                   </div>
+                </div>
+
+                {/* KPI名 + 注釈 */}
+                <div className="flex items-center justify-between text-[10px] font-medium text-slate-400 px-1 border-b border-slate-50 pb-3">
+                  <span>
+                    全社相関ランキング上位3設問の推移を表示
+                  </span>
+                  {activeKpiName && (
+                    <span className="flex items-center gap-1">
+                      <span>代表KPI:</span>
+                      <span className="font-black text-indigo-400">{activeKpiName}</span>
+                    </span>
+                  )}
                 </div>
 
                 {/* SVGチャート */}
