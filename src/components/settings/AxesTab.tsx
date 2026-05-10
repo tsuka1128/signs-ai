@@ -52,18 +52,18 @@ export const AxesTab = ({
                         <p className="text-[10px] text-slate-400 mt-3 ml-1 line-relaxed">※ 「KPI入力」や「マトリックス切替」の名称として使用されます。</p>
                     </div>
                     <div className="p-6 bg-slate-50 border border-slate-100 rounded-3xl">
-                        <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase">バブルサイズのKPI</label>
+                        <label className="block text-[10px] font-bold text-slate-400 mb-2 ml-1 uppercase">担当領域の代表指標</label>
                         <select
                             value={company?.secondary_axis_size_kpi_id || ""}
                             onChange={(e) => setCompany({ ...company, secondary_axis_size_kpi_id: e.target.value || null })}
                             className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-800 outline-none focus:border-teal"
                         >
-                            <option value="">-- 指定なし（達成率を使用） --</option>
+                            <option value="">-- 指定なし（登録順の先頭KPIを使用） --</option>
                             {kpis.map(k => (
                                 <option key={k.id} value={k.id}>{k.name}</option>
                             ))}
                         </select>
-                        <p className="text-[10px] text-slate-400 mt-3 ml-1 line-relaxed">※ マトリックスの円の大きさに反映させる重要指標を選択してください。</p>
+                        <p className="text-[10px] text-slate-400 mt-3 ml-1 line-relaxed">※ この担当領域を代表する最重要KPIを選択してください。ランキングや分析の代表値として使われます。</p>
                     </div>
                 </div>
 
