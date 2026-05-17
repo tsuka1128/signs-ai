@@ -220,29 +220,28 @@ export default function KpiInputPage() {
     const handleExportCsv = () => {
         try {
             const monthHeaders = allMonths.map(m => m.month.slice(0, 7)); // YYYY-MM
-            const headers = ['KPI名', '部署', '軸', ...monthHeaders];
+            const headers = ['KPI名', '部署', '軸', '種別', ...monthHeaders];
             const rows: string[][] = [];
 
-            // 基本軸（全社）
-            kpiDefinitions.forEach(kpi => {
+            const pushRows = (kpi: KpiDefinition, axisLabel: string, axisKey: string) => {
+                // 実績行
                 rows.push([
-                    kpi.name,
-                    kpi.owner_dept_name || '',
-                    '全社',
-                    ...allMonths.map(m => editValues[`${m.month}_${kpi.id}_main`]?.target || '')
+                    kpi.name, kpi.owner_dept_name || '', axisLabel, '実績',
+                    ...allMonths.map(m => editValues[`${m.month}_${kpi.id}_${axisKey}`]?.value || '')
                 ]);
-            });
+                // 目標行
+                rows.push([
+                    kpi.name, kpi.owner_dept_name || '', axisLabel, '目標',
+                    ...allMonths.map(m => editValues[`${m.month}_${kpi.id}_${axisKey}`]?.target || '')
+                ]);
+            };
+
+            // 基本軸（全社）
+            kpiDefinitions.forEach(kpi => pushRows(kpi, '全社', 'main'));
 
             // 第2軸
             axes.forEach(axis => {
-                kpiDefinitions.forEach(kpi => {
-                    rows.push([
-                        kpi.name,
-                        kpi.owner_dept_name || '',
-                        axis.name,
-                        ...allMonths.map(m => editValues[`${m.month}_${kpi.id}_${axis.id}`]?.target || '')
-                    ]);
-                });
+                kpiDefinitions.forEach(kpi => pushRows(kpi, axis.name, axis.id));
             });
 
             const csv = [headers, ...rows]
@@ -253,10 +252,10 @@ export default function KpiInputPage() {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'KPI目標値.csv';
+            a.download = 'KPI実績・目標値.csv';
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            toast.success('目標値CSVを出力しました');
+            toast.success('KPI実績・目標値CSVを出力しました');
         } catch (e: any) {
             toast.error(`CSV出力に失敗しました: ${e?.message || '不明なエラー'}`);
         }
@@ -272,7 +271,7 @@ export default function KpiInputPage() {
 
         reader.onload = (e) => {
             try {
-                const text = (e.target?.result as string).replace(/^\uFEFF/, ''); // BOM除去
+                const text = (e.target?.result as string).replace(/^\uFEFF/, '');
                 const lines = text.trim().split('\n').map(l => l.trim()).filter(Boolean);
 
                 if (lines.length < 2) {
@@ -280,58 +279,55 @@ export default function KpiInputPage() {
                     return;
                 }
 
-                // ヘッダー行パース
                 const headerCols = lines[0].split(',').map(c => c.replace(/^"|"$/g, '').trim());
-                if (headerCols.length < 4) {
+                if (headerCols.length < 5) {
                     toast.error('CSVのフォーマットが正しくありません（列数が不足しています）');
                     return;
                 }
 
-                // 月列ヘッダー: YYYY-MM または YYYY/MM の両方を受け付ける
-                const monthCols = headerCols.slice(3).map(h => h.replace(/\//g, '-')); // YYYY/MM → YYYY-MM に正規化
-
-                // 全月のセットを作成（高速検索用）
+                // col: KPI名[0], 部署[1], 軸[2], 種別[3], YYYY-MM[4~]
+                const monthCols = headerCols.slice(4).map(h => h.replace(/\//g, '-'));
                 const monthSet = new Set(allMonths.map(m => m.month.slice(0, 7)));
 
                 let updatedCount = 0;
                 let skippedKpiCount = 0;
                 let skippedAxisCount = 0;
+                let skippedTypeCount = 0;
                 const newEditValues = { ...editValues };
 
                 lines.slice(1).forEach(line => {
                     const cols = line.split(',').map(c => c.replace(/^"|"$/g, '').trim());
-                    const kpiName = cols[0];
+                    const kpiName  = cols[0];
                     const axisName = cols[2];
-                    const targetCols = cols.slice(3);
+                    const kindStr  = cols[3]; // '実績' or '目標'
+                    const valueCols = cols.slice(4);
 
-                    // KPIを名前で検索
                     const kpiDef = kpiDefinitions.find(k => k.name === kpiName);
-                    if (!kpiDef) {
-                        skippedKpiCount++;
-                        return;
-                    }
+                    if (!kpiDef) { skippedKpiCount++; return; }
 
-                    // 軸キーを特定
                     let axisKey: string;
                     if (!axisName || axisName === '全社') {
                         axisKey = 'main';
                     } else {
                         const axis = axes.find(a => a.name === axisName);
-                        if (!axis) {
-                            skippedAxisCount++;
-                            return;
-                        }
+                        if (!axis) { skippedAxisCount++; return; }
                         axisKey = axis.id;
                     }
 
+                    // 種別チェック
+                    const field: 'value' | 'target' | null =
+                        kindStr === '実績' ? 'value' :
+                        kindStr === '目標' ? 'target' : null;
+                    if (!field) { skippedTypeCount++; return; }
+
                     monthCols.forEach((monthYM, idx) => {
-                        if (!monthSet.has(monthYM)) return; // 表示範囲外の月はスキップ
-                        const month = `${monthYM}-01`; // YYYY-MM → YYYY-MM-01
+                        if (!monthSet.has(monthYM)) return;
+                        const month = `${monthYM}-01`;
                         const key = `${month}_${kpiDef.id}_${axisKey}`;
                         if (!(key in newEditValues)) return;
-                        const incoming = targetCols[idx] ?? '';
+                        const incoming = valueCols[idx] ?? '';
                         if (incoming !== '') {
-                            newEditValues[key] = { ...newEditValues[key], target: incoming };
+                            newEditValues[key] = { ...newEditValues[key], [field]: incoming };
                             updatedCount++;
                         }
                     });
@@ -339,22 +335,22 @@ export default function KpiInputPage() {
 
                 setEditValues(newEditValues);
 
-                // 結果トースト
                 if (updatedCount === 0) {
-                    // 1件も更新されなかった = フォーマット不一致の可能性が高い
                     toast.error(
-                        `目標値を取り込めませんでした。` +
-                        (skippedKpiCount > 0 ? ` KPI名が一致しない行: ${skippedKpiCount}件。` : '') +
-                        (skippedAxisCount > 0 ? ` 軸名が一致しない行: ${skippedAxisCount}件。` : '') +
+                        `データを取り込めませんでした。` +
+                        (skippedKpiCount  > 0 ? ` KPI名不一致: ${skippedKpiCount}行。`  : '') +
+                        (skippedAxisCount > 0 ? ` 軸名不一致: ${skippedAxisCount}行。`  : '') +
+                        (skippedTypeCount > 0 ? ` 種別不明: ${skippedTypeCount}行。`     : '') +
                         ` 出力したCSVをベースに編集してください。`
                     );
                 } else {
                     const warnings: string[] = [];
-                    if (skippedKpiCount > 0) warnings.push(`KPI名不一致: ${skippedKpiCount}行スキップ`);
+                    if (skippedKpiCount  > 0) warnings.push(`KPI名不一致: ${skippedKpiCount}行スキップ`);
                     if (skippedAxisCount > 0) warnings.push(`軸名不一致: ${skippedAxisCount}行スキップ`);
+                    if (skippedTypeCount > 0) warnings.push(`種別不明: ${skippedTypeCount}行スキップ`);
                     const warningText = warnings.length > 0 ? `（${warnings.join('、')}）` : '';
                     toast.success(
-                        `目標値を取り込みました（${updatedCount}セル更新）${warningText}。内容を確認後「保存」してください。`
+                        `データを取り込みました（${updatedCount}セル更新）${warningText}。内容を確認後「保存」してください。`
                     );
                 }
             } catch (e: any) {
@@ -598,7 +594,8 @@ export default function KpiInputPage() {
                     </div>
 
                     <div className="flex items-center gap-2 sm:gap-4 shrink-0 mt-4 sm:mt-0">
-                        <button 
+                        {/* 拡大表示 */}
+                        <button
                             onClick={() => setIsFullScreen(!isFullScreen)}
                             className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all shadow-sm"
                             title={isFullScreen ? "通常表示に戻す" : "全画面で表示"}
@@ -606,23 +603,29 @@ export default function KpiInputPage() {
                             {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                             {isFullScreen ? "縮小" : "拡大表示"}
                         </button>
-                        <button
-                            onClick={handleExportCsv}
-                            disabled={kpiDefinitions.length === 0}
-                            className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                            <Download className="w-3.5 h-3.5 text-emerald-600" />
-                            目標値を出力
-                        </button>
 
-                        <button
-                            onClick={() => importInputRef.current?.click()}
-                            disabled={kpiDefinitions.length === 0}
-                            className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                            <Upload className="w-3.5 h-3.5 text-blue-500" />
-                            目標値を取込
-                        </button>
+                        {/* CSV操作グループ */}
+                        <div className="flex flex-col items-center gap-1">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">CSV一括入力</span>
+                            <div className="flex items-center gap-1.5">
+                                <button
+                                    onClick={handleExportCsv}
+                                    disabled={kpiDefinitions.length === 0}
+                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    <Download className="w-3.5 h-3.5 text-emerald-600" />
+                                    出力
+                                </button>
+                                <button
+                                    onClick={() => importInputRef.current?.click()}
+                                    disabled={kpiDefinitions.length === 0}
+                                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    <Upload className="w-3.5 h-3.5 text-blue-500" />
+                                    取込
+                                </button>
+                            </div>
+                        </div>
 
                         <input
                             ref={importInputRef}
@@ -635,6 +638,10 @@ export default function KpiInputPage() {
                             }}
                         />
 
+                        {/* 区切り */}
+                        <div className="h-8 w-px bg-slate-200 hidden sm:block" />
+
+                        {/* 保存ボタン */}
                         <button
                             onClick={handleSave}
                             disabled={isSaving}
@@ -651,10 +658,7 @@ export default function KpiInputPage() {
                             ) : isSaving ? (
                                 <>保存中...</>
                             ) : (
-                                <>
-                                    この内容で保存する
-                                    <Save className="w-4 h-4 ml-1" />
-                                </>
+                                <>この内容で保存する <Save className="w-4 h-4 ml-1" /></>
                             )}
                         </button>
                     </div>
