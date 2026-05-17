@@ -162,28 +162,55 @@ export const KpiTab = ({
                                 </div>
                             </div>
 
-                            {/* Row 3: Revenue Toggle */}
-                            <div className="flex items-center gap-4 pt-2 border-t border-slate-100/50">
-                                <label className="flex items-center gap-3 cursor-pointer group/rev">
-                                    <div className="relative">
-                                        <input
-                                            type="checkbox"
-                                            checked={k.is_revenue || false}
-                                            onChange={(e) => setKpis(kpis.map(x => x.id === k.id ? { ...x, is_revenue: e.target.checked } : x))}
-                                            className="sr-only"
-                                        />
-                                        <div className={cn(
-                                            "w-10 h-5 rounded-full transition-all duration-300",
-                                            k.is_revenue ? "bg-teal" : "bg-slate-200"
-                                        )}></div>
-                                        <div className={cn(
-                                            "absolute top-1 left-1 w-3 h-3 rounded-full bg-white transition-all duration-300 shadow-sm",
-                                            k.is_revenue ? "translate-x-5" : "translate-x-0"
-                                        )}></div>
-                                    </div>
-                                    <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">売上・利益KPIとして扱う</span>
-                                </label>
-                                <span className="text-[9px] font-medium text-slate-400">※ 労働分配率を表示するには、売上KPIの設定（このフラグをON）が必要です。</span>
+                            {/* Row 3: Toggles */}
+                            <div className="pt-2 border-t border-slate-100/50 space-y-3">
+                                {/* 売上・利益KPI トグル */}
+                                <div className="flex items-center gap-4">
+                                    <label className="flex items-center gap-3 cursor-pointer group/rev">
+                                        <div className="relative">
+                                            <input
+                                                type="checkbox"
+                                                checked={k.is_revenue || false}
+                                                onChange={(e) => setKpis(kpis.map(x => x.id === k.id ? { ...x, is_revenue: e.target.checked } : x))}
+                                                className="sr-only"
+                                            />
+                                            <div className={cn(
+                                                "w-10 h-5 rounded-full transition-all duration-300",
+                                                k.is_revenue ? "bg-teal" : "bg-slate-200"
+                                            )}></div>
+                                            <div className={cn(
+                                                "absolute top-1 left-1 w-3 h-3 rounded-full bg-white transition-all duration-300 shadow-sm",
+                                                k.is_revenue ? "translate-x-5" : "translate-x-0"
+                                            )}></div>
+                                        </div>
+                                        <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">売上・利益KPIとして扱う</span>
+                                    </label>
+                                    <span className="text-[9px] font-medium text-slate-400">※ 労働分配率を表示するには、売上KPIの設定（このフラグをON）が必要です。</span>
+                                </div>
+
+                                {/* 全社員に公開する トグル */}
+                                <div className="flex items-center gap-4">
+                                    <label className="flex items-center gap-3 cursor-pointer group/pub">
+                                        <div className="relative">
+                                            <input
+                                                type="checkbox"
+                                                checked={k.is_public_to_players || false}
+                                                onChange={(e) => setKpis(kpis.map(x => x.id === k.id ? { ...x, is_public_to_players: e.target.checked } : x))}
+                                                className="sr-only"
+                                            />
+                                            <div className={cn(
+                                                "w-10 h-5 rounded-full transition-all duration-300",
+                                                k.is_public_to_players ? "bg-teal" : "bg-slate-200"
+                                            )}></div>
+                                            <div className={cn(
+                                                "absolute top-1 left-1 w-3 h-3 rounded-full bg-white transition-all duration-300 shadow-sm",
+                                                k.is_public_to_players ? "translate-x-5" : "translate-x-0"
+                                            )}></div>
+                                        </div>
+                                        <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">全社員に公開する</span>
+                                    </label>
+                                    <span className="text-[9px] font-medium text-slate-400">※ プレイヤー向け画面でこのKPIの実績・目標が表示されます（経営透明性）。</span>
+                                </div>
                             </div>
                         </div>
                     ))}

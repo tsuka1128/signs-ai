@@ -75,6 +75,7 @@ export interface Database {
           is_revenue: boolean
           is_main: boolean
           is_secondary_size_metric: boolean
+          is_public_to_players: boolean
           sort_order: number | null
           created_at: string
         }

@@ -306,7 +306,7 @@ export function useSettingsData() {
     };
 
     const handleAddKpi = () => {
-        setKpis([...kpis, { id: `new_${Date.now()}`, name: "", unit: "", target_default: 0, is_main: false, is_revenue: false, is_higher_better: true, is_new: true } as any]);
+        setKpis([...kpis, { id: `new_${Date.now()}`, name: "", unit: "", target_default: 0, is_main: false, is_revenue: false, is_higher_better: true, is_public_to_players: false, is_new: true } as any]);
     };
 
     const handleSaveAllKpis = async () => {
@@ -327,6 +327,7 @@ export function useSettingsData() {
                     owner_dept_id: k.owner_dept_id,
                     is_higher_better: k.is_higher_better ?? true,
                     is_revenue: k.is_revenue ?? false,
+                    is_public_to_players: k.is_public_to_players ?? false,
                     sort_order: k.sort_order
                 }).eq('id', k.id)),
                 toCreate.length > 0 ? supabase.from('kpi_definitions').insert(toCreate.map(k => ({
@@ -338,6 +339,7 @@ export function useSettingsData() {
                     owner_dept_id: k.owner_dept_id,
                     is_higher_better: k.is_higher_better ?? true,
                     is_revenue: k.is_revenue ?? false,
+                    is_public_to_players: k.is_public_to_players ?? false,
                     sort_order: k.sort_order
                 }))) : Promise.resolve({ error: null })
             ]);
