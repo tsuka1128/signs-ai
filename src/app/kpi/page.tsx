@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/Badge";
-import { Info, Save, ArrowLeft, Building2, Lock, Unlock, BarChart3, AlertTriangle, HelpCircle } from "lucide-react";
+import { Info, Save, ArrowLeft, Building2, Lock, Unlock, BarChart3, AlertTriangle, HelpCircle, Download, Upload } from "lucide-react";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase";
 import { Loading } from "@/components/ui/Loading";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -212,6 +213,157 @@ export default function KpiInputPage() {
     const [isSaved, setIsSaved] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
     const [isFullScreen, setIsFullScreen] = useState(false);
+
+    const importInputRef = useRef<HTMLInputElement>(null);
+
+    // ── 目標値 CSV 出力 ──
+    const handleExportCsv = () => {
+        try {
+            const monthHeaders = allMonths.map(m => m.month.slice(0, 7)); // YYYY-MM
+            const headers = ['KPI名', '部署', '軸', ...monthHeaders];
+            const rows: string[][] = [];
+
+            // 基本軸（全社）
+            kpiDefinitions.forEach(kpi => {
+                rows.push([
+                    kpi.name,
+                    kpi.owner_dept_name || '',
+                    '全社',
+                    ...allMonths.map(m => editValues[`${m.month}_${kpi.id}_main`]?.target || '')
+                ]);
+            });
+
+            // 第2軸
+            axes.forEach(axis => {
+                kpiDefinitions.forEach(kpi => {
+                    rows.push([
+                        kpi.name,
+                        kpi.owner_dept_name || '',
+                        axis.name,
+                        ...allMonths.map(m => editValues[`${m.month}_${kpi.id}_${axis.id}`]?.target || '')
+                    ]);
+                });
+            });
+
+            const csv = [headers, ...rows]
+                .map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
+                .join('\r\n');
+
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'KPI目標値.csv';
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            toast.success('目標値CSVを出力しました');
+        } catch (e: any) {
+            toast.error(`CSV出力に失敗しました: ${e?.message || '不明なエラー'}`);
+        }
+    };
+
+    // ── 目標値 CSV 取込 ──
+    const handleImportCsv = (file: File) => {
+        const reader = new FileReader();
+
+        reader.onerror = () => {
+            toast.error('ファイルの読み込みに失敗しました');
+        };
+
+        reader.onload = (e) => {
+            try {
+                const text = (e.target?.result as string).replace(/^\uFEFF/, ''); // BOM除去
+                const lines = text.trim().split('\n').map(l => l.trim()).filter(Boolean);
+
+                if (lines.length < 2) {
+                    toast.error('データが空です。CSVにデータ行を追加してください。');
+                    return;
+                }
+
+                // ヘッダー行パース
+                const headerCols = lines[0].split(',').map(c => c.replace(/^"|"$/g, '').trim());
+                if (headerCols.length < 4) {
+                    toast.error('CSVのフォーマットが正しくありません（列数が不足しています）');
+                    return;
+                }
+
+                // 月列ヘッダー: YYYY-MM または YYYY/MM の両方を受け付ける
+                const monthCols = headerCols.slice(3).map(h => h.replace(/\//g, '-')); // YYYY/MM → YYYY-MM に正規化
+
+                // 全月のセットを作成（高速検索用）
+                const monthSet = new Set(allMonths.map(m => m.month.slice(0, 7)));
+
+                let updatedCount = 0;
+                let skippedKpiCount = 0;
+                let skippedAxisCount = 0;
+                const newEditValues = { ...editValues };
+
+                lines.slice(1).forEach(line => {
+                    const cols = line.split(',').map(c => c.replace(/^"|"$/g, '').trim());
+                    const kpiName = cols[0];
+                    const axisName = cols[2];
+                    const targetCols = cols.slice(3);
+
+                    // KPIを名前で検索
+                    const kpiDef = kpiDefinitions.find(k => k.name === kpiName);
+                    if (!kpiDef) {
+                        skippedKpiCount++;
+                        return;
+                    }
+
+                    // 軸キーを特定
+                    let axisKey: string;
+                    if (!axisName || axisName === '全社') {
+                        axisKey = 'main';
+                    } else {
+                        const axis = axes.find(a => a.name === axisName);
+                        if (!axis) {
+                            skippedAxisCount++;
+                            return;
+                        }
+                        axisKey = axis.id;
+                    }
+
+                    monthCols.forEach((monthYM, idx) => {
+                        if (!monthSet.has(monthYM)) return; // 表示範囲外の月はスキップ
+                        const month = `${monthYM}-01`; // YYYY-MM → YYYY-MM-01
+                        const key = `${month}_${kpiDef.id}_${axisKey}`;
+                        if (!(key in newEditValues)) return;
+                        const incoming = targetCols[idx] ?? '';
+                        if (incoming !== '') {
+                            newEditValues[key] = { ...newEditValues[key], target: incoming };
+                            updatedCount++;
+                        }
+                    });
+                });
+
+                setEditValues(newEditValues);
+
+                // 結果トースト
+                if (updatedCount === 0) {
+                    // 1件も更新されなかった = フォーマット不一致の可能性が高い
+                    toast.error(
+                        `目標値を取り込めませんでした。` +
+                        (skippedKpiCount > 0 ? ` KPI名が一致しない行: ${skippedKpiCount}件。` : '') +
+                        (skippedAxisCount > 0 ? ` 軸名が一致しない行: ${skippedAxisCount}件。` : '') +
+                        ` 出力したCSVをベースに編集してください。`
+                    );
+                } else {
+                    const warnings: string[] = [];
+                    if (skippedKpiCount > 0) warnings.push(`KPI名不一致: ${skippedKpiCount}行スキップ`);
+                    if (skippedAxisCount > 0) warnings.push(`軸名不一致: ${skippedAxisCount}行スキップ`);
+                    const warningText = warnings.length > 0 ? `（${warnings.join('、')}）` : '';
+                    toast.success(
+                        `目標値を取り込みました（${updatedCount}セル更新）${warningText}。内容を確認後「保存」してください。`
+                    );
+                }
+            } catch (e: any) {
+                toast.error(`CSVの解析に失敗しました: ${e?.message || '不明なエラー'}`);
+            }
+        };
+
+        reader.readAsText(file, 'utf-8');
+    };
 
     // カンマ区切りフォーマット関数
     const formatValue = (val: string, unit?: string) => {
@@ -454,12 +606,34 @@ export default function KpiInputPage() {
                             {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                             {isFullScreen ? "縮小" : "拡大表示"}
                         </button>
-                        <button className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all shadow-sm">
-                            <svg className="w-3.5 h-3.5 text-emerald-600" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-2h2v2zm0-4H7v-2h2v2zm0-4H7V7h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z" />
-                            </svg>
-                            Sheets連携設定
+                        <button
+                            onClick={handleExportCsv}
+                            disabled={kpiDefinitions.length === 0}
+                            className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            <Download className="w-3.5 h-3.5 text-emerald-600" />
+                            目標値を出力
                         </button>
+
+                        <button
+                            onClick={() => importInputRef.current?.click()}
+                            disabled={kpiDefinitions.length === 0}
+                            className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            <Upload className="w-3.5 h-3.5 text-blue-500" />
+                            目標値を取込
+                        </button>
+
+                        <input
+                            ref={importInputRef}
+                            type="file"
+                            accept=".csv"
+                            className="hidden"
+                            onChange={e => {
+                                const file = e.target.files?.[0];
+                                if (file) { handleImportCsv(file); e.target.value = ''; }
+                            }}
+                        />
 
                         <button
                             onClick={handleSave}
