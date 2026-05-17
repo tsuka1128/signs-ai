@@ -6,6 +6,7 @@ import { Company, Department, KpiDefinition, KpiAxis, User, Invitation, Resource
 import { normalizeMonth, getLastNMonths, getMonthLabels, getFullMonthLabels } from "@/lib/utils/date";
 import { DEFAULT_SURVEY_QUESTIONS } from "@/lib/constants";
 import { calculateAchievementRate, calculateProductivity, getWeatherFromPulse, calculateGrowthRate } from "@/lib/logic/kpi-engine";
+import { toast } from "sonner";
 
 /**
  * 指定した部署/軸の resource_records から、最新月のデータを取得する（当月未入力時はフォールバック）
@@ -756,13 +757,13 @@ export function useDashboardData(
             });
             if (res.ok) {
                 await loadData();
-                alert("AI分析が完了しました。");
+                toast.success("AI分析が完了しました。");
             } else {
                 const result = await res.json();
-                alert("AI分析に失敗しました: " + result.error);
+                toast.error("AI分析に失敗しました: " + result.error);
             }
         } catch (err) {
-            alert("AI分析の実行中にエラーが発生しました。");
+            toast.error("AI分析の実行中にエラーが発生しました。");
         } finally {
             setIsAnalyzing(false);
         }
@@ -793,11 +794,11 @@ export function useDashboardData(
             const res = await fetch(`/api/semantic-layers?id=${id}`, { method: 'DELETE' });
             if (!res.ok) {
                 const result = await res.json();
-                alert(`削除に失敗しました: ${result.error || '不明なエラー'}`);
+                toast.error(`削除に失敗しました: ${result.error || '不明なエラー'}`);
                 setState(prev => ({ ...prev, realSemHistory: backup }));
             }
         } catch (err) {
-            alert('削除中にエラーが発生しました');
+            toast.error('削除中にエラーが発生しました');
             setState(prev => ({ ...prev, realSemHistory: backup }));
         }
     };

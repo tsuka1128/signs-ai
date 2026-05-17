@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils/index";
 import { createClient } from "@/lib/supabase";
 import { DEFAULT_SURVEY_QUESTIONS } from "@/lib/constants";
 import { Badge } from "@/components/ui/Badge";
+import { toast } from "sonner";
 
 interface Question {
     id: string;
@@ -37,7 +38,6 @@ export function SurveyTab({ companyId }: SurveyTabProps) {
     const [saving, setSaving] = useState(false);
     const [questions, setQuestions] = useState<Question[]>([]);
     const [showStandard, setShowStandard] = useState(false);
-    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     // カスタム設問の取得
     useEffect(() => {
@@ -93,7 +93,6 @@ export function SurveyTab({ companyId }: SurveyTabProps) {
     // 保存
     const handleSave = async () => {
         setSaving(true);
-        setMessage(null);
 
         try {
             // 1. 既存のカスタム設問を一度削除（物理削除または、idが一致しないものを削除するロジック）
@@ -136,10 +135,10 @@ export function SurveyTab({ companyId }: SurveyTabProps) {
             }
 
             setQuestions(validQuestions);
-            setMessage({ type: 'success', text: "設問設定を保存しました。" });
+            toast.success("設問設定を保存しました");
         } catch (err: any) {
             console.error("Save error:", err);
-            setMessage({ type: 'error', text: `保存に失敗しました: ${err.message}` });
+            toast.error("保存に失敗しました");
         } finally {
             setSaving(false);
         }
@@ -299,18 +298,7 @@ export function SurveyTab({ companyId }: SurveyTabProps) {
             </div>
 
             {/* Footer / Save Button */}
-            <div className="pt-6 border-t border-slate-100 flex items-center justify-between">
-                <div>
-                    {message && (
-                        <div className={cn(
-                            "flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-xl animate-fadeIn",
-                            message.type === 'success' ? "text-teal bg-teal-50" : "text-rose-500 bg-rose-50"
-                        )}>
-                            {message.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-                            {message.text}
-                        </div>
-                    )}
-                </div>
+            <div className="pt-6 border-t border-slate-100 flex items-center justify-end">
                 <button
                     onClick={handleSave}
                     disabled={saving}

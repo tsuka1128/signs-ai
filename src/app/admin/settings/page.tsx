@@ -29,6 +29,7 @@ import {
 import { Loading } from "@/components/ui/Loading";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils/index";
+import { toast } from "sonner";
 
 /** 設定タブの種別 */
 type SettingCategory = "system" | "ai" | "alert" | "survey";
@@ -154,7 +155,7 @@ export default function AdminSettingsPage() {
             await fetchSettings();
         } catch (error) {
             console.error("Error saving settings:", error);
-            alert("保存に失敗しました。");
+            toast.error("保存に失敗しました。");
         } finally {
             setTimeout(() => setSaving(false), 800);
         }
@@ -166,7 +167,7 @@ export default function AdminSettingsPage() {
     const handleTestSlackWebhook = async () => {
         const webhookUrl = localSettings['notification_slack_webhook'];
         if (!webhookUrl) {
-            alert("Webhook URLを入力・保存してからテストしてください。");
+            toast.success("Webhook URLを入力・保存してからテストしてください。");
             return;
         }
         
@@ -179,13 +180,13 @@ export default function AdminSettingsPage() {
             });
 
             if (res.ok) {
-                alert("テスト通知を送信しました。Slackチャンネルをご確認ください");
+                toast.success("テスト通知を送信しました。Slackチャンネルをご確認ください");
             } else {
                 const data = await res.json();
-                alert(`送信失敗: ${data.error || "詳細不明"}`);
+                toast.error(`送信失敗: ${data.error || "詳細不明"}`);
             }
         } catch (error: any) {
-            alert(`エラーが発生しました: ${error.message}`);
+            toast.error(`エラーが発生しました: ${error.message}`);
         } finally {
             setSaving(false);
         }

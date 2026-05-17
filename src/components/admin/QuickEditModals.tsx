@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils/index";
 import { Reorder, AnimatePresence, motion } from "framer-motion";
 import { createPortal } from "react-dom";
 import { CSVImportModal } from "./CSVImportModal";
+import { toast } from "sonner";
 
 interface ModalProps {
     companyId: string;
@@ -38,9 +39,9 @@ export function AdminDepartmentsModal({ companyId, companyName, onClose, onSucce
             await updateDepartments(depts);
             onSuccess();
             onClose();
-            alert("部署構成を更新しました");
+            toast.success("部署構成を更新しました");
         } catch (err: any) {
-            alert(`エラーが発生しました: ${err.message}`);
+            toast.error(`エラーが発生しました: ${err.message}`);
         } finally {
             setShowConfirm(false);
         }
@@ -243,9 +244,9 @@ export function AdminKpisModal({ companyId, companyName, onClose, onSuccess }: M
             await updateKpis(kpis.map((k, i) => ({ ...k, sort_order: i })));
             onSuccess();
             onClose();
-            alert("KPI定義を更新しました");
+            toast.success("KPI定義を更新しました");
         } catch (err: any) {
-            alert(`エラーが発生しました: ${err.message}`);
+            toast.error(`エラーが発生しました: ${err.message}`);
         } finally {
             setShowConfirm(false);
         }
@@ -455,9 +456,9 @@ export function AdminAxesModal({ companyId, companyName, onClose, onSuccess }: M
             await updateAxes(axes);
             onSuccess();
             onClose();
-            alert(`${secondaryAxisName}を更新しました`);
+            toast.success(`${secondaryAxisName}を更新しました`);
         } catch (err: any) {
-            alert(`エラーが発生しました: ${err.message}`);
+            toast.error(`エラーが発生しました: ${err.message}`);
         } finally {
             setShowConfirm(false);
         }
@@ -636,9 +637,9 @@ export function AdminPlanOverridesModal({ companyId, companyName, onClose, onSuc
             await updatePlanOverrides(overrides);
             onSuccess();
             onClose();
-            alert("個別上書き設定を保存しました");
+            toast.success("個別上書き設定を保存しました");
         } catch (err: any) {
-            alert(`エラーが発生しました: ${err.message}`);
+            toast.error(`エラーが発生しました: ${err.message}`);
         }
     };
 
@@ -820,9 +821,9 @@ export function AdminCompanySettingsModal({ companyId, companyName, onClose, onS
             await updateCompany(form);
             onSuccess();
             onClose();
-            alert("企業設定を更新しました");
+            toast.success("企業設定を更新しました");
         } catch (err: any) {
-            alert(`エラーが発生しました: ${err.message}`);
+            toast.error(`エラーが発生しました: ${err.message}`);
         } finally {
             setShowConfirm(false);
         }

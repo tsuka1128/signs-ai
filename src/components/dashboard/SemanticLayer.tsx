@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils/index";
 import { Bot, Send, CheckCircle2, X, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface SemanticLayerProps {
     initialText: string;
@@ -168,7 +169,7 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
             }, 2000);
         } catch (err: any) {
             console.error("Slack Send Error:", err);
-            alert(`エラー: ${err.message}`);
+            toast.error(`エラー: ${err.message}`);
             setIsSending(false);
         }
     };

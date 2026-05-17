@@ -5,6 +5,7 @@ import { Company, Department, KpiDefinition, KpiAxis, User, Invitation, Resource
 import { UserRole } from "@/lib/constants";
 import { getLastNMonths, normalizeMonth } from "@/lib/utils/date";
 import { calculateAchievementRate } from "@/lib/logic/kpi-engine";
+import { toast } from "sonner";
 
 export function useSettingsData() {
     const router = useRouter();
@@ -159,8 +160,8 @@ export function useSettingsData() {
             fiscal_year_start_month: company.fiscal_year_start_month || 1
         }).eq('id', company.id);
 
-        if (!error) alert("企業情報を保存しました");
-        else alert(`保存に失敗しました: ${error.message}`);
+        if (!error) toast.success("企業情報を保存しました");
+        else toast.error(`保存に失敗しました: ${error.message}`);
     };
 
     const handleSaveIntegration = async () => {
@@ -177,14 +178,14 @@ export function useSettingsData() {
             slack_msg_kpi_reminder: company.slack_msg_kpi_reminder
         }).eq('id', company.id);
 
-        if (!error) alert("連携・通知設定を保存しました");
-        else alert(`保存に失敗しました: ${error.message}`);
+        if (!error) toast.success("連携・通知設定を保存しました");
+        else toast.error(`保存に失敗しました: ${error.message}`);
     };
 
     const handlePreviewNotification = async (type: string) => {
         const webhookUrl = company?.slack_webhook_url;
         if (!webhookUrl) {
-            alert("Webhook URLを入力・保存してからプレビューしてください。");
+            toast.success("Webhook URLを入力・保存してからプレビューしてください。");
             return;
         }
 
@@ -204,20 +205,20 @@ export function useSettingsData() {
                 })
             });
             if (res.ok) {
-                alert("プレビュー通知を送信しました。Slackをご確認ください");
+                toast.success("プレビュー通知を送信しました。Slackをご確認ください");
             } else {
                 const data = await res.json();
-                alert(`送信失敗: ${data.error || "詳細不明"}`);
+                toast.error(`送信失敗: ${data.error || "詳細不明"}`);
             }
         } catch (e: any) {
-            alert(`エラーが発生しました: ${e.message}`);
+            toast.error(`エラーが発生しました: ${e.message}`);
         }
     };
 
     const handleTestClientSlackWebhook = async () => {
         const webhookUrl = company?.slack_webhook_url;
         if (!webhookUrl) {
-            alert("Webhook URLを入力・保存してからテストしてください。");
+            toast.success("Webhook URLを入力・保存してからテストしてください。");
             return;
         }
 
@@ -228,24 +229,24 @@ export function useSettingsData() {
                 body: JSON.stringify({ webhookUrl })
             });
             if (res.ok) {
-                alert("テスト通知を送信しました。Slackをご確認ください");
+                toast.success("テスト通知を送信しました。Slackをご確認ください");
             } else {
                 const data = await res.json();
-                alert(`送信失敗: ${data.error || "詳細不明"}`);
+                toast.error(`送信失敗: ${data.error || "詳細不明"}`);
             }
         } catch (e: any) {
-            alert(`エラーが発生しました: ${e.message}`);
+            toast.error(`エラーが発生しました: ${e.message}`);
         }
     };
 
     const handleTestMemberSlack = async (slackUserId: string) => {
         const webhookUrl = company?.slack_webhook_url;
         if (!webhookUrl) {
-            alert("まず「外部連携」タブでWebhook URLを保存してください。");
+            toast.success("まず「外部連携」タブでWebhook URLを保存してください。");
             return;
         }
         if (!slackUserId) {
-            alert("Slack User IDを入力してください。");
+            toast.error("Slack User IDを入力してください。");
             return;
         }
 
@@ -256,13 +257,13 @@ export function useSettingsData() {
                 body: JSON.stringify({ webhookUrl, slackUserId })
             });
             if (res.ok) {
-                alert(`Slack ID: ${slackUserId} 宛にテストメンションを送信しました。Slackをご確認ください`);
+                toast.success(`Slack ID: ${slackUserId} 宛にテストメンションを送信しました。Slackをご確認ください`);
             } else {
                 const data = await res.json();
-                alert(`送信失敗: ${data.error || "詳細不明"}`);
+                toast.error(`送信失敗: ${data.error || "詳細不明"}`);
             }
         } catch (e: any) {
-            alert(`エラーが発生しました: ${e.message}`);
+            toast.error(`エラーが発生しました: ${e.message}`);
         }
     };
 
@@ -287,11 +288,11 @@ export function useSettingsData() {
             const firstError = (results as any[]).find(r => r.error)?.error;
             if (firstError) throw new Error(firstError.message);
 
-            alert("部署情報を一括保存しました");
+            toast.success("部署情報を一括保存しました");
             const { data } = await supabase.from('departments').select('*').eq('company_id', company.id).order('sort_order', { ascending: true });
             if (data) setDepts(data);
         } catch (err: any) {
-            alert(`部署情報の保存に失敗しました: ${err.message || "詳細不明"}`);
+            toast.error(`部署情報の保存に失敗しました: ${err.message || "詳細不明"}`);
         }
     };
 
@@ -344,11 +345,11 @@ export function useSettingsData() {
             const firstError = (results as any[]).find(r => r.error)?.error;
             if (firstError) throw new Error(firstError.message);
 
-            alert("KPI設定を一括保存しました");
+            toast.success("KPI設定を一括保存しました");
             const { data } = await supabase.from('kpi_definitions').select('*').eq('company_id', company.id).order('sort_order', { ascending: true });
             if (data) setKpis(data);
         } catch (err: any) {
-            alert(`KPI設定の保存に失敗しました: ${err.message || "詳細不明"}`);
+            toast.error(`KPI設定の保存に失敗しました: ${err.message || "詳細不明"}`);
         }
     };
 
@@ -387,11 +388,11 @@ export function useSettingsData() {
             const firstError = (results as any[]).find(r => r.error)?.error;
             if (firstError) throw new Error(firstError.message);
 
-            alert(`${secondaryAxisName}設定を一括保存しました`);
+            toast.success(`${secondaryAxisName}設定を一括保存しました`);
             const { data } = await supabase.from('kpi_axes').select('*').eq('company_id', company.id).order('sort_order', { ascending: true });
             if (data) setAxes(data);
         } catch (err: any) {
-            alert(`保存に失敗しました: ${err.message || "詳細不明"}`);
+            toast.error(`保存に失敗しました: ${err.message || "詳細不明"}`);
         }
     };
 
@@ -432,7 +433,7 @@ export function useSettingsData() {
                 console.error("Mail API Error:", e);
             }
 
-            alert("招待を送信しました（メールが配信されます）");
+            toast.success("招待を送信しました（メールが配信されます）");
             setInviteEmail("");
             setInviteRole("player");
             setInviteDeptId("");
@@ -441,7 +442,7 @@ export function useSettingsData() {
             const { data } = await supabase.from('invitations').select('*').eq('company_id', company.id).eq('status', 'pending');
             if (data) setInvitations(data);
         } else {
-            alert(`招待に失敗しました: ${error?.message}`);
+            toast.error(`招待に失敗しました: ${error?.message}`);
         }
     };
 
@@ -450,7 +451,7 @@ export function useSettingsData() {
         const supabase = createClient();
         const { error } = await supabase.from('invitations').delete().eq('id', id);
         if (!error) setInvitations(invitations.filter(i => i.id !== id));
-        else alert(`削除に失敗しました: ${error.message}`);
+        else toast.error(`削除に失敗しました: ${error.message}`);
     };
 
     const handleResendInvitation = async (inv: Invitation) => {
@@ -461,14 +462,14 @@ export function useSettingsData() {
                 body: JSON.stringify({ invitationId: inv.id })
             });
             if (mailRes.ok) {
-                alert(`${inv.email} 宛に招待メールを再送しました`);
+                toast.success(`${inv.email} 宛に招待メールを再送しました`);
                 setInvitations(prev => prev.map(p => p.id === inv.id ? { ...p, updated_at: new Date().toISOString() } : p));
             } else {
                 const err = await mailRes.json();
-                alert(`再送に失敗しました: ${err.error}`);
+                toast.error(`再送に失敗しました: ${err.error}`);
             }
         } catch (e: any) {
-            alert(`エラーが発生しました: ${e.message}`);
+            toast.error(`エラーが発生しました: ${e.message}`);
         }
     };
 
@@ -476,9 +477,9 @@ export function useSettingsData() {
         const url = `${window.location.origin}/onboarding?token=${inv.token}`;
         try {
             await navigator.clipboard.writeText(url);
-            alert("招待用URLをコピーしました！ Slackなどで共有してください。");
+            toast.success("招待用URLをコピーしました！ Slackなどで共有してください。");
         } catch (err) {
-            alert(`コピーに失敗しました: ${url}`);
+            toast.error(`コピーに失敗しました: ${url}`);
         }
     };
 
@@ -506,11 +507,11 @@ export function useSettingsData() {
         } as any).eq('id', editingUser.id);
 
         if (!error) {
-            alert("ユーザー情報を更新しました");
+            toast.success("ユーザー情報を更新しました");
             const { data } = await supabase.from('users').select('*').eq('company_id', company.id);
             if (data) setUsers(data);
             setEditingUser(null);
-        } else alert(`保存に失敗しました: ${error.message}`);
+        } else toast.error(`保存に失敗しました: ${error.message}`);
     };
 
     const handleDeleteUser = async (userIdArg?: string) => {
@@ -520,10 +521,10 @@ export function useSettingsData() {
         const supabase = createClient();
         const { error } = await supabase.from('users').delete().eq('id', userId);
         if (!error) {
-            alert("メンバーを削除しました");
+            toast.success("メンバーを削除しました");
             setUsers(users.filter(u => u.id !== userId));
             setEditingUser(null);
-        } else alert(`削除に失敗しました: ${error.message}`);
+        } else toast.error(`削除に失敗しました: ${error.message}`);
     };
 
     const handleRunAnalyze = async () => {
@@ -536,7 +537,7 @@ export function useSettingsData() {
         try {
             const res = await fetch("/api/ai/analyze", { method: "POST" });
             if (!res.ok) throw new Error("API Request Failed");
-            alert("AIの分析処理が完了しました。ダッシュボードをご確認ください。");
+            toast.success("AIの分析処理が完了しました。ダッシュボードをご確認ください。");
             
             if (company) {
                 setCompany({
@@ -545,7 +546,7 @@ export function useSettingsData() {
                 });
             }
         } catch (error: any) {
-            alert(`分析の実行中にエラーが発生しました: ${error.message}`);
+            toast.error(`分析の実行中にエラーが発生しました: ${error.message}`);
         } finally {
             setIsAnalyzing(false);
         }
@@ -556,9 +557,9 @@ export function useSettingsData() {
         try {
             const res = await fetch("/api/settings/remind-voice-check", { method: "POST" });
             if (!res.ok) throw new Error("API Request Failed");
-            alert("未回答者に催促通知を送信しました。");
+            toast.success("未回答者に催促通知を送信しました。");
         } catch (error: any) {
-            alert(`エラーが発生しました: ${error.message}`);
+            toast.error(`エラーが発生しました: ${error.message}`);
         }
     };
 
@@ -567,9 +568,9 @@ export function useSettingsData() {
         try {
             const res = await fetch("/api/settings/remind-kpi", { method: "POST" });
             if (!res.ok) throw new Error("API Request Failed");
-            alert("KPI入力リマインドを送信しました。");
+            toast.success("KPI入力リマインドを送信しました。");
         } catch (error: any) {
-            alert(`エラーが発生しました: ${error.message}`);
+            toast.error(`エラーが発生しました: ${error.message}`);
         }
     };
 
