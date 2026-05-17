@@ -89,7 +89,7 @@ function KpiTable({ title, axisId, isMain, kpiDefinitions, allMonths, editValues
 
                             {allMonths.map((m, idx) => (
                                 <th key={m.month}
-                                    className={`sticky top-0 z-40 w-[200px] min-w-[200px] border-b border-r border-slate-200 p-2 text-center transition-colors ${idx === 0
+                                    className={`sticky top-0 z-30 w-[200px] min-w-[200px] border-b border-r border-slate-200 p-2 text-center transition-colors ${idx === 0
                                         ? "left-[220px] bg-[#F0FDF4] shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)] z-50 border-r-2 border-slate-200"
                                         : "bg-slate-50"
                                         }`}>
@@ -105,7 +105,7 @@ function KpiTable({ title, axisId, isMain, kpiDefinitions, allMonths, editValues
                     <tbody>
                         {kpiDefinitions.map((kpi, index) => (
                             <tr key={kpi.id} className="group border-b border-slate-200 bg-white">
-                                <td className="sticky left-0 z-30 bg-white group-hover:bg-slate-50 border-b border-r border-slate-200 p-0 shadow-[2px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors align-top w-[220px]">
+                                <td className="sticky left-0 z-40 bg-white group-hover:bg-slate-50 border-b border-r border-slate-200 p-0 shadow-[2px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors align-top w-[220px]">
                                     <div className="flex flex-col h-full justify-between p-3 min-h-[90px]">
                                         <div className="flex items-start gap-2 mb-2 ml-1">
                                             <span className="text-[10px] font-black text-slate-300 mt-0.5">{index + 1}.</span>
@@ -128,7 +128,7 @@ function KpiTable({ title, axisId, isMain, kpiDefinitions, allMonths, editValues
                                     return (
                                         <td key={m.month}
                                             className={`p-0 border-r border-slate-200 align-top transition-colors w-[200px] min-w-[200px] ${idx === 0
-                                                ? "sticky left-[220px] z-30 bg-[#F0FDF4] group-hover:bg-[#E9FBF0] border-r-2 border-slate-200 shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)]"
+                                                ? "sticky left-[220px] z-40 bg-[#F0FDF4] group-hover:bg-[#E9FBF0] border-r-2 border-slate-200 shadow-[8px_0_16px_-6px_rgba(0,0,0,0.08)]"
                                                 : "bg-white group-hover:bg-slate-50"
                                                 }`}>
                                             <div className="flex flex-col w-full h-full min-h-[90px]">
