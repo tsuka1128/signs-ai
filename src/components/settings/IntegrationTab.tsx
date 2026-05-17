@@ -94,7 +94,7 @@ export const IntegrationTab = ({
                                     company?.anomaly_alert_enabled === false && "opacity-40 pointer-events-none grayscale-[0.5]"
                                 )}>
                                     <div>
-                                        <label className="block text-[10px] font-medium text-slate-500 mb-1 ml-1">絶対値下限</label>
+                                        <label className="block text-[10px] font-medium text-slate-500 mb-1 ml-1">絶対値下限（体温スコアがこの値を下回ったら検知）</label>
                                         <div className="relative">
                                             <input
                                                 type="number"
@@ -108,7 +108,7 @@ export const IntegrationTab = ({
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] font-medium text-slate-500 mb-1 ml-1">前月比下落</label>
+                                        <label className="block text-[10px] font-medium text-slate-500 mb-1 ml-1">前月比下落（前月より何ポイント下がったら検知）</label>
                                         <div className="relative">
                                             <input
                                                 type="number"
@@ -122,7 +122,7 @@ export const IntegrationTab = ({
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] font-medium text-slate-500 mb-1 ml-1">部門別乖離</label>
+                                        <label className="block text-[10px] font-medium text-slate-500 mb-1 ml-1">部門別乖離（全社平均との差がこの値を超えたら検知）</label>
                                         <div className="relative">
                                             <input
                                                 type="number"
@@ -137,7 +137,7 @@ export const IntegrationTab = ({
                                     </div>
                                 </div>
                                 <p className="text-[10px] text-slate-500 mt-3 ml-1 leading-relaxed">
-                                    全社平均スコアがこの閾値を下回るか、急激な変動があった場合にSlack通知が飛びます。
+                                    全社平均スコアがこの閾値を超えた変動を検知した場合、管理者・経営層（admin / executive ロール）のSlackにアラートが通知されます。
                                 </p>
                             </div>
 
@@ -257,7 +257,7 @@ export const IntegrationTab = ({
                                     <span className="text-[10px] font-bold text-amber-600 bg-amber-100/50 px-2 py-0.5 rounded-full">KPI実績入力リマインド設定を使用</span>
                                 </div>
                                 <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
-                                    前月分のKPIがまだ入力されていない担当部署のマネージャーに対して、Slackで入力を促すメッセージを送信します。
+                                    前月分のKPIが未入力の部署を検知し、その部署のマネージャーにSlackでリマインドを送信します。マネージャーが未設定の場合は、管理者・経営層（admin / executive ロール）にフォールバック通知されます。
                                 </p>
                                 <div className="pt-2">
                                     <button
