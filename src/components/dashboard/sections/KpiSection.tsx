@@ -6,7 +6,7 @@ import { KpiSummaryCard } from "@/components/dashboard/KpiSummaryCard";
 import { DetailLineChart } from "@/components/dashboard/DetailLineChart";
 import { KpiDisplayData } from "@/types/dashboard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { BarChart3, TrendingDown } from "lucide-react";
+import { BarChart3, TrendingDown, TrendingUp } from "lucide-react";
 import { HelpLink } from "@/components/ui/HelpLink";
 import { cn } from "@/lib/utils/index";
 import {
@@ -306,6 +306,57 @@ export function KpiSection({
                             </table>
                         </div>
                     </div>
+                    </div>
+
+                    {/* 部署別KPI達成率 月次推移 */}
+                    <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm mt-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <div className="px-8 py-6 border-b border-slate-50 flex items-center gap-3 bg-slate-50/30 rounded-t-[32px]">
+                            <TrendingUp className="w-4 h-4 text-teal/60" />
+                            <h3 className="text-sm font-black text-slate-800 tracking-tight">部署別KPI達成率 月次推移</h3>
+                            <span className="ml-auto text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-slate-100 shadow-sm">Past 13 Months</span>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-slate-50/50">
+                                        <th className="sticky left-0 z-10 bg-slate-50 py-4 px-8 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 min-w-[140px]">部署</th>
+                                        {fullMonthLabels.map((label, i) => (
+                                            <th key={i} className={cn(
+                                                "py-4 px-3 text-[10px] font-black text-center border-b border-slate-100 whitespace-nowrap min-w-[72px]",
+                                                i === fullMonthLabels.length - 1 ? "text-teal" : "text-slate-400"
+                                            )}>{label}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {displayDepts.map((d: any) => (
+                                        <tr key={d.id} className="border-b border-slate-50/50 hover:bg-slate-50/30 transition-colors">
+                                            <td className="sticky left-0 z-10 bg-white/95 py-4 px-8">
+                                                <span className="text-sm font-black text-slate-700">{d.name}</span>
+                                            </td>
+                                            {(d.kpiAchHistory as number[]).map((ach, i) => (
+                                                <td key={i} className="py-4 px-3 text-center">
+                                                    {ach > 0 ? (
+                                                        <span className={cn(
+                                                            "text-xs font-black tabular-nums px-2 py-0.5 rounded-lg",
+                                                            ach >= 100
+                                                                ? "bg-emerald-50 text-emerald-600"
+                                                                : ach >= 80
+                                                                ? "bg-amber-50 text-amber-600"
+                                                                : "bg-rose-50 text-rose-500"
+                                                        )}>
+                                                            {ach}%
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[10px] text-slate-200 font-bold">—</span>
+                                                    )}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </>
             ) : (
