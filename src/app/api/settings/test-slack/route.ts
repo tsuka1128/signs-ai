@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { sendSlackNotification } from "@/lib/slack";
 import { SLACK_MESSAGE_DEFAULTS } from "@/lib/slack-message-defaults";
+import { getBaseURL } from "@/lib/utils/index";
 
 export async function POST(req: Request) {
   try {
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
         },
         {
           "type": "actions",
-          "elements": [{ "type": "button", "text": { "type": "plain_text", "text": "サンプルを見る" }, "url": "https://example.com" }]
+          "elements": [{ "type": "button", "text": { "type": "plain_text", "text": "サンプルを見る" }, "url": `${getBaseURL()}/dashboard` }]
         }
       ];
     } else if (previewType === 'anomaly_alert') {
@@ -58,7 +59,7 @@ export async function POST(req: Request) {
         },
         {
           "type": "actions",
-          "elements": [{ "type": "button", "text": { "type": "plain_text", "text": "状況を確認する" }, "url": "https://example.com", "style": "danger" }]
+          "elements": [{ "type": "button", "text": { "type": "plain_text", "text": "状況を確認する" }, "url": `${getBaseURL()}/dashboard`, "style": "danger" }]
         }
       ];
     } else if (previewType === 'voice_check_reminder') {
