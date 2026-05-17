@@ -21,7 +21,8 @@ import {
     Search,
     Brain,
     Wallet,
-    Crown
+    Crown,
+    UserCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { useState, useEffect } from "react";
@@ -350,6 +351,10 @@ export function Sidebar({
                     {/* View Section */}
                     <div className="space-y-1">
                         <p className="px-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.25em] mb-4">View</p>
+                        
+                        {/* マイページ（全ユーザー） */}
+                        {renderLink('/me', 'マイページ', UserCircle, pathname === '/me')}
+
                         {dashboardNav}
                         {proNav}
                     </div>
