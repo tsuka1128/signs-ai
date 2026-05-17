@@ -160,6 +160,7 @@ export default function SettingsPage() {
                             setInviteSlackUserId={handlers.setInviteSlackUserId}
                             handleTestMemberSlack={handlers.handleTestMemberSlack}
                             handleInvite={handlers.handleInvite}
+                            handleBulkInvite={handlers.handleBulkInvite}
                             users={state.users}
                             kpis={state.kpis}
                             handleStartEditUser={handlers.handleStartEditUser}

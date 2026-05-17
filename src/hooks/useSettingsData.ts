@@ -446,6 +446,50 @@ export function useSettingsData() {
         }
     };
 
+    const handleBulkInvite = async (
+        rows: { email: string; role: string; department_id: string | null; slack_user_id: string | null }[]
+    ): Promise<{ success: number; failed: number }> => {
+        if (!company?.id || !currentUserId) return { success: 0, failed: rows.length };
+        const supabase = createClient();
+        let success = 0, failed = 0;
+
+        for (const row of rows) {
+            try {
+                const { data: inv, error } = await supabase.from('invitations').insert({
+                    email: row.email,
+                    company_id: company.id,
+                    inviter_id: currentUserId,
+                    role: row.role,
+                    department_id: row.department_id,
+                    axis_id: null,
+                    slack_user_id: row.slack_user_id,
+                }).select().single();
+
+                if (!error && inv) {
+                    await fetch("/api/emails/invite", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ invitationId: inv.id })
+                    });
+                    success++;
+                } else {
+                    failed++;
+                }
+            } catch {
+                failed++;
+            }
+        }
+
+        // 招待リストを再取得
+        const { data } = await supabase.from('invitations').select('*').eq('company_id', company.id).eq('status', 'pending');
+        if (data) setInvitations(data);
+
+        if (success > 0) toast.success(`${success}件の招待を送信しました。${failed > 0 ? `（${failed}件失敗）` : ''}`);
+        if (success === 0) toast.error(`すべての招待に失敗しました（${failed}件）`);
+
+        return { success, failed };
+    };
+
     const handleDeleteInvitation = async (id: string) => {
         if (!confirm("この招待を取り消しますか？")) return;
         const supabase = createClient();
@@ -586,7 +630,7 @@ export function useSettingsData() {
             handleCopyId, handleSaveCompany, handleSaveIntegration, handleTestClientSlackWebhook,
             handleTestMemberSlack, handleAddDept, handleSaveAllDepts, handleDeleteDept, handleAddKpi,
             handleSaveAllKpis, handleDeleteKpi, handleAddAxis, handleSaveAllAxes, handleDeleteAxis,
-            handleInvite, handleDeleteInvitation, handleResendInvitation, handleCopyInviteLink,
+            handleInvite, handleBulkInvite, handleDeleteInvitation, handleResendInvitation, handleCopyInviteLink,
             handleStartEditUser,
             handleSaveUserDetail, handleDeleteUser, handleRunAnalyze, handleRemindVoiceCheck,
             handlePreviewNotification, handleRemindKpi
