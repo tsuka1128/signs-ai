@@ -71,12 +71,12 @@ export const SlackHelpTooltip = ({ mode = 'userId' }: SlackHelpTooltipProps) => 
                                     </ol>
                                 </div>
                                 <a 
-                                    href="https://api.slack.com/messaging/webhooks" 
+                                    href="/docs/slack-integration" 
                                     target="_blank" 
                                     rel="noopener noreferrer"
                                     className="flex items-center gap-2 text-teal-400 font-black hover:text-teal-300 transition-colors pt-2 border-t border-white/5"
                                 >
-                                    <ExternalLink className="w-3.5 h-3.5" /> 公式ガイドの確認
+                                    <ExternalLink className="w-3.5 h-3.5" /> SignsAI セットアップガイドを確認
                                 </a>
                             </div>
                         )}
