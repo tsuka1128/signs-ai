@@ -21,7 +21,6 @@ export default function MyPage() {
     const supabase = createClient();
     const [loading, setLoading] = useState(true);
     const [userName, setUserName] = useState<string>("");
-    const [userEmail, setUserEmail] = useState<string>("");
     const [hasDepartment, setHasDepartment] = useState(false);
     const [monthlyScores, setMonthlyScores] = useState<MonthlyScore[]>([]);
     const [totalCompanyResponses, setTotalCompanyResponses] = useState(0);
@@ -37,17 +36,15 @@ export default function MyPage() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) { setError("ログインが必要です"); return; }
 
-            setUserEmail(user.email || "");
-
             // ユーザー情報
             const { data: profile } = await supabase
                 .from('users')
-                .select('name, company_id, department_id')
+                .select('display_name, company_id, department_id')
                 .eq('id', user.id)
                 .single();
 
             if (!profile) { setError("ユーザー情報を取得できません"); return; }
-            setUserName(profile.name || (user.email?.split('@')[0] ?? "あなた"));
+            setUserName(profile.display_name || (user.email?.split('@')[0] ?? "あなた"));
             setHasDepartment(!!profile.department_id);
 
             // 過去6ヶ月の月リストを生成（YYYY-MM）
