@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { UserPlus, Mail, ArrowRight, ShieldCheck, Edit3, Copy, Send, Trash2, HelpCircle, Upload, Download, AlertTriangle } from "lucide-react";
 import { SlackHelpTooltip } from "@/components/ui/SlackHelpTooltip";
 import { USER_ROLES, UserRole } from "@/lib/constants";
@@ -148,10 +148,42 @@ export const MembersTab = ({
         URL.revokeObjectURL(url);
     }
 
+    // ── CSV ファイル読み込み & 自動パース ──
+    function handleCsvFileSelect(file: File) {
+        const reader = new FileReader();
+
+        reader.onerror = () => {
+            setSelectedFileName(null);
+            // リセット
+            setBulkPreview([]);
+            setUpdateWarnings([]);
+            setWarningSelections({});
+            setBulkSkippedCount(0);
+            // エラーはブラウザのコンソールに出るが、UIにも表示
+            alert('ファイルの読み込みに失敗しました。');
+        };
+
+        reader.onload = (e) => {
+            const text = (e.target?.result as string).replace(/^\uFEFF/, ''); // BOM除去
+            setSelectedFileName(file.name);
+            const { inviteRows, updateWarnings: warns, skippedCount } =
+                parseBulkCsvEnhanced(text, depts, users);
+            setBulkPreview(inviteRows);
+            setUpdateWarnings(warns);
+            setWarningSelections({});
+            setBulkSkippedCount(skippedCount);
+            setBulkResult(null);
+            setBulkUpdateResult(null);
+        };
+
+        reader.readAsText(file, 'utf-8');
+    }
+
     // ── ローカル state ──
     const [includeExistingInTemplate, setIncludeExistingInTemplate] = useState(false);
     const [showBulk, setShowBulk] = useState(false);
-    const [csvText, setCsvText] = useState('');
+    const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+    const csvFileInputRef = useRef<HTMLInputElement>(null);
     const [bulkPreview, setBulkPreview] = useState<BulkRow[]>([]);
     const [updateWarnings, setUpdateWarnings] = useState<UpdateWarning[]>([]);
     const [warningSelections, setWarningSelections] = useState<Record<number, boolean>>({});
@@ -287,8 +319,10 @@ export const MembersTab = ({
                     <button
                         onClick={() => {
                             setShowBulk(!showBulk);
-                            setBulkPreview([]); setCsvText(''); setBulkResult(null);
+                            setBulkPreview([]); setBulkResult(null);
                             setUpdateWarnings([]); setWarningSelections({}); setBulkUpdateResult(null);
+                            setSelectedFileName(null);
+                            if (csvFileInputRef.current) csvFileInputRef.current.value = '';
                         }}
                         className="text-[10px] font-black text-slate-400 hover:text-teal transition-colors"
                     >
@@ -331,32 +365,37 @@ export const MembersTab = ({
                             <p className="text-[10px] text-slate-400">登録済みメールアドレスは招待ではなく変更提案として扱われます</p>
                         </div>
 
-                        {/* ③ テキストエリア */}
-                        <textarea
-                            value={csvText}
-                            onChange={e => setCsvText(e.target.value)}
-                            placeholder="CSVをここに貼り付けてください"
-                            rows={5}
-                            className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-xs font-mono text-slate-700 outline-none focus:border-teal resize-y"
-                        />
-
-                        {/* ④ プレビューボタン */}
-                        <button
-                            onClick={() => {
-                                const { inviteRows, updateWarnings: warns, skippedCount } =
-                                    parseBulkCsvEnhanced(csvText, depts, users);
-                                setBulkPreview(inviteRows);
-                                setUpdateWarnings(warns);
-                                setWarningSelections({});
-                                setBulkSkippedCount(skippedCount);
-                                setBulkResult(null);
-                                setBulkUpdateResult(null);
-                            }}
-                            disabled={!csvText.trim()}
-                            className="bg-white border border-slate-200 text-slate-600 px-6 py-3 rounded-2xl text-xs font-black hover:bg-slate-50 transition-all disabled:opacity-40"
-                        >
-                            プレビュー確認
-                        </button>
+                        {/* ③ ファイル選択 */}
+                        <div>
+                            <input
+                                ref={csvFileInputRef}
+                                type="file"
+                                accept=".csv"
+                                className="hidden"
+                                onChange={e => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleCsvFileSelect(file);
+                                    e.target.value = ''; // 同じファイルの再選択を可能にする
+                                }}
+                            />
+                            <button
+                                onClick={() => csvFileInputRef.current?.click()}
+                                className="w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-200 rounded-2xl py-8 bg-white hover:border-teal hover:bg-teal/5 transition-all group"
+                            >
+                                <Upload className="w-6 h-6 text-slate-300 group-hover:text-teal transition-colors" />
+                                {selectedFileName ? (
+                                    <div className="text-center space-y-1">
+                                        <p className="text-xs font-black text-teal">{selectedFileName}</p>
+                                        <p className="text-[10px] text-slate-400 font-bold">別のファイルを選択</p>
+                                    </div>
+                                ) : (
+                                    <div className="text-center space-y-1">
+                                        <p className="text-xs font-black text-slate-500">CSVファイルを選択</p>
+                                        <p className="text-[10px] text-slate-400 font-bold">クリックしてファイルを選択してください</p>
+                                    </div>
+                                )}
+                            </button>
+                        </div>
 
                         {/* ⑤A 新規招待 */}
                         {bulkPreview.length > 0 && (
@@ -408,7 +447,11 @@ export const MembersTab = ({
                                             );
                                             setBulkResult(result);
                                             setBulkSending(false);
-                                            if (result.success > 0 && result.failed === 0) { setBulkPreview([]); setCsvText(''); }
+                                            if (result.success > 0 && result.failed === 0) {
+                                                setBulkPreview([]);
+                                                setSelectedFileName(null);
+                                                if (csvFileInputRef.current) csvFileInputRef.current.value = '';
+                                            }
                                         }}
                                         disabled={bulkSending || bulkPreview.filter(r => r.valid).length === 0}
                                         className="bg-teal text-white px-8 py-3 rounded-2xl font-black text-sm hover:bg-teal-600 transition-all shadow-xl shadow-teal/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
