@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { UserPlus, Mail, ArrowRight, ShieldCheck, Edit3, Copy, Send, Trash2, HelpCircle, Upload } from "lucide-react";
+import { UserPlus, Mail, ArrowRight, ShieldCheck, Edit3, Copy, Send, Trash2, HelpCircle, Upload, Download, AlertTriangle } from "lucide-react";
 import { SlackHelpTooltip } from "@/components/ui/SlackHelpTooltip";
 import { USER_ROLES, UserRole } from "@/lib/constants";
 
@@ -27,7 +27,8 @@ interface MembersTabProps {
     setInviteSlackUserId: (id: string) => void;
     handleTestMemberSlack: (id: string) => void;
     handleInvite: () => void;
-    handleBulkInvite: (rows: { email: string; role: string; department_id: string | null; slack_user_id: string | null }[]) => Promise<{ success: number; failed: number }>;
+    handleBulkInvite: (rows: { email: string; role: string; department_id: string | null; slack_user_id: string | null }[]) => Promise<{ success: number; failed: number; errors: { email: string; reason: string }[] }>;
+    handleBulkUpdateUsers: (updates: { userId: string; email?: string; role?: string; department_id?: string | null; slack_user_id?: string | null }[]) => Promise<{ success: number; failed: number; errors: { email: string; reason: string }[] }>;
     users: any[];
     kpis: any[];
     handleStartEditUser: (user: any) => void;
@@ -54,6 +55,7 @@ export const MembersTab = ({
     handleTestMemberSlack,
     handleInvite,
     handleBulkInvite,
+    handleBulkUpdateUsers,
     users,
     kpis,
     handleStartEditUser,
@@ -64,21 +66,29 @@ export const MembersTab = ({
     inviteRole,
     setInviteRole
 }: MembersTabProps) => {
+    // ── 型定義 ──
     interface BulkRow {
-        email: string;
-        role: string;
-        deptName: string;
-        deptId: string | null;
-        slackUserId: string;
-        valid: boolean;
-        errorMsg: string;
+        email: string; role: string; deptName: string; deptId: string | null;
+        slackUserId: string; valid: boolean; errorMsg: string;
     }
+    interface UpdateWarning {
+        userId: string; email: string;
+        changes: { field: string; label: string; current: string; incoming: string }[];
+    }
+    type BulkInviteResult = { success: number; failed: number; errors: { email: string; reason: string }[] };
 
-    function parseBulkCsv(text: string, depts: any[]): BulkRow[] {
+    // ── CSV パース（新規招待 ／ 既存差分 を分離）──
+    function parseBulkCsvEnhanced(
+        text: string, depts: any[], existingUsers: any[]
+    ): { inviteRows: BulkRow[]; updateWarnings: UpdateWarning[]; skippedCount: number } {
         const validRoles = ['player', 'manager', 'executive', 'admin', 'partner'];
-        return text.trim().split('\n')
+        const inviteRows: BulkRow[] = [];
+        const updateWarnings: UpdateWarning[] = [];
+        let skippedCount = 0;
+
+        text.trim().split('\n')
             .filter(line => line.trim() && !line.toLowerCase().startsWith('email'))
-            .map(line => {
+            .forEach(line => {
                 const [rawEmail = '', rawRole = '', rawDept = '', rawSlack = ''] =
                     line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
                 const email = rawEmail.toLowerCase();
@@ -87,18 +97,69 @@ export const MembersTab = ({
                 const dept = deptName ? depts.find((d: any) => d.name === deptName) : null;
                 const deptId = dept?.id || null;
                 const slackUserId = rawSlack;
-                let errorMsg = '';
-                if (!email || !email.includes('@')) errorMsg = 'メールアドレスが無効';
-                else if (role === 'manager' && deptName && !deptId) errorMsg = `部署「${deptName}」が見つかりません`;
-                return { email, role, deptName, deptId, slackUserId, valid: !errorMsg, errorMsg };
+
+                const existing = existingUsers.find(u => u.email?.toLowerCase() === email);
+                if (existing) {
+                    const changes: UpdateWarning['changes'] = [];
+                    if (existing.role !== role)
+                        changes.push({ field: 'role', label: 'ロール', current: existing.role || '—', incoming: role });
+                    const curDept = depts.find((d: any) => d.id === existing.department_id)?.name || '—';
+                    const inDept = deptName || '—';
+                    if (curDept !== inDept)
+                        changes.push({ field: 'department_id', label: '部署', current: curDept, incoming: inDept });
+                    const curSlack = existing.slack_user_id || '—';
+                    const inSlack = slackUserId || '—';
+                    if (curSlack !== inSlack)
+                        changes.push({ field: 'slack_user_id', label: 'Slack ID', current: curSlack, incoming: inSlack });
+
+                    if (changes.length > 0) updateWarnings.push({ userId: existing.id, email, changes });
+                    else skippedCount++;
+                } else {
+                    let errorMsg = '';
+                    if (!email || !email.includes('@')) errorMsg = 'メールアドレスが無効';
+                    else if (role === 'manager' && !deptId)
+                        errorMsg = deptName ? `部署「${deptName}」が見つかりません` : '部署は必須です（managerロール）';
+                    inviteRows.push({ email, role, deptName, deptId, slackUserId, valid: !errorMsg, errorMsg });
+                }
             });
+
+        return { inviteRows, updateWarnings, skippedCount };
     }
 
+    // ── テンプレート CSV ダウンロード ──
+    function downloadTemplate(includeExisting: boolean, existingUsers: any[], depts: any[]) {
+        const headers = ['email', 'role', 'department', 'slack_user_id'];
+        const rows: string[][] = includeExisting
+            ? existingUsers.map(u => [
+                  u.email || '', u.role || '',
+                  depts.find((d: any) => d.id === u.department_id)?.name || '',
+                  u.slack_user_id || '',
+              ])
+            : [];
+        const csv = [headers, ...rows]
+            .map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
+            .join('\r\n');
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = includeExisting ? 'メンバー一覧.csv' : 'メンバー招待テンプレート.csv';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // ── ローカル state ──
+    const [includeExistingInTemplate, setIncludeExistingInTemplate] = useState(false);
     const [showBulk, setShowBulk] = useState(false);
-    const [csvText, setCsvText] = useState("");
+    const [csvText, setCsvText] = useState('');
     const [bulkPreview, setBulkPreview] = useState<BulkRow[]>([]);
+    const [updateWarnings, setUpdateWarnings] = useState<UpdateWarning[]>([]);
+    const [warningSelections, setWarningSelections] = useState<Record<number, boolean>>({});
+    const [bulkSkippedCount, setBulkSkippedCount] = useState(0);
     const [bulkSending, setBulkSending] = useState(false);
-    const [bulkResult, setBulkResult] = useState<{ success: number; failed: number } | null>(null);
+    const [bulkResult, setBulkResult] = useState<BulkInviteResult | null>(null);
+    const [bulkUpdating, setBulkUpdating] = useState(false);
+    const [bulkUpdateResult, setBulkUpdateResult] = useState<BulkInviteResult | null>(null);
 
     return (
         <div className="space-y-10 animate-in fade-in">
@@ -217,49 +278,90 @@ export const MembersTab = ({
                 </div>
             </div>
 
-            {/* CSV 一括招待 */}
+            {/* CSV 一括招待 / メンバー更新 */}
             <div>
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-bold text-slate-600 flex items-center gap-2">
-                        <Upload className="w-4 h-4 text-slate-400" /> CSVで一括招待
+                        <Upload className="w-4 h-4 text-slate-400" /> CSVで一括招待 / メンバー更新
                     </h3>
                     <button
-                        onClick={() => { setShowBulk(!showBulk); setBulkPreview([]); setCsvText(""); setBulkResult(null); }}
+                        onClick={() => {
+                            setShowBulk(!showBulk);
+                            setBulkPreview([]); setCsvText(''); setBulkResult(null);
+                            setUpdateWarnings([]); setWarningSelections({}); setBulkUpdateResult(null);
+                        }}
                         className="text-[10px] font-black text-slate-400 hover:text-teal transition-colors"
                     >
-                        {showBulk ? "▲ 閉じる" : "▼ 開く"}
+                        {showBulk ? '▲ 閉じる' : '▼ 開く'}
                     </button>
                 </div>
 
                 {showBulk && (
                     <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 space-y-4">
-                        {/* フォーマット説明 */}
-                        <div className="bg-white rounded-2xl border border-slate-100 p-4 space-y-1">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">CSV形式（1行目はヘッダーとして無視されます）</p>
-                            <code className="text-[11px] text-slate-500 font-mono block">email,role,department,slack_user_id</code>
-                            <code className="text-[11px] text-slate-500 font-mono block">member@company.com,player,営業部,U12345678</code>
-                            <code className="text-[11px] text-slate-500 font-mono block">manager@company.com,manager,開発部,</code>
-                            <p className="text-[10px] text-slate-400 mt-2">role: player / manager / executive / admin / partner（省略時は player）</p>
+
+                        {/* ① テンプレートダウンロード */}
+                        <div className="bg-white rounded-2xl border border-slate-100 p-4">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">テンプレートをダウンロード</p>
+                            <div className="flex items-center justify-between">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={includeExistingInTemplate}
+                                        onChange={e => setIncludeExistingInTemplate(e.target.checked)}
+                                        className="w-4 h-4 accent-teal"
+                                    />
+                                    <span className="text-[11px] font-bold text-slate-600">登録済みメンバーのデータを含める</span>
+                                </label>
+                                <button
+                                    onClick={() => downloadTemplate(includeExistingInTemplate, users, depts)}
+                                    className="flex items-center gap-1.5 text-[11px] font-black text-teal hover:text-teal-700 transition-colors"
+                                >
+                                    <Download className="w-3.5 h-3.5" /> ダウンロード
+                                </button>
+                            </div>
                         </div>
 
+                        {/* ② フォーマット説明 */}
+                        <div className="bg-white rounded-2xl border border-slate-100 p-4 space-y-1">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">CSV形式（1行目はヘッダーとして無視）</p>
+                            <code className="text-[11px] text-slate-500 font-mono block">email <span className="text-rose-400">*必須</span>,role,department,slack_user_id</code>
+                            <code className="text-[11px] text-slate-500 font-mono block">member@company.com,player,営業部,U12345678</code>
+                            <code className="text-[11px] text-slate-500 font-mono block">manager@company.com,manager,開発部,</code>
+                            <p className="text-[10px] text-slate-400 mt-2">role: player / manager / executive / admin / partner（省略時は player）　※ manager は部署必須</p>
+                            <p className="text-[10px] text-slate-400">登録済みメールアドレスは招待ではなく変更提案として扱われます</p>
+                        </div>
+
+                        {/* ③ テキストエリア */}
                         <textarea
                             value={csvText}
-                            onChange={(e) => setCsvText(e.target.value)}
+                            onChange={e => setCsvText(e.target.value)}
                             placeholder="CSVをここに貼り付けてください"
                             rows={5}
                             className="w-full bg-white border border-slate-200 rounded-2xl px-4 py-3 text-xs font-mono text-slate-700 outline-none focus:border-teal resize-y"
                         />
 
+                        {/* ④ プレビューボタン */}
                         <button
-                            onClick={() => setBulkPreview(parseBulkCsv(csvText, depts))}
+                            onClick={() => {
+                                const { inviteRows, updateWarnings: warns, skippedCount } =
+                                    parseBulkCsvEnhanced(csvText, depts, users);
+                                setBulkPreview(inviteRows);
+                                setUpdateWarnings(warns);
+                                setWarningSelections({});
+                                setBulkSkippedCount(skippedCount);
+                                setBulkResult(null);
+                                setBulkUpdateResult(null);
+                            }}
                             disabled={!csvText.trim()}
                             className="bg-white border border-slate-200 text-slate-600 px-6 py-3 rounded-2xl text-xs font-black hover:bg-slate-50 transition-all disabled:opacity-40"
                         >
                             プレビュー確認
                         </button>
 
+                        {/* ⑤A 新規招待 */}
                         {bulkPreview.length > 0 && (
                             <div className="space-y-3">
+                                <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">新規招待</p>
                                 <div className="overflow-x-auto rounded-2xl border border-slate-100">
                                     <table className="w-full text-xs border-collapse">
                                         <thead>
@@ -288,7 +390,6 @@ export const MembersTab = ({
                                         </tbody>
                                     </table>
                                 </div>
-
                                 <div className="flex items-center justify-between pt-1">
                                     <p className="text-[11px] text-slate-500 font-bold">
                                         送信可能: <span className="text-emerald-600">{bulkPreview.filter(r => r.valid).length}件</span>
@@ -298,35 +399,178 @@ export const MembersTab = ({
                                     </p>
                                     <button
                                         onClick={async () => {
-                                            setBulkSending(true);
-                                            setBulkResult(null);
-                                            const validRows = bulkPreview.filter(r => r.valid).map(r => ({
-                                                email: r.email,
-                                                role: r.role,
-                                                department_id: r.deptId,
-                                                slack_user_id: r.slackUserId || null,
-                                            }));
-                                            const result = await handleBulkInvite(validRows);
+                                            setBulkSending(true); setBulkResult(null);
+                                            const result = await handleBulkInvite(
+                                                bulkPreview.filter(r => r.valid).map(r => ({
+                                                    email: r.email, role: r.role,
+                                                    department_id: r.deptId, slack_user_id: r.slackUserId || null,
+                                                }))
+                                            );
                                             setBulkResult(result);
                                             setBulkSending(false);
-                                            if (result.success > 0) { setBulkPreview([]); setCsvText(""); }
+                                            if (result.success > 0) { setBulkPreview([]); setCsvText(''); }
                                         }}
                                         disabled={bulkSending || bulkPreview.filter(r => r.valid).length === 0}
                                         className="bg-teal text-white px-8 py-3 rounded-2xl font-black text-sm hover:bg-teal-600 transition-all shadow-xl shadow-teal/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                                     >
-                                        {bulkSending
-                                            ? "送信中..."
-                                            : <>{bulkPreview.filter(r => r.valid).length}件を一括招待 <Send className="w-4 h-4" /></>}
+                                        {bulkSending ? '送信中...' : <>{bulkPreview.filter(r => r.valid).length}件を一括招待 <Send className="w-4 h-4" /></>}
                                     </button>
                                 </div>
-
                                 {bulkResult && (
-                                    <div className={`rounded-2xl px-4 py-3 text-sm font-bold ${bulkResult.failed === 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
-                                        完了: {bulkResult.success}件成功 / {bulkResult.failed}件失敗
+                                    <div className="space-y-2">
+                                        <div className={`rounded-2xl px-4 py-3 text-sm font-bold ${bulkResult.failed === 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                                            完了: {bulkResult.success}件成功 / {bulkResult.failed}件失敗
+                                        </div>
+                                        {bulkResult.errors.length > 0 && (
+                                            <div className="overflow-x-auto rounded-2xl border border-rose-100">
+                                                <table className="w-full text-xs border-collapse">
+                                                    <thead>
+                                                        <tr className="bg-rose-50">
+                                                            <th className="px-4 py-2.5 text-left text-[10px] font-black text-rose-600 uppercase">メール</th>
+                                                            <th className="px-4 py-2.5 text-left text-[10px] font-black text-rose-600 uppercase">エラー理由</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {bulkResult.errors.map((e, i) => (
+                                                            <tr key={i} className="border-t border-rose-100">
+                                                                <td className="px-4 py-2 font-mono text-slate-600">{e.email}</td>
+                                                                <td className="px-4 py-2 text-rose-600 font-bold">{e.reason}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
                         )}
+
+                        {/* ⑤B 既存メンバー差分警告 */}
+                        {updateWarnings.length > 0 && (
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                                    <p className="text-[11px] font-black text-amber-700">
+                                        {updateWarnings.length}件は登録済みのメールアドレスです。変更内容を確認・選択してください。
+                                    </p>
+                                </div>
+                                <div className="overflow-x-auto rounded-2xl border border-amber-100">
+                                    <table className="w-full text-xs border-collapse">
+                                        <thead>
+                                            <tr className="bg-amber-50">
+                                                <th className="px-4 py-2.5 text-center w-10">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={updateWarnings.every((_, i) => warningSelections[i] !== false)}
+                                                        onChange={e => {
+                                                            const s: Record<number, boolean> = {};
+                                                            updateWarnings.forEach((_, i) => { s[i] = e.target.checked; });
+                                                            setWarningSelections(s);
+                                                        }}
+                                                        className="w-4 h-4 accent-amber-500"
+                                                    />
+                                                </th>
+                                                <th className="px-4 py-2.5 text-left text-[10px] font-black text-amber-700 uppercase">メール</th>
+                                                <th className="px-4 py-2.5 text-left text-[10px] font-black text-amber-700 uppercase">変更内容（現在 → 変更後）</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {updateWarnings.map((w, i) => (
+                                                <tr key={i} className={`border-t border-amber-100 transition-opacity ${warningSelections[i] === false ? 'opacity-40' : ''}`}>
+                                                    <td className="px-4 py-3 text-center">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={warningSelections[i] !== false}
+                                                            onChange={e => setWarningSelections(prev => ({ ...prev, [i]: e.target.checked }))}
+                                                            className="w-4 h-4 accent-amber-500"
+                                                        />
+                                                    </td>
+                                                    <td className="px-4 py-3 font-mono text-slate-600">{w.email}</td>
+                                                    <td className="px-4 py-3">
+                                                        <div className="space-y-1.5">
+                                                            {w.changes.map((c, j) => (
+                                                                <div key={j} className="flex items-center gap-2 text-[11px]">
+                                                                    <span className="font-black text-slate-500 w-16 shrink-0">{c.label}</span>
+                                                                    <span className="bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded font-mono">{c.current}</span>
+                                                                    <span className="text-slate-300">→</span>
+                                                                    <span className="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-mono">{c.incoming}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div className="flex items-center justify-between pt-1">
+                                    <p className="text-[11px] text-slate-500 font-bold">
+                                        選択中: <span className="text-amber-600">{updateWarnings.filter((_, i) => warningSelections[i] !== false).length}件</span>を更新
+                                    </p>
+                                    <button
+                                        onClick={async () => {
+                                            setBulkUpdating(true); setBulkUpdateResult(null);
+                                            const selected = updateWarnings.filter((_, i) => warningSelections[i] !== false);
+                                            const payloads = selected.map(w => {
+                                                const upd: any = { userId: w.userId, email: w.email };
+                                                w.changes.forEach(c => {
+                                                    if (c.field === 'role') upd.role = c.incoming;
+                                                    else if (c.field === 'department_id')
+                                                        upd.department_id = depts.find((d: any) => d.name === c.incoming)?.id ?? null;
+                                                    else if (c.field === 'slack_user_id')
+                                                        upd.slack_user_id = c.incoming === '—' ? null : c.incoming;
+                                                });
+                                                return upd;
+                                            });
+                                            const result = await handleBulkUpdateUsers(payloads);
+                                            setBulkUpdateResult(result);
+                                            setBulkUpdating(false);
+                                            if (result.success > 0) setUpdateWarnings([]);
+                                        }}
+                                        disabled={bulkUpdating || updateWarnings.filter((_, i) => warningSelections[i] !== false).length === 0}
+                                        className="bg-amber-500 text-white px-8 py-3 rounded-2xl font-black text-sm hover:bg-amber-600 transition-all shadow-xl shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {bulkUpdating ? '更新中...' : `選択した${updateWarnings.filter((_, i) => warningSelections[i] !== false).length}件を更新`}
+                                    </button>
+                                </div>
+                                {bulkUpdateResult && (
+                                    <div className="space-y-2">
+                                        <div className={`rounded-2xl px-4 py-3 text-sm font-bold ${bulkUpdateResult.failed === 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                                            更新完了: {bulkUpdateResult.success}件成功 / {bulkUpdateResult.failed}件失敗
+                                        </div>
+                                        {bulkUpdateResult.errors.length > 0 && (
+                                            <div className="overflow-x-auto rounded-2xl border border-rose-100">
+                                                <table className="w-full text-xs border-collapse">
+                                                    <thead>
+                                                        <tr className="bg-rose-50">
+                                                            <th className="px-4 py-2.5 text-left text-[10px] font-black text-rose-600 uppercase">メール</th>
+                                                            <th className="px-4 py-2.5 text-left text-[10px] font-black text-rose-600 uppercase">エラー理由</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {bulkUpdateResult.errors.map((e, i) => (
+                                                            <tr key={i} className="border-t border-rose-100">
+                                                                <td className="px-4 py-2 font-mono text-slate-600">{e.email}</td>
+                                                                <td className="px-4 py-2 text-rose-600 font-bold">{e.reason}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* ⑤C スキップ件数 */}
+                        {bulkSkippedCount > 0 && (
+                            <p className="text-[11px] text-slate-400 font-bold">
+                                ※ {bulkSkippedCount}件は登録済み・変更なしのためスキップします
+                            </p>
+                        )}
+
                     </div>
                 )}
             </div>
