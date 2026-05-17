@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
 import { ImpersonationBanner } from "@/components/layout/ImpersonationBanner";
+import { Toaster } from "sonner";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -31,6 +32,15 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className={`${inter.variable} ${notoNSansJP.variable}`}>
+        <Toaster
+            position="top-right"
+            toastOptions={{
+                classNames: {
+                    success: "bg-emerald-50 text-emerald-700 border-emerald-200",
+                    error: "bg-rose-50 text-rose-700 border-rose-200",
+                }
+            }}
+        />
         <ImpersonationBanner />
         {children}
       </body>

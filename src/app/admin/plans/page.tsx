@@ -21,6 +21,7 @@ import {
     ChevronUp
 } from "lucide-react";
 import { cn } from "@/lib/utils/index";
+import { toast } from "sonner";
 
 export default function AdminPlansPage() {
     const { supabase, loading: authLoading } = useAdmin();
@@ -128,11 +129,11 @@ export default function AdminPlansPage() {
                     });
                 }
             }
-            alert("マスタープランの設定を更新しました。");
+            toast.success("マスタープランの設定を更新しました。");
             setIsEditing(false);
             fetchData();
         } catch (err: any) {
-            alert(`エラーが発生しました: ${err.message}`);
+            toast.error(`エラーが発生しました: ${err.message}`);
         } finally {
             setSaving(false);
         }

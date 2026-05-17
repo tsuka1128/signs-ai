@@ -22,6 +22,7 @@ import {
     Plus
 } from "lucide-react";
 import { cn } from "@/lib/utils/index";
+import { toast } from "sonner";
 import {
     AreaChart,
     Area,
@@ -241,7 +242,7 @@ export default function AdminBillingPage() {
     const handleCreateCompany = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingCompany.name || !editingCompany.plan_id) {
-            alert("企業名とプランを選択してください");
+            toast.error("企業名とプランを選択してください");
             return;
         }
 
@@ -271,7 +272,7 @@ export default function AdminBillingPage() {
             window.location.reload();
         } catch (error: any) {
             console.error("Error creating company:", error);
-            alert(`登録に失敗しました。\nエラー内容: ${error.message || "不明なエラー"}`);
+            toast.error(`登録に失敗しました。\nエラー内容: ${error.message || "不明なエラー"}`);
         } finally {
             setIsSaving(false);
         }

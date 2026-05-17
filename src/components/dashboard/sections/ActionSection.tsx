@@ -5,6 +5,7 @@ import { ActionItem } from "@/components/dashboard/ActionItem";
 import { Plus, X, Check, RefreshCcw, Target } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { HelpLink } from "@/components/ui/HelpLink";
+import { toast } from "sonner";
 
 interface ActionSectionProps {
     actions: any[];
@@ -96,7 +97,7 @@ export function ActionSection({ actions: initialActions, depts = [] }: ActionSec
             setIsAdding(false);
         } catch (error) {
             console.error(error);
-            alert("アクションの追加に失敗しました");
+            toast.error("アクションの追加に失敗しました");
         } finally {
             setIsSubmitting(false);
         }

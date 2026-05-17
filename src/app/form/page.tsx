@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { createClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils/index";
+import { toast } from "sonner";
 
 // 型定義
 interface Question {
@@ -133,7 +134,7 @@ function SurveyFormContent() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!department) return alert("所属部署を選択してください。");
+        if (!department) return toast.error("所属部署を選択してください。");
         if (Object.keys(answers).length < questions.length) {
             // スクロールで未回答の設問に誘導
             const firstUnanswered = questions.find(q => !answers[q.id]);
@@ -141,10 +142,10 @@ function SurveyFormContent() {
                 const el = document.getElementById(`question-${firstUnanswered.id}`);
                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
-            return alert("すべての5段階評価に回答してください。");
+            return toast.success("すべての5段階評価に回答してください。");
         }
         if (kpiImprovement.length < 100) {
-            return alert("Step 3の記述は100文字以上で入力してください。");
+            return toast.error("Step 3の記述は100文字以上で入力してください。");
         }
 
         setIsSubmitting(true);
@@ -177,7 +178,7 @@ function SurveyFormContent() {
             if (rErr) {
                 // 重複エラー（UNIQUE制約違反）の判定
                 if (rErr.code === '23505') {
-                    alert("今月は既に回答済みです。ご協力ありがとうございました！");
+                    toast.success("今月は既に回答済みです。ご協力ありがとうございました！");
                     if (resolvedCompanyId) {
                         localStorage.setItem(`signs_ai_answered_${resolvedCompanyId}_${currentMonthPart}`, "true");
                     }
@@ -209,7 +210,7 @@ function SurveyFormContent() {
         } catch (err: any) {
             console.error("Submit error details:", err);
             const msg = err.message || "不明なエラー";
-            alert(`送信に失敗しました。\n理由: ${msg}\n\nネットワーク状況を確認し、改善しない場合は管理者にお問い合わせください。`);
+            toast.error(`送信に失敗しました。\n理由: ${msg}\n\nネットワーク状況を確認し、改善しない場合は管理者にお問い合わせください。`);
         } finally {
             setIsSubmitting(false);
         }

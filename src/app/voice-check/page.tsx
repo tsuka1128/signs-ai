@@ -16,6 +16,7 @@ import {
     HelpCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils/index";
+import { toast } from "sonner";
 
 /**
  * ボイスチェック運用ページ
@@ -110,8 +111,8 @@ export default function VoiceCheckPage() {
             survey_deadline_day: company.survey_deadline_day
         }).eq('id', company.id);
 
-        if (!error) alert("回答期限を保存しました");
-        else alert(`保存に失敗しました: ${error.message}`);
+        if (!error) toast.success("回答期限を保存しました");
+        else toast.error(`保存に失敗しました: ${error.message}`);
     };
 
     if (loading) return <div className="flex items-center justify-center min-h-screen">読み込み中...</div>;

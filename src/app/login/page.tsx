@@ -14,6 +14,7 @@ import { signInWithGoogle, signInWithEmail } from "@/lib/auth";
 import { getBaseURL } from "@/lib/utils/index";
 
 import { Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
 
 function LoginForm() {
     const router = useRouter();
@@ -124,7 +125,7 @@ function LoginForm() {
                                     type: "signup",
                                     email: unconfirmedEmail,
                                 });
-                                alert("確認メールを再送しました。");
+                                toast.success("確認メールを再送しました。");
                             }}
                             className="text-xs text-teal-600 underline font-bold mt-2 hover:text-teal-700 transition-colors"
                         >

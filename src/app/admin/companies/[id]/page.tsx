@@ -32,6 +32,7 @@ import { AVAILABLE_ADDONS } from "@/lib/addons";
 import { AnimatePresence } from "framer-motion";
 import { CSVImportModal } from "@/components/admin/CSVImportModal";
 import { useAdminSettings } from "@/hooks/useAdminSettings";
+import { toast } from "sonner";
 
 export default function AdminCompanyDetailPage() {
     const params = useParams();
@@ -67,11 +68,11 @@ export default function AdminCompanyDetailPage() {
             });
             const result = await resp.json();
             if (!resp.ok) throw new Error(result.error || 'AI分析に失敗しました');
-            alert('AI分析が完了しました。');
+            toast.success('AI分析が完了しました。');
             router.refresh();
         } catch (error: any) {
             console.error("AI Analysis Error:", error);
-            alert(error.message);
+            toast.error(error.message);
         } finally {
             setIsAnalyzing(false);
         }
@@ -92,7 +93,7 @@ export default function AdminCompanyDetailPage() {
             document.body.removeChild(link);
         } catch (error) {
             console.error("CSV Export Error:", error);
-            alert("CSVエクスポートに失敗しました。");
+            toast.error("CSVエクスポートに失敗しました。");
         }
     };
 
