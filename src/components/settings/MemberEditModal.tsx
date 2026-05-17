@@ -1,5 +1,6 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { X, Save, Trash2 } from "lucide-react";
 import { SlackHelpTooltip } from "@/components/ui/SlackHelpTooltip";
 import { USER_ROLES } from "@/lib/constants";
@@ -29,8 +30,8 @@ export const MemberEditModal = ({
     handleSaveUserDetail,
     handleDeleteUser
 }: MemberEditModalProps) => {
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+    return createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
                 <div className="p-8 border-b border-slate-100 flex items-center justify-between">
                     <div>
@@ -155,6 +156,7 @@ export const MemberEditModal = ({
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
