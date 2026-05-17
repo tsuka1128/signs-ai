@@ -448,10 +448,11 @@ export function useSettingsData() {
 
     const handleBulkInvite = async (
         rows: { email: string; role: string; department_id: string | null; slack_user_id: string | null }[]
-    ): Promise<{ success: number; failed: number }> => {
-        if (!company?.id || !currentUserId) return { success: 0, failed: rows.length };
+    ): Promise<{ success: number; failed: number; errors: { email: string; reason: string }[] }> => {
+        if (!company?.id || !currentUserId) return { success: 0, failed: rows.length, errors: [] };
         const supabase = createClient();
         let success = 0, failed = 0;
+        const errors: { email: string; reason: string }[] = [];
 
         for (const row of rows) {
             try {
@@ -474,20 +475,59 @@ export function useSettingsData() {
                     success++;
                 } else {
                     failed++;
+                    const reason = error?.code === '23505' ? '既に招待済みのメールアドレスです'
+                                 : error?.code === '42501' ? '権限がありません'
+                                 : error?.message || '不明なエラー';
+                    errors.push({ email: row.email, reason });
                 }
-            } catch {
+            } catch (e: any) {
                 failed++;
+                errors.push({ email: row.email, reason: e?.message || '不明なエラー' });
             }
         }
 
-        // 招待リストを再取得
         const { data } = await supabase.from('invitations').select('*').eq('company_id', company.id).eq('status', 'pending');
         if (data) setInvitations(data);
 
         if (success > 0) toast.success(`${success}件の招待を送信しました。${failed > 0 ? `（${failed}件失敗）` : ''}`);
         if (success === 0) toast.error(`すべての招待に失敗しました（${failed}件）`);
 
-        return { success, failed };
+        return { success, failed, errors };
+    };
+
+    const handleBulkUpdateUsers = async (
+        updates: { userId: string; email?: string; role?: string; department_id?: string | null; slack_user_id?: string | null }[]
+    ): Promise<{ success: number; failed: number; errors: { email: string; reason: string }[] }> => {
+        if (!company?.id) return { success: 0, failed: updates.length, errors: [] };
+        const supabase = createClient();
+        let success = 0, failed = 0;
+        const errors: { email: string; reason: string }[] = [];
+
+        for (const upd of updates) {
+            const payload: any = {};
+            if (upd.role !== undefined) payload.role = upd.role;
+            if (upd.department_id !== undefined) payload.department_id = upd.department_id;
+            if (upd.slack_user_id !== undefined) payload.slack_user_id = upd.slack_user_id;
+
+            const { error } = await supabase.from('users').update(payload).eq('id', upd.userId);
+            if (!error) {
+                success++;
+            } else {
+                failed++;
+                errors.push({
+                    email: upd.email || upd.userId,
+                    reason: error?.code === '42501' ? '権限がありません' : error?.message || '不明なエラー'
+                });
+            }
+        }
+
+        const { data } = await supabase.from('users').select('*').eq('company_id', company.id);
+        if (data) setUsers(data);
+
+        if (success > 0) toast.success(`${success}件のメンバー情報を更新しました。${failed > 0 ? `（${failed}件失敗）` : ''}`);
+        if (success === 0) toast.error(`更新に失敗しました（${failed}件）`);
+
+        return { success, failed, errors };
     };
 
     const handleDeleteInvitation = async (id: string) => {
@@ -630,7 +670,7 @@ export function useSettingsData() {
             handleCopyId, handleSaveCompany, handleSaveIntegration, handleTestClientSlackWebhook,
             handleTestMemberSlack, handleAddDept, handleSaveAllDepts, handleDeleteDept, handleAddKpi,
             handleSaveAllKpis, handleDeleteKpi, handleAddAxis, handleSaveAllAxes, handleDeleteAxis,
-            handleInvite, handleBulkInvite, handleDeleteInvitation, handleResendInvitation, handleCopyInviteLink,
+            handleInvite, handleBulkInvite, handleBulkUpdateUsers, handleDeleteInvitation, handleResendInvitation, handleCopyInviteLink,
             handleStartEditUser,
             handleSaveUserDetail, handleDeleteUser, handleRunAnalyze, handleRemindVoiceCheck,
             handlePreviewNotification, handleRemindKpi
