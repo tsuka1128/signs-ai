@@ -4,6 +4,14 @@ import { UserPlus, Mail, ArrowRight, ShieldCheck, Edit3, Copy, Send, Trash2, Hel
 import { SlackHelpTooltip } from "@/components/ui/SlackHelpTooltip";
 import { USER_ROLES, UserRole } from "@/lib/constants";
 
+function getActivityStatus(lastSignInAt: string | null) {
+    if (!lastSignInAt) return { label: "未ログイン", className: "bg-slate-100 text-slate-400" };
+    const days = Math.floor((Date.now() - new Date(lastSignInAt).getTime()) / 86400000);
+    if (days < 30)  return { label: "アクティブ", className: "bg-emerald-50 text-emerald-600" };
+    if (days < 90)  return { label: "非アクティブ", className: "bg-amber-50 text-amber-600" };
+    return { label: "長期未ログイン", className: "bg-rose-50 text-rose-500" };
+}
+
 interface MembersTabProps {
     inviteEmail: string;
     setInviteEmail: (email: string) => void;
@@ -199,7 +207,17 @@ export const MembersTab = ({
                                                         {(u.display_name || u.email || "U")[0].toUpperCase()}
                                                     </div>
                                                     <div>
-                                                        <div className="text-sm font-black text-slate-800 leading-tight">{u.display_name || "未設定"}</div>
+                                                        <div className="flex items-center gap-2 mb-0.5">
+                                                            <div className="text-sm font-black text-slate-800 leading-tight">{u.display_name || "未設定"}</div>
+                                                            {(() => {
+                                                                const status = getActivityStatus(u.last_sign_in_at ?? null);
+                                                                return (
+                                                                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${status.className}`}>
+                                                                        {status.label}
+                                                                    </span>
+                                                                );
+                                                            })()}
+                                                        </div>
                                                         <div className="text-[10px] text-slate-400 font-bold">{u.email}</div>
                                                     </div>
                                                 </div>
