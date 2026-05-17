@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { UserPlus, Mail, ArrowRight, ShieldCheck, Edit3, Copy, Send, Trash2, HelpCircle, Upload, Download, AlertTriangle } from "lucide-react";
 import { SlackHelpTooltip } from "@/components/ui/SlackHelpTooltip";
 import { USER_ROLES, UserRole } from "@/lib/constants";
+import { toast } from "sonner";
 
 function getActivityStatus(lastSignInAt: string | null) {
     if (!lastSignInAt) return { label: "未ログイン", className: "bg-slate-100 text-slate-400" };
@@ -160,7 +161,7 @@ export const MembersTab = ({
             setWarningSelections({});
             setBulkSkippedCount(0);
             // エラーはブラウザのコンソールに出るが、UIにも表示
-            alert('ファイルの読み込みに失敗しました。');
+            toast.error('ファイルの読み込みに失敗しました。');
         };
 
         reader.onload = (e) => {
