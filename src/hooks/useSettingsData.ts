@@ -185,7 +185,7 @@ export function useSettingsData() {
     const handlePreviewNotification = async (type: string) => {
         const webhookUrl = company?.slack_webhook_url;
         if (!webhookUrl) {
-            toast.success("Webhook URLを入力・保存してからプレビューしてください。");
+            toast.error("Webhook URLを入力・保存してからプレビューしてください。");
             return;
         }
 
@@ -218,7 +218,7 @@ export function useSettingsData() {
     const handleTestClientSlackWebhook = async () => {
         const webhookUrl = company?.slack_webhook_url;
         if (!webhookUrl) {
-            toast.success("Webhook URLを入力・保存してからテストしてください。");
+            toast.error("Webhook URLを入力・保存してからテストしてください。");
             return;
         }
 
@@ -242,7 +242,7 @@ export function useSettingsData() {
     const handleTestMemberSlack = async (slackUserId: string) => {
         const webhookUrl = company?.slack_webhook_url;
         if (!webhookUrl) {
-            toast.success("まず「外部連携」タブでWebhook URLを保存してください。");
+            toast.error("まず「外部連携」タブでWebhook URLを保存してください。");
             return;
         }
         if (!slackUserId) {
