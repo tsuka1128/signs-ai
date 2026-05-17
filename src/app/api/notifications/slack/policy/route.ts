@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
 import { sendSlackNotification } from "@/lib/slack";
+import { getBaseURL } from "@/lib/utils/index";
 
 export async function POST(request: NextRequest) {
     const supabase = await createServerSupabaseClient();
@@ -110,7 +111,7 @@ export async function POST(request: NextRequest) {
         });
     }
 
-    const footerText = "\n\n🔗 [SignsAI ダッシュボードを開く](https://signs-ai.vercel.app/dashboard)"; // 仮のURL
+    const footerText = `\n\n🔗 [SignsAI ダッシュボードを開く](${getBaseURL()}/dashboard)`;
     blocks.push({
         type: "context",
         elements: [
