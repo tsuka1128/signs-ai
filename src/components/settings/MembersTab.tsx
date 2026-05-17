@@ -408,7 +408,7 @@ export const MembersTab = ({
                                             );
                                             setBulkResult(result);
                                             setBulkSending(false);
-                                            if (result.success > 0) { setBulkPreview([]); setCsvText(''); }
+                                            if (result.success > 0 && result.failed === 0) { setBulkPreview([]); setCsvText(''); }
                                         }}
                                         disabled={bulkSending || bulkPreview.filter(r => r.valid).length === 0}
                                         className="bg-teal text-white px-8 py-3 rounded-2xl font-black text-sm hover:bg-teal-600 transition-all shadow-xl shadow-teal/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -526,7 +526,7 @@ export const MembersTab = ({
                                             const result = await handleBulkUpdateUsers(payloads);
                                             setBulkUpdateResult(result);
                                             setBulkUpdating(false);
-                                            if (result.success > 0) setUpdateWarnings([]);
+                                            if (result.success > 0 && result.failed === 0) setUpdateWarnings([]);
                                         }}
                                         disabled={bulkUpdating || updateWarnings.filter((_, i) => warningSelections[i] !== false).length === 0}
                                         className="bg-amber-500 text-white px-8 py-3 rounded-2xl font-black text-sm hover:bg-amber-600 transition-all shadow-xl shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
