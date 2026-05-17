@@ -53,6 +53,7 @@ export const MembersTab = ({
     setInviteSlackUserId,
     handleTestMemberSlack,
     handleInvite,
+    handleBulkInvite,
     users,
     kpis,
     handleStartEditUser,
