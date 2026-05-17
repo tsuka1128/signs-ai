@@ -289,7 +289,11 @@ function OnboardingContent() {
     /* バリデーション */
     const canProceed = () => {
         if (step === 1) {
-            if (state.mode === "join") return state.invitationToken.trim().length > 0;
+            if (state.mode === "join") {
+                return state.invitationToken.trim().length > 0
+                    && !!state.invitedCompany
+                    && !error;
+            }
             return state.companyName.trim().length > 0;
         }
 
