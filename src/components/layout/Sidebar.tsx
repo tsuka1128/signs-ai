@@ -355,6 +355,9 @@ export function Sidebar({
                         {/* マイページ（全ユーザー） */}
                         {renderLink('/me', 'マイページ', UserCircle, pathname === '/me')}
 
+                        {/* 組織の温度（全ユーザー） */}
+                        {renderLink('/temperature', '組織の温度', Thermometer, pathname === '/temperature')}
+
                         {dashboardNav}
                         {proNav}
                     </div>
