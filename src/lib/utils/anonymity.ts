@@ -38,7 +38,7 @@ export function safeAggregateValue<T>(
 /**
  * グループ化された集計配列から、サンプル数が閾値未満のグループを除外
  * @param groups 集計結果の配列
- * @param getCount 各グループ의 サンプル数取得関数
+ * @param getCount 各グループのサンプル数取得関数
  * @example
  *   filterByAnonymity(deptSummaries, d => d.responseCount)
  */
