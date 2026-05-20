@@ -132,10 +132,8 @@ export default function DeptDashboardPage() {
                 });
             }
 
-            // ── 前月のデータも比較対象にするため、過去7ヶ月分の範囲で responses を取得 ──
-            const prevD = new Date(now.getFullYear(), now.getMonth() - 6, 1);
-            const extraYM = `${prevD.getFullYear()}-${String(prevD.getMonth() + 1).padStart(2, '0')}`;
-            const targetYMs = [extraYM, ...months.map(m => m.ym)];
+            // ── 過去6ヶ月の範囲で responses を取得 ──
+            const targetYMs = months.map(m => m.ym);
 
             // 1. survey_responses 取得
             const { data: responses, error: responseErr } = await supabase
@@ -193,18 +191,6 @@ export default function DeptDashboardPage() {
                 };
             });
 
-            // 4. 前月（比較用）のスコア集集計
-            const prevIds = responsesByMonth[extraYM] || [];
-            const prevScores: number[] = [];
-            prevIds.forEach(rid => {
-                (answerByResponse[rid] || []).forEach(ans => prevScores.push(ans.score));
-            });
-            const prevAvg = prevScores.length > 0
-                ? Number((prevScores.reduce((s, v) => s + v, 0) / prevScores.length).toFixed(2))
-                : null;
-            const prevRespondentCount = prevIds.length;
-
-            // 今月分に前月比較データを一時的に含めるため、scored の手前に prev スコア情報をメモリ保持させる
             // 部署スコアステートへ設定
             setDeptScores(scored);
 
