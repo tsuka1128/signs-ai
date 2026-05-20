@@ -221,7 +221,7 @@ export default function TemperaturePage() {
 
     if (loading) return <Loading fullScreen message="組織の温度を読み込んでいます..." />;
 
-    const latestDeptScore = [...deptScores].reverse().find(s => s.avg !== null && passesAnonymityGuard(s.respondentCount));
+    const currentMonthScore = deptScores[deptScores.length - 1];
     const totalRespondents = deptScores.reduce((s, m) => s + m.respondentCount, 0);
 
     const formatKpiValue = (v: number | null, unit: string | null) => {
@@ -311,19 +311,19 @@ export default function TemperaturePage() {
                         </div>
 
                         {/* 今月のスコア */}
-                        {latestDeptScore ? (
+                        {currentMonthScore && passesAnonymityGuard(currentMonthScore.respondentCount) ? (
                             <div className="mb-8">
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">今月の総合スコア</p>
                                 <div className="flex items-baseline gap-2">
                                     <span className="text-5xl font-black text-slate-800 tracking-tighter">
-                                        <AnonymityGate count={latestDeptScore.respondentCount}>
-                                            {latestDeptScore.avg?.toFixed(1)}
+                                        <AnonymityGate count={currentMonthScore.respondentCount}>
+                                            {currentMonthScore.avg?.toFixed(1)}
                                         </AnonymityGate>
                                     </span>
                                     <span className="text-sm font-bold text-slate-400">/ 5.0</span>
                                 </div>
                                 <p className="text-[11px] text-slate-400 font-bold mt-1">
-                                    回答者数: {latestDeptScore.respondentCount}名（{latestDeptScore.month}）
+                                    回答者数: {currentMonthScore.respondentCount}名（{currentMonthScore.month}）
                                 </p>
                             </div>
                         ) : (
