@@ -355,9 +355,9 @@ export function Sidebar({
                         {/* 組織の温度（全ユーザー） */}
                         {renderLink('/temperature', '組織の温度', Thermometer, pathname === '/temperature')}
 
-                        {/* 部署ダッシュボード（マネージャー以上） */}
+                        {/* 部署マネジメント（マネージャー以上） */}
                         {(userRole === 'super_admin' || userRole === 'admin' || userRole === 'executive' || userRole === 'manager') &&
-                            renderLink('/dept', '部署ダッシュボード', Building2, pathname === '/dept')
+                            renderLink('/dept', '部署マネジメント', Building2, pathname === '/dept')
                         }
 
                         {dashboardNav}
