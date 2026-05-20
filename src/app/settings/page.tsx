@@ -19,6 +19,7 @@ import { MembersTab } from "@/components/settings/MembersTab";
 import { IntegrationTab } from "@/components/settings/IntegrationTab";
 import { AITab } from "@/components/settings/AITab";
 import { SurveyTab } from "@/components/settings/SurveyTab";
+import { MonthlyFocusTab } from "@/components/settings/MonthlyFocusTab";
 
 // Modals
 import { MemberEditModal } from "@/components/settings/MemberEditModal";
@@ -63,7 +64,8 @@ export default function SettingsPage() {
                         { id: "ai", label: "AI分析" },
                         { id: "survey", label: "ボイスチェック" },
                         { id: "users", label: "メンバー" },
-                        { id: "integration", label: "Slack連携" }
+                        { id: "integration", label: "Slack連携" },
+                        { id: "focus", label: "今月の課題" }
                     ].map(t => (
                         <button
                             key={t.id}
@@ -186,6 +188,10 @@ export default function SettingsPage() {
                                 handleRemindKpi={handlers.handleRemindKpi}
                             />
                         </PlanGate>
+                    )}
+
+                    {activeTab === "focus" && (
+                        <MonthlyFocusTab companyId={state.company?.id} />
                     )}
                 </div>
 
