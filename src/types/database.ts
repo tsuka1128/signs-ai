@@ -80,6 +80,18 @@ export interface Database {
           created_at: string
         }
       }
+      executive_monthly_focus: {
+        Row: {
+          id: string
+          company_id: string
+          month: string  // YYYY-MM
+          title: string
+          content: string
+          created_at: string
+          updated_at: string
+          created_by: string | null
+        }
+      }
       kpi_records: {
         Row: {
           id: string
@@ -254,3 +266,4 @@ export type ResourceRecord = Database['public']['Tables']['resource_records']['R
 export type Invitation = Database['public']['Tables']['invitations']['Row']
 export type AdminActivityLog = Database['public']['Tables']['admin_activity_logs']['Row']
 export type Plan = Database['public']['Tables']['plans']['Row']
+export type ExecutiveMonthlyFocus = Database['public']['Tables']['executive_monthly_focus']['Row']
