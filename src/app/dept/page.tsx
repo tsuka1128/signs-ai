@@ -13,24 +13,9 @@ import {
 } from "@/lib/utils/anonymity";
 import { createClient } from "@/lib/supabase";
 import {
-    LineChart,
-    Line,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-} from "recharts";
-import {
     Building2,
-    TrendingUp,
-    TrendingDown,
-    Minus,
     Info,
-    Users,
     ChevronRight,
-    HelpCircle,
-    Activity,
     ClipboardList,
     Inbox,
     Lock,
@@ -367,18 +352,8 @@ export default function DeptDashboardPage() {
         return <Loading fullScreen message="部署のデータを読み込んでいます..." />;
     }
 
-    // 今月のスコア情報
+    // 今月の設問別匿名ガード判定に使用
     const currentMonthScore = deptScores[deptScores.length - 1];
-    // 前月のスコア情報（前月比計算用）
-    const prevMonthScore = deptScores[deptScores.length - 2] || null;
-
-    // 前月比の差分計算
-    let diff: number | null = null;
-    if (currentMonthScore && currentMonthScore.avg !== null && prevMonthScore && prevMonthScore.avg !== null) {
-        diff = Number((currentMonthScore.avg - prevMonthScore.avg).toFixed(2));
-    }
-
-    const totalRespondents = deptScores.reduce((s, m) => s + m.respondentCount, 0);
 
     // 選択中の部署名（フォールバックとしてprofileから取得したdepartmentNameを使用）
     const selectedDeptName = departments.find(d => d.id === selectedDepartmentId)?.name || departmentName;
@@ -390,12 +365,12 @@ export default function DeptDashboardPage() {
                 <div>
                     <h1 className="text-2xl font-black text-slate-800 tracking-tighter flex items-center gap-3 mb-2">
                         <Building2 className="w-7 h-7 text-teal" />
-                        部署ダッシュボード
+                        部署マネジメント
                     </h1>
                     <p className="text-slate-500 font-medium">
                         {userRole === 'manager'
-                            ? "マネージャーとして、あなたの所属する部署のメンバー状態を多角的に把握・分析します。"
-                            : "経営層・管理者として、組織内の各部署のメンバー状態を多角的に把握・分析します。"
+                            ? "自部署の状況を理解し、次の一歩を考えるためのワークスペースです。"
+                            : "各部署の状況を理解し、次の一歩を考えるためのワークスペースです。"
                         }
                     </p>
                 </div>
@@ -442,8 +417,8 @@ export default function DeptDashboardPage() {
                         }
                         description={
                             userRole === "manager"
-                                ? "部署ダッシュボードは、部署に所属しているマネージャー・管理者に向けた機能です。"
-                                : "部署ダッシュボードで分析対象となる部署が登録されていません。管理者設定より部署を登録してください。"
+                                ? "部署マネジメントは、部署に所属しているマネージャー・管理者に向けた機能です。"
+                                : "部署マネジメントで分析対象となる部署が登録されていません。管理者設定より部署を登録してください。"
                         }
                         icon={<Building2 className="w-12 h-12 text-slate-200" />}
                     />
@@ -457,179 +432,86 @@ export default function DeptDashboardPage() {
                                 </div>
                             </div>
                         )}
-                        {/* ① 今月の部署スコア（ヒーローカード） */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            <div className="lg:col-span-2 bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-100 rounded-3xl p-8 flex flex-col justify-between relative overflow-hidden">
-                                <div className="absolute right-0 top-0 translate-x-6 -translate-y-6 w-32 h-32 bg-teal-200/10 rounded-full blur-2xl" />
-                                <div>
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h2 className="text-sm font-black text-teal-800 uppercase tracking-widest flex items-center gap-2">
-                                            <Activity className="w-4 h-4" /> 今月の部署スコア
-                                            {selectedDeptName && (
-                                                <Badge className="bg-teal-100 text-teal-800 border-none text-[10px] font-black px-2 py-0.5 ml-2">
-                                                    {selectedDeptName}
-                                                </Badge>
-                                            )}
+                        {/* 📥 経営方針インボックス */}
+                        <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm space-y-6 animate-in fade-in">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500">
+                                        <Inbox className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-base font-black text-slate-800 tracking-tight">
+                                            経営方針インボックス
                                         </h2>
-                                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-teal-600">
-                                            <Users className="w-3.5 h-3.5" />
-                                            累計回答 {totalRespondents}件
-                                        </div>
-                                    </div>
-
-                                    {currentMonthScore && passesAnonymityGuard(currentMonthScore.respondentCount) ? (
-                                        <div className="space-y-4">
-                                            <div className="flex items-baseline gap-2">
-                                                <span className="text-6xl font-black text-slate-800 tracking-tighter">
-                                                    <AnonymityGate count={currentMonthScore.respondentCount}>
-                                                        {currentMonthScore.avg?.toFixed(2)}
-                                                    </AnonymityGate>
-                                                </span>
-                                                <span className="text-lg font-bold text-slate-400">/ 5.00</span>
-
-                                                {/* 前月比表示 */}
-                                                {diff !== null && (
-                                                    <div className="ml-4 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/80 border border-teal-100/30">
-                                                        {diff > 0 ? (
-                                                            <>
-                                                                <TrendingUp className="w-3.5 h-3.5 text-teal" />
-                                                                <span className="text-teal">+{diff.toFixed(2)}</span>
-                                                            </>
-                                                        ) : diff < 0 ? (
-                                                            <>
-                                                                <TrendingDown className="w-3.5 h-3.5 text-rose-500" />
-                                                                <span className="text-rose-500">{diff.toFixed(2)}</span>
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <Minus className="w-3.5 h-3.5 text-slate-400" />
-                                                                <span className="text-slate-400">±0.00</span>
-                                                            </>
-                                                        )}
-                                                        <span className="text-[10px] text-slate-400 font-medium">前月比</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <p className="text-xs text-slate-500 font-bold">
-                                                回答者数: {currentMonthScore.respondentCount}名（{currentMonthScore.month}）
-                                            </p>
-                                        </div>
-                                    ) : (
-                                        <div className="bg-white/80 border border-teal-100 rounded-2xl p-5 flex items-center gap-3 mt-2">
-                                            <Info className="w-4 h-4 text-teal-600 shrink-0" />
-                                            <p className="text-xs text-teal-800 font-bold">
-                                                今月はまだ集計表示できる回答数（{3}名以上）に達していません。
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="mt-6 border-t border-teal-100/50 pt-4 flex items-center gap-2 text-[10px] text-teal-600 font-bold">
-                                    <HelpCircle className="w-3.5 h-3.5" />
-                                    回答者数が3名未満の月は、個人特定防止のため自動的に非表示処理（匿名ガード）が働きます。
-                                </div>
-                            </div>
-
-                            <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
-                                <div>
-                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">メンバー分析ステータス</h3>
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between border-b border-slate-50 pb-2">
-                                            <span className="text-xs text-slate-500 font-bold">集計ステータス</span>
-                                            {currentMonthScore && passesAnonymityGuard(currentMonthScore.respondentCount) ? (
-                                                <Badge className="bg-teal text-white border-none font-bold text-[10px] px-2.5 py-1 rounded-lg">集計完了</Badge>
-                                            ) : (
-                                                <Badge className="bg-amber-500 text-white border-none font-bold text-[10px] px-2.5 py-1 rounded-lg">回答収集中</Badge>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center justify-between border-b border-slate-50 pb-2">
-                                            <span className="text-xs text-slate-500 font-bold">今月の回答率目標</span>
-                                            <span className="text-xs font-black text-slate-700">70% 以上</span>
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-xs text-slate-500 font-bold">匿名ガード閾値</span>
-                                            <span className="text-xs font-black text-slate-700">3名未満で非表示</span>
-                                        </div>
+                                        <p className="text-xs text-slate-400 font-bold">
+                                            {userRole === 'manager'
+                                                ? "自部署での実行プランに落とし込むためのワークスペース"
+                                                : "今月の経営方針と各部署への落とし込みを確認できます"
+                                            }
+                                        </p>
                                     </div>
                                 </div>
-                                <div className="text-[10px] text-slate-400 font-bold bg-slate-50 p-3.5 rounded-2xl flex items-start gap-2">
-                                    <Info className="w-3.5 h-3.5 shrink-0 text-slate-400 mt-0.5" />
-                                    マネージャー向け画面は、自部署メンバーの総合動向のみが表示され、個別特定ができないよう制限されています。
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 📥 経営方針インボックス（一般マネージャー本人のみ表示、管理者・経営層は非表示） */}
-                        {userRole === 'manager' && (
-                            <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm space-y-6 animate-in fade-in">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500">
-                                            <Inbox className="w-5 h-5" />
-                                        </div>
-                                        <div>
-                                            <h2 className="text-base font-black text-slate-800 tracking-tight">
-                                                経営方針インボックス
-                                            </h2>
-                                            <p className="text-xs text-slate-400 font-bold">自部署での実行プランに落とし込むためのワークスペース</p>
-                                        </div>
-                                    </div>
+                                {userRole === 'manager' && (
                                     <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-black text-slate-500 shrink-0 self-start sm:self-auto">
                                         <Lock className="w-3.5 h-3.5 text-slate-400" />
-                                        本人のみ閲覧可
+                                        メモは本人のみ閲覧可
                                     </div>
-                                </div>
+                                )}
+                            </div>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                    {/* 左カラム：経営方針（原文表示） */}
-                                    <div className="space-y-6">
-                                        <div>
-                                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                                                <Bookmark className="w-3.5 h-3.5 text-amber-500" /> 今月の経営方針
-                                            </h3>
-                                            {currentFocus ? (
-                                                <div className="bg-gradient-to-br from-amber-50/60 to-orange-50/30 border border-amber-100 rounded-2xl p-6 space-y-3 relative overflow-hidden">
-                                                    <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-20 h-20 bg-amber-500/5 rounded-full blur-xl" />
-                                                    <h4 className="text-sm font-black text-amber-900 leading-tight">
-                                                        {currentFocus.title}
-                                                    </h4>
-                                                    <p className="text-xs text-amber-800/90 font-medium leading-relaxed whitespace-pre-wrap">
-                                                        {currentFocus.content}
-                                                    </p>
-                                                </div>
-                                            ) : (
-                                                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 text-center">
-                                                    <p className="text-xs text-slate-400 font-bold">
-                                                        経営層からの今月の課題はまだ登録されていません。
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* 過去の方針（アコーディオン） */}
-                                        {pastFocus.length > 0 && (
-                                            <div className="space-y-2">
-                                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">過去の方針</h3>
-                                                <div className="space-y-2">
-                                                    {pastFocus.map(pf => (
-                                                        <details key={pf.id} className="group bg-white border border-slate-200 rounded-2xl overflow-hidden [&_summary::-webkit-details-marker]:hidden">
-                                                            <summary className="flex items-center justify-between p-4 cursor-pointer select-none hover:bg-slate-50 transition-colors">
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="text-[10px] font-black bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">{pf.month}</span>
-                                                                    <span className="text-xs font-black text-slate-700 truncate max-w-[200px] sm:max-w-xs">{pf.title}</span>
-                                                                </div>
-                                                                <ChevronRight className="w-4 h-4 text-slate-400 group-open:rotate-90 transition-transform" />
-                                                            </summary>
-                                                            <div className="px-4 pb-4 pt-1 border-t border-slate-50 text-xs text-slate-600 font-medium leading-relaxed whitespace-pre-wrap bg-slate-50/50">
-                                                                {pf.content}
-                                                            </div>
-                                                        </details>
-                                                    ))}
-                                                </div>
+                            {/* 経営方針（原文・過去履歴）: 全ロールに表示 */}
+                            <div className={userRole === 'manager' ? "grid grid-cols-1 lg:grid-cols-2 gap-8" : "space-y-6"}>
+                                {/* 左カラム / 上部：経営方針（原文表示） */}
+                                <div className="space-y-6">
+                                    <div>
+                                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                                            <Bookmark className="w-3.5 h-3.5 text-amber-500" /> 今月の経営方針
+                                        </h3>
+                                        {currentFocus ? (
+                                            <div className="bg-gradient-to-br from-amber-50/60 to-orange-50/30 border border-amber-100 rounded-2xl p-6 space-y-3 relative overflow-hidden">
+                                                <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-20 h-20 bg-amber-500/5 rounded-full blur-xl" />
+                                                <h4 className="text-sm font-black text-amber-900 leading-tight">
+                                                    {currentFocus.title}
+                                                </h4>
+                                                <p className="text-xs text-amber-800/90 font-medium leading-relaxed whitespace-pre-wrap">
+                                                    {currentFocus.content}
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 text-center">
+                                                <p className="text-xs text-slate-400 font-bold">
+                                                    経営層からの今月の課題はまだ登録されていません。
+                                                </p>
                                             </div>
                                         )}
                                     </div>
 
-                                    {/* 右カラム：マネージャーの落とし込みメモ */}
+                                    {/* 過去の方針（アコーディオン） */}
+                                    {pastFocus.length > 0 && (
+                                        <div className="space-y-2">
+                                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">過去の方針</h3>
+                                            <div className="space-y-2">
+                                                {pastFocus.map(pf => (
+                                                    <details key={pf.id} className="group bg-white border border-slate-200 rounded-2xl overflow-hidden [&_summary::-webkit-details-marker]:hidden">
+                                                        <summary className="flex items-center justify-between p-4 cursor-pointer select-none hover:bg-slate-50 transition-colors">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[10px] font-black bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">{pf.month}</span>
+                                                                <span className="text-xs font-black text-slate-700 truncate max-w-[200px] sm:max-w-xs">{pf.title}</span>
+                                                            </div>
+                                                            <ChevronRight className="w-4 h-4 text-slate-400 group-open:rotate-90 transition-transform" />
+                                                        </summary>
+                                                        <div className="px-4 pb-4 pt-1 border-t border-slate-50 text-xs text-slate-600 font-medium leading-relaxed whitespace-pre-wrap bg-slate-50/50">
+                                                            {pf.content}
+                                                        </div>
+                                                    </details>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 右カラム：マネージャーの落とし込みメモ（manager のみ表示） */}
+                                {userRole === 'manager' && (
                                     <div className="flex flex-col justify-between space-y-6">
                                         <div className="space-y-3">
                                             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
@@ -675,61 +557,19 @@ export default function DeptDashboardPage() {
                                             </ul>
                                         </div>
                                     </div>
-                                </div>
-                            </section>
-                        )}
-
-                        {/* ② 過去6ヶ月の推移グラフ */}
-                        <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                    <TrendingUp className="w-4 h-4" /> 部署スコアの推移
-                                </h2>
-                                <span className="text-[10px] font-bold text-slate-400">過去6ヶ月</span>
+                                )}
                             </div>
-
-                            <div className="h-72">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={deptScores.map(s => ({
-                                        ...s,
-                                        displayAvg: passesAnonymityGuard(s.respondentCount) ? s.avg : null,
-                                    }))}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                                        <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} fontWeight="bold" />
-                                        <YAxis domain={[1, 5]} stroke="#94a3b8" fontSize={11} fontWeight="bold" />
-                                        <Tooltip
-                                            contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 700 }}
-                                            formatter={(v: any, _name: any, props: any) => {
-                                                const d = props?.payload;
-                                                if (!passesAnonymityGuard(d?.respondentCount || 0)) {
-                                                    return ['非表示', ANONYMITY_HIDDEN_REASON];
-                                                }
-                                                return v !== null ? [`${v}`, `スコア（${d.respondentCount}名）`] : ['未集計', ''];
-                                            }}
-                                        />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="displayAvg"
-                                            stroke="#14b8a6"
-                                            strokeWidth={3}
-                                            dot={{ r: 6, fill: '#14b8a6', strokeWidth: 2, stroke: '#ffffff' }}
-                                            activeDot={{ r: 8 }}
-                                            connectNulls={false}
-                                        />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </div>
-                            <p className="text-[11px] text-slate-400 font-bold mt-3 flex items-center gap-1.5">
-                                <Info className="w-3 h-3" />
-                                プライバシー保護のため、回答数が3名に満たない月はグラフ上で自動的に線がスキップされます。
-                            </p>
                         </section>
+                
 
-                        {/* ③ 設問別スコア（今月） */}
+                        {/* 📊 今月の設問別スコア */}
                         <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
-                            <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-6">
-                                <ClipboardList className="w-4 h-4" /> 設問別詳細スコア（今月）
-                            </h2>
+                            <div className="mb-6">
+                                <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-2">
+                                    <ClipboardList className="w-4 h-4" /> 今月の設問別スコア
+                                </h2>
+                                <p className="text-xs text-slate-500 font-medium">今月、どの問いに課題が出ているかを確認しましょう</p>
+                            </div>
 
                             {currentMonthScore && passesAnonymityGuard(currentMonthScore.respondentCount) ? (
                                 <div className="space-y-6">
