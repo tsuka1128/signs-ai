@@ -21,8 +21,7 @@ import {
     Search,
     Brain,
     Wallet,
-    Crown,
-    UserCircle
+    Crown
 } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { useState, useEffect } from "react";
@@ -352,9 +351,6 @@ export function Sidebar({
                     <div className="space-y-1">
                         <p className="px-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.25em] mb-4">View</p>
                         
-                        {/* マイページ（全ユーザー） */}
-                        {renderLink('/me', 'マイページ', UserCircle, pathname === '/me')}
-
                         {/* 組織の温度（全ユーザー） */}
                         {renderLink('/temperature', '組織の温度', Thermometer, pathname === '/temperature')}
 
