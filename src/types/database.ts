@@ -246,6 +246,19 @@ export interface Database {
           created_at: string
         }
       }
+      manager_directive_notes: {
+        Row: {
+          id: string
+          company_id: string
+          department_id: string
+          manager_user_id: string
+          month: string
+          focus_id: string | null
+          note: string
+          created_at: string
+          updated_at: string
+        }
+      }
     }
   }
 }
@@ -267,3 +280,4 @@ export type Invitation = Database['public']['Tables']['invitations']['Row']
 export type AdminActivityLog = Database['public']['Tables']['admin_activity_logs']['Row']
 export type Plan = Database['public']['Tables']['plans']['Row']
 export type ExecutiveMonthlyFocus = Database['public']['Tables']['executive_monthly_focus']['Row']
+export type ManagerDirectiveNote = Database['public']['Tables']['manager_directive_notes']['Row']

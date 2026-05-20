@@ -32,6 +32,9 @@ import {
     HelpCircle,
     Activity,
     ClipboardList,
+    Inbox,
+    Lock,
+    Bookmark
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -63,6 +66,12 @@ export default function DeptDashboardPage() {
 
     const [deptScores, setDeptScores] = useState<DeptMonthlyScore[]>([]);
     const [questionScores, setQuestionScores] = useState<QuestionScore[]>([]);
+
+    const [userId, setUserId] = useState<string | null>(null);
+    const [note, setNote] = useState<string>("");
+    const [savingNote, setSavingNote] = useState<boolean>(false);
+    const [currentFocus, setCurrentFocus] = useState<any>(null);
+    const [pastFocus, setPastFocus] = useState<any[]>([]);
 
     useEffect(() => {
         checkRoleAndFetchData();
@@ -113,6 +122,7 @@ export default function DeptDashboardPage() {
             setCompanyId(profile.company_id);
             setDepartmentId(profile.department_id);
             setDepartmentName((profile as any).departments?.name || "");
+            setUserId(user.id);
 
             // 部署未所属の場合はローディング終了（EmptyStateを表示するため）
             if (!profile.department_id) {
@@ -228,11 +238,72 @@ export default function DeptDashboardPage() {
             });
             setQuestionScores(qScores);
 
+            // ── 経営方針インボックス用データ取得 ──
+            const { data: focusList, error: focusErr } = await supabase
+                .from('executive_monthly_focus')
+                .select('id, month, title, content')
+                .eq('company_id', profile.company_id)
+                .order('month', { ascending: false })
+                .limit(7);
+
+            if (focusErr) throw focusErr;
+
+            const curFocus = focusList?.find(f => f.month === currentYM) || null;
+            const pstFocus = (focusList || []).filter(f => f.month !== currentYM).slice(0, 6);
+            setCurrentFocus(curFocus);
+            setPastFocus(pstFocus);
+
+            // 2. 自分のメモ（今月分）
+            const { data: noteData, error: noteErr } = await supabase
+                .from('manager_directive_notes')
+                .select('note, focus_id')
+                .eq('manager_user_id', user.id)
+                .eq('month', currentYM)
+                .maybeSingle();
+
+            if (noteErr) throw noteErr;
+            setNote(noteData?.note || '');
+
         } catch (e: any) {
             setError(e?.message || "データの取得に失敗しました");
             toast.error(e?.message || "データの取得に失敗しました");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSaveNote = async () => {
+        if (!userId || !companyId || !departmentId) {
+            toast.error("ユーザー情報または部署情報が不足しているため保存できません");
+            return;
+        }
+        try {
+            setSavingNote(true);
+            const currentYM = deptScores[deptScores.length - 1]?.month;
+            if (!currentYM) {
+                toast.error("現在の月情報を取得できませんでした");
+                return;
+            }
+
+            const { error: upsertErr } = await supabase
+                .from('manager_directive_notes')
+                .upsert({
+                    company_id: companyId,
+                    department_id: departmentId,
+                    manager_user_id: userId,
+                    month: currentYM,
+                    focus_id: currentFocus?.id ?? null,
+                    note: note,
+                }, {
+                    onConflict: 'manager_user_id,month'
+                });
+
+            if (upsertErr) throw upsertErr;
+            toast.success("メモを保存しました");
+        } catch (e: any) {
+            toast.error(e?.message || "メモの保存に失敗しました");
+        } finally {
+            setSavingNote(false);
         }
     };
 
@@ -391,6 +462,125 @@ export default function DeptDashboardPage() {
                                 </div>
                             </div>
                         </div>
+
+                        {/* 📥 経営方針インボックス */}
+                        <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm space-y-6">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500">
+                                        <Inbox className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-base font-black text-slate-800 tracking-tight">
+                                            経営方針インボックス
+                                        </h2>
+                                        <p className="text-xs text-slate-400 font-bold">自部署での実行プランに落とし込むためのワークスペース</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-black text-slate-500 shrink-0 self-start sm:self-auto">
+                                    <Lock className="w-3.5 h-3.5 text-slate-400" />
+                                    本人のみ閲覧可
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                {/* 左カラム：経営方針（原文表示） */}
+                                <div className="space-y-6">
+                                    <div>
+                                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                                            <Bookmark className="w-3.5 h-3.5 text-amber-500" /> 今月の経営方針
+                                        </h3>
+                                        {currentFocus ? (
+                                            <div className="bg-gradient-to-br from-amber-50/60 to-orange-50/30 border border-amber-100 rounded-2xl p-6 space-y-3 relative overflow-hidden">
+                                                <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-20 h-20 bg-amber-500/5 rounded-full blur-xl" />
+                                                <h4 className="text-sm font-black text-amber-900 leading-tight">
+                                                    {currentFocus.title}
+                                                </h4>
+                                                <p className="text-xs text-amber-800/90 font-medium leading-relaxed whitespace-pre-wrap">
+                                                    {currentFocus.content}
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 text-center">
+                                                <p className="text-xs text-slate-400 font-bold">
+                                                    経営層からの今月の課題はまだ登録されていません。
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 過去の方針（アコーディオン） */}
+                                    {pastFocus.length > 0 && (
+                                        <div className="space-y-2">
+                                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">過去の方針</h3>
+                                            <div className="space-y-2">
+                                                {pastFocus.map(pf => (
+                                                    <details key={pf.id} className="group bg-white border border-slate-200 rounded-2xl overflow-hidden [&_summary::-webkit-details-marker]:hidden">
+                                                        <summary className="flex items-center justify-between p-4 cursor-pointer select-none hover:bg-slate-50 transition-colors">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[10px] font-black bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">{pf.month}</span>
+                                                                <span className="text-xs font-black text-slate-700 truncate max-w-[200px] sm:max-w-xs">{pf.title}</span>
+                                                            </div>
+                                                            <ChevronRight className="w-4 h-4 text-slate-400 group-open:rotate-90 transition-transform" />
+                                                        </summary>
+                                                        <div className="px-4 pb-4 pt-1 border-t border-slate-50 text-xs text-slate-600 font-medium leading-relaxed whitespace-pre-wrap bg-slate-50/50">
+                                                            {pf.content}
+                                                        </div>
+                                                    </details>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 右カラム：マネージャーの落とし込みメモ */}
+                                <div className="flex flex-col justify-between space-y-6">
+                                    <div className="space-y-3">
+                                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                                            自部署への落とし込みメモ
+                                        </h3>
+                                        <div className="relative">
+                                            <textarea
+                                                value={note}
+                                                onChange={(e) => setNote(e.target.value)}
+                                                maxLength={2000}
+                                                placeholder="この方針を自部署でどう実行するか、メンバーにどう伝えるか、自由に書き留めてください"
+                                                rows={6}
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal transition-all resize-none leading-relaxed"
+                                            />
+                                            <span className="absolute bottom-3 right-3 text-[10px] text-slate-400 font-bold">
+                                                {note.length} / 2000
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-4">
+                                            <p className="text-[10px] text-slate-400 font-bold leading-normal">
+                                                ※ このメモはあなた本人のみが閲覧できます（メンバー・他マネージャー・経営層には非公開です）
+                                            </p>
+                                            <button
+                                                onClick={handleSaveNote}
+                                                disabled={savingNote}
+                                                className="bg-slate-800 hover:bg-slate-900 text-white text-xs font-black px-5 py-2.5 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 shrink-0"
+                                            >
+                                                {savingNote ? "保存中..." : "メモを保存"}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* 思考のヒント（固定文言） */}
+                                    <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-5 relative overflow-hidden">
+                                        <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-16 h-16 bg-amber-500/5 rounded-full blur-xl" />
+                                        <p className="text-xs font-black text-amber-700 mb-2 flex items-center gap-1.5">
+                                            💭 考えるヒント
+                                        </p>
+                                        <ul className="text-xs text-amber-900/90 space-y-1.5 font-bold leading-relaxed">
+                                            <li>・この方針は、自部署のどの業務に直結しますか？</li>
+                                            <li>・チームの誰の声を聞くと、ヒントが得られそうですか？</li>
+                                            <li>・先月のスコアの動きと関連はありますか？</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
 
                         {/* ② 過去6ヶ月の推移グラフ */}
                         <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
