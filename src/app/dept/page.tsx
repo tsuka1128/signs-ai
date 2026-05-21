@@ -19,7 +19,8 @@ import {
     ClipboardList,
     Inbox,
     Lock,
-    Bookmark
+    Bookmark,
+    AlertTriangle
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -355,6 +356,53 @@ export default function DeptDashboardPage() {
     // 今月の設問別匿名ガード判定に使用
     const currentMonthScore = deptScores[deptScores.length - 1];
 
+    // 要注意シグナルの判定
+    type Signal = {
+        level: 'critical' | 'warning';
+        message: string;
+    };
+
+    const signals: Signal[] = [];
+
+    // ① スコア急降下（前月比 -0.5 以上）
+    const currentAvg = currentMonthScore?.avg ?? null;
+    const prevMonthScore = deptScores[deptScores.length - 2] ?? null;
+    const prevAvg = prevMonthScore?.avg ?? null;
+
+    if (
+        currentAvg !== null &&
+        prevAvg !== null &&
+        passesAnonymityGuard(currentMonthScore!.respondentCount) &&
+        passesAnonymityGuard(prevMonthScore!.respondentCount)
+    ) {
+        const diff = currentAvg - prevAvg;
+        if (diff <= -0.5) {
+            signals.push({
+                level: 'critical',
+                message: `今月のスコアが先月より ${Math.abs(diff).toFixed(2)} ポイント低下しています（${prevAvg.toFixed(2)} → ${currentAvg.toFixed(2)}）`,
+            });
+        }
+    }
+
+    // ② 回答数が3名未満（匿名ガード発動中）
+    if (currentMonthScore && !passesAnonymityGuard(currentMonthScore.respondentCount)) {
+        signals.push({
+            level: 'warning',
+            message: `今月の回答数が ${currentMonthScore.respondentCount} 名です。集計には ${3} 名以上の回答が必要です`,
+        });
+    }
+
+    // ③ 低スコア設問あり（3.0 未満かつ匿名ガード通過済みの月）
+    if (currentMonthScore && passesAnonymityGuard(currentMonthScore.respondentCount)) {
+        const lowQuestions = questionScores.filter(q => q.avg !== null && q.avg < 3.0);
+        if (lowQuestions.length > 0) {
+            signals.push({
+                level: 'warning',
+                message: `${lowQuestions.length} つの設問でスコアが 3.0 を下回っています`,
+            });
+        }
+    }
+
     // 選択中の部署名（フォールバックとしてprofileから取得したdepartmentNameを使用）
     const selectedDeptName = departments.find(d => d.id === selectedDepartmentId)?.name || departmentName;
 
@@ -432,6 +480,28 @@ export default function DeptDashboardPage() {
                                 </div>
                             </div>
                         )}
+
+                        {/* 🚨 要注意シグナル（あれば表示） */}
+                        {signals.length > 0 && (
+                            <div className="space-y-2">
+                                {signals.map((signal, i) => (
+                                    <div
+                                        key={i}
+                                        className={`flex items-start gap-3 px-5 py-4 rounded-2xl border text-sm font-bold ${
+                                            signal.level === 'critical'
+                                                ? 'bg-rose-50 border-rose-200 text-rose-700'
+                                                : 'bg-amber-50 border-amber-200 text-amber-700'
+                                        }`}
+                                    >
+                                        <AlertTriangle className={`w-4 h-4 shrink-0 mt-0.5 ${
+                                            signal.level === 'critical' ? 'text-rose-500' : 'text-amber-500'
+                                        }`} />
+                                        <span>{signal.message}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
                         {/* 📥 経営方針インボックス */}
                         <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm space-y-6 animate-in fade-in">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
