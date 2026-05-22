@@ -78,8 +78,9 @@ export async function POST(req: Request) {
             }
         });
 
-        // 6. 匿名ガード：コメント数が3件未満は400エラー
-        if (commentsList.length < 3) {
+        // 6. 匿名ガード：回答者数（survey_responses の行数）が3人未満の場合は400エラー
+        const respondentCount = (responses || []).length;
+        if (respondentCount < 3) {
             return NextResponse.json({ error: "INSUFFICIENT_RESPONSES" }, { status: 400 });
         }
 
