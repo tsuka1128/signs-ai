@@ -844,7 +844,7 @@
     "href": "/docs/faq#voice-check-faq",
     "icon": "HelpCircle",
     "category": "サポート",
-    "content": "ボイスチェック」から変更できます（デフォルト: 20文字）。具体的なエピソードや改善提案を含めると、自然と文字数を超えます。\" />"
+    "content": ""
   },
   {
     "title": "FAQ / トラブルシューティング > KPI・データ入力",
@@ -873,61 +873,5 @@
     "icon": "HelpCircle",
     "category": "サポート",
     "content": "+ ); }"
-  },
-  {
-    "title": "人事戦略インサイトの使い方",
-    "href": "/docs/hr-strategy-guide",
-    "icon": "Crown",
-    "category": "Pro 機能",
-    "content": "KPIと組織体温を掛け合わせ、離職リスクの予兆検知・エンゲージメント改善・AI人事戦略提言を行うProプラン専用機能です。"
-  },
-  {
-    "title": "人事戦略インサイト > リスクアラート",
-    "href": "/docs/hr-strategy-guide#risk-alerts",
-    "icon": "Crown",
-    "category": "Pro 機能",
-    "content": "各部署の体温・KPI・回答率を自動分析し、緊急・警告・注意の3段階でアラートを表示します。"
-  },
-  {
-    "title": "人事戦略インサイト > エンゲージメントドライバー分析",
-    "href": "/docs/hr-strategy-guide#driver-analysis",
-    "icon": "Crown",
-    "category": "Pro 機能",
-    "content": "11設問スコアとKPI達成率の相関係数を計算し、KPIへの影響が強い設問を順に表示します。右が正の相関（改善効果あり）、左が負の相関（構造的課題の可能性）。"
-  },
-  {
-    "title": "人事戦略インサイト > AI人事戦略提言",
-    "href": "/docs/hr-strategy-guide#ai-insight",
-    "icon": "Crown",
-    "category": "Pro 機能",
-    "content": "月次AI分析実行時に人事戦略専用の提言が自動生成されます。追加操作は不要です。"
-  },
-  {
-    "title": "人件費分析の使い方",
-    "href": "/docs/labor-cost-guide",
-    "icon": "Crown",
-    "category": "Pro 機能",
-    "content": "人件費ROI・象限分析・体温改善シミュレーターなど、人材投資とKPI・体温を掛け合わせて投資対効果を可視化するProプラン専用機能。"
-  },
-  {
-    "title": "人件費分析 > 人件費ROI",
-    "href": "/docs/labor-cost-guide#summary-kpi",
-    "icon": "Crown",
-    "category": "Pro 機能",
-    "content": "平均KPI達成率を総人件費で割った独自指標。数値が高いほど少ない人件費で高い成果を上げている。"
-  },
-  {
-    "title": "人件費分析 > 象限分析",
-    "href": "/docs/labor-cost-guide#quadrant",
-    "icon": "Crown",
-    "category": "Pro 機能",
-    "content": "体温と一人当たり単価で全部署を4象限（理想的・安定投資・要注意・警告域）に分類。投資戦略の方向性をひと目で把握できる。"
-  },
-  {
-    "title": "人件費分析 > 体温改善シミュレーター",
-    "href": "/docs/labor-cost-guide#simulator",
-    "icon": "Crown",
-    "category": "Pro 機能",
-    "content": "体温改善幅をスライダーで設定すると、推定改善価値（万円）と部署別インパクトをリアルタイム試算。施策投資の費用対効果検討に使用。"
   }
 ]
