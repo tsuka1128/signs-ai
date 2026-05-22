@@ -278,6 +278,22 @@ export interface Database {
           generated_at: string
         }
       }
+      dept_action_plans: {
+        Row: {
+          id: string
+          company_id: string
+          department_id: string
+          manager_user_id: string | null
+          month: string
+          title: string
+          description: string | null
+          source: 'manual' | 'ai_proposed'
+          status: 'proposed' | 'accepted' | 'in_progress' | 'done' | 'dismissed'
+          is_shared_with_players: boolean
+          created_at: string
+          updated_at: string
+        }
+      }
     }
   }
 }
@@ -301,3 +317,4 @@ export type Plan = Database['public']['Tables']['plans']['Row']
 export type ExecutiveMonthlyFocus = Database['public']['Tables']['executive_monthly_focus']['Row']
 export type ManagerDirectiveNote = Database['public']['Tables']['manager_directive_notes']['Row']
 export type DeptAiSummary = Database['public']['Tables']['dept_ai_summaries']['Row']
+export type DeptActionPlan = Database['public']['Tables']['dept_action_plans']['Row']
