@@ -12,7 +12,7 @@ import {
     ANONYMITY_HIDDEN_REASON,
 } from "@/lib/utils/anonymity";
 import { createClient } from "@/lib/supabase";
-import { DeptAiSummary } from "@/types/database";
+import { DeptAiSummary, DeptActionPlan } from "@/types/database";
 import {
     Building2,
     Info,
@@ -21,7 +21,12 @@ import {
     Inbox,
     Lock,
     Bookmark,
-    AlertTriangle
+    AlertTriangle,
+    Check,
+    X,
+    Plus,
+    Trash2,
+    Sparkles
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -61,6 +66,13 @@ export default function DeptDashboardPage() {
     const [pastFocus, setPastFocus] = useState<any[]>([]);
     const [aiSummary, setAiSummary] = useState<DeptAiSummary | null>(null);
     const [summaryLoading, setSummaryLoading] = useState<boolean>(false);
+
+    // アクションプラン管理用 State
+    const [actionPlans, setActionPlans] = useState<DeptActionPlan[]>([]);
+    const [newTitle, setNewTitle] = useState<string>("");
+    const [newDescription, setNewDescription] = useState<string>("");
+    const [isAddingAction, setIsAddingAction] = useState<boolean>(false);
+    const [actionSaving, setActionSaving] = useState<boolean>(false);
 
     const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
     const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
@@ -307,6 +319,18 @@ export default function DeptDashboardPage() {
                 .maybeSingle();
             setAiSummary(summaryData || null);
 
+            // ── アクションプラン取得（proposed含む全ステータス、dismissed以外） ──
+            const { data: actionPlansData, error: actionPlanErr } = await supabase
+                .from('dept_action_plans')
+                .select('*')
+                .eq('department_id', deptId)
+                .eq('month', currentYM)
+                .neq('status', 'dismissed')
+                .order('created_at', { ascending: true });
+
+            if (actionPlanErr) throw actionPlanErr;
+            setActionPlans(actionPlansData || []);
+
         } catch (e: any) {
             setError(e?.message || "データの取得に失敗しました");
             toast.error(e?.message || "データの取得に失敗しました");
@@ -381,10 +405,129 @@ export default function DeptDashboardPage() {
             const data = await res.json();
             setAiSummary(data);
             toast.success('AI要約を生成しました');
+
+            // AI要約生成成功後、続けてアクション提案も生成（失敗しても無視）
+            try {
+                await fetch('/api/ai/dept-action-proposals', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ department_id: selectedDepartmentId, month: currentYM }),
+                });
+            } catch (proposalErr) {
+                // サイレントフェイル（提案生成の失敗は要約生成の成否に影響しない）
+                console.error("AI提案の自動生成に失敗しました（無視します）:", proposalErr);
+            }
+
+            // UI更新
+            fetchDeptData(selectedDepartmentId);
         } catch (e: any) {
             toast.error('AI要約の生成に失敗しました');
         } finally {
             setSummaryLoading(false);
+        }
+    };
+
+    const handleAddAction = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newTitle.trim()) {
+            toast.error("タイトルを入力してください");
+            return;
+        }
+        if (!userId || !companyId || !selectedDepartmentId) {
+            toast.error("ユーザー情報または部署情報が不足しています");
+            return;
+        }
+
+        const currentYM = deptScores[deptScores.length - 1]?.month;
+        if (!currentYM) {
+            toast.error("現在の月情報を取得できませんでした");
+            return;
+        }
+
+        try {
+            setActionSaving(true);
+            const { error: insertErr } = await supabase
+                .from('dept_action_plans')
+                .insert({
+                    company_id: companyId,
+                    department_id: selectedDepartmentId,
+                    manager_user_id: userId,
+                    month: currentYM,
+                    title: newTitle.trim(),
+                    description: newDescription.trim() || null,
+                    source: 'manual',
+                    status: 'accepted',
+                });
+
+            if (insertErr) throw insertErr;
+
+            toast.success("アクションを追加しました");
+            setNewTitle("");
+            setNewDescription("");
+            setIsAddingAction(false);
+            
+            // UIデータ再取得
+            fetchDeptData(selectedDepartmentId);
+        } catch (e: any) {
+            toast.error(e?.message || "アクションの追加に失敗しました");
+        } finally {
+            setActionSaving(false);
+        }
+    };
+
+    const handleUpdateStatus = async (planId: string, nextStatus: 'proposed' | 'accepted' | 'in_progress' | 'done' | 'dismissed') => {
+        if (!userId || !selectedDepartmentId) return;
+
+        try {
+            const updateData: any = {
+                status: nextStatus,
+                updated_at: new Date().toISOString()
+            };
+
+            // 採用する（accepted）または却下（dismissed）の場合、manager_user_id を本人のIDに更新する
+            if (nextStatus === 'accepted' || nextStatus === 'dismissed') {
+                updateData.manager_user_id = userId;
+            }
+
+            const { error: updateErr } = await supabase
+                .from('dept_action_plans')
+                .update(updateData)
+                .eq('id', planId);
+
+            if (updateErr) throw updateErr;
+
+            if (nextStatus === 'accepted') {
+                toast.success("提案アクションを採用しました");
+            } else if (nextStatus === 'dismissed') {
+                toast.success("提案を却下しました");
+            } else {
+                toast.success("ステータスを更新しました");
+            }
+
+            // UIデータ再取得
+            fetchDeptData(selectedDepartmentId);
+        } catch (e: any) {
+            toast.error(e?.message || "更新に失敗しました");
+        }
+    };
+
+    const handleDeleteAction = async (planId: string) => {
+        if (!selectedDepartmentId) return;
+        if (!window.confirm("このアクションプランを削除しますか？")) return;
+
+        try {
+            const { error: deleteErr } = await supabase
+                .from('dept_action_plans')
+                .delete()
+                .eq('id', planId);
+
+            if (deleteErr) throw deleteErr;
+
+            toast.success("アクションプランを削除しました");
+            // UIデータ再取得
+            fetchDeptData(selectedDepartmentId);
+        } catch (e: any) {
+            toast.error(e?.message || "削除に失敗しました");
         }
     };
 
@@ -797,6 +940,263 @@ export default function DeptDashboardPage() {
                                 </div>
                             )}
                         </section>
+
+                        {/* 📬 今月のAI提案アクション & ✅ アクションプラン（今月） */}
+                        {aiSummary && (
+                            <>
+                                {/* 📬 今月のAI提案アクション */}
+                                <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm space-y-6">
+                                    <div className="flex items-center justify-between border-b border-slate-100 pb-5">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-2xl bg-teal-50 flex items-center justify-center text-teal">
+                                                <Sparkles className="w-5 h-5 text-teal" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-base font-black text-slate-800 tracking-tight flex items-center gap-2">
+                                                    AIからの今月提案
+                                                    {actionPlans.filter(p => p.source === 'ai_proposed' && p.status === 'proposed').length > 0 && (
+                                                        <span className="inline-flex items-center justify-center px-2 py-0.5 ml-1 text-[10px] font-black leading-none text-white bg-rose-500 rounded-full animate-pulse">
+                                                            ● {actionPlans.filter(p => p.source === 'ai_proposed' && p.status === 'proposed').length}件
+                                                        </span>
+                                                    )}
+                                                </h2>
+                                                <p className="text-xs text-slate-400 font-bold">
+                                                    ボイスチェックの要約に基づき、今月のアクションを提案します
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {actionPlans.filter(p => p.source === 'ai_proposed' && p.status === 'proposed').length === 0 ? (
+                                        <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-6 text-center">
+                                            <p className="text-xs text-slate-400 font-bold">
+                                                今月の提案はすべて確認済みです。
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {actionPlans
+                                                .filter(p => p.source === 'ai_proposed' && p.status === 'proposed')
+                                                .map(plan => (
+                                                    <div 
+                                                        key={plan.id}
+                                                        className="bg-gradient-to-br from-teal-50/20 to-slate-50/40 border border-teal-100/60 rounded-2xl p-5 flex flex-col justify-between hover:shadow-md transition-all duration-300 relative group overflow-hidden"
+                                                    >
+                                                        <div className="absolute right-0 top-0 translate-x-3 -translate-y-3 w-12 h-12 bg-teal-500/5 rounded-full blur-lg group-hover:scale-150 transition-all duration-500" />
+                                                        <div className="space-y-2">
+                                                            <div className="flex items-start gap-2">
+                                                                <span className="text-base shrink-0 mt-0.5">💡</span>
+                                                                <h4 className="text-xs font-black text-slate-800 leading-tight">
+                                                                    {plan.title}
+                                                                </h4>
+                                                            </div>
+                                                            {plan.description && (
+                                                                <p className="text-xs text-slate-500 font-bold leading-relaxed pl-6">
+                                                                    {plan.description}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                        
+                                                        {userRole === 'manager' && (
+                                                            <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-slate-100/50">
+                                                                <button
+                                                                    onClick={() => handleUpdateStatus(plan.id, 'dismissed')}
+                                                                    className="flex items-center gap-1 text-[10px] font-black text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100 px-3 py-1.5 rounded-xl transition-all"
+                                                                >
+                                                                    <X className="w-3.5 h-3.5" /> 却下
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleUpdateStatus(plan.id, 'accepted')}
+                                                                    className="flex items-center gap-1 text-[10px] font-black bg-teal hover:bg-teal-600 text-white px-3.5 py-1.5 rounded-xl transition-all shadow-sm active:scale-95"
+                                                                >
+                                                                    <Check className="w-3.5 h-3.5" /> 採用する
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                        </div>
+                                    )}
+                                </section>
+
+                                {/* ✅ アクションプラン（今月） */}
+                                <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm space-y-6">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-500">
+                                                <ClipboardList className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-base font-black text-slate-800 tracking-tight">
+                                                    アクションプラン（今月）
+                                                </h2>
+                                                <p className="text-xs text-slate-400 font-bold">
+                                                    今月フォーカスして実行する具体的なアクション一覧です
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {userRole === 'manager' && !isAddingAction && (
+                                            <button
+                                                onClick={() => setIsAddingAction(true)}
+                                                className="flex items-center gap-1 text-xs font-black bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-xl transition-all shadow-sm active:scale-95 shrink-0 self-start sm:self-auto"
+                                            >
+                                                <Plus className="w-4 h-4" /> アクションを追加
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* 手動追加インラインフォーム */}
+                                    {isAddingAction && (
+                                        <form 
+                                            onSubmit={handleAddAction}
+                                            className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4 animate-in slide-in-from-top-3 duration-200"
+                                        >
+                                            <div className="space-y-3">
+                                                <div>
+                                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">タイトル（必須）</label>
+                                                    <input 
+                                                        type="text"
+                                                        value={newTitle}
+                                                        onChange={(e) => setNewTitle(e.target.value)}
+                                                        maxLength={20}
+                                                        placeholder="アクションのタイトル（20文字以内）"
+                                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal transition-all"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">説明（任意）</label>
+                                                    <textarea 
+                                                        value={newDescription}
+                                                        onChange={(e) => setNewDescription(e.target.value)}
+                                                        maxLength={60}
+                                                        placeholder="具体的な手順や工夫（60文字以内）"
+                                                        rows={2}
+                                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal transition-all resize-none"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setIsAddingAction(false);
+                                                        setNewTitle("");
+                                                        setNewDescription("");
+                                                    }}
+                                                    className="text-xs font-black text-slate-500 hover:text-slate-700 bg-white border border-slate-200 px-4 py-2 rounded-xl transition-all"
+                                                >
+                                                    キャンセル
+                                                </button>
+                                                <button
+                                                    type="submit"
+                                                    disabled={actionSaving}
+                                                    className="text-xs font-black bg-teal hover:bg-teal-600 text-white px-5 py-2 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                                                >
+                                                    {actionSaving ? "保存中..." : "追加する"}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    )}
+
+                                    {actionPlans.filter(p => p.status !== 'proposed').length === 0 ? (
+                                        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-8 text-center flex flex-col items-center justify-center space-y-2">
+                                            <p className="text-xs text-slate-400 font-bold">
+                                                今月のアクションプランはまだありません。
+                                            </p>
+                                            {userRole === 'manager' && (
+                                                <p className="text-[10px] text-slate-400 font-medium">
+                                                    「アクションを追加」または「AIからの今月提案」を採用して行動を開始しましょう
+                                                </p>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {actionPlans
+                                                .filter(p => p.status !== 'proposed')
+                                                .map(plan => {
+                                                    const isManual = plan.source === 'manual';
+                                                    return (
+                                                        <div 
+                                                            key={plan.id}
+                                                            className="bg-white border border-slate-200 rounded-2xl p-5 hover:border-slate-300 hover:shadow-sm transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+                                                        >
+                                                            <div className="space-y-2 max-w-xl">
+                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                    {!isManual && (
+                                                                        <span className="text-[9px] font-black bg-gradient-to-r from-teal-500 to-indigo-500 text-white px-2 py-0.5 rounded-full shrink-0 flex items-center gap-0.5 shadow-sm">
+                                                                            <Sparkles className="w-2.5 h-2.5" /> AI提案
+                                                                        </span>
+                                                                    )}
+                                                                    <h4 className="text-xs font-black text-slate-800 leading-snug">
+                                                                        {plan.title}
+                                                                    </h4>
+                                                                </div>
+                                                                {plan.description && (
+                                                                    <p className="text-xs text-slate-500 font-bold leading-relaxed">
+                                                                        {plan.description}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+
+                                                            <div className="flex items-center gap-3 shrink-0 self-end md:self-auto">
+                                                                {/* ステータス切替トグル（manager限定、それ以外は閲覧用バッジ表示） */}
+                                                                {userRole === 'manager' ? (
+                                                                    <div className="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200/50">
+                                                                        {(['accepted', 'in_progress', 'done'] as const).map(st => {
+                                                                            const isSelected = plan.status === st;
+                                                                            const label = st === 'accepted' ? '予定' : st === 'in_progress' ? '実行中' : '完了';
+                                                                            const colorClass = isSelected
+                                                                                ? st === 'accepted'
+                                                                                    ? 'bg-white text-slate-700 shadow-sm'
+                                                                                    : st === 'in_progress'
+                                                                                    ? 'bg-teal text-white shadow-sm'
+                                                                                    : 'bg-indigo-500 text-white shadow-sm'
+                                                                                : 'text-slate-400 hover:text-slate-600';
+                                                                            
+                                                                            return (
+                                                                                <button
+                                                                                    key={st}
+                                                                                    type="button"
+                                                                                    onClick={() => handleUpdateStatus(plan.id, st)}
+                                                                                    className={`text-[10px] font-black px-3 py-1 rounded-lg transition-all ${colorClass}`}
+                                                                                >
+                                                                                    {label}
+                                                                                </button>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className={`text-[10px] font-black px-3 py-1.5 rounded-xl border ${
+                                                                        plan.status === 'accepted' 
+                                                                            ? 'bg-slate-50 text-slate-600 border-slate-200' 
+                                                                            : plan.status === 'in_progress' 
+                                                                            ? 'bg-teal-50 text-teal border-teal-200' 
+                                                                            : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                                                                    }`}>
+                                                                        {plan.status === 'accepted' ? '予定' : plan.status === 'in_progress' ? '実行中' : '完了'}
+                                                                    </span>
+                                                                )}
+
+                                                                {/* 削除ボタン（managerのみ、且つ自分が所有するもの） */}
+                                                                {userRole === 'manager' && (
+                                                                    <button
+                                                                        onClick={() => handleDeleteAction(plan.id)}
+                                                                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all border border-transparent hover:border-rose-100"
+                                                                        title="削除する"
+                                                                    >
+                                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                        </div>
+                                    )}
+                                </section>
+                            </>
+                        )}
 
                         {/* 📊 今月の設問別スコア */}
                         <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
