@@ -124,6 +124,12 @@ export interface Database {
           department_id: string | null
           axis_id: string | null
           recorded_month: string
+          free_comment: string | null
+          cross_dept_feedback: string | null
+          fingerprint: string | null
+          bottleneck_tags: string | null
+          related_kpi: string | null
+          submitted_at: string | null
           created_at: string
         }
       }
@@ -259,6 +265,19 @@ export interface Database {
           updated_at: string
         }
       }
+      dept_ai_summaries: {
+        Row: {
+          id: string
+          company_id: string
+          department_id: string
+          month: string
+          topics: { title: string; sentiment: 'positive' | 'negative' | 'neutral'; count: number }[]
+          positive_summary: string
+          negative_summary: string
+          manager_hint: string
+          generated_at: string
+        }
+      }
     }
   }
 }
@@ -281,3 +300,4 @@ export type AdminActivityLog = Database['public']['Tables']['admin_activity_logs
 export type Plan = Database['public']['Tables']['plans']['Row']
 export type ExecutiveMonthlyFocus = Database['public']['Tables']['executive_monthly_focus']['Row']
 export type ManagerDirectiveNote = Database['public']['Tables']['manager_directive_notes']['Row']
+export type DeptAiSummary = Database['public']['Tables']['dept_ai_summaries']['Row']

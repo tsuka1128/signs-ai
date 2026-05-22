@@ -12,6 +12,7 @@ import {
     ANONYMITY_HIDDEN_REASON,
 } from "@/lib/utils/anonymity";
 import { createClient } from "@/lib/supabase";
+import { DeptAiSummary } from "@/types/database";
 import {
     Building2,
     Info,
@@ -58,6 +59,8 @@ export default function DeptDashboardPage() {
     const [savingNote, setSavingNote] = useState<boolean>(false);
     const [currentFocus, setCurrentFocus] = useState<any>(null);
     const [pastFocus, setPastFocus] = useState<any[]>([]);
+    const [aiSummary, setAiSummary] = useState<DeptAiSummary | null>(null);
+    const [summaryLoading, setSummaryLoading] = useState<boolean>(false);
 
     const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
     const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
@@ -295,6 +298,15 @@ export default function DeptDashboardPage() {
                 setNote('');
             }
 
+            // ── ボイスチェックAI要約キャッシュ取得 ──
+            const { data: summaryData } = await supabase
+                .from('dept_ai_summaries')
+                .select('*')
+                .eq('department_id', deptId)
+                .eq('month', currentYM)
+                .maybeSingle();
+            setAiSummary(summaryData || null);
+
         } catch (e: any) {
             setError(e?.message || "データの取得に失敗しました");
             toast.error(e?.message || "データの取得に失敗しました");
@@ -336,6 +348,43 @@ export default function DeptDashboardPage() {
             toast.error(e?.message || "メモの保存に失敗しました");
         } finally {
             setSavingNote(false);
+        }
+    };
+
+    const handleGenerateSummary = async () => {
+        if (!selectedDepartmentId) return;
+        const currentYM = deptScores[deptScores.length - 1]?.month;
+        if (!currentYM) {
+            toast.error("現在の月情報を取得できませんでした");
+            return;
+        }
+
+        setSummaryLoading(true);
+        try {
+            const res = await fetch('/api/ai/dept-summary', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    department_id: selectedDepartmentId,
+                    month: currentYM,
+                }),
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                if (err.error === 'INSUFFICIENT_RESPONSES') {
+                    toast.error('回答数が3名未満のため要約を生成できません');
+                } else {
+                    toast.error(err.error || 'AI要約の生成に失敗しました');
+                }
+                return;
+            }
+            const data = await res.json();
+            setAiSummary(data);
+            toast.success('AI要約を生成しました');
+        } catch (e: any) {
+            toast.error('AI要約の生成に失敗しました');
+        } finally {
+            setSummaryLoading(false);
         }
     };
 
@@ -631,6 +680,123 @@ export default function DeptDashboardPage() {
                             </div>
                         </section>
                 
+
+                        {/* 🧠 ボイスチェックの声（AI要約） */}
+                        <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm space-y-6">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-2xl bg-teal-50 flex items-center justify-center text-teal">
+                                        <Info className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-base font-black text-slate-800 tracking-tight">
+                                            ボイスチェックの声（AI要約）
+                                        </h2>
+                                        <p className="text-xs text-slate-400 font-bold">
+                                            アンケートの自由回答から、個人が特定されない形で組織の状態をAI要約します
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 匿名ガード未通過の場合 */}
+                            {currentMonthScore && !passesAnonymityGuard(currentMonthScore.respondentCount) ? (
+                                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 text-center">
+                                    <p className="text-xs text-slate-400 font-bold">
+                                        今月は回答数が3名未満のため要約を生成できません。
+                                    </p>
+                                </div>
+                            ) : aiSummary ? (
+                                /* キャッシュあり（生成済み）の場合 */
+                                <div className="space-y-6 animate-in fade-in">
+                                    {/* 今月のトピック */}
+                                    <div>
+                                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
+                                            今月の主要なトピック
+                                        </h3>
+                                        <div className="flex flex-wrap gap-2">
+                                            {aiSummary.topics && aiSummary.topics.length > 0 ? (
+                                                aiSummary.topics.map((t, idx) => {
+                                                    const sentimentColor = 
+                                                        t.sentiment === 'positive' 
+                                                            ? 'bg-teal-50 border-teal-200 text-teal' 
+                                                            : t.sentiment === 'negative' 
+                                                            ? 'bg-rose-50 border-rose-200 text-rose-700' 
+                                                            : 'bg-slate-50 border-slate-200 text-slate-600';
+                                                    return (
+                                                        <span 
+                                                            key={idx} 
+                                                            className={`text-xs font-black px-3.5 py-1.5 rounded-full border ${sentimentColor} flex items-center gap-1.5`}
+                                                        >
+                                                            {t.title}
+                                                            <span className="text-[10px] font-bold opacity-60">({t.count}件)</span>
+                                                        </span>
+                                                    );
+                                                })
+                                            ) : (
+                                                <p className="text-xs text-slate-400">トピックは抽出されませんでした。</p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* 要約詳細 */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="bg-teal-50/30 border border-teal-100 rounded-2xl p-5 space-y-2">
+                                            <h4 className="text-xs font-black text-teal">ポジティブな声</h4>
+                                            <p className="text-xs text-slate-700 font-bold leading-relaxed">
+                                                {aiSummary.positive_summary || "—"}
+                                            </p>
+                                        </div>
+                                        <div className="bg-rose-50/30 border border-rose-100 rounded-2xl p-5 space-y-2">
+                                            <h4 className="text-xs font-black text-rose-700">課題・改善要望</h4>
+                                            <p className="text-xs text-slate-700 font-bold leading-relaxed">
+                                                {aiSummary.negative_summary || "—"}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* 注目ヒント */}
+                                    <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-5 relative overflow-hidden">
+                                        <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-16 h-16 bg-amber-500/5 rounded-full blur-xl" />
+                                        <p className="text-xs font-black text-amber-700 mb-2 flex items-center gap-1.5">
+                                            💡 マネージャーへの注目点
+                                        </p>
+                                        <p className="text-xs text-amber-900 font-bold leading-relaxed">
+                                            {aiSummary.manager_hint || "—"}
+                                        </p>
+                                    </div>
+
+                                    {/* 再生成・生成時間表示 */}
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-slate-100">
+                                        <span className="text-[10px] text-slate-400 font-bold">
+                                            生成日時: {new Date(aiSummary.generated_at).toLocaleString('ja-JP')}
+                                        </span>
+                                        <button
+                                            onClick={handleGenerateSummary}
+                                            disabled={summaryLoading}
+                                            className="text-xs font-black text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-4 py-2 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                                        >
+                                            {summaryLoading ? "再生成中..." : "AI要約を再生成する"}
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                /* キャッシュなし・匿名ガード通過済みの場合 */
+                                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-8 text-center flex flex-col items-center justify-center space-y-4 animate-in fade-in">
+                                    <p className="text-xs text-slate-500 font-medium max-w-md leading-relaxed">
+                                        今月の従業員の自由回答を集約・分析し、AI要約を生成できます。
+                                        個人を特定できないよう保護されたレポートが作成されます。
+                                    </p>
+                                    <button
+                                        onClick={handleGenerateSummary}
+                                        disabled={summaryLoading}
+                                        className="bg-teal hover:bg-teal-600 text-white text-xs font-black px-6 py-3 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-95 disabled:opacity-50"
+                                    >
+                                        {summaryLoading ? "AI要約を生成中..." : "AIで要約を生成する"}
+                                    </button>
+                                </div>
+                            )}
+                        </section>
 
                         {/* 📊 今月の設問別スコア */}
                         <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
