@@ -90,14 +90,25 @@ export async function sendAiSummaryNotification(companyId: string) {
     try {
         const supabase = await createClient();
         
-        // 企業のWebhook URLとカスタム文面を取得
+        // 企業名とカスタム文面を取得
         const { data: company } = await supabase
             .from('companies')
-            .select('slack_webhook_url, name, slack_msg_ai_summary')
+            .select('name, slack_msg_ai_summary')
             .eq('id', companyId)
             .single();
 
-        if (!company?.slack_webhook_url) return;
+        // 送信先チャンネルを取得 (全社 / 経営陣 で AI分析サマリーONのもの)
+        const { data: channels } = await supabase
+            .from('slack_channels')
+            .select('webhook_url')
+            .eq('company_id', companyId)
+            .in('channel_type', ['company', 'executive'])
+            .eq('notify_ai_summary', true);
+
+        if (!channels || channels.length === 0) {
+            console.log(`No active slack channels for AI summary in company ${companyId}`);
+            return;
+        }
 
         // 通知対象を取得
         const targets = await getNotificationTargets(companyId, 'ai_summary');
@@ -110,7 +121,7 @@ export async function sendAiSummaryNotification(companyId: string) {
 
         const mentions = targets.map(t => `<@${t.slack_user_id}>`).join(' ');
         const dashboardUrl = `${getBaseURL()}/dashboard`;
-        const customText = company.slack_msg_ai_summary || SLACK_MESSAGE_DEFAULTS.ai_summary;
+        const customText = company?.slack_msg_ai_summary || SLACK_MESSAGE_DEFAULTS.ai_summary;
 
         const text = `${mentions}\n${customText}`;
         const blocks = [
@@ -146,11 +157,13 @@ export async function sendAiSummaryNotification(companyId: string) {
             }
         ];
 
-        await sendSlackNotification(company.slack_webhook_url, text, blocks);
-        console.log(`AI summary notification sent to ${targets.length} users in company ${companyId}`);
+        // 該当するすべてのSlackチャンネルに並列送信
+        await Promise.all(channels.map(ch => 
+            sendSlackNotification(ch.webhook_url, text, blocks)
+        ));
+        console.log(`AI summary notification sent to ${channels.length} channels in company ${companyId}`);
 
     } catch (error) {
-        // AI分析自体を落とさないよう、通知のエラーはキャッチしてログ出力のみ
         console.error("Failed to send AI summary notification:", error);
     }
 }
@@ -165,10 +178,9 @@ export async function sendVoiceCheckReminders(companyId: string) {
         const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
 
         // 1. 配信対象候補（player / manager / admin などの回答対象ロール）を取得
-        // ※実際には回答権限のある全ユーザー
         const { data: allUsers } = await supabase
             .from('users')
-            .select('id, email, slack_user_id, role')
+            .select('id, email, slack_user_id, role, department_id')
             .eq('company_id', companyId);
 
         if (!allUsers) return;
@@ -208,19 +220,49 @@ export async function sendVoiceCheckReminders(companyId: string) {
 
         if (finalTargets.length === 0) return;
 
-        // 5. 企業のWebhook URLとカスタム文面を取得
+        // 5. カスタム文面を取得
         const { data: company } = await supabase
             .from('companies')
-            .select('slack_webhook_url, slack_msg_voice_check')
+            .select('slack_msg_voice_check')
             .eq('id', companyId)
             .single();
 
-        if (!company?.slack_webhook_url) return;
+        // 6. 送信先Webhook URLの収集（重複防止のため Set を使用）
+        const webhookUrls = new Set<string>();
 
-        // 6. 送信
+        // ① 全社チャンネル（ボイスチェック催促がONのもの）を取得
+        const { data: companyChannels } = await supabase
+            .from('slack_channels')
+            .select('webhook_url')
+            .eq('company_id', companyId)
+            .eq('channel_type', 'company')
+            .eq('notify_voice_check_reminder', true);
+        
+        companyChannels?.forEach(ch => webhookUrls.add(ch.webhook_url));
+
+        // ② 未回答者が所属する部署のチャンネル（ボイスチェック催促がONのもの）を取得
+        const targetDeptIds = Array.from(new Set(finalTargets.map(t => t.department_id).filter(Boolean))) as string[];
+        if (targetDeptIds.length > 0) {
+            const { data: deptChannels } = await supabase
+                .from('slack_channels')
+                .select('webhook_url')
+                .eq('company_id', companyId)
+                .eq('channel_type', 'department')
+                .in('department_id', targetDeptIds)
+                .eq('notify_voice_check_reminder', true);
+            
+            deptChannels?.forEach(ch => webhookUrls.add(ch.webhook_url));
+        }
+
+        if (webhookUrls.size === 0) {
+            console.log(`No active channels configured for voice check reminder in company ${companyId}`);
+            return;
+        }
+
+        // 7. 送信
         const mentions = finalTargets.map(t => `<@${t.slack_user_id}>`).join(' ');
         const surveyUrl = `${getBaseURL()}/check`;
-        const customText = company.slack_msg_voice_check || SLACK_MESSAGE_DEFAULTS.voice_check;
+        const customText = company?.slack_msg_voice_check || SLACK_MESSAGE_DEFAULTS.voice_check;
 
         const text = `${mentions}\n${customText}`;
         const blocks = [
@@ -247,10 +289,13 @@ export async function sendVoiceCheckReminders(companyId: string) {
             }
         ];
 
-        await sendSlackNotification(company.slack_webhook_url, text, blocks);
-        console.log(`Voice check reminder sent to ${finalTargets.length} users.`);
+        // すべての該当するチャンネルへ並列送信
+        await Promise.all(Array.from(webhookUrls).map(url => 
+            sendSlackNotification(url, text, blocks)
+        ));
+        console.log(`Voice check reminder sent to ${webhookUrls.size} channels.`);
 
-    } catch (error) {
+     } catch (error) {
         console.error("Failed to send voice check reminders:", error);
     }
 }
@@ -270,16 +315,29 @@ export async function sendAnomalyAlertNotification(
         const supabase = await createClient();
         const { data: company } = await supabase
             .from('companies')
-            .select('slack_webhook_url, anomaly_threshold_absolute, anomaly_threshold_drop, anomaly_threshold_gap, slack_msg_anomaly_alert, anomaly_alert_enabled')
+            .select('anomaly_threshold_absolute, anomaly_threshold_drop, anomaly_threshold_gap, slack_msg_anomaly_alert, anomaly_alert_enabled')
             .eq('id', companyId)
             .single();
 
-        if (!company?.slack_webhook_url || company.anomaly_alert_enabled === false) return;
+        if (company?.anomaly_alert_enabled === false) return;
+
+        // 送信先チャンネルを取得 (全社 / 経営陣 で 異常検知アラートONのもの)
+        const { data: channels } = await supabase
+            .from('slack_channels')
+            .select('webhook_url')
+            .eq('company_id', companyId)
+            .in('channel_type', ['company', 'executive'])
+            .eq('notify_anomaly_alert', true);
+
+        if (!channels || channels.length === 0) {
+            console.log(`No active channels configured for anomaly alert in company ${companyId}`);
+            return;
+        }
 
         // 閾値の設定（DBになければデフォルト値、または0の場合も考慮）
-        const threshAbs = company.anomaly_threshold_absolute ?? 60;
-        const threshDrop = company.anomaly_threshold_drop ?? 10;
-        const threshGap = company.anomaly_threshold_gap ?? 20;
+        const threshAbs = company?.anomaly_threshold_absolute ?? 60;
+        const threshDrop = company?.anomaly_threshold_drop ?? 10;
+        const threshGap = company?.anomaly_threshold_gap ?? 20;
 
         const anomalies: string[] = [];
 
@@ -316,7 +374,7 @@ export async function sendAnomalyAlertNotification(
         const title = isUrgent ? '*【緊急】組織異常検知アラート*' : '*組織異常検知アラート*';
         
         const dashboardUrl = `${getBaseURL()}/dashboard`;
-        const customText = company.slack_msg_anomaly_alert || SLACK_MESSAGE_DEFAULTS.anomaly_alert;
+        const customText = company?.slack_msg_anomaly_alert || SLACK_MESSAGE_DEFAULTS.anomaly_alert;
         const text = `${mentions}\n${customText}\n\n${anomalies.join('\n')}`;
 
         const blocks = [
@@ -350,8 +408,11 @@ export async function sendAnomalyAlertNotification(
             }
         ];
 
-        await sendSlackNotification(company.slack_webhook_url, text, blocks);
-        console.log(`Anomaly alert notification sent for company ${companyId}`);
+        // 該当するすべてのSlackチャンネルに並列送信
+        await Promise.all(channels.map(ch => 
+            sendSlackNotification(ch.webhook_url, text, blocks)
+        ));
+        console.log(`Anomaly alert notification sent to ${channels.length} channels for company ${companyId}`);
 
     } catch (error) {
         console.error("Failed to send anomaly alert notification:", error);
@@ -370,14 +431,12 @@ export async function sendKpiReminders(companyId: string): Promise<void> {
         const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const prevMonth = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}-01`;
 
-        // 2. 会社情報取得 (Webhook, カスタム文面)
+        // 2. 会社情報取得 (カスタム文面)
         const { data: company } = await supabase
             .from('companies')
-            .select('slack_webhook_url, slack_msg_kpi_reminder')
+            .select('slack_msg_kpi_reminder')
             .eq('id', companyId)
             .single();
-
-        if (!company?.slack_webhook_url) return;
 
         // 3. KPI定義と実績取得
         const [kpiDefs, kpiRecs] = await Promise.all([
@@ -393,11 +452,45 @@ export async function sendKpiReminders(companyId: string): Promise<void> {
 
         if (missingKpis.length === 0) return;
 
-        // 5. 通知対象ユーザー（メンション）の収集
+        // 5. 配信先Webhook URLの収集（重複防止のため Set を使用）
+        const webhookUrls = new Set<string>();
+
+        // ① 未入力KPIの部署IDに対応する部署別チャンネル（KPI催促がONのもの）を取得
+        const ownerDeptIds = Array.from(new Set(missingKpis.map(k => k.owner_dept_id).filter(Boolean))) as string[];
+        if (ownerDeptIds.length > 0) {
+            const { data: deptChannels } = await supabase
+                .from('slack_channels')
+                .select('webhook_url')
+                .eq('company_id', companyId)
+                .eq('channel_type', 'department')
+                .in('department_id', ownerDeptIds)
+                .eq('notify_kpi_reminder', true);
+            
+            deptChannels?.forEach(ch => webhookUrls.add(ch.webhook_url));
+        }
+
+        // ② 担当部署がないKPIがある、または部署チャンネルに送信先が1つもない場合は全社チャンネルにフォールバック（KPI催促がONのもの）
+        const hasKpiWithNoOwner = missingKpis.some(k => !k.owner_dept_id);
+        if (hasKpiWithNoOwner || webhookUrls.size === 0) {
+            const { data: companyChannels } = await supabase
+                .from('slack_channels')
+                .select('webhook_url')
+                .eq('company_id', companyId)
+                .eq('channel_type', 'company')
+                .eq('notify_kpi_reminder', true);
+            
+            companyChannels?.forEach(ch => webhookUrls.add(ch.webhook_url));
+        }
+
+        if (webhookUrls.size === 0) {
+            console.log(`No active channels configured for KPI reminder in company ${companyId}`);
+            return;
+        }
+
+        // 6. 通知対象ユーザー（メンション）の収集
         const mentionUsers = new Set<string>();
 
         // 部署担当がある場合: 該当部署のマネージャーを取得
-        const ownerDeptIds = Array.from(new Set(missingKpis.map(k => k.owner_dept_id).filter(Boolean))) as string[];
         if (ownerDeptIds.length > 0) {
             const { data: managers } = await supabase
                 .from('users')
@@ -412,7 +505,6 @@ export async function sendKpiReminders(companyId: string): Promise<void> {
         }
 
         // 担当部署がないKPIがある、または担当部署マネージャーがいない場合: admin/executiveを追加
-        const hasKpiWithNoOwner = missingKpis.some(k => !k.owner_dept_id);
         if (hasKpiWithNoOwner || mentionUsers.size === 0) {
             const admins = await getNotificationTargets(companyId, 'kpi_reminder');
             admins.forEach(a => {
@@ -422,13 +514,13 @@ export async function sendKpiReminders(companyId: string): Promise<void> {
 
         const mentions = Array.from(mentionUsers).join(' ');
 
-        // 6. メッセージ構築
+        // 7. メッセージ構築
         const kpiList = missingKpis.slice(0, 5).map(k => `・${k.name}`);
         if (missingKpis.length > 5) {
             kpiList.push(`他${missingKpis.length - 5}件`);
         }
 
-        const customText = company.slack_msg_kpi_reminder || SLACK_MESSAGE_DEFAULTS.kpi_reminder;
+        const customText = company?.slack_msg_kpi_reminder || SLACK_MESSAGE_DEFAULTS.kpi_reminder;
 
         const blocks = [
             {
@@ -456,7 +548,11 @@ export async function sendKpiReminders(companyId: string): Promise<void> {
             }
         ];
 
-        await sendSlackNotification(company.slack_webhook_url, "", blocks);
+        // すべての該当するWebhook URLに並列送信
+        await Promise.all(Array.from(webhookUrls).map(url => 
+            sendSlackNotification(url, "", blocks)
+        ));
+        console.log(`KPI reminder sent to ${webhookUrls.size} channels for company ${companyId}`);
 
     } catch (error: any) {
         console.error("[sendKpiReminders Error]:", error);
