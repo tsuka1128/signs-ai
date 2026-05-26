@@ -46,3 +46,9 @@ yarn-error.log*
 next-env.d.ts
 # macOS/Dropbox の一時ファイル
 .!*
+
+# Claude Code
+.claude/
+
+# Supabase seed files
+supabase/seed_*.sql
