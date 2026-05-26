@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Settings2, Sparkles } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { cn } from "@/lib/utils/index";
@@ -24,11 +24,27 @@ import { MonthlyFocusTab } from "@/components/settings/MonthlyFocusTab";
 // Modals
 import { MemberEditModal } from "@/components/settings/MemberEditModal";
 
+const VALID_TABS = ["company", "dept", "kpi", "axis", "ai", "survey", "users", "integration", "focus"] as const;
+type TabId = typeof VALID_TABS[number];
+
 export default function SettingsPage() {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState("company");
+    const searchParams = useSearchParams();
+    const tabParam = searchParams.get("tab");
+    const initialTab: TabId = (tabParam && (VALID_TABS as readonly string[]).includes(tabParam))
+        ? (tabParam as TabId)
+        : "company";
+    const [activeTab, setActiveTab] = useState<TabId>(initialTab);
     const { state, handlers, userRole } = useSettingsData();
     const { plan, limits } = usePlanFeatures();
+
+    // URL の ?tab= が変わったら追従（ドキュメントからの直接リンク対応）
+    useEffect(() => {
+        if (tabParam && (VALID_TABS as readonly string[]).includes(tabParam) && tabParam !== activeTab) {
+            setActiveTab(tabParam as TabId);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tabParam]);
 
     useEffect(() => {
         if (!state.loading && userRole !== "super_admin" && userRole !== "admin") {
@@ -69,7 +85,7 @@ export default function SettingsPage() {
                     ].map(t => (
                         <button
                             key={t.id}
-                            onClick={() => setActiveTab(t.id)}
+                            onClick={() => setActiveTab(t.id as TabId)}
                             className={cn(
                                 "flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all",
                                 activeTab === t.id ? "bg-white text-teal shadow-md" : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
