@@ -46,6 +46,24 @@ const CSS = `
     border-left: 2px solid var(--border2); line-height: 1.7;
     background: rgba(0,0,0,0.02); border-radius: 4px;
   }
+  .flow-panel-links {
+    display: flex; flex-direction: column; gap: 6px; margin-top: 4px;
+    padding-top: 12px; border-top: 0.5px solid var(--border);
+  }
+  .flow-panel-links-title {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--text3); margin-bottom: 2px;
+  }
+  .flow-panel-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700; color: var(--teal-800);
+    background: var(--teal-50); padding: 8px 10px; border-radius: 6px;
+    border: 0.5px solid rgba(29, 158, 117, 0.25);
+    text-decoration: none; transition: opacity 0.15s, transform 0.1s;
+  }
+  .flow-panel-link:hover { opacity: 0.85; transform: translateY(-1px); }
+  .flow-panel-link:active { transform: scale(0.98); }
+  .flow-panel-link-arrow { margin-left: auto; opacity: 0.7; font-weight: 800; }
 
   /* メイン図 */
   .flow-main { flex: 1; padding: 32px 32px; overflow-x: auto; min-width: 0; }
@@ -136,133 +154,192 @@ const CSS = `
   }
 `;
 
+type PanelLink = { url: string; label: string };
+
 type PanelContent = {
     badge: { label: string; color: string };
     heading: string;
     body: string;
     note?: string;
+    links?: PanelLink[];
 };
 
 const PANELS: Record<string, PanelContent> = {
     company: {
         badge: { label: "会社情報", color: "pb-teal" },
         heading: "会社情報の登録",
-        body: "Signs AI を使う会社の基本情報を登録します。最初のセットアップで管理者が入力。Slack 通知を送るための連携設定もここで行います。",
-        note: "初回のみ登録。あとで会社名や Slack 設定を変更したいときも、ここから編集します。",
+        body: "Signs AI を使う会社の基本情報（会社名・業種・規模など）を登録します。最初のセットアップで管理者が入力。\n\nSlack 連携は専用タブ「Slack連携」から設定します。",
+        note: "初回のみ登録。あとで会社情報を変更したいときも、ここから編集します。",
+        links: [
+            { url: "/settings?tab=company", label: "設定 → 基本設定 を開く" },
+        ],
     },
     department: {
         badge: { label: "部署", color: "pb-teal" },
         heading: "部署の登録",
         body: "会社の中の部署を登録します。KPI 入力・ボイスチェック回答・人件費入力は、すべて「どの部署のデータか」が紐付きます。マネージャーは自分の部署のデータだけを編集できます。",
+        links: [
+            { url: "/settings?tab=dept", label: "設定 → 部署 を開く" },
+        ],
     },
     kpidef: {
         badge: { label: "KPI", color: "pb-purple" },
         heading: "KPI 項目の設定",
-        body: "会社で測りたい KPI 項目を定義します（例：売上、新規契約数、解約率）。各 KPI には担当部署を指定し、その部署のマネージャーだけが入力できます。",
+        body: "会社で測りたい KPI 項目を定義します（例：売上、新規契約数、解約率）。各 KPI には担当部署を指定し、その部署のマネージャーだけが入力できます。\n\nStandard プラン以上では「担当領域（第2軸）」を組み合わせた多角的なKPI管理も可能です。",
+        links: [
+            { url: "/settings?tab=kpi", label: "設定 → KPI を開く" },
+            { url: "/settings?tab=axis", label: "設定 → 担当領域 を開く（Standard 以上）" },
+        ],
     },
     semantic: {
         badge: { label: "組織方針", color: "pb-coral" },
         heading: "組織方針の登録",
-        body: "会社が大事にしている価値観・戦略・専門用語を文章で登録します。AI が組織を分析するときに「この会社らしさ」を理解するための材料になります。",
+        body: "会社が大事にしている価値観・戦略・専門用語を Markdown で登録します。AI が組織を分析するときに「この会社らしさ」を理解するための材料になります。\n\n組織方針メモはダッシュボードの「セマンティックレイヤー」セクションから編集・履歴管理できます。",
         note: "経営者がアクションを承認したあと、来月に向けて組織方針を更新するのが理想のサイクルです。",
+        links: [
+            { url: "/", label: "ダッシュボード → 組織方針メモ を開く" },
+        ],
     },
     invitation: {
         badge: { label: "メンバー招待", color: "pb-gray" },
         heading: "メンバーの招待",
-        body: "メールアドレスを指定してメンバーを Signs AI に招待します。招待時にロール（管理者・マネージャー・メンバー・経営者）を指定。招待リンクは 7 日間有効です。",
+        body: "メールアドレスを指定してメンバーを Signs AI に招待します。\n\nロールは以下の6種類：\n• super_admin（システム管理者）\n• admin（管理者）\n• executive（経営者）\n• manager（マネージャー）\n• player（メンバー）\n• partner（パートナー／外部）\n\n招待リンクは 7 日間有効です。",
+        links: [
+            { url: "/settings?tab=users", label: "設定 → メンバー を開く" },
+        ],
     },
     "survey-setup": {
         badge: { label: "ボイスチェック設定", color: "pb-coral" },
         heading: "カスタム設問の設定",
-        body: "標準 11 問に加えて、会社固有のオリジナル設問を最大 3 問まで追加できます。\n\n設定画面：「設定 → ボイスチェック → カスタム設問」\n\n標準設問と同じく 1〜5 のスコアで回答され、AI 分析にも反映されます。",
+        body: "標準 11 問に加えて、会社固有のオリジナル設問を最大 3 問まで追加できます。\n\n標準設問と同じく 1〜5 のスコアで回答され、AI 分析にも反映されます。\n\n回答締切日や匿名URLもこのタブから設定できます。",
+        links: [
+            { url: "/settings?tab=survey", label: "設定 → ボイスチェック を開く" },
+        ],
     },
     kpirec: {
         badge: { label: "KPI 入力", color: "pb-purple" },
         heading: "毎月の KPI 入力",
-        body: "マネージャーが毎月、自分の部署の KPI 数値（実績と目標）を入力します。AI 分析時には、直近数ヶ月分のデータが時系列の文脈として使われます。",
+        body: "マネージャーが毎月、自分の部署の KPI 数値（実績と目標）を入力します。AI 分析時には、直近 13 ヶ月分のデータが時系列の文脈として使われます。",
         note: "入力が漏れると AI 分析の精度が下がるため、月初に必ず入力しましょう。",
+        links: [
+            { url: "/kpi", label: "KPI 入力画面を開く" },
+        ],
     },
     resource: {
         badge: { label: "人数・人件費", color: "pb-purple" },
         heading: "人数・人件費の入力",
-        body: "マネージャーが毎月、自部署の人数と人件費を入力します。AI はこの人件費と KPI（売上など）を組み合わせて、人件費の投資対効果を算出。ダッシュボードの「人件費ROI」マトリックス分析にも使われます。",
+        body: "マネージャーが毎月、自部署の人数と人件費を入力します。AI はこの人件費と KPI（売上など）を組み合わせて、一人当たり生産性・人件費の投資対効果（ROI）を算出します。\n\nダッシュボードの「人件費ROI」マトリックス分析や、人事戦略ページの 4 象限マッピングにも使われます。",
+        links: [
+            { url: "/dept", label: "部署マネジメント画面を開く" },
+        ],
     },
     "slack-remind": {
         badge: { label: "Slack 通知", color: "pb-gray" },
         heading: "Slack でボイスチェック催促",
-        body: "毎月決まった日に、Signs AI から未回答のメンバーへ Slack DM が自動送信されます。\n\n送信される条件：\n① メンバーの Slack ID が設定済み\n② 通知設定が ON（デフォルト ON）\n③ 当月のボイスチェックがまだ未回答",
+        body: "毎月決まった日に、Signs AI から未回答のメンバーへ Slack DM が自動送信されます。\n\n送信される条件：\n① 会社の Slack 連携が有効\n② メンバーの Slack ID が設定済み\n③ 通知設定が ON（デフォルト ON）\n④ 当月のボイスチェックがまだ未回答",
+        links: [
+            { url: "/settings?tab=integration", label: "設定 → Slack連携 を開く" },
+        ],
     },
     surveyres: {
         badge: { label: "ボイスチェック", color: "pb-coral" },
         heading: "ボイスチェック回答",
-        body: "メンバーがその月のボイスチェックに答えると、回答セット（11問のまとめ）として記録されます。回答スコアの平均が「組織の体温」として、AI 分析に使われる主要指標です。",
+        body: "メンバーがその月のボイスチェックに答えると、回答セット（11問 + カスタム最大3問）として記録されます。回答スコアの平均が「組織の体温」として、AI 分析に使われる主要指標です。",
         note: "匿名 URL から回答した場合は、誰が答えたかは紐付きません。",
     },
     surveyanswer: {
         badge: { label: "ボイスチェック", color: "pb-coral" },
-        heading: "11 問それぞれの回答",
-        body: "ボイスチェックは 11 問あり、各問 1〜5 のスコアで回答します。AI はカテゴリ別（エンゲージメント・関係性・成長感など）に集計してインサイトを作成します。",
+        heading: "各問の回答",
+        body: "ボイスチェックは標準 11 問 + カスタム最大 3 問の合計最大 14 問で、各問 1〜5 のスコアで回答します。AI はカテゴリ別（エンゲージメント・スピード・透明性・心理的安全性・成長感など）に集計してインサイトを作成します。",
     },
     aiinsight: {
         badge: { label: "AI 分析", color: "pb-amber" },
         heading: "AI 分析レポートの生成",
-        body: "AI が KPI・人件費・ボイスチェック・組織方針を総合して分析した、月次レポートです。\n\n含まれる内容：\n• 140 字の要約\n• 5 観点の詳細レポート（Deep Report）\n• 部署別メッセージ\n• ボイスチェックのフリーコメント分析\n• 推奨アクション",
+        body: "AI が KPI・人件費・ボイスチェック・組織方針・今月の課題を総合して分析した、月次レポートです。\n\n含まれる内容：\n• 140 字の全体サマリー\n• Deep Report（5観点）：経営総評・相関分析・方針整合性・リスク・推奨アクション\n• matrix_analysis：1/3/6/12ヶ月の時系列振り返り\n• 部署別メッセージ（insights_by_dept）\n• ボイスチェックのフリーコメント分析（voice_topics）\n• 部署間フィードバック（department_feedback）\n• 推奨アクション（suggested_actions）\n• リスクレベル判定（low / medium / high）",
+        links: [
+            { url: "/settings?tab=ai", label: "設定 → AI分析 を開く" },
+        ],
     },
     actionitem: {
         badge: { label: "アクション", color: "pb-blue" },
         heading: "アクションアイテムの自動生成",
-        body: "AI が自動でアクションアイテムを生成します（手動でも追加可能）。優先度は urgent / high / normal の 3 段階。完了または却下するとアーカイブされます。",
+        body: "AI が全社レベルで自動生成します（手動でも追加可能）。優先度は urgent / high / normal の 3 段階。完了または却下するとアーカイブされます。\n\nさらに、各部署ごとに「部署別アクション提案（dept-action-proposals）」が独立して生成され、マネージャーが /dept ページで採用・却下できます。",
         note: "翌月の AI 分析では「実行中のアクション」として、改善状況も文脈に含まれます。",
+        links: [
+            { url: "/dept", label: "部署マネジメント → AI提案アクション を開く" },
+        ],
     },
     "admin-review": {
         badge: { label: "管理者", color: "pb-teal" },
         heading: "管理者の分析レビュー",
-        body: "AI 分析が完了するとアプリ内通知が届きます。Deep Report（5観点の全社分析）を確認し、必要ならアクションの優先度を調整したり、手動で追加したりします。すべての操作は自動でログに残ります。",
+        body: "AI 分析が完了するとアプリ内通知が届きます。Deep Report（5観点の全社分析）と matrix_analysis、voice_topics などを確認し、必要ならアクションの優先度を調整したり、手動で追加したりします。すべての操作は自動でログに残ります。",
         note: "Slack 通知（ai_summary）は管理者にも届きます。",
     },
     "exec-action": {
         badge: { label: "経営者", color: "pb-amber" },
         heading: "経営者のアクション承認",
-        body: "経営者は全社の KPI・人件費・ボイスチェックを横断的に確認し、アクションを承認または新規作成します。\n\nこのときに組織方針を更新すると、翌月の AI 分析に新しい方針が反映されます。",
+        body: "経営者は全社の KPI・人件費・ボイスチェックを横断的に確認し、アクションを承認または新規作成します。\n\nこのタイミングで「今月の課題（executive_monthly_focus）」を設定すると、翌月の AI 分析に経営重点テーマとして反映されます。",
+        links: [
+            { url: "/settings?tab=focus", label: "設定 → 今月の課題 を開く" },
+        ],
     },
     "exec-semantic": {
         badge: { label: "組織方針", color: "pb-coral" },
         heading: "組織方針の更新（来月に向けて）",
-        body: "経営者がアクションを承認したあと、来月に向けた組織方針・重点テーマを追記します。保存時に Slack で各部署へ方針通知を送ることもできます。",
+        body: "経営者がアクションを承認したあと、来月に向けた組織方針を Markdown で更新します。保存時に Slack で各部署へ方針通知を送ることもできます（方針翻訳 AI が部署ごとに自分事化された要約を作成）。\n\n組織方針は履歴管理され、過去版へのロールバックも可能。",
+        links: [
+            { url: "/", label: "ダッシュボード → 組織方針メモ を開く" },
+        ],
     },
     "notify-create": {
         badge: { label: "通知", color: "pb-green" },
         heading: "マネージャーへの通知作成",
-        body: "AI 分析完了後、Signs AI が部署ごとにマネージャー宛のアプリ内通知を自動作成します。これによって、各マネージャーが自部署の分析結果を確認できます。",
+        body: "AI 分析完了後、Signs AI が部署ごとにマネージャー宛のアプリ内通知を自動作成します。これによって、各マネージャーが自部署の分析結果（dept-summary、dept-action-plans）を確認できます。",
     },
     "notify-setting": {
         badge: { label: "通知設定", color: "pb-gray" },
         heading: "通知設定の確認",
         body: "Slack DM を送る前に、メンバーごとの通知設定を確認します。\n\n• Slack 通知 ON → Slack に DM 送信\n• Slack 通知 OFF → アプリ内通知のみ\n• Slack ID 未設定 → Slack 送信はスキップ",
+        links: [
+            { url: "/settings?tab=users", label: "設定 → メンバー を開く" },
+            { url: "/settings?tab=integration", label: "設定 → Slack連携 を開く" },
+        ],
     },
     "slack-dm": {
         badge: { label: "Slack 通知", color: "pb-green" },
         heading: "Slack DM 送信",
         body: "マネージャーが Slack DM で受け取る主な通知は、ボイスチェックの回答進捗通知です。\n\n送信される条件：\n① 会社の Slack 連携が有効\n② メンバーの Slack ID が設定済み\n③ 通知設定が ON",
         note: "AI 分析完了通知（ai_summary）は管理者・経営者宛に Slack で送られます。",
+        links: [
+            { url: "/settings?tab=integration", label: "設定 → Slack連携 を開く" },
+        ],
     },
     "slack-kpi-request": {
         badge: { label: "Slack 通知", color: "pb-green" },
         heading: "Slack で KPI 入力依頼",
         body: "前月の KPI が未入力の場合、Signs AI から担当マネージャーへ Slack DM で入力依頼を送ります。\n\n送信される条件：\n① 会社の Slack 連携が有効\n② 前月の KPI に未入力がある\n③ マネージャーの Slack ID が設定済み",
         note: "月初に自動で送信、または管理者が手動で発火することもできます。",
+        links: [
+            { url: "/settings?tab=integration", label: "設定 → Slack連携 を開く" },
+        ],
     },
     "slack-admin-done": {
         badge: { label: "Slack 通知", color: "pb-green" },
         heading: "AI 分析完了の Slack 通知",
         body: "AI 分析完了 + 管理者レビュー完了のタイミングで、経営者・管理者へ Slack 通知が送られます。ダッシュボードへのリンク付きで、これが「経営者のアクション承認」に進むトリガーになります。",
         note: "Slack のメッセージ文面は会社ごとにカスタマイズ可能です。",
+        links: [
+            { url: "/settings?tab=integration", label: "設定 → Slack連携（メッセージ文面） を開く" },
+        ],
     },
     "action-confirm": {
         badge: { label: "アクション", color: "pb-blue" },
-        heading: "自部署のアクション確認",
-        body: "マネージャーは自部署に紐付くアクションのみを閲覧できます。優先度・状態を確認して、来月の KPI 入力に向けた準備を行います。",
-        note: "マネージャーは閲覧のみ。アクションの作成・編集はできません。",
+        heading: "自部署のアクション確認・採用",
+        body: "マネージャーは自部署に紐付くアクションを閲覧し、AI が部署別に提案したアクション提案を採用・却下できます。\n\nさらに、自部署のボイスチェック AI 要約（dept-summary）も閲覧でき、来月の打ち手の検討に活用できます。",
+        note: "全社アクションの作成・編集は管理者／経営者のみ。マネージャーは AI 部署提案の採用・却下が可能。",
+        links: [
+            { url: "/dept", label: "部署マネジメント を開く" },
+        ],
     },
 };
 
@@ -314,6 +391,21 @@ export default function DocsFlowPage() {
                             <div className="flow-panel-body" style={{ whiteSpace: "pre-line" }}>{panel.body}</div>
                             {panel.note && (
                                 <div className="flow-panel-note">💡 {panel.note}</div>
+                            )}
+                            {panel.links && panel.links.length > 0 && (
+                                <div className="flow-panel-links">
+                                    <div className="flow-panel-links-title">関連する設定</div>
+                                    {panel.links.map((link, i) => (
+                                        <a
+                                            key={`${link.url}-${i}`}
+                                            href={link.url}
+                                            className="flow-panel-link"
+                                        >
+                                            <span>{link.label}</span>
+                                            <span className="flow-panel-link-arrow">→</span>
+                                        </a>
+                                    ))}
+                                </div>
                             )}
                         </div>
                     )}
