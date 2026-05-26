@@ -65,15 +65,27 @@ export function Sidebar({
     const [userInitial, setUserInitial] = useState("?");
     const [userRole, setUserRole] = useState<string>("player");
     const isDashboardActive = pathname === '/' || pathname === '/dashboard';
-    const [isDashboardExpanded, setIsDashboardExpanded] = useState(isDashboardActive);
-
     const isProActive = pathname === '/hr-strategy' || (isDashboardActive && currentSection === 'finance');
-    const [isProExpanded, setIsProExpanded] = useState(isProActive);
     const isPro = canUse('labor_analytics');
     const [showProGate, setShowProGate] = useState(false);
     const router = useRouter();
 
-    const [isDocsExpanded, setIsDocsExpanded] = useState(pathname.startsWith("/docs"));
+    // トップレベルメニューを排他制御（同時に1つだけ展開）
+    type ExpandedMenu = 'dashboard' | 'pro' | 'docs' | null;
+    const initialMenu: ExpandedMenu =
+        isDashboardActive ? 'dashboard'
+        : isProActive ? 'pro'
+        : pathname.startsWith('/docs') ? 'docs'
+        : null;
+    const [expandedMenu, setExpandedMenu] = useState<ExpandedMenu>(initialMenu);
+
+    const isDashboardExpanded = expandedMenu === 'dashboard';
+    const isProExpanded = expandedMenu === 'pro';
+    const isDocsExpanded = expandedMenu === 'docs';
+
+    const toggleMenu = (menu: Exclude<ExpandedMenu, null>) => {
+        setExpandedMenu(prev => prev === menu ? null : menu);
+    };
     const [expandedDocsGroups, setExpandedDocsGroups] = useState<Set<string>>(() => {
         const initial = new Set<string>();
         DOCS_MENU.forEach(group => {
@@ -151,7 +163,7 @@ export function Sidebar({
     const proNav = (userRole === 'super_admin' || userRole === 'admin' || userRole === 'executive') ? (
         <div className="space-y-1">
             <button
-                onClick={() => setIsProExpanded(!isProExpanded)}
+                onClick={() => toggleMenu('pro')}
                 className={cn(
                     "flex w-full items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all group",
                     isProActive ? "text-teal bg-teal/5" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
@@ -273,7 +285,7 @@ export function Sidebar({
     const dashboardNav = (
         <div className="space-y-1">
             <button
-                onClick={() => setIsDashboardExpanded(!isDashboardExpanded)}
+                onClick={() => toggleMenu('dashboard')}
                 className={cn(
                     "flex w-full items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all group",
                     isDashboardActive ? "text-teal" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
@@ -369,7 +381,7 @@ export function Sidebar({
                         <p className="px-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.25em] mb-4">Support</p>
                         <div className="space-y-1">
                             <button
-                                onClick={() => setIsDocsExpanded(!isDocsExpanded)}
+                                onClick={() => toggleMenu('docs')}
                                 className={cn(
                                     "flex w-full items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all group",
                                     isDocsActive ? "text-teal" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
