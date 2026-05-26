@@ -104,6 +104,13 @@ const CSS = `
   .flow-node.selected { box-shadow: 0 0 0 2px var(--text); }
   .flow-node-title { font-size: 12px; font-weight: 700; line-height: 1.3; }
   .flow-node-sub { font-size: 10px; opacity: 0.75; margin-top: 2px; line-height: 1.4; }
+  .flow-node-pro-badge {
+    display: inline-flex; align-items: center;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.04em;
+    padding: 1px 5px; border-radius: 3px;
+    background: var(--purple-400); color: #fff;
+    position: absolute; top: 6px; right: 6px; pointer-events: none;
+  }
 
   .n-teal   { background: var(--teal-50);   border-color: var(--teal-400);   color: var(--teal-800); }
   .n-purple { background: var(--purple-50); border-color: var(--purple-400); color: var(--purple-800); }
@@ -226,11 +233,11 @@ const PANELS: Record<string, PanelContent> = {
         ],
     },
     resource: {
-        badge: { label: "人数・人件費", color: "pb-purple" },
+        badge: { label: "人数・人件費 ✦ Pro", color: "pb-purple" },
         heading: "人数・人件費の入力",
-        body: "マネージャーが毎月、自部署の人数と人件費を入力します。AI はこの人件費と KPI（売上など）を組み合わせて、一人当たり生産性・人件費の投資対効果（ROI）を算出します。\n\nダッシュボードの「人件費ROI」マトリックス分析や、人事戦略ページの 4 象限マッピングにも使われます。",
+        body: "【Pro プラン限定】マネージャーが毎月、自部署の人数と人件費を入力します。AI はこの人件費と KPI（売上など）を組み合わせて、一人当たり生産性・人件費の投資対効果（ROI）を算出します。\n\nダッシュボードの「人件費ROI」マトリックス分析や、人事戦略ページの 4 象限マッピングにも使われます。",
         links: [
-            { url: "/dept", label: "部署マネジメント画面を開く" },
+            { url: "/labor", label: "人件費入力画面を開く" },
         ],
     },
     "slack-remind": {
@@ -343,15 +350,17 @@ const PANELS: Record<string, PanelContent> = {
     },
 };
 
-function Node({ nodeKey, panelId, color, title, sub, selectedKey, onSelect }: {
+function Node({ nodeKey, panelId, color, title, sub, selectedKey, onSelect, pro }: {
     nodeKey: string; panelId: string; color: string; title: string; sub: string;
     selectedKey: string | null; onSelect: (nodeKey: string, panelId: string) => void;
+    pro?: boolean;
 }) {
     return (
         <div
             className={`flow-node ${color}${selectedKey === nodeKey ? " selected" : ""}`}
             onClick={() => onSelect(nodeKey, panelId)}
         >
+            {pro && <span className="flow-node-pro-badge">Pro</span>}
             <span className="flow-node-title">{title}</span>
             <span className="flow-node-sub">{sub}</span>
         </div>
@@ -454,7 +463,7 @@ export default function DocsFlowPage() {
                             </div>
                             <div className="flow-nodes">
                                 <Node nodeKey="s1_kpirec"            panelId="kpirec"            color="n-purple" title="KPI 入力"        sub="実績と目標を入力"           selectedKey={selectedKey} onSelect={handleSelect} />
-                                <Node nodeKey="s1_resource"          panelId="resource"          color="n-purple" title="人数・人件費入力"  sub="投資対効果の算出に使用"      selectedKey={selectedKey} onSelect={handleSelect} />
+                                <Node nodeKey="s1_resource"          panelId="resource"          color="n-purple" title="人数・人件費入力"  sub="投資対効果の算出に使用"      selectedKey={selectedKey} onSelect={handleSelect} pro />
                                 <Node nodeKey="s1_slack-kpi-request" panelId="slack-kpi-request" color="n-green"  title="Slack で入力依頼"  sub="未入力時に自動通知"          selectedKey={selectedKey} onSelect={handleSelect} />
                             </div>
                         </div>
@@ -486,7 +495,7 @@ export default function DocsFlowPage() {
                             </div>
                             <div className="flow-nodes">
                                 <Node nodeKey="s3_kpirec"    panelId="kpirec"    color="n-purple" title="KPI"            sub="業績データ"            selectedKey={selectedKey} onSelect={handleSelect} />
-                                <Node nodeKey="s3_resource"  panelId="resource"  color="n-purple" title="人数・人件費"     sub="投資対効果"             selectedKey={selectedKey} onSelect={handleSelect} />
+                                <Node nodeKey="s3_resource"  panelId="resource"  color="n-purple" title="人数・人件費"     sub="投資対効果"             selectedKey={selectedKey} onSelect={handleSelect} pro />
                                 <Node nodeKey="s3_surveyres" panelId="surveyres" color="n-coral"  title="ボイスチェック"   sub="組織の体温"             selectedKey={selectedKey} onSelect={handleSelect} />
                                 <Node nodeKey="s3_semantic"  panelId="semantic"  color="n-coral"  title="組織方針"        sub="会社の価値観・文脈"      selectedKey={selectedKey} onSelect={handleSelect} />
                             </div>
