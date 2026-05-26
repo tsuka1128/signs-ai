@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Settings2, Sparkles } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -27,7 +27,7 @@ import { MemberEditModal } from "@/components/settings/MemberEditModal";
 const VALID_TABS = ["company", "dept", "kpi", "axis", "ai", "survey", "users", "integration", "focus"] as const;
 type TabId = typeof VALID_TABS[number];
 
-export default function SettingsPage() {
+function SettingsContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const tabParam = searchParams.get("tab");
@@ -230,5 +230,13 @@ export default function SettingsPage() {
                 </div>
             </TrialGuard>
         </AppLayout>
+    );
+}
+
+export default function SettingsPage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center min-h-screen">読み込み中...</div>}>
+            <SettingsContent />
+        </Suspense>
     );
 }
