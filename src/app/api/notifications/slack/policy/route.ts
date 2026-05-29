@@ -45,9 +45,22 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Target company ID is required" }, { status: 400 });
     }
 
-    const { data: company } = await supabase.from('companies').select('name, slack_webhook_url').eq('id', effectiveCompanyId).single();
-    if (!company?.slack_webhook_url) {
-        return NextResponse.json({ error: "Slack Webhook URL is not configured for this company" }, { status: 400 });
+    const { data: company } = await supabase.from('companies').select('name').eq('id', effectiveCompanyId).single();
+    if (!company) {
+        return NextResponse.json({ error: "Company not found" }, { status: 404 });
+    }
+
+    // 新テーブル slack_channels から 組織方針通知がオンになっている全社チャンネルを取得
+    const { data: slackChannel } = await supabase
+        .from('slack_channels')
+        .select('webhook_url')
+        .eq('company_id', effectiveCompanyId)
+        .eq('channel_type', 'company')
+        .eq('notify_policy_update', true)
+        .maybeSingle();
+
+    if (!slackChannel?.webhook_url) {
+        return NextResponse.json({ error: "Slack workspace configuration not found or Webhook URL is not configured for this company" }, { status: 400 });
     }
 
     // 4. 全ユーザーと部署を並列で取得
@@ -122,12 +135,12 @@ export async function POST(request: NextRequest) {
         ]
     });
 
-    const success = await sendSlackNotification(company.slack_webhook_url, `組織方針更新のお知らせ (${company.name})`, blocks);
+    const success = await sendSlackNotification(slackChannel.webhook_url, `組織方針更新のお知らせ (${company.name})`, blocks);
 
     if (success) {
         return NextResponse.json({ success: true });
     } else {
-        console.error(`Slack通知の送信に失敗しました: company_id=${effectiveCompanyId}, webhook=${company.slack_webhook_url?.slice(0, 40)}...`);
+        console.error(`Slack通知の送信に失敗しました: company_id=${effectiveCompanyId}, webhook=${slackChannel.webhook_url?.slice(0, 40)}...`);
         return NextResponse.json({ error: "Failed to send Slack notification" }, { status: 500 });
     }
 }

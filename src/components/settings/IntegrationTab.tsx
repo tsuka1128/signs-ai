@@ -14,7 +14,6 @@ interface IntegrationTabProps {
     handleTestClientSlackWebhook?: () => void; // 既存コードとの後方互換性のためにオプショナルとして残置
     handleSaveIntegration: () => void;
     handleRemindVoiceCheck: () => void;
-    handlePreviewNotification: (type: string) => void;
     handleRemindKpi: () => void;
 }
 
@@ -29,6 +28,7 @@ interface SlackChannel {
     notify_ai_summary: boolean;
     notify_anomaly_alert: boolean;
     notify_kpi_reminder: boolean;
+    notify_policy_update: boolean; // 組織方針更新フラグを追加
     created_at: string;
 }
 
@@ -37,7 +37,6 @@ export const IntegrationTab = ({
     setCompany,
     handleSaveIntegration,
     handleRemindVoiceCheck,
-    handlePreviewNotification,
     handleRemindKpi
 }: IntegrationTabProps) => {
     const supabase = createClient();
@@ -238,6 +237,42 @@ export const IntegrationTab = ({
         }
     };
 
+    // プレビュー通知送信ハンドラーの自立実装
+    const handlePreviewNotification = async (type: string) => {
+        // 登録されているチャンネルから「全社（company）」の Webhook を自動判別
+        const companyChannel = channels.find(c => c.channel_type === 'company');
+        if (!companyChannel?.webhook_url) {
+            toast.error("全社（company）チャンネルが登録されていません。「チャンネル追加」から全社チャンネルを登録・保存してください。");
+            return;
+        }
+
+        try {
+            const res = await fetch("/api/settings/slack-channels/preview", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    webhookUrl: companyChannel.webhook_url, 
+                    previewType: type,
+                    customMessages: {
+                        slack_msg_ai_summary: company.slack_msg_ai_summary,
+                        slack_msg_anomaly_alert: company.slack_msg_anomaly_alert,
+                        slack_msg_voice_check: company.slack_msg_voice_check,
+                        slack_msg_kpi_reminder: company.slack_msg_kpi_reminder,
+                        slack_msg_voice_feedback: company.slack_msg_voice_feedback
+                    }
+                })
+            });
+            if (res.ok) {
+                toast.success("プレビュー通知を送信しました。Slackをご確認ください");
+            } else {
+                const data = await res.json();
+                toast.error(`送信失敗: ${data.error || "詳細不明"}`);
+            }
+        } catch (e: any) {
+            toast.error(`エラーが発生しました: ${e.message}`);
+        }
+    };
+
     // 各個別フラグ切り替えハンドラー
     const toggleNotifyFlag = (chan: SlackChannel, flagKey: keyof SlackChannel) => {
         const updated = { ...chan, [flagKey]: !chan[flagKey] };
@@ -386,6 +421,17 @@ export const IntegrationTab = ({
                                                             className="w-4 h-4 rounded text-teal border-slate-200 outline-none focus:ring-0 focus:ring-offset-0 cursor-pointer"
                                                         />
                                                         <span>KPI入力催促</span>
+                                                    </label>
+
+                                                    {/* 組織方針更新 */}
+                                                    <label className="flex items-center gap-2.5 cursor-pointer hover:text-slate-800 transition-colors py-0.5">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={chan.notify_policy_update}
+                                                            onChange={() => toggleNotifyFlag(chan, 'notify_policy_update')}
+                                                            className="w-4 h-4 rounded text-teal border-slate-200 outline-none focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                                                        />
+                                                        <span>組織方針更新</span>
                                                     </label>
 
                                                     {/* 参謀フィードバック */}

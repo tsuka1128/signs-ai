@@ -181,10 +181,8 @@ export default function SettingsPage() {
                             <IntegrationTab 
                                 company={state.company}
                                 setCompany={handlers.setCompany}
-                                handleTestClientSlackWebhook={handlers.handleTestClientSlackWebhook}
                                 handleSaveIntegration={handlers.handleSaveIntegration}
                                 handleRemindVoiceCheck={handlers.handleRemindVoiceCheck}
-                                handlePreviewNotification={handlers.handlePreviewNotification}
                                 handleRemindKpi={handlers.handleRemindKpi}
                             />
                         </PlanGate>

@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS public.slack_channels (
     notify_ai_summary BOOLEAN NOT NULL DEFAULT FALSE,
     notify_anomaly_alert BOOLEAN NOT NULL DEFAULT FALSE,
     notify_kpi_reminder BOOLEAN NOT NULL DEFAULT FALSE,
+    notify_policy_update BOOLEAN NOT NULL DEFAULT FALSE, -- 組織方針更新通知用カラム
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 制約条件
@@ -49,14 +50,15 @@ CREATE INDEX IF NOT EXISTS idx_slack_channels_department_id ON public.slack_chan
 -- 4. 既存データの自動移行
 -- =====================================================
 -- companies.slack_webhook_url から slack_channels へ「全社チャンネル」として自動移行
--- デフォルトプリセット: ai_summary=true, anomaly_alert=true, 他はfalse
+-- デフォルトプリセット: ai_summary=true, anomaly_alert=true, policy_update=true, 他はfalse
 INSERT INTO public.slack_channels (
     company_id, 
     name, 
     channel_type, 
     webhook_url, 
     notify_ai_summary, 
-    notify_anomaly_alert
+    notify_anomaly_alert,
+    notify_policy_update
 )
 SELECT 
     id, 
@@ -64,6 +66,7 @@ SELECT
     'company', 
     slack_webhook_url, 
     TRUE, 
+    TRUE,
     TRUE
 FROM public.companies
 WHERE slack_webhook_url IS NOT NULL
@@ -74,16 +77,29 @@ ON CONFLICT (company_id) WHERE channel_type = 'company' DO NOTHING;
 -- =====================================================
 ALTER TABLE public.slack_channels ENABLE ROW LEVEL SECURITY;
 
--- 自身の所属する company_id かつ、ロールが admin, super_admin, executive のメンバーに全操作を許可
+-- 既存ポリシーのクリーンアップ
 DROP POLICY IF EXISTS "admin_manage_slack_channels" ON public.slack_channels;
-CREATE POLICY "admin_manage_slack_channels" ON public.slack_channels
-    FOR ALL TO authenticated USING (
-        EXISTS (
-            SELECT 1 FROM public.users
-            WHERE users.id = auth.uid() 
-              AND users.company_id = slack_channels.company_id
-              AND users.role IN ('admin', 'super_admin', 'executive')
-        )
+DROP POLICY IF EXISTS "slack_channels_select" ON public.slack_channels;
+DROP POLICY IF EXISTS "slack_channels_modify" ON public.slack_channels;
+
+-- 5-1. 閲覧ポリシー（admin, super_admin, executive のみに自社データを許可）
+CREATE POLICY "slack_channels_select" ON public.slack_channels
+    FOR SELECT TO authenticated 
+    USING (
+        company_id = get_my_company_id()
+        AND (SELECT role FROM public.users WHERE id = auth.uid()) IN ('admin', 'super_admin', 'executive')
+    );
+
+-- 5-2. 編集ポリシー（ALL: admin, super_admin のみに自社データの操作を許可）
+CREATE POLICY "slack_channels_modify" ON public.slack_channels
+    FOR ALL TO authenticated 
+    USING (
+        company_id = get_my_company_id()
+        AND (SELECT role FROM public.users WHERE id = auth.uid()) IN ('admin', 'super_admin')
+    )
+    WITH CHECK (
+        company_id = get_my_company_id()
+        AND (SELECT role FROM public.users WHERE id = auth.uid()) IN ('admin', 'super_admin')
     );
 
 -- =====================================================

@@ -167,7 +167,6 @@ export function useSettingsData() {
     const handleSaveIntegration = async () => {
         const supabase = createClient();
         const { error } = await supabase.from('companies').update({
-            slack_webhook_url: company.slack_webhook_url,
             anomaly_threshold_absolute: company.anomaly_threshold_absolute,
             anomaly_threshold_drop: company.anomaly_threshold_drop,
             anomaly_threshold_gap: company.anomaly_threshold_gap,
@@ -175,86 +174,43 @@ export function useSettingsData() {
             slack_msg_ai_summary: company.slack_msg_ai_summary,
             slack_msg_anomaly_alert: company.slack_msg_anomaly_alert,
             slack_msg_voice_check: company.slack_msg_voice_check,
-            slack_msg_kpi_reminder: company.slack_msg_kpi_reminder
+            slack_msg_kpi_reminder: company.slack_msg_kpi_reminder,
+            slack_msg_voice_feedback: company.slack_msg_voice_feedback
         }).eq('id', company.id);
 
         if (!error) toast.success("連携・通知設定を保存しました");
         else toast.error(`保存に失敗しました: ${error.message}`);
     };
 
-    const handlePreviewNotification = async (type: string) => {
-        const webhookUrl = company?.slack_webhook_url;
-        if (!webhookUrl) {
-            toast.error("Webhook URLを入力・保存してからプレビューしてください。");
-            return;
-        }
-
-        try {
-            const res = await fetch("/api/settings/test-slack", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    webhookUrl, 
-                    previewType: type,
-                    customMessages: {
-                        slack_msg_ai_summary: company.slack_msg_ai_summary,
-                        slack_msg_anomaly_alert: company.slack_msg_anomaly_alert,
-                        slack_msg_voice_check: company.slack_msg_voice_check,
-                        slack_msg_kpi_reminder: company.slack_msg_kpi_reminder
-                    }
-                })
-            });
-            if (res.ok) {
-                toast.success("プレビュー通知を送信しました。Slackをご確認ください");
-            } else {
-                const data = await res.json();
-                toast.error(`送信失敗: ${data.error || "詳細不明"}`);
-            }
-        } catch (e: any) {
-            toast.error(`エラーが発生しました: ${e.message}`);
-        }
-    };
-
-    const handleTestClientSlackWebhook = async () => {
-        const webhookUrl = company?.slack_webhook_url;
-        if (!webhookUrl) {
-            toast.error("Webhook URLを入力・保存してからテストしてください。");
-            return;
-        }
-
-        try {
-            const res = await fetch("/api/settings/test-slack", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ webhookUrl })
-            });
-            if (res.ok) {
-                toast.success("テスト通知を送信しました。Slackをご確認ください");
-            } else {
-                const data = await res.json();
-                toast.error(`送信失敗: ${data.error || "詳細不明"}`);
-            }
-        } catch (e: any) {
-            toast.error(`エラーが発生しました: ${e.message}`);
-        }
-    };
-
     const handleTestMemberSlack = async (slackUserId: string) => {
-        const webhookUrl = company?.slack_webhook_url;
-        if (!webhookUrl) {
-            toast.error("まず「外部連携」タブでWebhook URLを保存してください。");
-            return;
-        }
+        if (!company?.id) return;
         if (!slackUserId) {
             toast.error("Slack User IDを入力してください。");
             return;
         }
 
+        const supabase = createClient();
+        // 新テーブル slack_channels から「全社チャンネル (company)」の Webhook を動的にクエリ
+        const { data: slackChannel } = await supabase
+            .from('slack_channels')
+            .select('webhook_url')
+            .eq('company_id', company.id)
+            .eq('channel_type', 'company')
+            .maybeSingle();
+
+        if (!slackChannel?.webhook_url) {
+            toast.error("全社（company）チャンネルが登録されていません。「外部連携」タブで全社チャンネルを登録・保存してください。");
+            return;
+        }
+
         try {
-            const res = await fetch("/api/settings/test-slack", {
+            const res = await fetch("/api/settings/slack-channels/preview", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ webhookUrl, slackUserId })
+                body: JSON.stringify({ 
+                    webhookUrl: slackChannel.webhook_url, 
+                    slackUserId 
+                })
             });
             if (res.ok) {
                 toast.success(`Slack ID: ${slackUserId} 宛にテストメンションを送信しました。Slackをご確認ください`);
@@ -669,13 +625,13 @@ export function useSettingsData() {
             setCompany, setDepts, setKpis, setAxes, setSecondaryAxisName, setInviteEmail, setInviteDeptId,
             setInviteRole,
             setInviteAxisId, setInviteSlackUserId, setEditForm, setEditingUser,
-            handleCopyId, handleSaveCompany, handleSaveIntegration, handleTestClientSlackWebhook,
+            handleCopyId, handleSaveCompany, handleSaveIntegration,
             handleTestMemberSlack, handleAddDept, handleSaveAllDepts, handleDeleteDept, handleAddKpi,
             handleSaveAllKpis, handleDeleteKpi, handleAddAxis, handleSaveAllAxes, handleDeleteAxis,
             handleInvite, handleBulkInvite, handleBulkUpdateUsers, handleDeleteInvitation, handleResendInvitation, handleCopyInviteLink,
             handleStartEditUser,
             handleSaveUserDetail, handleDeleteUser, handleRunAnalyze, handleRemindVoiceCheck,
-            handlePreviewNotification, handleRemindKpi
+            handleRemindKpi
         },
         userRole
     };

@@ -87,10 +87,12 @@ export async function POST(req: Request) {
     let notify_voice_check_reminder = false;
     let notify_voice_check_feedback = false;
     let notify_kpi_reminder = false;
+    let notify_policy_update = false;
 
     if (channel_type === 'company' || channel_type === 'executive') {
       notify_ai_summary = true;
       notify_anomaly_alert = true;
+      notify_policy_update = true;
     } else if (channel_type === 'department') {
       notify_voice_check_reminder = true;
       notify_voice_check_feedback = true;
@@ -110,7 +112,8 @@ export async function POST(req: Request) {
         notify_anomaly_alert,
         notify_voice_check_reminder,
         notify_voice_check_feedback,
-        notify_kpi_reminder
+        notify_kpi_reminder,
+        notify_policy_update
       })
       .select()
       .single();
@@ -153,7 +156,7 @@ export async function PUT(req: Request) {
 
     // 2. リクエストデータの取得
     const body = await req.json();
-    const { id, name, webhook_url, notify_ai_summary, notify_anomaly_alert, notify_voice_check_reminder, notify_voice_check_feedback, notify_kpi_reminder } = body;
+    const { id, name, webhook_url, notify_ai_summary, notify_anomaly_alert, notify_voice_check_reminder, notify_voice_check_feedback, notify_kpi_reminder, notify_policy_update } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Channel ID is required" }, { status: 400 });
@@ -170,6 +173,7 @@ export async function PUT(req: Request) {
         notify_voice_check_reminder,
         notify_voice_check_feedback,
         notify_kpi_reminder,
+        notify_policy_update,
         updated_at: new Date().toISOString()
       })
       .eq("id", id)

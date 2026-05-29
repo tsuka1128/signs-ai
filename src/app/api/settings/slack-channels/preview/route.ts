@@ -4,16 +4,31 @@ import { sendSlackNotification } from "@/lib/slack";
 import { SLACK_MESSAGE_DEFAULTS } from "@/lib/slack-message-defaults";
 import { getBaseURL } from "@/lib/utils/index";
 
+// =====================================================
+// POST: Slackチャンネルプレビュー＆メンションテスト送信
+// =====================================================
 export async function POST(req: Request) {
   try {
     const supabase = await createServerSupabaseClient();
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (!session) {
+    
+    // 1. 認証チェック
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // `slack_webhook_url`, `slackUserId`, `previewType`, `customMessages` をリクエストボディから取得
+    // 2. ユーザープロフィールの取得と権限検証
+    const { data: profile } = await supabase
+      .from("users")
+      .select("company_id, role")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile || !profile.company_id || (profile.role !== 'admin' && profile.role !== 'super_admin' && profile.role !== 'executive')) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // `webhookUrl`, `slackUserId`, `previewType`, `customMessages` をリクエストボディから取得
     const { webhookUrl, slackUserId, previewType, customMessages } = await req.json();
 
     if (!webhookUrl) {
@@ -75,6 +90,7 @@ export async function POST(req: Request) {
         }
       ];
     } else {
+      // slackUserId がある場合はメンションテスト、ない場合は通常のテスト
       message = slackUserId 
         ? `🎉 *SignsAI メンションテスト* \n✅ <@${slackUserId}> さん、SignsAIとの連携に成功しました！`
         : "🎉 *SignsAI* \n✅ これはSignsAIからのテスト通知です。Slack連携は正常に動作しています！";
@@ -110,7 +126,7 @@ export async function POST(req: Request) {
     }
 
   } catch (error: any) {
-    console.error("Test Slack API Error:", error);
+    console.error("Preview Slack API Error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
