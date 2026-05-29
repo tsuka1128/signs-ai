@@ -121,6 +121,9 @@ ${summary.manager_hint || 'なし'}
                 apiKey: sysSettings['anthropic_api_key'] || sysSettings['claude_api_key'],
                 maxTokens: 1024,
                 temperature: 0.3,
+                companyId,
+                agentName: "CTO Gates",
+                purpose: "dept_action_proposals"
             });
         } catch (apiError: any) {
             console.error("[Claude API Error (Proposals)]:", apiError);

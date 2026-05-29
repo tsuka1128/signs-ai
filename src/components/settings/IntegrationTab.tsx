@@ -11,7 +11,6 @@ import { toast } from "sonner";
 interface IntegrationTabProps {
     company: any;
     setCompany: (company: any) => void;
-    handleTestClientSlackWebhook?: () => void; // 既存コードとの後方互換性のためにオプショナルとして残置
     handleSaveIntegration: () => void;
     handleRemindVoiceCheck: () => void;
     handleRemindKpi: () => void;

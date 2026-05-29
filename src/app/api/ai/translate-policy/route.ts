@@ -82,7 +82,10 @@ ${JSON.stringify(depts.map(d => ({ id: d.id, name: d.name })))}
             temperature: sysSettings['temperature'] ?? 0.7,
             maxTokens: sysSettings['max_tokens'] ?? 2000,
             model: sysSettings['default_model'] ?? "claude-3-7-sonnet-20250219",
-            apiKey: sysSettings['anthropic_api_key']
+            apiKey: sysSettings['anthropic_api_key'],
+            companyId: effectiveCompanyId,
+            agentName: "system",
+            purpose: "policy_translation"
         });
 
         // ── AI回答のJSON解析（堅牢化） ──

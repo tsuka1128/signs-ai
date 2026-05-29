@@ -299,7 +299,10 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
                 maxTokens: sysSettings['max_tokens'] ?? 3000,
                 model: sysSettings['default_model'] ?? "claude-3-7-sonnet-20250219",
                 apiKey: sysSettings['anthropic_api_key'],
-                signal: controller.signal
+                signal: controller.signal,
+                companyId,
+                agentName: "CPO Elon",
+                purpose: "ai_analysis"
             });
             clearTimeout(timeoutId);
 
@@ -373,6 +376,9 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
                 temperature: 0.5,
                 apiKey: sysSettings['claude_api_key'],
                 signal: AbortSignal.timeout(20000),
+                companyId,
+                agentName: "CHRO Drucker",
+                purpose: "hr_strategy"
             });
 
             await supabase.from('ai_insights').upsert({

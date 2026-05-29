@@ -5,6 +5,9 @@
  * モデル名・temperature・maxTokens を呼び出し側から受け取り、APIリクエストに反映する。
  */
 
+import { createClient } from "@supabase/supabase-js";
+import { calcCostUsd } from "./token-pricing";
+
 /** デフォルト値の定数定義 */
 const DEFAULT_MODEL = "claude-3-7-sonnet-20250219";
 const DEFAULT_TEMPERATURE = 0.3;
@@ -23,6 +26,12 @@ interface GenerateOptions {
     apiKey?: string;
     /** タイムアウト制御用のSignal */
     signal?: AbortSignal;
+    /** エージェント名（メタデータ） */
+    agentName?: string;
+    /** 呼び出し目的（メタデータ） */
+    purpose?: string;
+    /** 対象企業ID（メタデータ） */
+    companyId?: string;
 }
 
 /**
@@ -76,5 +85,70 @@ export async function generateAIInsight(prompt: string, options?: GenerateOption
     }
 
     const data = await response.json();
+
+    // トークン使用量を非同期でロギング (fire-and-forget、レイテンシ影響ゼロ)
+    if (data.usage) {
+        logTokenUsage({
+            companyId: options?.companyId,
+            agentName: options?.agentName ?? 'system',
+            purpose: options?.purpose ?? 'unknown',
+            model,
+            inputTokens: data.usage.input_tokens || 0,
+            outputTokens: data.usage.output_tokens || 0,
+            costUsd: calcCostUsd(model, data.usage.input_tokens || 0, data.usage.output_tokens || 0),
+        }).catch(console.error);
+    }
+
     return data.content[0].text;
+}
+
+// =====================================================
+// トークン使用実績の自動ロギングユーティリティ (サービスロール使用)
+// =====================================================
+let supabaseAdmin: any = null;
+
+function getSupabaseAdmin() {
+    if (supabaseAdmin) return supabaseAdmin;
+    
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!url || !key) {
+        return null;
+    }
+
+    supabaseAdmin = createClient(url, key);
+    return supabaseAdmin;
+}
+
+interface LogTokenUsageParams {
+    companyId?: string;
+    agentName: string;
+    purpose: string;
+    model: string;
+    inputTokens: number;
+    outputTokens: number;
+    costUsd: number;
+}
+
+async function logTokenUsage(params: LogTokenUsageParams) {
+    const admin = getSupabaseAdmin();
+    if (!admin) {
+        console.warn("logTokenUsage skipped: Supabase admin client not initialized (check env vars)");
+        return;
+    }
+
+    const { error } = await admin.from("ai_usage_logs").insert({
+        company_id: params.companyId ?? null,
+        agent_name: params.agentName,
+        purpose: params.purpose,
+        model: params.model,
+        input_tokens: params.inputTokens,
+        output_tokens: params.outputTokens,
+        cost_usd: params.costUsd
+    });
+
+    if (error) {
+        console.error("logTokenUsage error:", error);
+    }
 }

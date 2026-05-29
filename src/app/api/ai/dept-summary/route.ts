@@ -125,6 +125,9 @@ ${commentsText}
                 apiKey: sysSettings['anthropic_api_key'] || sysSettings['claude_api_key'],
                 maxTokens: 512,
                 temperature: 0.3,
+                companyId,
+                agentName: "CPO Elon",
+                purpose: "dept_summary"
             });
         } catch (apiError: any) {
             console.error("[Claude API Error]:", apiError);
