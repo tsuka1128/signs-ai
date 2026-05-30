@@ -23,6 +23,7 @@ export default function DeckHub() {
   const [dir, setDir] = useState(1);
   const thumbStripRef = useRef<HTMLDivElement>(null);
   const tocRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
 
   const deck: Deck = useMemo(() => getDeck(deckId) ?? DEFAULT_DECK, [deckId]);
   const total = deck.slides.length;
@@ -66,6 +67,17 @@ export default function DeckHub() {
   const selectDeck = useCallback((id: string) => {
     setDir(1); setDeckId(id); setSlide(0);
   }, []);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(delta) > 48) go(delta < 0 ? slide + 1 : slide - 1);
+    touchStartX.current = null;
+  }, [go, slide]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -300,7 +312,11 @@ export default function DeckHub() {
              MOBILE SLIDE (card view)
             ════════════════════════════════ */}
         <div className="flex md:hidden flex-1 min-h-0 flex-col">
-          <div className="relative flex-1 min-h-0 mx-3 my-2">
+          <div
+            className="relative flex-1 min-h-0 mx-3 my-2"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
             <AnimatePresence mode="wait" custom={dir}>
               <motion.div
                 key={`mob-${deck.id}-${slide}`}
