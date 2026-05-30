@@ -56,7 +56,7 @@ const executive: Deck = {
   title: "経営層向け 総合提案",
   subtitle: "組織に体温を。",
   tagline: "KPIと現場の声を統合し、経営の解像度を上げる",
-  accent: "#4F46E5",
+  accent: "#38B2AC",
   icon: "📊",
   slides: [
     {
@@ -346,443 +346,231 @@ const executive: Deck = {
 };
 
 /* ════════════════════════════════════════════════════════
- *  DECK 2 ── コトラー × 市場戦略・ポジショニング
+ *  DECK 2 ── 人事・HR向け 提案
  * ════════════════════════════════════════════════════════ */
-const kotler: Deck = {
-  id: "kotler-market",
-  category: "市場戦略",
-  persona: "コトラー",
-  personaEn: "Philip Kotler",
-  role: "CMO ／ 市場戦略・ポジショニング",
-  title: "市場戦略・ポジショニング",
-  subtitle: "「組織の内側」を、外部市場と同じ解像度で経営する",
-  tagline: "KPIが語らない組織の兆候を、AIが経営言語に翻訳する経営参謀SaaS",
-  accent: "#38B2AC",
-  icon: "🎯",
+const hr: Deck = {
+  id: "hr-brief",
+  category: "人事向け",
+  persona: "人事・HR",
+  personaEn: "HR Brief",
+  role: "人事向け ご提案資料",
+  title: "人事向け 提案",
+  subtitle: "利益を出す人事へ。",
+  tagline: "人事施策の効果を、売上・利益に翻訳する",
+  accent: "#4F46E5",
+  icon: "👥",
   slides: [
     {
-      kicker: "01 ／ 市場定義",
-      title: "なぜ今、「組織の内側」がマーケットになるのか",
+      kicker: "01 ／ 課題",
+      title: "人事の成果は、売上に換算できるか",
       blocks: [
         {
           type: "lead",
-          text: "インターナルマーケティングは、エクスターナルマーケティングに先行する。",
+          text: "「人事費用のROIは？」と聞かれて、即座に数字で答えられるか。",
         },
         {
           type: "bullets",
           items: [
-            { text: "外部顧客を熱狂させるのは、最終的に人間だ" },
-            { text: "多くの経営者は外部市場には精緻なデータを持ち込み、内部市場には感覚しか使わない" },
-            { text: "Signs AI はこの非対称を解消するために作られた" },
-          ],
-        },
-      ],
-    },
-    {
-      kicker: "02 ／ セグメンテーション",
-      title: "市場の空白：誰も埋めていない象限がある",
-      blocks: [
-        {
-          type: "table",
-          headers: ["市場レイヤー", "代表ツール", "できないこと"],
-          rows: [
-            ["HRサーベイ層", "Lattice / Culture Amp", "KPIとの接続・経営提言"],
-            ["BI/KPI分析層", "Tableau / Looker", "現場の定性・人的要因の統合"],
-            ["🔲 統合×提言層", "（空白）", "誰も埋めていない"],
+            { text: "採用目標を達成した／研修を実施した／評価制度を刷新した／離職率を改善した" },
+            { text: "——どれも「売上にいくら貢献したか」を語れない" },
           ],
         },
         {
           type: "callout",
           tone: "accent",
-          text: "「なぜKPIが落ちているか」既存ツールは答えられない。Signs AI は統合と提言を同時に出す唯一のカテゴリだ。",
+          text: "これは人事の能力の問題ではない。施策効果を売上・利益に翻訳する仕組みがなかった、構造の問題だ。",
         },
       ],
     },
     {
-      kicker: "03 ／ ICP定義",
-      title: "ターゲット顧客プロファイル（ICP）",
-      blocks: [
-        {
-          type: "bullets",
-          items: [
-            { label: "規模", text: "従業員50〜200名のSaaS・IT・スタートアップ（Series B〜D）" },
-            { label: "意思決定者", text: "CEO / 経営企画 / CHRO（不在ならCOO）" },
-            { label: "ペインの瞬間①", text: "ハイパフォーマーが突然辞める。なぜかわからない" },
-            { label: "ペインの瞬間②", text: "KPIは達成しているのに、組織の空気がどこか重い" },
-          ],
-        },
-      ],
-    },
-    {
-      kicker: "04 ／ ポジショニング",
-      title: "パーセプチュアルマップ：右上の象限を独占する",
+      kicker: "02 ／ 採用の本質",
+      title: "「採用要望」は本当に採用で解決すべきか",
       blocks: [
         {
           type: "lead",
-          text: "競合が存在しない場所に戦場を作る——これがコトラー流ポジショニング戦略だ。",
+          text: "冷えた組織に人を投入するのは、水漏れするバケツに水を注ぐのと同じだ。",
         },
         {
           type: "bullets",
           items: [
-            { label: "KPI管理専業（Tableau系）", text: "経営への接続は強いが、定性データがない" },
-            { label: "HRサーベイ専業（Lattice / Culture Amp）", text: "現場の声は拾えるが、経営提言がない" },
-            { label: "Signs AI", text: "KPI×定性統合 × 経営提言——右上の象限を独占" },
+            { label: "生産性の低下", text: "チームが疲弊し、同じ成果に以前より工数がかかる" },
+            { label: "エンゲージメント低下", text: "実質的な稼働率が落ちている" },
+            { label: "マネジメント機能不全", text: "マネージャーが孤立し、チームが正しく動いていない" },
           ],
         },
-      ],
-    },
-    {
-      kicker: "05 ／ バリュープロポジション",
-      title: "バリュープロポジション（価値3層モデル）",
-      blocks: [
         {
-          type: "steps",
-          items: [
-            {
-              tag: "第1層",
-              title: "コア価値",
-              desc: "組織リスクを事前に察知し、経営判断のタイミングを3〜6ヶ月前倒しにする能力",
-            },
-            {
-              tag: "第2層",
-              title: "期待価値",
-              desc: "KPI×サーベイの統合管理・月次レポート自動生成・部署横断の比較ビュー",
-            },
-            {
-              tag: "第3層",
-              title: "付加価値",
-              desc: "セマンティックレイヤー・Slack参謀チャンネル・施策効果の時系列追跡",
-            },
-          ],
+          type: "callout",
+          tone: "warn",
+          text: "これらが原因なら採用では解決しない。組織体温とKPIを照合し「採用か、組織改善が先か」を数字で判断する。",
         },
       ],
     },
     {
-      kicker: "06 ／ 競合差別化",
-      title: "競合差別化マトリクス",
+      kicker: "03 ／ 効果測定の壁",
+      title: "人事施策の「前後」が見えない問題",
       blocks: [
         {
           type: "table",
-          highlightLastCol: true,
-          headers: ["比較軸", "Lattice / Culture Amp", "Tableau", "Signs AI"],
+          headers: ["打った施策", "現在の測定手段", "経営報告における限界"],
           rows: [
-            ["KPI管理", "△", "◎", "◯"],
-            ["組織定性把握", "◎", "✕", "◎"],
-            ["両者の統合分析", "✕", "✕", "◎"],
-            ["AIによる経営提言", "△", "△", "◎"],
-            ["日本語・日本市場特化", "△", "△", "◎"],
+            ["マネージャー研修", "受講後アンケート", "組織パフォーマンスの変化まで追えない"],
+            ["組織再編・統合", "数ヶ月後の業績", "市況・他施策との因果分離ができない"],
+            ["評価制度の刷新", "サーベイ・1on1", "部署横断・時系列での定点観測が困難"],
           ],
         },
         {
           type: "callout",
           tone: "accent",
-          text: "勝ち筋は「統合 × 提言 × 日本特化」の3点セット。3つが重なる場所に戦場を作る。",
+          text: "施策の実施月を記録し、前後でKPIと組織体温の変化を時系列で可視化。「あの研修は翌月チームスコアを8pt改善した」と報告できる。",
         },
       ],
     },
     {
-      kicker: "07 ／ 4P",
-      title: "マーケティングミックス（4P分析）",
+      kicker: "04 ／ エビデンス",
+      title: "組織の温度が上がると、採用予算はどう変わるか",
       blocks: [
-        {
-          type: "steps",
-          items: [
-            {
-              tag: "Product",
-              title: "製品",
-              desc: "KPI×Voice×Policy の3レイヤー統合。「診断」ではなく「提言」まで出す点が核心",
-            },
-            {
-              tag: "Price",
-              title: "価格",
-              desc: "Freemiumで摩擦ゼロのエントリー。無料で現状スキャンを体験させ、ROIを見せてからアップセル",
-            },
-            {
-              tag: "Place",
-              title: "流通",
-              desc: "WebベースのSaaS + Slack連携で日常の中に価値を届ける",
-            },
-            {
-              tag: "Promotion",
-              title: "販促",
-              desc: "Evidence-based（ROI試算）/ Proof of Concept（Freeで証明）/ Community（体温経営）",
-            },
-          ],
-        },
-      ],
-    },
-    {
-      kicker: "08 ／ カスタマージャーニー",
-      title: "カスタマージャーニー",
-      blocks: [
-        {
-          type: "steps",
-          items: [
-            { tag: "認知", title: "Awareness", desc: "HR Tech文脈でコンテンツに接触。組織の数値化という課題を認識" },
-            { tag: "体験", title: "Aha", desc: "Freeプラン：自社の組織体温を初めて数字で見る" },
-            { tag: "導入", title: "Adopt", desc: "Standard：施策の前後を追い始める。ROIが見え始める" },
-            { tag: "定着", title: "Retain", desc: "セマンティックレイヤーに自社方針が蓄積。代替不可能に" },
-            { tag: "推薦", title: "Advocate", desc: "「うちの経営参謀」として他社経営者に紹介" },
-          ],
-        },
-      ],
-    },
-    {
-      kicker: "09 ／ メッセージング",
-      title: "セグメント別メッセージング",
-      blocks: [
-        {
-          type: "table",
-          headers: ["ターゲット", "刺さるメッセージ", "提供する価値"],
-          rows: [
-            ["CEO", "組織リスクを経営判断に組み込む", "兆候を3ヶ月前に掴める経営"],
-            ["CHRO / 人事", "施策の効果を数字で経営に報告", "利益を出す人事への転換"],
-            ["経営企画", "KPIと人的資本を同一画面で管理", "先行指標で次の一手を打てる"],
-            ["マネージャー", "AIが自部署の動き方を提言", "AIが参謀になってくれる"],
-          ],
-        },
-      ],
-    },
-    {
-      kicker: "10 ／ Closing",
-      title: "コトラーからのメッセージ",
-      blocks: [
-        {
-          type: "quote",
-          text: "The aim of marketing is to know and understand the customer so well the product or service fits him and sells itself.",
-          author: "Philip Kotler",
-        },
-        {
-          type: "callout",
-          tone: "accent",
-          text: "Signs AI が戦うべき市場は、競合との戦いではない。「見えない組織リスクを放置する経営習慣」との戦いだ。",
-        },
-      ],
-    },
-  ],
-};
-
-/* ════════════════════════════════════════════════════════
- *  DECK 3 ── ベニオフ × 顧客成功・SaaS事業設計
- * ════════════════════════════════════════════════════════ */
-const benioff: Deck = {
-  id: "benioff-success",
-  category: "顧客成功・事業設計",
-  persona: "ベニオフ",
-  personaEn: "Marc Benioff",
-  role: "CSO ／ 顧客成功・SaaS事業設計",
-  title: "顧客成功・SaaS事業設計",
-  subtitle: "「No Spreadsheet for Org Management.」",
-  tagline: "KPIを追うだけの経営から、組織の体温を持った経営へ",
-  accent: "#3B82F6",
-  icon: "☁️",
-  slides: [
-    {
-      kicker: "01 ／ 宣言",
-      title: "「No Software」が変えた世界、「No Spreadsheet」が変える次",
-      blocks: [
-        {
-          type: "bullets",
-          items: [
-            { text: "1999年、Salesforceは「No Software」を宣言し、CRMをクラウドへ移した" },
-            { text: "今も多くの企業は月次人事データをExcelで管理し、感覚的なレポートで意思決定している" },
-            { text: "これは2025年に「オンプレミスのCRM」を使い続けるのと同義だ" },
-          ],
-        },
-        {
-          type: "callout",
-          tone: "accent",
-          title: "Signs AI の宣言",
-          text: "No Spreadsheet for Org Management. 組織の健康状態を、月次・自動・AI分析で経営の意思決定に接続する。",
-        },
-      ],
-    },
-    {
-      kicker: "02 ／ Org 360",
-      title: "Org 360：組織の全貌を一つの画面で把握する",
-      blocks: [
-        {
-          type: "steps",
-          items: [
-            { tag: "KPI", title: "定量", desc: "売上・商談数・解約率 → 経営の意思決定に直結" },
-            { tag: "Voice", title: "定性", desc: "11問のエンゲージメントスコア → マネジメントの行動指針" },
-            { tag: "Policy", title: "文脈", desc: "経営方針・今期優先事項 → 現場の動き方を規定" },
-          ],
-        },
-        {
-          type: "callout",
-          tone: "accent",
-          text: "3層を統合しなければ組織管理に意味はない。AIが「今何が起きていて、次に何をすべきか」を出す。",
-        },
-      ],
-    },
-    {
-      kicker: "03 ／ V2MOM",
-      title: "V2MOM：Signs AI の存在意義",
-      blocks: [
-        {
-          type: "callout",
-          tone: "accent",
-          title: "Vision",
-          text: "すべての組織に、体温を持たせる。KPIと現場の声が統合された意思決定が、すべての経営者の手に届く世界。",
-        },
-        {
-          type: "bullets",
-          items: [
-            { label: "Values", text: "透明性・先手・人への敬意" },
-            { label: "Methods", text: "3層統合・セマンティックレイヤー・Slack参謀チャンネル" },
-            { label: "Obstacles", text: "心理的抵抗→Freeで体験 / 移行コスト→並行運用 / 信頼不足→根拠開示" },
-            { label: "Measures", text: "Free転換率 / NRR 120%以上 / AI診断実行回数" },
-          ],
-        },
-      ],
-    },
-    {
-      kicker: "04 ／ カスタマーサクセス",
-      title: "カスタマーサクセスファースト設計",
-      blocks: [
-        {
-          type: "steps",
-          items: [
-            { tag: "STEP 1", title: "Onboard", desc: "初月：KPIとアンケートを設定。組織のベースライン体温を測定", kpi: "回答率70%以上" },
-            { tag: "STEP 2", title: "Activate", desc: "2〜3ヶ月：AI診断を経営会議・マネージャーMTGに組み込む", kpi: "意思決定で参照される" },
-            { tag: "STEP 3", title: "Value", desc: "4〜6ヶ月：施策の前後比較で因果が見え始める", kpi: "効いた/効かないを数字で言える" },
-            { tag: "STEP 4", title: "Habit", desc: "7〜12ヶ月：月次運用が習慣化。セマンティックレイヤーに方針が蓄積", kpi: "スイッチングコスト > 代替価値" },
-            { tag: "STEP 5", title: "Expand", desc: "1年以降：部署数・ユーザー数が拡大。Pro移行・他部門展開", kpi: "NRR 120%超" },
-          ],
-        },
-      ],
-    },
-    {
-      kicker: "05 ／ 事業モデル",
-      title: "SaaS収益モデル：Land and Expand",
-      blocks: [
-        {
-          type: "table",
-          headers: ["フェーズ", "プラン", "トリガー"],
-          rows: [
-            ["Land", "Free", "現状スキャン・兆候の発見"],
-            ["Expand 1", "Standard", "「なぜ？」を深掘り・施策効果を追う"],
-            ["Expand 2", "Pro", "全社統合・人事戦略・ROI管理"],
-            ["Expand 3", "Enterprise", "グループ会社・多拠点展開"],
-          ],
-        },
         {
           type: "metrics",
           items: [
-            { value: "25%", label: "Free→有料転換率" },
-            { value: "175万円", label: "MRR（100社時点）" },
-            { value: "120%+", label: "NRR" },
-            { value: "3%以下", label: "月次チャーン率" },
+            { value: "▲43%", label: "離職率（採用予算が縮小）" },
+            { value: "+23%", label: "生産性（採用せず解決）" },
+            { value: "▲81%", label: "欠勤率（実質稼働率↑）" },
+            { value: "▲18%", label: "品質不良（手戻り↓）" },
           ],
+        },
+        {
+          type: "callout",
+          tone: "accent",
+          text: "組織の体温を1度上げることは、採用計画を1件見直すよりも人事予算への効果が大きい。採用は「組織が健康な前提」でこそ機能する。",
         },
       ],
     },
     {
-      kicker: "06 ／ Trust",
-      title: "Trust as Foundation：なぜ信頼できるか",
+      kicker: "05 ／ もたらす変化",
+      title: "Signs AIが人事にもたらす3つの変化",
       blocks: [
         {
-          type: "bullets",
+          type: "steps",
           items: [
-            { label: "セキュリティ", text: "Row Level Security・会社IDベースのデータ分離・役割別アクセス制御" },
-            { label: "AIの透明性", text: "診断には必ず根拠データを提示。断定せず「提言」を出す。文脈はユーザーが完全管理" },
-            { label: "プライバシー", text: "回答は個人を特定しない集計ベース（部署単位の最小集計）" },
+            {
+              tag: "①",
+              title: "勘と経験 → データと根拠",
+              desc: "「どの部署の・何が・どう悪いか」を具体的な言葉で経営層に報告できる",
+            },
+            {
+              tag: "②",
+              title: "施策の因果を可視化",
+              desc: "実施月をマークし前後の変化を追う。予算申請がエビデンスで語れる武器になる",
+            },
+            {
+              tag: "③",
+              title: "採用か組織改善かの判断軸",
+              desc: "採用を進める判断も止める判断も、数字で説明できる人事になれる",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      kicker: "06 ／ 運用",
+      title: "月次運用フロー（人事担当者の動き方）",
+      blocks: [
+        {
+          type: "steps",
+          items: [
+            { tag: "月初", title: "KPI入力", desc: "前月の売上・商談数・解約率などを記録" },
+            { tag: "月中", title: "アンケート配布", desc: "URLを全社員へ配布。回答は3〜5分" },
+            { tag: "月末", title: "集計実行", desc: "「集計を実行」でAIが診断を生成" },
+            { tag: "翌月頭", title: "レポート共有", desc: "経営会議・マネージャーMTGに診断を共有" },
           ],
         },
         {
           type: "callout",
           tone: "accent",
-          text: "組織の内部データという最もセンシティブな情報を扱う。Trust（信頼）は Signs AI にとって死活問題だ。",
+          text: "運用工数は月あたり約1〜2時間。人事専任でなくても回せる設計。",
         },
       ],
     },
     {
-      kicker: "07 ／ Slack参謀",
-      title: "Slack参謀チャンネル：AIが「日常」に溶け込む",
+      kicker: "07 ／ 利益を出す人事",
+      title: "人事がSigns AIで「利益を出す」とは",
       blocks: [
         {
-          type: "code",
-          text: `📢 #signs-ai-営業部
-
-【今月の診断サマリー】
-✅ KPI達成率：88%（先月比 +5pt）
-⚠️ エンゲージメント：62pt（3ヶ月連続低下）
-
-🤖 AIの提言：
-「KPIは改善していますが、エンゲージメント低下が継続中。
- 成果を出すメンバーほど疲弊している可能性があります。
- 今月は1on1の頻度を上げ、達成者への感謝表明を意識してください。」`,
+          type: "lead",
+          text: "人事は「コスト部門」ではない。生産性と定着率を動かし、利益に直結できる部門だ。",
         },
         {
-          type: "callout",
-          tone: "accent",
-          text: "ツールを開く必要がない。AIが日常の場所（Slack）に来る——これが定着率を高める最大の仕掛けだ。",
+          type: "table",
+          highlightLastCol: true,
+          headers: ["これまでの人事", "Signs AIを使った人事"],
+          rows: [
+            ["採用要望が来たら動く（受け身）", "組織体温を見て先手を打つ（能動）"],
+            ["施策効果を感覚で語る", "前後をデータで比較・報告する"],
+            ["離職してから原因を探る", "離職の予兆を3ヶ月前に察知する"],
+            ["経営会議でROIを説明できない", "施策効果を数字で経営に報告する"],
+          ],
         },
       ],
     },
     {
       kicker: "08 ／ ROI",
-      title: "ROI：投資対効果の「ストーリー」で語る",
+      title: "投資対効果（人事視点のROI試算）",
       blocks: [
         {
-          type: "table",
-          headers: ["項目", "金額"],
-          rows: [
-            ["離職抑制コスト削減（2名分）", "+600万円"],
-            ["Signs AI 年間費用（Pro）", "▲135万円"],
-            ["純効果", "+465万円（ROI 約4.4倍）"],
+          type: "metrics",
+          items: [
+            { value: "+687万円", label: "効果合計 / 年" },
+            { value: "▲75万円", label: "年間費用（Standard）" },
+            { value: "約9倍", label: "年間ROI（純効果+612万円）" },
+            { value: "4倍", label: "離職1名抑制で回収" },
           ],
         },
         {
           type: "callout",
           tone: "accent",
-          text: "ケースA：急成長SaaS（150名）。離職リスクのある2名を3ヶ月前に検知→介入→離職ゼロで次期を終えた。",
+          text: "前提：従業員100名・年間離職率10%・離職コスト300万円/人。採用1件を正しく止めるだけで年間費用の4倍を回収——これが「利益を出す人事」の入口だ。",
         },
       ],
     },
     {
-      kicker: "09 ／ Ohana",
-      title: "「Ohana」モデル：全ステークホルダーへの価値",
+      kicker: "09 ／ プラン",
+      title: "プラン・はじめ方",
       blocks: [
         {
           type: "table",
-          headers: ["ステークホルダー", "Signs AI が提供する価値"],
+          headers: ["プラン", "月額", "最低契約", "こんな企業に"],
           rows: [
-            ["経営者", "組織リスクの先行把握・ROIある意思決定"],
-            ["人事 / HRBP", "施策効果の証明・経営への発言権"],
-            ["マネージャー", "孤独なマネジメントにAI参謀が伴走"],
-            ["従業員", "自分の声が組織改善につながる実感"],
-            ["投資家・株主", "人的資本の定量管理と将来予測可能性"],
+            ["Free（30日間）", "無料", "なし", "まず組織の現状を知りたい"],
+            ["Standard", "5万円", "3ヶ月", "部署3〜5つ・効果検証したい"],
+            ["Pro", "10万円", "3ヶ月", "全社統合・経営と連動させたい"],
           ],
         },
         {
           type: "callout",
           tone: "accent",
-          text: "組織が健全であることが、すべてのステークホルダーへの最大の価値提供だ。",
+          text: "まずはFreeで、自社の組織体温を測るところから。3ヶ月後「どこが冷えているか」が可視化され、次のアクションが明確になる。",
         },
       ],
     },
     {
       kicker: "10 ／ Closing",
-      title: "ベニオフからのメッセージ",
+      title: "人事担当者へのメッセージ",
       blocks: [
         {
-          type: "quote",
-          text: "The business of business is improving the state of the world.",
-          author: "Marc Benioff",
+          type: "lead",
+          text: "「人事の成果を売上に換算できない」もどかしさは、正しい。",
         },
         {
           type: "callout",
           tone: "accent",
-          text: "KPIを追うだけの経営から、「組織の体温を持った経営」へ。その転換を今日始める最もシンプルな第一歩がFreeプランだ。",
+          text: "価値がないのではない。翻訳する仕組みがなかっただけだ。組織の体温を上げることが採用費を削り、生産性を高め、利益に直結する。Signs AI は、あなたが「利益を出す人事」になるためのインフラだ。",
         },
       ],
     },
   ],
 };
 
-export const decks: Deck[] = [executive, kotler, benioff];
+export const decks: Deck[] = [executive, hr];
 
 export const decksByCategory: { category: string; decks: Deck[] }[] = decks.reduce(
   (acc, deck) => {
