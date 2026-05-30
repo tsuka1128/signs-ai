@@ -3,10 +3,13 @@
 import React from "react";
 import type { Block } from "../_data/proposals";
 
-/** 1スライド分のブロック配列をレンダリング */
+/**
+ * 16:9スライドの右パネル用ブロックレンダラー。
+ * コンパクトなタイポグラフィとスペーシングで、右パネルに収まるよう設計。
+ */
 export function SlideBlocks({ blocks, accent }: { blocks: Block[]; accent: string }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {blocks.map((block, i) => (
         <BlockView key={i} block={block} accent={accent} />
       ))}
@@ -16,26 +19,31 @@ export function SlideBlocks({ blocks, accent }: { blocks: Block[]; accent: strin
 
 function BlockView({ block, accent }: { block: Block; accent: string }) {
   switch (block.type) {
+    /* ── リード文 ── */
     case "lead":
       return (
         <p
-          className="text-xl md:text-2xl font-bold leading-relaxed text-slate-800 border-l-4 pl-5"
+          className="border-l-[3px] pl-4 text-base font-bold leading-snug text-slate-800"
           style={{ borderColor: accent }}
         >
           {block.text}
         </p>
       );
 
+    /* ── 段落 ── */
     case "paragraph":
-      return <p className="text-[15px] md:text-base leading-relaxed text-slate-600">{block.text}</p>;
+      return (
+        <p className="text-sm leading-relaxed text-slate-500">{block.text}</p>
+      );
 
+    /* ── 箇条書き ── */
     case "bullets":
       return (
-        <ul className="space-y-3">
+        <ul className="space-y-2">
           {block.items.map((item, i) => (
-            <li key={i} className="flex gap-3 text-[15px] leading-relaxed text-slate-700">
+            <li key={i} className="flex gap-2.5 text-sm leading-relaxed text-slate-700">
               <span
-                className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full"
+                className="mt-[6px] h-[6px] w-[6px] flex-shrink-0 rounded-full"
                 style={{ background: accent }}
               />
               <span>
@@ -49,10 +57,11 @@ function BlockView({ block, accent }: { block: Block; accent: string }) {
         </ul>
       );
 
+    /* ── テーブル ── */
     case "table":
       return (
-        <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
-          <table className="w-full text-left text-[13px] md:text-sm">
+        <div className="overflow-hidden rounded-lg border border-slate-200 shadow-sm">
+          <table className="w-full text-left text-xs">
             <thead>
               <tr className="bg-slate-50">
                 {block.headers.map((h, i) => {
@@ -60,7 +69,7 @@ function BlockView({ block, accent }: { block: Block; accent: string }) {
                   return (
                     <th
                       key={i}
-                      className="px-4 py-3 font-bold text-slate-700"
+                      className="px-3 py-2 font-bold text-slate-700"
                       style={
                         block.highlightLastCol && isLast
                           ? { background: accent, color: "#fff" }
@@ -78,14 +87,15 @@ function BlockView({ block, accent }: { block: Block; accent: string }) {
                 <tr key={ri} className="border-t border-slate-100">
                   {row.map((cell, ci) => {
                     const isLast = ci === row.length - 1;
-                    const isHead = ci === 0;
                     return (
                       <td
                         key={ci}
-                        className={`px-4 py-3 ${isHead ? "font-semibold text-slate-800" : "text-slate-600"}`}
+                        className={`px-3 py-2 ${
+                          ci === 0 ? "font-semibold text-slate-800" : "text-slate-600"
+                        }`}
                         style={
                           block.highlightLastCol && isLast
-                            ? { background: `${accent}14`, fontWeight: 700, color: "#0f172a" }
+                            ? { background: `${accent}18`, fontWeight: 700, color: "#0f172a" }
                             : undefined
                         }
                       >
@@ -100,44 +110,46 @@ function BlockView({ block, accent }: { block: Block; accent: string }) {
         </div>
       );
 
+    /* ── メトリクスカード ── */
     case "metrics":
       return (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {block.items.map((m, i) => (
             <div
               key={i}
-              className="rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-3 text-center shadow-sm"
             >
-              <div className="text-2xl md:text-3xl font-extrabold" style={{ color: accent }}>
+              <p className="text-[22px] font-extrabold leading-none" style={{ color: accent }}>
                 {m.value}
-              </div>
-              <div className="mt-1 text-xs text-slate-500">{m.label}</div>
+              </p>
+              <p className="mt-1 text-[10px] leading-tight text-slate-500">{m.label}</p>
             </div>
           ))}
         </div>
       );
 
+    /* ── ステップ ── */
     case "steps":
       return (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {block.items.map((s, i) => (
             <div
               key={i}
-              className="flex gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+              className="flex gap-2.5 rounded-lg border border-slate-200 bg-white px-3 py-2.5 shadow-sm"
             >
               <div
-                className="flex h-fit flex-shrink-0 items-center rounded-lg px-3 py-1 text-xs font-bold text-white"
+                className="flex-shrink-0 self-start rounded-md px-2 py-0.5 text-[10px] font-bold text-white leading-5"
                 style={{ background: accent }}
               >
                 {s.tag}
               </div>
               <div className="min-w-0">
-                <div className="font-bold text-slate-900">{s.title}</div>
-                <div className="mt-0.5 text-sm leading-relaxed text-slate-600">{s.desc}</div>
+                <p className="text-[13px] font-bold text-slate-900">{s.title}</p>
+                <p className="text-[11px] leading-relaxed text-slate-500">{s.desc}</p>
                 {s.kpi && (
-                  <div className="mt-1.5 inline-block rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
-                    成功指標：{s.kpi}
-                  </div>
+                  <span className="mt-1 inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-medium text-slate-400">
+                    {s.kpi}
+                  </span>
                 )}
               </div>
             </div>
@@ -145,40 +157,43 @@ function BlockView({ block, accent }: { block: Block; accent: string }) {
         </div>
       );
 
+    /* ── 引用 ── */
     case "quote":
       return (
-        <blockquote className="rounded-xl bg-slate-900 p-5 md:p-6">
-          <p className="text-base md:text-lg font-medium italic leading-relaxed text-white">
-            “{block.text}”
+        <blockquote className="rounded-xl bg-slate-900 px-5 py-4">
+          <p className="text-sm font-medium italic leading-relaxed text-white">
+            &ldquo;{block.text}&rdquo;
           </p>
           {block.author && (
-            <footer className="mt-2 text-sm" style={{ color: accent }}>
+            <footer className="mt-2 text-xs font-semibold" style={{ color: accent }}>
               — {block.author}
             </footer>
           )}
         </blockquote>
       );
 
+    /* ── コールアウト ── */
     case "callout":
       return (
         <div
-          className="rounded-xl border-l-4 p-4 md:p-5"
+          className="rounded-lg border-l-[3px] px-4 py-3"
           style={{
             borderColor: block.tone === "warn" ? "#F59E0B" : accent,
-            background: block.tone === "warn" ? "#FFFBEB" : `${accent}10`,
+            background: block.tone === "warn" ? "#FFFBEB" : `${accent}0f`,
           }}
         >
           {block.title && (
-            <div className="mb-1 text-sm font-bold text-slate-900">{block.title}</div>
+            <p className="mb-1 text-xs font-bold text-slate-900">{block.title}</p>
           )}
-          <p className="text-[15px] leading-relaxed text-slate-700">{block.text}</p>
+          <p className="text-sm leading-relaxed text-slate-700">{block.text}</p>
         </div>
       );
 
+    /* ── コードブロック ── */
     case "code":
       return (
-        <pre className="overflow-x-auto rounded-xl bg-slate-900 p-4 md:p-5 text-[12px] md:text-[13px] leading-relaxed text-slate-100">
-          <code className="font-mono whitespace-pre">{block.text}</code>
+        <pre className="overflow-x-auto rounded-lg bg-slate-900 p-3 text-[11px] leading-relaxed text-slate-200">
+          <code className="whitespace-pre font-mono">{block.text}</code>
         </pre>
       );
 
