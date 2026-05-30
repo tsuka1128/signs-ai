@@ -1,29 +1,42 @@
 "use client";
 
 import React from "react";
+import { motion } from "framer-motion";
 import type { Block } from "../_data/proposals";
 
-/**
- * 16:9スライドの右パネル用ブロックレンダラー。
- * コンパクトなタイポグラフィとスペーシングで、右パネルに収まるよう設計。
- */
+const item = {
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.32, ease: "easeOut" } },
+};
+
 export function SlideBlocks({ blocks, accent }: { blocks: Block[]; accent: string }) {
   return (
-    <div className="space-y-3">
+    <motion.div
+      className="space-y-3"
+      initial="hidden"
+      animate="show"
+      variants={{
+        hidden: {},
+        show: { transition: { staggerChildren: 0.07, delayChildren: 0.14 } },
+      }}
+    >
       {blocks.map((block, i) => (
-        <BlockView key={i} block={block} accent={accent} />
+        <motion.div key={i} variants={item}>
+          <BlockView block={block} accent={accent} />
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 }
 
 function BlockView({ block, accent }: { block: Block; accent: string }) {
   switch (block.type) {
+
     /* ── リード文 ── */
     case "lead":
       return (
         <p
-          className="border-l-[3px] pl-4 text-base font-bold leading-snug text-slate-800"
+          className="border-l-[4px] pl-4 text-[15px] font-bold leading-snug text-slate-800"
           style={{ borderColor: accent }}
         >
           {block.text}
@@ -117,12 +130,15 @@ function BlockView({ block, accent }: { block: Block; accent: string }) {
           {block.items.map((m, i) => (
             <div
               key={i}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-3 text-center shadow-sm"
+              className="rounded-xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/60 px-3 py-3.5 text-center shadow-sm"
             >
-              <p className="text-[22px] font-extrabold leading-none" style={{ color: accent }}>
+              <p
+                className="text-[30px] font-extrabold leading-none tracking-tight"
+                style={{ color: accent }}
+              >
                 {m.value}
               </p>
-              <p className="mt-1 text-[10px] leading-tight text-slate-500">{m.label}</p>
+              <p className="mt-1.5 text-[10px] leading-tight text-slate-500">{m.label}</p>
             </div>
           ))}
         </div>
@@ -144,7 +160,7 @@ function BlockView({ block, accent }: { block: Block; accent: string }) {
                 {s.tag}
               </div>
               <div className="min-w-0">
-                <p className="text-[13px] font-bold text-slate-900">{s.title}</p>
+                <p className="text-sm font-bold text-slate-900">{s.title}</p>
                 <p className="text-[11px] leading-relaxed text-slate-500">{s.desc}</p>
                 {s.kpi && (
                   <span className="mt-1 inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-medium text-slate-400">
@@ -179,7 +195,7 @@ function BlockView({ block, accent }: { block: Block; accent: string }) {
           className="rounded-lg border-l-[3px] px-4 py-3"
           style={{
             borderColor: block.tone === "warn" ? "#F59E0B" : accent,
-            background: block.tone === "warn" ? "#FFFBEB" : `${accent}0f`,
+            background: block.tone === "warn" ? "#FFFBEB" : `${accent}0d`,
           }}
         >
           {block.title && (
