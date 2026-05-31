@@ -124,9 +124,10 @@ export default function DeckHub() {
     >
 
       {/* ════════════════════════════════
-           SIDEBAR — desktop only（共有ビューでは非表示）
+           SIDEBAR — desktop only
+           共有ビューではデッキ切替を隠し、目次は残す
           ════════════════════════════════ */}
-      <aside className={`${clean ? "hidden" : "hidden md:flex"} w-64 flex-shrink-0 flex-col border-r border-slate-200/60 bg-white/75 backdrop-blur-2xl`}>
+      <aside className="hidden w-64 flex-shrink-0 flex-col border-r border-slate-200/60 bg-white/75 backdrop-blur-2xl md:flex">
 
         {/* ロゴエリア */}
         <div className="relative overflow-hidden border-b border-slate-200/60 px-5 py-4">
@@ -155,7 +156,8 @@ export default function DeckHub() {
           </div>
         </div>
 
-        {/* デッキ切替 */}
+        {/* デッキ切替（共有ビューでは非表示） */}
+        {!clean && (
         <div className="px-3 pt-4">
           <p className="px-2 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
             提案資料を選ぶ
@@ -210,6 +212,7 @@ export default function DeckHub() {
             })}
           </div>
         </div>
+        )}
 
         {/* 目次 */}
         <div className="mt-4 flex min-h-0 flex-1 flex-col border-t border-slate-200/60 pt-3">
