@@ -22,3 +22,52 @@ body {
     @apply px-4 py-2 bg-teal text-white rounded-lg font-semibold hover:bg-teal/90 transition-all;
   }
 }
+
+/* ──────────────────────────────────────────
+   提案デッキ PDF出力（印刷）用スタイル
+   ・1スライド = 横向き1ページ（16:9）
+   ・画面では .print-only を隠し、印刷時のみ表示
+   ────────────────────────────────────────── */
+.print-only {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: 297mm 167mm; /* 16:9 ランドスケープ */
+    margin: 0;
+  }
+
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  /* 画面UIを隠し、印刷専用レイアウトのみ表示 */
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+
+  /* 背景色・アクセントカラーをそのまま印刷 */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .print-slide {
+    width: 297mm;
+    height: 167mm;
+    overflow: hidden;
+    break-after: page;
+    page-break-after: always;
+  }
+  .print-slide:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+}
