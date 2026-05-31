@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Download, Share2, Check } from "lucide-react";
 import { decks, getDeck, type Deck, type Slide } from "../_data/proposals";
 import { SlideBlocks } from "./SlideBlocks";
@@ -397,32 +397,28 @@ export default function DeckHub() {
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
           >
-            <AnimatePresence mode="wait" custom={dir}>
-              <motion.div
-                key={`mob-${deck.id}-${slide}`}
-                custom={dir}
-                initial={{ opacity: 0, x: dir * 36, scale: 0.98 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: dir * -36, scale: 0.98 }}
-                transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
-                className="absolute inset-0 overflow-y-auto rounded-2xl bg-white px-5 py-6 shadow-[0_8px_40px_rgba(15,23,42,0.1)] ring-1 ring-slate-200/60"
+            <motion.div
+              key={`mob-${deck.id}-${slide}`}
+              initial={{ opacity: 0, x: dir * 36, scale: 0.98 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
+              className="absolute inset-0 overflow-y-auto rounded-2xl bg-white px-5 py-6 shadow-[0_8px_40px_rgba(15,23,42,0.1)] ring-1 ring-slate-200/60"
+            >
+              <div
+                className="absolute left-0 right-0 top-0 h-[3px] rounded-t-2xl"
+                style={{ background: `linear-gradient(90deg, ${deck.accent}, ${deck.accent}66)` }}
+              />
+              <p
+                className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.18em]"
+                style={{ color: deck.accent }}
               >
-                <div
-                  className="absolute left-0 right-0 top-0 h-[3px] rounded-t-2xl"
-                  style={{ background: `linear-gradient(90deg, ${deck.accent}, ${deck.accent}66)` }}
-                />
-                <p
-                  className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.18em]"
-                  style={{ color: deck.accent }}
-                >
-                  {current.kicker}
-                </p>
-                <h2 className="mb-4 text-[18px] font-extrabold leading-snug text-slate-900">
-                  {current.title}
-                </h2>
-                <SlideBlocks blocks={current.blocks} accent={deck.accent} />
-              </motion.div>
-            </AnimatePresence>
+                {current.kicker}
+              </p>
+              <h2 className="mb-4 text-[18px] font-extrabold leading-snug text-slate-900">
+                {current.title}
+              </h2>
+              <SlideBlocks blocks={current.blocks} accent={deck.accent} />
+            </motion.div>
           </div>
 
           <div className="flex flex-shrink-0 items-center justify-between px-4 pb-3 pt-1">
@@ -478,47 +474,43 @@ export default function DeckHub() {
             </button>
 
             <div className="aspect-video w-full overflow-hidden rounded-2xl bg-white shadow-[0_24px_64px_rgba(15,23,42,0.15)] ring-1 ring-slate-200/60">
-              <AnimatePresence mode="wait" custom={dir}>
-                <motion.div
-                  key={`${deck.id}-${slide}`}
-                  custom={dir}
-                  initial={{ opacity: 0, x: dir * 48, scale: 0.985 }}
-                  animate={{ opacity: 1, x: 0, scale: 1 }}
-                  exit={{ opacity: 0, x: dir * -48, scale: 0.985 }}
-                  transition={{ duration: 0.28, ease: [0.2, 0.8, 0.2, 1] }}
-                  className="flex h-full"
-                >
-                  <LeftPanel deck={deck} slide={current} slideIndex={slide} total={total} />
+              <motion.div
+                key={`${deck.id}-${slide}`}
+                initial={{ opacity: 0, x: dir * 48, scale: 0.985 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                transition={{ duration: 0.28, ease: [0.2, 0.8, 0.2, 1] }}
+                className="flex h-full"
+              >
+                <LeftPanel deck={deck} slide={current} slideIndex={slide} total={total} />
 
-                  <div className="relative flex flex-1 flex-col justify-center overflow-hidden bg-white px-9 py-7">
-                    <div
-                      className="absolute left-0 right-0 top-0 h-[3px]"
-                      style={{ background: `linear-gradient(90deg, ${deck.accent}, ${deck.accent}55)` }}
-                    />
-                    <p
-                      className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.2em]"
-                      style={{ color: deck.accent }}
-                    >
-                      {current.kicker}
-                    </p>
-                    <h2 className="mb-4 text-[17px] font-extrabold leading-snug text-slate-900 xl:text-[18px] 2xl:text-xl">
-                      {current.title}
-                    </h2>
-                    <div className="min-h-0 flex-1 overflow-hidden">
-                      <SlideBlocks blocks={current.blocks} accent={deck.accent} />
-                    </div>
-                    <div className="absolute bottom-2.5 right-4 flex items-center gap-1.5">
-                      <span
-                        className="h-1 w-1 rounded-full"
-                        style={{ background: deck.accent }}
-                      />
-                      <span className="text-[9px] font-semibold tracking-wider text-slate-300 uppercase">
-                        Signs AI
-                      </span>
-                    </div>
+                <div className="relative flex flex-1 flex-col justify-center overflow-hidden bg-white px-9 py-7">
+                  <div
+                    className="absolute left-0 right-0 top-0 h-[3px]"
+                    style={{ background: `linear-gradient(90deg, ${deck.accent}, ${deck.accent}55)` }}
+                  />
+                  <p
+                    className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.2em]"
+                    style={{ color: deck.accent }}
+                  >
+                    {current.kicker}
+                  </p>
+                  <h2 className="mb-4 text-[17px] font-extrabold leading-snug text-slate-900 xl:text-[18px] 2xl:text-xl">
+                    {current.title}
+                  </h2>
+                  <div className="min-h-0 flex-1 overflow-hidden">
+                    <SlideBlocks blocks={current.blocks} accent={deck.accent} />
                   </div>
-                </motion.div>
-              </AnimatePresence>
+                  <div className="absolute bottom-2.5 right-4 flex items-center gap-1.5">
+                    <span
+                      className="h-1 w-1 rounded-full"
+                      style={{ background: deck.accent }}
+                    />
+                    <span className="text-[9px] font-semibold tracking-wider text-slate-300 uppercase">
+                      Signs AI
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
             </div>
 
             <button
