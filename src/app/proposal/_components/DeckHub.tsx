@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Share2, Check } from "lucide-react";
 import { decks, getDeck, type Deck, type Slide } from "../_data/proposals";
 import { SlideBlocks } from "./SlideBlocks";
 
@@ -21,6 +21,8 @@ export default function DeckHub() {
   const [deckId, setDeckId] = useState<string>(DEFAULT_DECK.id);
   const [slide, setSlide] = useState(0);
   const [dir, setDir] = useState(1);
+  const [clean, setClean] = useState(false);
+  const [copied, setCopied] = useState(false);
   const thumbStripRef = useRef<HTMLDivElement>(null);
   const tocRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
@@ -33,6 +35,8 @@ export default function DeckHub() {
   useEffect(() => {
     const { deckId: d, slide: s } = parseHash();
     if (getDeck(d)) { setDeckId(d); setSlide(s); }
+    const params = new URLSearchParams(window.location.search);
+    setClean(params.get("share") === "1" || params.has("present"));
     const onHash = () => {
       const p = parseHash();
       if (getDeck(p.deckId)) { setDeckId(p.deckId); setSlide(p.slide); }
@@ -68,6 +72,27 @@ export default function DeckHub() {
     setDir(1); setDeckId(id); setSlide(0);
   }, []);
 
+  const handlePrint = useCallback(() => {
+    window.print();
+  }, []);
+
+  const handleShare = useCallback(async () => {
+    const url = `${window.location.origin}${window.location.pathname}?share=1${window.location.hash || `#/d/${deckId}/${slide + 1}`}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // クリップボードAPIが使えない場合のフォールバック
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
+  }, [deckId, slide]);
+
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
   }, []);
@@ -92,15 +117,16 @@ export default function DeckHub() {
   }, [go, slide]);
 
   return (
+    <>
     <div
-      className="flex h-screen overflow-hidden select-none"
+      className="flex h-screen overflow-hidden select-none no-print"
       style={{ background: "linear-gradient(135deg, #F0F9F8 0%, #DCEEFB 45%, #E8F7F1 100%)" }}
     >
 
       {/* ════════════════════════════════
-           SIDEBAR — desktop only
+           SIDEBAR — desktop only（共有ビューでは非表示）
           ════════════════════════════════ */}
-      <aside className="hidden md:flex w-64 flex-shrink-0 flex-col border-r border-slate-200/60 bg-white/75 backdrop-blur-2xl">
+      <aside className={`${clean ? "hidden" : "hidden md:flex"} w-64 flex-shrink-0 flex-col border-r border-slate-200/60 bg-white/75 backdrop-blur-2xl`}>
 
         {/* ロゴエリア */}
         <div className="relative overflow-hidden border-b border-slate-200/60 px-5 py-4">
@@ -260,24 +286,48 @@ export default function DeckHub() {
           >
             S
           </div>
-          <nav className="flex flex-1 min-w-0 gap-1.5 mx-1">
-            {decks.map((d) => {
-              const isActive = d.id === deckId;
-              return (
-                <button
-                  key={d.id}
-                  onClick={() => selectDeck(d.id)}
-                  className={`flex min-w-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold truncate transition-all ${
-                    isActive ? "text-white" : "bg-white text-slate-500 shadow-sm ring-1 ring-slate-200/60"
-                  }`}
-                  style={isActive ? { background: d.accent } : undefined}
-                >
-                  <span className="flex-shrink-0">{d.icon}</span>
-                  <span className="truncate">{d.category}</span>
-                </button>
-              );
-            })}
-          </nav>
+          {clean ? (
+            <span className="flex-1 min-w-0 mx-1 truncate text-[13px] font-extrabold text-slate-900">
+              {deck.title}
+            </span>
+          ) : (
+            <nav className="flex flex-1 min-w-0 gap-1.5 mx-1">
+              {decks.map((d) => {
+                const isActive = d.id === deckId;
+                return (
+                  <button
+                    key={d.id}
+                    onClick={() => selectDeck(d.id)}
+                    className={`flex min-w-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold truncate transition-all ${
+                      isActive ? "text-white" : "bg-white text-slate-500 shadow-sm ring-1 ring-slate-200/60"
+                    }`}
+                    style={isActive ? { background: d.accent } : undefined}
+                  >
+                    <span className="flex-shrink-0">{d.icon}</span>
+                    <span className="truncate">{d.category}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          )}
+          {!clean && (
+            <div className="flex flex-shrink-0 items-center gap-1">
+              <button
+                onClick={handleShare}
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-slate-500 shadow-sm ring-1 ring-slate-200/60 transition active:scale-95"
+                aria-label="共有リンクをコピー"
+              >
+                {copied ? <Check size={14} className="text-emerald-500" /> : <Share2 size={14} />}
+              </button>
+              <button
+                onClick={handlePrint}
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-slate-500 shadow-sm ring-1 ring-slate-200/60 transition active:scale-95"
+                aria-label="PDFで保存"
+              >
+                <Download size={14} />
+              </button>
+            </div>
+          )}
           <div className="flex-shrink-0 font-mono text-xs">
             <span className="font-extrabold" style={{ color: deck.accent }}>
               {String(slide + 1).padStart(2, "0")}
@@ -297,7 +347,37 @@ export default function DeckHub() {
             </p>
             <h1 className="truncate text-[15px] font-extrabold text-slate-900">{deck.title}</h1>
           </div>
-          <div className="ml-auto flex items-baseline gap-0.5 font-mono flex-shrink-0">
+          {!clean && (
+            <div className="ml-auto flex flex-shrink-0 items-center gap-2">
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-[12px] font-bold text-slate-600 shadow-sm ring-1 ring-slate-200/70 transition hover:text-slate-900 hover:shadow active:scale-95"
+                aria-label="共有リンクをコピー"
+              >
+                {copied ? (
+                  <>
+                    <Check size={14} className="text-emerald-500" />
+                    <span className="text-emerald-600">コピー済み</span>
+                  </>
+                ) : (
+                  <>
+                    <Share2 size={14} />
+                    <span>共有</span>
+                  </>
+                )}
+              </button>
+              <button
+                onClick={handlePrint}
+                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-bold text-white shadow-sm transition hover:shadow active:scale-95"
+                style={{ background: deck.accent }}
+                aria-label="PDFで保存"
+              >
+                <Download size={14} />
+                <span>PDF</span>
+              </button>
+            </div>
+          )}
+          <div className={`${clean ? "ml-auto" : ""} flex items-baseline gap-0.5 font-mono flex-shrink-0`}>
             <span
               className="text-[26px] font-extrabold tabular-nums leading-none"
               style={{ color: deck.accent }}
@@ -473,6 +553,55 @@ export default function DeckHub() {
           </div>
         </div>
       </div>
+    </div>
+
+    {/* ════════════════════════════════
+         PRINT-ONLY — 全スライドをPDF用に展開
+         （画面では display:none、印刷/PDF時のみ表示）
+        ════════════════════════════════ */}
+    <PrintDeck deck={deck} />
+    </>
+  );
+}
+
+/* ─────────────────────────────────────────
+   PrintDeck — 印刷/PDF専用ビュー
+   ・現在のデッキの全スライドを 16:9 ページとして展開
+   ・1スライド = 1ページ（globals.css の @page / .print-slide 参照）
+  ───────────────────────────────────────── */
+function PrintDeck({ deck }: { deck: Deck }) {
+  const total = deck.slides.length;
+  return (
+    <div className="print-only">
+      {deck.slides.map((s, i) => (
+        <div key={i} className="print-slide flex">
+          <LeftPanel deck={deck} slide={s} slideIndex={i} total={total} />
+          <div className="relative flex flex-1 flex-col justify-center bg-white px-10 py-8">
+            <div
+              className="absolute left-0 right-0 top-0 h-[3px]"
+              style={{ background: `linear-gradient(90deg, ${deck.accent}, ${deck.accent}55)` }}
+            />
+            <p
+              className="mb-2 text-[11px] font-bold uppercase tracking-[0.2em]"
+              style={{ color: deck.accent }}
+            >
+              {s.kicker}
+            </p>
+            <h2 className="mb-5 text-[20px] font-extrabold leading-snug text-slate-900">
+              {s.title}
+            </h2>
+            <div className="flex-1">
+              <SlideBlocks blocks={s.blocks} accent={deck.accent} />
+            </div>
+            <div className="absolute bottom-3 right-5 flex items-center gap-1.5">
+              <span className="h-1 w-1 rounded-full" style={{ background: deck.accent }} />
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-300">
+                Signs AI
+              </span>
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
