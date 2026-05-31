@@ -9,6 +9,20 @@ const item: Variants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.32, ease: "easeOut" } },
 };
 
+/** テキスト中の **強調** をアクセント色の太字に変換する */
+function renderEmphasis(text: string, accent: string): React.ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((p, i) =>
+    p.startsWith("**") && p.endsWith("**") ? (
+      <span key={i} className="font-bold" style={{ color: accent }}>
+        {p.slice(2, -2)}
+      </span>
+    ) : (
+      <React.Fragment key={i}>{p}</React.Fragment>
+    ),
+  );
+}
+
 export function SlideBlocks({ blocks, accent }: { blocks: Block[]; accent: string }) {
   return (
     <motion.div
@@ -211,6 +225,84 @@ function BlockView({ block, accent }: { block: Block; accent: string }) {
         <pre className="overflow-x-auto rounded-lg bg-slate-900 p-3 text-[11px] leading-relaxed text-slate-200">
           <code className="whitespace-pre font-mono">{block.text}</code>
         </pre>
+      );
+
+    /* ── メタ情報の行（対象 / 場面 など） ── */
+    case "meta":
+      return (
+        <div className="flex flex-wrap gap-x-8 gap-y-2">
+          {block.items.map((m, i) => (
+            <div key={i}>
+              <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400">
+                {m.label}
+              </p>
+              <p className="text-[13px] font-bold text-slate-900">{m.value}</p>
+            </div>
+          ))}
+        </div>
+      );
+
+    /* ── 見出し付きセクション（○課題 / ●効果） ── */
+    case "section": {
+      const filled = block.marker !== "outline";
+      return (
+        <div>
+          <div className="mb-1.5 flex items-center gap-2">
+            <span
+              className="h-3.5 w-3.5 flex-shrink-0 rounded-full"
+              style={
+                filled
+                  ? { background: accent }
+                  : { boxShadow: `inset 0 0 0 2px ${accent}` }
+              }
+            />
+            <p className="text-[13px] font-extrabold text-slate-900">{block.title}</p>
+          </div>
+          <ul className="space-y-1 pl-[3px]">
+            {block.items.map((t, i) => (
+              <li
+                key={i}
+                className="flex gap-2 text-[12px] leading-relaxed text-slate-600"
+              >
+                <span
+                  className="mt-[8px] h-px w-2 flex-shrink-0"
+                  style={{ background: "#cbd5e1" }}
+                />
+                <span>{renderEmphasis(t, accent)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+
+    /* ── 連携チップ群（TECH STACK 相当） ── */
+    case "chips":
+      return (
+        <div>
+          {block.label && (
+            <p
+              className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.15em]"
+              style={{ color: accent }}
+            >
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ background: accent }}
+              />
+              {block.label}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-1.5">
+            {block.items.map((c, i) => (
+              <span
+                key={i}
+                className="rounded-full bg-slate-900 px-2.5 py-1 text-[10px] font-semibold text-white"
+              >
+                {c}
+              </span>
+            ))}
+          </div>
+        </div>
       );
 
     default:

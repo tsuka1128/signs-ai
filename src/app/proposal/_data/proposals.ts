@@ -20,7 +20,18 @@ export type Block =
   | { type: "steps"; items: { tag: string; title: string; desc: string; kpi?: string }[] }
   | { type: "quote"; text: string; author?: string }
   | { type: "callout"; tone?: "accent" | "warn"; title?: string; text: string }
-  | { type: "code"; text: string };
+  | { type: "code"; text: string }
+  /* ── 機能紹介スライド用（OSUSHIケーススタディ型） ── */
+  /** メタ情報の行（対象 / 場面 など、ラベル+値の組） */
+  | { type: "meta"; items: { label: string; value: string }[] }
+  /**
+   * 見出し付きセクション（○課題 / ●効果）。
+   * marker="outline" で白丸（課題）、省略時は塗り丸（効果）。
+   * items 内の **強調** はアクセント色の太字でレンダリングされる。
+   */
+  | { type: "section"; marker?: "outline" | "filled"; title: string; items: string[] }
+  /** 関連データ・連携チップ群（TECH STACK 相当） */
+  | { type: "chips"; label?: string; items: string[] };
 
 export interface Slide {
   kicker: string;
@@ -846,7 +857,437 @@ const whitepaper: Deck = {
   ],
 };
 
-export const decks: Deck[] = [executive, hr, whitepaper];
+/* ════════════════════════════════════════════════════════
+ *  DECK 4 ── 機能紹介（Product Tour）
+ *  ・1機能 = 1スライド。OSUSHIケーススタディ型のレイアウト
+ *  ・meta（対象/場面）→ lead（価値1行）→ section○課題 → section●効果 → chips（連携）
+ * ════════════════════════════════════════════════════════ */
+const featureTour: Deck = {
+  id: "feature-tour",
+  category: "機能紹介",
+  persona: "Signs AI 全機能ガイド",
+  personaEn: "Product Tour",
+  role: "Signs AI 機能紹介",
+  title: "Signs AI 機能紹介",
+  subtitle: "組織の体温を、すべての機能で。",
+  tagline: "KPI・現場の声・経営方針を統合する10の機能",
+  accent: "#F43F5E",
+  icon: "🧩",
+  slides: [
+    {
+      kicker: "01 ／ KPI管理",
+      title: "組織のKPI・KPI推移",
+      blocks: [
+        {
+          type: "meta",
+          items: [
+            { label: "対象", value: "経営・部門長" },
+            { label: "画面", value: "KPIダッシュボード" },
+          ],
+        },
+        {
+          type: "lead",
+          text: "部署ごとの月次実績を一元管理し、推移を時系列で追う。",
+        },
+        {
+          type: "section",
+          marker: "outline",
+          title: "こんな悩みに",
+          items: [
+            "数字が部署ごとにバラバラなシートへ散在している",
+            "前月比やトレンドが直感的に見えない",
+            "入力が手間で、記録が続かない",
+          ],
+        },
+        {
+          type: "section",
+          title: "この機能でできること",
+          items: [
+            "月次KPIを **数分** で入力・記録",
+            "部署×指標を **時系列グラフ** で可視化",
+            "第2軸での内訳分析にも対応",
+          ],
+        },
+        {
+          type: "chips",
+          label: "関連機能・データ",
+          items: ["組織のKPI", "KPI推移", "スプレッドシート入力"],
+        },
+      ],
+    },
+    {
+      kicker: "02 ／ 現場の声",
+      title: "ボイスチェック",
+      blocks: [
+        {
+          type: "meta",
+          items: [
+            { label: "対象", value: "全社員" },
+            { label: "頻度", value: "毎月・匿名" },
+          ],
+        },
+        {
+          type: "lead",
+          text: "現場の率直な声を、匿名アンケートで毎月収集する。",
+        },
+        {
+          type: "section",
+          marker: "outline",
+          title: "こんな悩みに",
+          items: [
+            "数字だけでは現場の温度が分からない",
+            "年1回のサーベイでは変化を捉えられない",
+            "本音がなかなか集まらない",
+          ],
+        },
+        {
+          type: "section",
+          title: "この機能でできること",
+          items: [
+            "URL配布で **3〜5分** ・匿名回答",
+            "独自設計の設問で組織の状態を定量化",
+            "毎月の定点観測で変化を追跡",
+          ],
+        },
+        {
+          type: "chips",
+          label: "関連機能・データ",
+          items: ["ボイスチェック", "匿名アンケート", "回答フォーム"],
+        },
+      ],
+    },
+    {
+      kicker: "03 ／ 可視化",
+      title: "マトリックス分析（温度×KPI）",
+      blocks: [
+        {
+          type: "meta",
+          items: [
+            { label: "対象", value: "経営・部門長" },
+            { label: "画面", value: "マトリックス" },
+          ],
+        },
+        {
+          type: "lead",
+          text: "温度×KPIの4象限で、“今すぐ手を打つべき部署”が一目でわかる。",
+        },
+        {
+          type: "section",
+          marker: "outline",
+          title: "こんな悩みに",
+          items: [
+            "KPI低迷の原因が人か組織か判別できない",
+            "温度低×KPI高の危険信号を見落とす",
+            "全社を俯瞰して優先順位がつけられない",
+          ],
+        },
+        {
+          type: "section",
+          title: "この機能でできること",
+          items: [
+            "全部署を **バブルチャート** でプロット",
+            "4象限ごとに **推奨アクション** を提示",
+            "時系列で象限の移動を追える",
+          ],
+        },
+        {
+          type: "chips",
+          label: "関連機能・データ",
+          items: ["マトリックス", "バブルチャート", "KPI×温度"],
+        },
+      ],
+    },
+    {
+      kicker: "04 ／ 体温",
+      title: "組織の体温",
+      blocks: [
+        {
+          type: "meta",
+          items: [
+            { label: "対象", value: "経営・人事" },
+            { label: "画面", value: "組織の体温" },
+          ],
+        },
+        {
+          type: "lead",
+          text: "組織のエンゲージメントを定点観測し、変化を可視化する。",
+        },
+        {
+          type: "section",
+          marker: "outline",
+          title: "こんな悩みに",
+          items: [
+            "エンゲージメントが感覚値でしか語れない",
+            "施策の効果を温度で測れない",
+            "部署間の温度差が見えない",
+          ],
+        },
+        {
+          type: "section",
+          title: "この機能でできること",
+          items: [
+            "部署別の **組織体温** をスコア化",
+            "月次の推移と前月比を表示",
+            "冷えている部署を早期に検知",
+          ],
+        },
+        {
+          type: "chips",
+          label: "関連機能・データ",
+          items: ["組織の体温", "エンゲージメント", "部署別スコア"],
+        },
+      ],
+    },
+    {
+      kicker: "05 ／ AI診断",
+      title: "AI組織診断・アクション",
+      blocks: [
+        {
+          type: "meta",
+          items: [
+            { label: "対象", value: "経営・部門長・人事" },
+            { label: "出力", value: "各層向けの提言" },
+          ],
+        },
+        {
+          type: "lead",
+          text: "KPI・現場の声・経営方針をAIが統合し、次の打ち手を提言する。",
+        },
+        {
+          type: "section",
+          marker: "outline",
+          title: "こんな悩みに",
+          items: [
+            "データはあるが「で、何をすべきか」が分からない",
+            "立場ごとに必要な示唆が異なる",
+            "分析に時間がかかる",
+          ],
+        },
+        {
+          type: "section",
+          title: "この機能でできること",
+          items: [
+            "3データ統合でAIが **自動診断**",
+            "経営／部門長／現場へ **役割別の提言**",
+            "「集計を実行」で即時に生成",
+          ],
+        },
+        {
+          type: "chips",
+          label: "関連機能・データ",
+          items: ["AI組織診断", "アクション", "Claude API"],
+        },
+      ],
+    },
+    {
+      kicker: "06 ／ 生産性",
+      title: "人件費・生産性分析",
+      blocks: [
+        {
+          type: "meta",
+          items: [
+            { label: "対象", value: "経営・経営企画" },
+            { label: "画面", value: "人件費分析" },
+          ],
+        },
+        {
+          type: "lead",
+          text: "部署ごとの「人数あたりの成果」を可視化する。",
+        },
+        {
+          type: "section",
+          marker: "outline",
+          title: "こんな悩みに",
+          items: [
+            "増員要望の妥当性が判断できない",
+            "部署の生産性を横比較できない",
+            "人件費と成果が結びつかない",
+          ],
+        },
+        {
+          type: "section",
+          title: "この機能でできること",
+          items: [
+            "部署別の **生産性** を算出・比較",
+            "人件費とKPIを突き合わせ",
+            "増員・再配置の **根拠** を提示",
+          ],
+        },
+        {
+          type: "chips",
+          label: "関連機能・データ",
+          items: ["人件費分析", "生産性", "労働分配"],
+        },
+      ],
+    },
+    {
+      kicker: "07 ／ 判断軸",
+      title: "組織方針・セマンティックレイヤー",
+      blocks: [
+        {
+          type: "meta",
+          items: [
+            { label: "対象", value: "経営・管理者" },
+            { label: "役割", value: "AIの判断軸" },
+          ],
+        },
+        {
+          type: "lead",
+          text: "経営方針や独自の指標定義を、AIの判断軸として投入する。",
+        },
+        {
+          type: "section",
+          marker: "outline",
+          title: "こんな悩みに",
+          items: [
+            "自社特有の文脈をAIが汲めない",
+            "指標の定義が人によって揺れる",
+            "方針と現場の打ち手がずれる",
+          ],
+        },
+        {
+          type: "section",
+          title: "この機能でできること",
+          items: [
+            "経営方針を **Policy** としてAIに投入",
+            "独自KPIの **意味づけ** を定義",
+            "運用するほど診断精度が向上",
+          ],
+        },
+        {
+          type: "chips",
+          label: "関連機能・データ",
+          items: ["組織方針", "セマンティックレイヤー", "Policy投入"],
+        },
+      ],
+    },
+    {
+      kicker: "08 ／ 効果測定",
+      title: "PDCA・施策効果測定",
+      blocks: [
+        {
+          type: "meta",
+          items: [
+            { label: "対象", value: "人事・部門長" },
+            { label: "場面", value: "施策の前後" },
+          ],
+        },
+        {
+          type: "lead",
+          text: "施策の前後で、KPIと体温の変化を検証する。",
+        },
+        {
+          type: "section",
+          marker: "outline",
+          title: "こんな悩みに",
+          items: [
+            "研修や制度改定が「やって終わり」になる",
+            "効果を数字で語れない",
+            "何が効いたのか分からない",
+          ],
+        },
+        {
+          type: "section",
+          title: "この機能でできること",
+          items: [
+            "施策の実施月を記録",
+            "前後の **KPI×体温の変化** を比較",
+            "「効いた施策」を根拠を持って報告",
+          ],
+        },
+        {
+          type: "chips",
+          label: "関連機能・データ",
+          items: ["PDCA", "施策効果測定", "前後比較"],
+        },
+      ],
+    },
+    {
+      kicker: "09 ／ 連携",
+      title: "Slack連携・通知",
+      blocks: [
+        {
+          type: "meta",
+          items: [
+            { label: "対象", value: "全社・管理者" },
+            { label: "連携", value: "Slack" },
+          ],
+        },
+        {
+          type: "lead",
+          text: "診断結果やアラートを、現場のチャットへ自動で届ける。",
+        },
+        {
+          type: "section",
+          marker: "outline",
+          title: "こんな悩みに",
+          items: [
+            "ダッシュボードを開かないと気づけない",
+            "危険信号の共有が遅れる",
+            "通知が分散する",
+          ],
+        },
+        {
+          type: "section",
+          title: "この機能でできること",
+          items: [
+            "診断・アラートを **Slackへ自動通知**",
+            "危険信号を早期にチームへ共有",
+            "回答リマインドも自動化",
+          ],
+        },
+        {
+          type: "chips",
+          label: "関連機能・データ",
+          items: ["Slack連携", "通知", "アラート"],
+        },
+      ],
+    },
+    {
+      kicker: "10 ／ 戦略",
+      title: "人事戦略支援",
+      blocks: [
+        {
+          type: "meta",
+          items: [
+            { label: "対象", value: "人事・経営" },
+            { label: "画面", value: "人事戦略" },
+          ],
+        },
+        {
+          type: "lead",
+          text: "採用・配置・リスキリングの意思決定材料を提供する。",
+        },
+        {
+          type: "section",
+          marker: "outline",
+          title: "こんな悩みに",
+          items: [
+            "採用判断が勘に頼りがち",
+            "活躍人材の定着が読めない",
+            "配置の最適解が見えない",
+          ],
+        },
+        {
+          type: "section",
+          title: "この機能でできること",
+          items: [
+            "温度×KPIで **採用の要否** を判断",
+            "活躍と定着の観点でKPIを再定義",
+            "配置・育成の **優先順位** を提示",
+          ],
+        },
+        {
+          type: "chips",
+          label: "関連機能・データ",
+          items: ["人事戦略", "採用判断", "リスキリング"],
+        },
+      ],
+    },
+  ],
+};
+
+export const decks: Deck[] = [executive, hr, whitepaper, featureTour];
 
 export const decksByCategory: { category: string; decks: Deck[] }[] = decks.reduce(
   (acc, deck) => {
