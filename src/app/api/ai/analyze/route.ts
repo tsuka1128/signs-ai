@@ -383,7 +383,7 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
                 maxTokens: 800,
                 model: sysSettings['default_model'],
                 temperature: 0.5,
-                apiKey: sysSettings['claude_api_key'],
+                apiKey: sysSettings['anthropic_api_key'],
                 signal: AbortSignal.timeout(20000),
             });
 
