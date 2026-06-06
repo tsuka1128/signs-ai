@@ -1,3 +1,5 @@
+export const maxDuration = 300;
+
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { generateAIInsight } from "@/lib/claude";
 import { getSystemSettings } from "@/lib/settings-server";
