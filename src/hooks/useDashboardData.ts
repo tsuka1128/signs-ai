@@ -472,7 +472,7 @@ export function useDashboardData(
         }
 
         return depts.map(d => {
-            const latestMonth = last13Months[12];
+            const latestMonth = state.latestSurveyMonth || last13Months[12];
             const latestAnswers = deptAnswerIndex.get(`${latestMonth}:${d.id}`) || [];
 
             // 今月データがなければ直近月にフォールバック
@@ -517,8 +517,8 @@ export function useDashboardData(
             const mKpis = state.realKpis.filter(k => k.owner_dept_id === d.id);
             // 今月データがない（isStale）場合は、dataMonth（フォールバック先）のレコードを使用
             const targetMonthStr = isStale && dataMonth
-                ? last13Months.find(m => m.includes(`-${dataMonth.replace('月', '').padStart(2, '0')}-`)) || last13Months[12]
-                : last13Months[12];
+                ? last13Months.find(m => m.includes(`-${dataMonth.replace('月', '').padStart(2, '0')}-`)) || state.latestKpiMonth || last13Months[12]
+                : state.latestKpiMonth || last13Months[12];
 
             const mRecs = kpiRecordByMonth.get(normalizeMonth(targetMonthStr)) || [];
 
@@ -604,7 +604,7 @@ export function useDashboardData(
                 })
             };
         });
-    }, [state.realDepts, state.realResponses, state.realKpis, state.realKpiRecords, state.realResources, last13Months, userRole, userDepartmentId]);
+    }, [state.realDepts, state.realResponses, state.realKpis, state.realKpiRecords, state.realResources, last13Months, userRole, userDepartmentId, state.latestSurveyMonth, state.latestKpiMonth]);
 
     const displayKpis = useMemo(() => {
         return state.realKpis.map(k => ({
@@ -640,7 +640,7 @@ export function useDashboardData(
         }
 
         return state.realAxes.map(axis => {
-            const latestMonth = last13Months[12];
+            const latestMonth = state.latestSurveyMonth || last13Months[12];
             const latestAnswers = axisAnswerIndex.get(`${latestMonth}:${axis.id}`) || [];
 
             // 今月データがなければ直近月にフォールバック
@@ -692,8 +692,8 @@ export function useDashboardData(
             const laborCostPerHead = (latestLabor > 0 && latestActualHead > 0) ? Math.round((latestLabor / latestActualHead / 10000) * 10) / 10 : 0;
 
             const targetMonthStr = isStale && dataMonth
-                ? last13Months.find(m => m.includes(`-${dataMonth.replace('月', '').padStart(2, '0')}-`)) || last13Months[12]
-                : last13Months[12];
+                ? last13Months.find(m => m.includes(`-${dataMonth.replace('月', '').padStart(2, '0')}-`)) || state.latestKpiMonth || last13Months[12]
+                : state.latestKpiMonth || last13Months[12];
 
             const mRecs = (kpiRecordByMonthAxes.get(normalizeMonth(targetMonthStr)) || []).filter(r => r.axis_id === axis.id);
             let totalAch = 0;
@@ -771,7 +771,7 @@ export function useDashboardData(
             };
         });
 
-    }, [state.realAxes, state.realResponses, state.realKpiRecords, state.realKpis, state.realResources, company, last13Months]);
+    }, [state.realAxes, state.realResponses, state.realKpiRecords, state.realKpis, state.realResources, company, last13Months, state.latestSurveyMonth, state.latestKpiMonth]);
 
     const handleRunAnalyze = async () => {
         if (!company) return;
