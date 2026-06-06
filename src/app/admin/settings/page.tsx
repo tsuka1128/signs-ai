@@ -389,13 +389,35 @@ export default function AdminSettingsPage() {
                                             <span className="text-sm font-black text-slate-900">ベースシステムプロンプト</span>
                                             <Badge className="bg-slate-900 text-white border-none font-black text-[10px] px-3 py-1">STATIC_CORE_PROMPT</Badge>
                                         </div>
-                                        <textarea 
+                                        {/* 警告バナー */}
+                                        <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-3">
+                                            <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                                            <p className="text-xs text-amber-800 leading-relaxed">
+                                                ここを変更すると、<strong>全企業のAI分析の結果が変わります。</strong>空白のまま保存するとシステム標準の設定が使われます。変更が必要な場合は、必ず「デフォルトに戻す」で元に戻せることを確認してから編集してください。
+                                            </p>
+                                        </div>
+                                        <textarea
                                             value={localSettings['base_system_prompt'] || ""}
                                             onChange={(e) => handleChange('base_system_prompt', e.target.value)}
                                             rows={28}
                                             className="w-full px-5 py-4 bg-slate-950 border-none rounded-[24px] text-xs font-medium text-emerald-400 focus:ring-2 focus:ring-teal/40 transition-all font-mono leading-relaxed shadow-xl ring-1 ring-white/5"
-                                            placeholder="AIに対する基本的な役割分担や禁止事項を入力してください..."
+                                            placeholder="空白のままにすると、システム標準のプロンプトが自動的に使われます（推奨）"
                                         />
+                                        {/* デフォルトに戻すボタン */}
+                                        {localSettings['base_system_prompt'] && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (window.confirm('AIの分析指示をシステム標準の設定に戻します。\n\n現在の内容は消えますが、分析の品質が最適な状態に戻ります。\n\nよろしいですか？')) {
+                                                        handleChange('base_system_prompt', '');
+                                                    }
+                                                }}
+                                                className="mt-2 flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-rose-600 transition-colors"
+                                            >
+                                                <RefreshCcw className="w-3.5 h-3.5" />
+                                                デフォルトに戻す（システム標準の設定を使う）
+                                            </button>
+                                        )}
                                     </label>
                                 </div>
 
