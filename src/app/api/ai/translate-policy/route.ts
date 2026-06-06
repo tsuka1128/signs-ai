@@ -81,7 +81,7 @@ ${JSON.stringify(depts.map(d => ({ id: d.id, name: d.name })))}
             systemPrompt,
             temperature: sysSettings['temperature'] ?? 0.7,
             maxTokens: sysSettings['max_tokens'] ?? 2000,
-            model: sysSettings['default_model'] ?? "claude-3-7-sonnet-20250219",
+            model: sysSettings['default_model'] ?? "claude-sonnet-4-5",
             apiKey: sysSettings['anthropic_api_key']
         });
 

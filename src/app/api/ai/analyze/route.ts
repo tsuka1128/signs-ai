@@ -297,7 +297,7 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
                 systemPrompt,
                 temperature: sysSettings['temperature'] ?? 0.2,
                 maxTokens: sysSettings['max_tokens'] ?? 3000,
-                model: sysSettings['default_model'] ?? "claude-3-7-sonnet-20250219",
+                model: sysSettings['default_model'] ?? "claude-sonnet-4-5",
                 apiKey: sysSettings['anthropic_api_key'],
                 signal: controller.signal
             });
@@ -340,7 +340,7 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
             insight_type: 'full_report',
             target_month: latestMonth,
             content: aiResult,
-            model_used: sysSettings['default_model'] ?? 'claude-3-7-sonnet-20250219',
+            model_used: sysSettings['default_model'] ?? 'claude-sonnet-4-5',
             updated_at: new Date().toISOString()
         }, { onConflict: 'company_id, target_month, insight_type' });
 
@@ -380,7 +380,7 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
                 insight_type: 'hr_strategy',
                 target_month: latestMonth,
                 content: { strategy: hrStrategy },
-                model_used: sysSettings['default_model'] ?? 'claude-3-7-sonnet-20250219',
+                model_used: sysSettings['default_model'] ?? 'claude-sonnet-4-5',
                 updated_at: new Date().toISOString(),
             }, { onConflict: 'company_id, target_month, insight_type' });
 
