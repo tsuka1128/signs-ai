@@ -18,6 +18,13 @@ KPI×アンケートをAIで分析し経営者向けに提案する。
 - survey_responses の recorded_month は YYYY-MM 形式
 - エラー時はトースト表示（成功:緑 / 失敗:赤）
 
+## DB変更ルール（厳守・乖離防止）
+- **DBスキーマ変更（テーブル/カラム/制約/インデックス）は必ず `supabase/migrations/` にファイルを作成し、`supabase db push` で適用する**
+- **Supabase SQL Editor での直接 ALTER / カラム追加 / 制約変更 / データ構造変更は禁止**（本番DBとmigrationの乖離を生むため）
+- 変更後は `supabase db pull` で本番DBとローカルmigrationの差分がゼロであることを確認する
+- AIプロンプト等の重要設定（system_settings）を変更した場合は、変更内容とJSON構造をPR説明に必ず記載する
+- 緊急ホットフィックスでSQL Editorを使わざるを得なかった場合も、事後に必ず同内容のmigrationファイルを作成してコミットする
+
 ## ブランチ運用
 - バグ修正: fix/xxxx
 - 新機能: feature/xxxx
