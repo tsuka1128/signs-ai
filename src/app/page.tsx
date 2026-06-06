@@ -349,7 +349,7 @@ export default function DashboardPage() {
               displaySem={state.realSem || DEFAULT_SEMANTIC_POLICY}
               realSemHistory={state.realSemHistory}
               realDepts={state.realDepts}
-              actions={[]}
+              actions={state.realActionItems}
               onSave={handlers.handleSaveSemantic}
               onDelete={handlers.handleDeleteSemantic}
               aiContent={aiContent}
