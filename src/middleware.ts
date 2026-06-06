@@ -128,6 +128,6 @@ export const config = {
          * - 静的アセット（svg, png, jpg, jpeg, gif, webp）
          * - /form (アンケート回答ページ - ミドルウェア自体で確実に除外されるように正規表現でも指定)
          */
-        "/((?!_next/static|_next/image|favicon.ico|form|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+        "/((?!_next/static|_next/image|favicon.ico|form|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
     ],
 };
