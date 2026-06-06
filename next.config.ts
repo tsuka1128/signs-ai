@@ -17,4 +17,8 @@ export default withSentryConfig(nextConfig, {
 
   // ログ出力を無効化
   disableLogger: true,
+
+  // SentryがAPIルートをEdge Runtimeでラップするのを防ぐ
+  // （AIルートはNode.js Runtimeが必要なため）
+  autoInstrumentServerFunctions: false,
 });
