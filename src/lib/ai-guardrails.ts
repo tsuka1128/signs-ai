@@ -23,7 +23,6 @@ const FORBIDDEN_PHRASES: RegExp[] = [
     /Gallupと提携/,
     /効果を保証/,
     /必ず改善/,
-    /100%/,
 ];
 
 /** 数値断定パターン（根拠なき具体的数値の断定） */
@@ -60,9 +59,9 @@ export function applyGuardrails(text: string, fieldName: string): GuardrailResul
     // 2. 禁止フレーズの検出・警告（削除はせず警告のみ。重大な場合はUIで注記）
     for (const phrase of FORBIDDEN_PHRASES) {
         if (phrase.test(filtered)) {
+            // コメント通り「警告ログのみ・本文は変更しない」。
+            // 本文に不自然な定型文を埋め込むと表示が壊れるため、誇大表現の抑制はプロンプト側で行う。
             warnings.push(`[FORBIDDEN_PHRASE] ${fieldName}: 禁止フレーズ "${phrase.source}" を検出`);
-            // 禁止フレーズを含む文を曖昧化
-            filtered = filtered.replace(phrase, '[この表現は品質基準により修正が必要です]');
         }
     }
 
