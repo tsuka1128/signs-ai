@@ -289,9 +289,9 @@ ${JSON.stringify(historicalContext, null, 2)}
 
 JSONの構造に従い詳細な分析結果を出力してください。`;
 
-        // ── タイムアウト制御（Vercel Pro 上限 60秒 を考慮して 55秒で切る） ──
+        // ── タイムアウト制御（Vercel Pro: maxDuration=300秒を考慮して240秒で切る） ──
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 55000);
+        const timeoutId = setTimeout(() => controller.abort(), 240000);
 
         let aiResult: any;
 
@@ -328,7 +328,7 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
         } catch (error: any) {
             clearTimeout(timeoutId); 
             if (error.name === 'AbortError') {
-                console.error("AI Analysis Timeout Error: Request took longer than 55s");
+                console.error("AI Analysis Timeout Error: Request took longer than 240s");
                 return NextResponse.json({ 
                     error: "AI分析がタイムアウトしました。分析範囲を絞るか、再度実行してください。",
                     detail: "Vercel timeout limit reached" 
