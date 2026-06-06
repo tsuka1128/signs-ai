@@ -102,7 +102,9 @@ export function useSettingsData() {
         // --- 先行指標チャート用の最小限の履歴データ加工 ---
         const last13 = getLastNMonths(13);
         const [responses, records] = await Promise.all([
-            supabase.from('survey_responses').select('*, survey_answers(score)').eq('company_id', targetId).in('recorded_month', last13),
+            // survey_responses.recorded_month は YYYY-MM 形式のため、YYYY-MM-01 配列での .in() は一致しない。
+            // 最古月（YYYY-MM 境界）以降の範囲フィルタにし、月の突合は normalizeMonth に任せる。
+            supabase.from('survey_responses').select('*, survey_answers(score)').eq('company_id', targetId).gte('recorded_month', last13[0].slice(0, 7)),
             supabase.from('kpi_records').select('*').in('kpi_definition_id', (k.data || []).map(def => def.id)).in('recorded_month', last13)
         ]);
 

@@ -187,10 +187,13 @@ export async function POST(req: Request) {
         ] = await Promise.all([
             supabase.from('departments').select('*').eq('company_id', companyId),
             supabase.from('kpi_definitions').select('*').eq('company_id', companyId),
+            // survey_responses.recorded_month は YYYY-MM 形式で保存されるため、YYYY-MM-01 配列での
+            // .in() は一致せず常に0件になる（useDashboardData と同様の対処）。最古の対象月（YYYY-MM 境界）
+            // 以降の範囲フィルタにし、月の突合は後段の summarizeMonth が normalizeMonth で吸収する。
             supabase.from('survey_responses')
                 .select('*, survey_answers(*)')
                 .eq('company_id', companyId)
-                .in('recorded_month', targetMonths),
+                .gte('recorded_month', targetMonths[targetMonths.length - 1].slice(0, 7)),
             supabase.from('kpi_records')
                 .select('*')
                 .eq('company_id', companyId)

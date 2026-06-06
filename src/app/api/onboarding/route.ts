@@ -7,9 +7,31 @@
  * POST /api/onboarding
  */
 
-import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
 import { NextRequest, NextResponse } from "next/server";
 import { sanitizeText } from "@/lib/utils/index";
+
+/**
+ * オンボーディング失敗時の補償処理。
+ * 企業レコードを削除すると、departments / kpi_definitions / semantic_layers は
+ * ON DELETE CASCADE で、users.company_id は ON DELETE SET NULL で自動的に巻き戻る。
+ * companies には DELETE 用 RLS ポリシーが無いため、サービスロールで削除する。
+ */
+async function rollbackOnboarding(companyId: string) {
+    const admin = createServiceRoleClient();
+    if (!admin) {
+        console.error(
+            `[Onboarding Rollback] SUPABASE_SERVICE_ROLE_KEY 未設定のため company=${companyId} を削除できませんでした。手動クリーンアップが必要です。`
+        );
+        return;
+    }
+    const { error } = await admin.from("companies").delete().eq("id", companyId);
+    if (error) {
+        console.error(`[Onboarding Rollback] company=${companyId} の削除に失敗: ${error.message}`);
+    } else {
+        console.warn(`[Onboarding Rollback] 不完全な company=${companyId} をロールバック削除しました。`);
+    }
+}
 
 /** リクエストボディの型定義 */
 interface OnboardingPayload {
@@ -74,6 +96,7 @@ export async function POST(request: NextRequest) {
     if (invitationToken) {
         // ダミートークン「TAION」の場合はデモデータを作成
         if (invitationToken === "TAION") {
+            let createdDemoCompanyId: string | null = null;
             try {
                 // 1. Free プラン取得
                 const { data: freePlan } = await supabase.from("plans").select("id").eq("name", "Free").single();
@@ -87,6 +110,7 @@ export async function POST(request: NextRequest) {
                     secondary_axis_name: "ブランド / エリア"
                 }).select("id").single();
                 if (cErr || !company) throw new Error("デモ企業の作成に失敗しました");
+                createdDemoCompanyId = company.id;
 
                 // 3. ユーザーと紐付け (管理者以外の場合のみ)
                 if (!isSuperAdmin) {
@@ -134,6 +158,9 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ success: true, companyId: company.id });
             } catch (e: any) {
                 console.error("TAIONデモ作成エラー:", e.message);
+                if (createdDemoCompanyId) {
+                    await rollbackOnboarding(createdDemoCompanyId);
+                }
                 return NextResponse.json({
                     message: "デモデータの作成に失敗しました",
                     detail: e.message
@@ -202,6 +229,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: "KPI名を入力してください" }, { status: 400 });
     }
 
+    // 企業作成後に後続ステップが失敗した場合、ゾンビデータ（紐付け不完全な企業・
+    // company_id だけ設定されたユーザー）が残り再登録できなくなる。失敗時に削除して巻き戻すため
+    // 作成済み企業 ID を保持する。
+    let createdCompanyId: string | null = null;
+
     try {
         // 1. Free プランの ID を取得
         const { data: freePlan, error: planError } = await supabase
@@ -237,6 +269,7 @@ export async function POST(request: NextRequest) {
         if (companyError || !company) {
             throw new Error(`企業の作成に失敗しました: ${companyError?.message || "データが取得できません"}`);
         }
+        createdCompanyId = company.id;
 
         // Update with actual UUID prefix
         const finalShortId = `${planChar}-${dateStr}-${company.id.split('-')[0].toUpperCase().slice(0, 4)}`;
@@ -307,6 +340,10 @@ export async function POST(request: NextRequest) {
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : "サーバーエラーが発生しました";
         console.error("オンボーディングエラー:", message);
+        // 企業作成後に失敗した場合は巻き戻して、再登録可能な状態に戻す。
+        if (createdCompanyId) {
+            await rollbackOnboarding(createdCompanyId);
+        }
         return NextResponse.json({ message }, { status: 500 });
     }
 }
