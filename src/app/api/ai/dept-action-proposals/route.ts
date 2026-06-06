@@ -117,7 +117,7 @@ ${summary.manager_hint || 'なし'}
         try {
             ProposalsText = await generateAIInsight(prompt, {
                 systemPrompt,
-                model: sysSettings['default_model'] || 'claude-3-7-sonnet-20250219',
+                model: sysSettings['default_model'] || 'claude-sonnet-4-5',
                 apiKey: sysSettings['anthropic_api_key'] || sysSettings['claude_api_key'],
                 maxTokens: 1024,
                 temperature: 0.3,

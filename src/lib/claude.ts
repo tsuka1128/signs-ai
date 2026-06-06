@@ -6,7 +6,7 @@
  */
 
 /** デフォルト値の定数定義 */
-const DEFAULT_MODEL = "claude-3-7-sonnet-20250219";
+const DEFAULT_MODEL = "claude-sonnet-4-5";
 const DEFAULT_TEMPERATURE = 0.3;
 const DEFAULT_MAX_TOKENS = 1024;
 
