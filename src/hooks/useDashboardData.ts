@@ -78,7 +78,9 @@ export function useDashboardData(
             supabase.from('departments').select('*').eq('company_id', company.id).order('sort_order', { ascending: true }),
             supabase.from('kpi_definitions').select('*').eq('company_id', company.id).order('sort_order', { ascending: true }),
             supabase.from('semantic_layers').select('*').eq('company_id', company.id).order('created_at', { ascending: false }),
-            supabase.from('survey_responses').select('*, survey_answers(*)').eq('company_id', company.id),
+            // survey_responses.recorded_month は YYYY-MM 形式のため、YYYY-MM-01 配列での .in() は一致しない。
+            // 先頭月（YYYY-MM）境界の範囲フィルタにすることで YYYY-MM / YYYY-MM-01 双方の保存形式にマッチさせる。
+            supabase.from('survey_responses').select('*, survey_answers(*)').eq('company_id', company.id).gte('recorded_month', last13Months[0].slice(0, 7)),
             supabase.from('kpi_axes').select('*').eq('company_id', company.id).order('sort_order', { ascending: true }),
             supabase.from('ai_insights').select('*').eq('company_id', company.id).order('created_at', { ascending: false }).limit(10),
             supabase.from('action_items').select('*').eq('company_id', company.id).eq('is_archived', false).order('created_at', { ascending: false }),
@@ -441,12 +443,37 @@ export function useDashboardData(
             depts = depts.filter(d => d.id === userDepartmentId);
         }
 
+        // 月×部署 の事前インデックス: Map<`${month}:${dept_id}`, answer[]>
+        const deptAnswerIndex = new Map<string, any[]>();
+        for (const r of state.realResponses) {
+            if (!r.department_id) continue;
+            const key = `${normalizeMonth(r.recorded_month)}:${r.department_id}`;
+            const existing = deptAnswerIndex.get(key);
+            const answers = r.survey_answers || [];
+            if (existing) existing.push(...answers);
+            else deptAnswerIndex.set(key, [...answers]);
+        }
+
+        // 月×部署 の回答件数インデックス: Map<`${month}:${dept_id}`, count>
+        const deptResponseCountIndex = new Map<string, number>();
+        for (const r of state.realResponses) {
+            if (!r.department_id) continue;
+            const key = `${normalizeMonth(r.recorded_month)}:${r.department_id}`;
+            deptResponseCountIndex.set(key, (deptResponseCountIndex.get(key) || 0) + 1);
+        }
+
+        // 月 の事前インデックス: Map<`${month}`, KpiRecord[]>
+        const kpiRecordByMonth = new Map<string, KpiRecord[]>();
+        for (const rec of state.realKpiRecords) {
+            const key = normalizeMonth(rec.recorded_month);
+            const existing = kpiRecordByMonth.get(key);
+            if (existing) existing.push(rec);
+            else kpiRecordByMonth.set(key, [rec]);
+        }
+
         return depts.map(d => {
             const latestMonth = last13Months[12];
-            const deptResponses = state.realResponses.filter(r => r.department_id === d.id);
-            const latestAnswers = deptResponses
-                .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
-                .flatMap(r => r.survey_answers || []);
+            const latestAnswers = deptAnswerIndex.get(`${latestMonth}:${d.id}`) || [];
 
             // 今月データがなければ直近月にフォールバック
             let pulseScore = latestAnswers.length > 0
@@ -457,13 +484,10 @@ export function useDashboardData(
 
             if (latestAnswers.length === 0) {
                 for (let i = last13Months.length - 2; i >= 0; i--) {
-                    const prevAnswers = deptResponses
-                        .filter(r => normalizeMonth(r.recorded_month) === last13Months[i])
-                        .flatMap(r => r.survey_answers || []);
+                    const prevAnswers = deptAnswerIndex.get(`${last13Months[i]}:${d.id}`) || [];
                     if (prevAnswers.length > 0) {
                         pulseScore = prevAnswers.reduce((sum, a) => sum + (a as any).score, 0) / prevAnswers.length;
                         isStale = true;
-                        // 「3月」のような表示用ラベルを生成
                         dataMonth = `${parseInt(last13Months[i].split('-')[1])}月`;
                         break;
                     }
@@ -471,9 +495,7 @@ export function useDashboardData(
             }
 
             const pulseHistory = last13Months.map(month => {
-                const monthAnswers = deptResponses
-                    .filter(r => normalizeMonth(r.recorded_month) === month)
-                    .flatMap(r => r.survey_answers || []);
+                const monthAnswers = deptAnswerIndex.get(`${month}:${d.id}`) || [];
                 if (monthAnswers.length === 0) return 0;
                 return monthAnswers.reduce((sum, a) => sum + (a as any).score, 0) / monthAnswers.length;
             });
@@ -490,15 +512,15 @@ export function useDashboardData(
             const latestActualHead = latestResource?.head_count || activeUserCount;
             const laborCostPerHead = (latestLabor > 0 && latestActualHead > 0) ? Math.round((latestLabor / latestActualHead / 10000) * 10) / 10 : 0;
 
-            const respondentsCount = deptResponses.filter(r => normalizeMonth(r.recorded_month) === latestMonth).length;
+            const respondentsCount = deptResponseCountIndex.get(`${latestMonth}:${d.id}`) || 0;
 
             const mKpis = state.realKpis.filter(k => k.owner_dept_id === d.id);
             // 今月データがない（isStale）場合は、dataMonth（フォールバック先）のレコードを使用
-            const targetMonthStr = isStale && dataMonth 
+            const targetMonthStr = isStale && dataMonth
                 ? last13Months.find(m => m.includes(`-${dataMonth.replace('月', '').padStart(2, '0')}-`)) || last13Months[12]
                 : last13Months[12];
-            
-            const mRecs = state.realKpiRecords.filter(r => normalizeMonth(r.recorded_month) === normalizeMonth(targetMonthStr));
+
+            const mRecs = kpiRecordByMonth.get(normalizeMonth(targetMonthStr)) || [];
 
             let totalAch = 0;
             let count = 0;
@@ -528,11 +550,11 @@ export function useDashboardData(
                 pulse: Number(pulseScore.toFixed(1)),
                 pulseHistory,
                 kpiAchHistory: last13Months.map((month) => {
-                    const mRecs = state.realKpiRecords.filter(r => normalizeMonth(r.recorded_month) === normalizeMonth(month));
+                    const monthRecs = kpiRecordByMonth.get(normalizeMonth(month)) || [];
                     let tAch = 0;
                     let c = 0;
                     mKpis.forEach(def => {
-                        const rec = mRecs.find(r =>
+                        const rec = monthRecs.find(r =>
                             r.kpi_definition_id === def.id &&
                             r.axis_id === null &&
                             (r.department_id === d.id || (r.department_id === null && def.owner_dept_id === d.id))
@@ -564,11 +586,11 @@ export function useDashboardData(
                 kpiName: state.realKpis.find(k => k.owner_dept_id === d.id && k.is_main)?.name ||
                         state.realKpis.find(k => k.owner_dept_id === d.id)?.name || "",
                 productivityHistory: last13Months.map((month, idx) => {
-                    const mRecs = state.realKpiRecords.filter(r => normalizeMonth(r.recorded_month) === normalizeMonth(month));
+                    const monthRecs = kpiRecordByMonth.get(normalizeMonth(month)) || [];
                     let tAch = 0;
                     let c = 0;
                     mKpis.forEach(def => {
-                        const rec = mRecs.find(r => r.kpi_definition_id === def.id && r.axis_id === null && (r.department_id === d.id || (r.department_id === null && def.owner_dept_id === d.id)));
+                        const rec = monthRecs.find(r => r.kpi_definition_id === def.id && r.axis_id === null && (r.department_id === d.id || (r.department_id === null && def.owner_dept_id === d.id)));
                         if (rec && rec.target_value !== null) {
                             const ach = calculateAchievementRate(rec.value, rec.target_value, def.is_higher_better !== false);
                             if (ach !== null) {
@@ -595,12 +617,31 @@ export function useDashboardData(
     }, [state.realKpis, state.realDepts]);
 
     const displayAxes = useMemo(() => {
+        // 月×axis の事前インデックス
+        const axisAnswerIndex = new Map<string, any[]>();
+        const axisResponseCountIndex = new Map<string, number>();
+        for (const r of state.realResponses) {
+            if (!r.axis_id) continue;
+            const key = `${normalizeMonth(r.recorded_month)}:${r.axis_id}`;
+            const existing = axisAnswerIndex.get(key);
+            const answers = r.survey_answers || [];
+            if (existing) existing.push(...answers);
+            else axisAnswerIndex.set(key, [...answers]);
+            axisResponseCountIndex.set(key, (axisResponseCountIndex.get(key) || 0) + 1);
+        }
+
+        // 月 の KpiRecord インデックス（axis フィルタは後続で）
+        const kpiRecordByMonthAxes = new Map<string, KpiRecord[]>();
+        for (const rec of state.realKpiRecords) {
+            const key = normalizeMonth(rec.recorded_month);
+            const existing = kpiRecordByMonthAxes.get(key);
+            if (existing) existing.push(rec);
+            else kpiRecordByMonthAxes.set(key, [rec]);
+        }
+
         return state.realAxes.map(axis => {
             const latestMonth = last13Months[12];
-            const axisResponses = state.realResponses.filter(r => r.axis_id === axis.id);
-            const latestAnswers = axisResponses
-                .filter(r => normalizeMonth(r.recorded_month) === latestMonth)
-                .flatMap(r => r.survey_answers || []);
+            const latestAnswers = axisAnswerIndex.get(`${latestMonth}:${axis.id}`) || [];
 
             // 今月データがなければ直近月にフォールバック
             let pulseScore = latestAnswers.length > 0
@@ -611,9 +652,7 @@ export function useDashboardData(
 
             if (latestAnswers.length === 0) {
                 for (let i = last13Months.length - 2; i >= 0; i--) {
-                    const prevAnswers = axisResponses
-                        .filter(r => normalizeMonth(r.recorded_month) === last13Months[i])
-                        .flatMap(r => r.survey_answers || []);
+                    const prevAnswers = axisAnswerIndex.get(`${last13Months[i]}:${axis.id}`) || [];
                     if (prevAnswers.length > 0) {
                         pulseScore = prevAnswers.reduce((sum, a) => sum + (a as any).score, 0) / prevAnswers.length;
                         isStale = true;
@@ -624,20 +663,18 @@ export function useDashboardData(
             }
 
             const pulseHistory = last13Months.map(month => {
-                const monthAnswers = axisResponses
-                    .filter(r => normalizeMonth(r.recorded_month) === month)
-                    .flatMap(r => r.survey_answers || []);
+                const monthAnswers = axisAnswerIndex.get(`${month}:${axis.id}`) || [];
                 if (monthAnswers.length === 0) return 0;
                 return monthAnswers.reduce((sum, a) => sum + (a as any).score, 0) / monthAnswers.length;
             });
 
-            const activeHead = axisResponses.filter(r => normalizeMonth(r.recorded_month) === latestMonth).length;
+            const activeHead = axisResponseCountIndex.get(`${latestMonth}:${axis.id}`) || 0;
 
             const sizeHistory = last13Months.map(month => {
-                const sizeRec = state.realKpiRecords.find(rec =>
+                const monthRecs = kpiRecordByMonthAxes.get(month) || [];
+                const sizeRec = monthRecs.find(rec =>
                     rec.axis_id === axis.id &&
-                    rec.kpi_definition_id === company?.secondary_axis_size_kpi_id &&
-                    normalizeMonth(rec.recorded_month) === month
+                    rec.kpi_definition_id === company?.secondary_axis_size_kpi_id
                 );
                 return sizeRec ? sizeRec.value : 0;
             });
@@ -654,11 +691,11 @@ export function useDashboardData(
             const latestActualHead = latestResource?.head_count || activeUserCount;
             const laborCostPerHead = (latestLabor > 0 && latestActualHead > 0) ? Math.round((latestLabor / latestActualHead / 10000) * 10) / 10 : 0;
 
-            const targetMonthStr = isStale && dataMonth 
+            const targetMonthStr = isStale && dataMonth
                 ? last13Months.find(m => m.includes(`-${dataMonth.replace('月', '').padStart(2, '0')}-`)) || last13Months[12]
                 : last13Months[12];
-            
-            const mRecs = state.realKpiRecords.filter(r => normalizeMonth(r.recorded_month) === normalizeMonth(targetMonthStr) && r.axis_id === axis.id);
+
+            const mRecs = (kpiRecordByMonthAxes.get(normalizeMonth(targetMonthStr)) || []).filter(r => r.axis_id === axis.id);
             let totalAch = 0;
             let count = 0;
             mRecs.forEach(rec => {
@@ -707,7 +744,7 @@ export function useDashboardData(
                   .sort((a: any, b: any) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0))
                   .slice(0, 3) as any[],
                 productivityHistory: last13Months.map((month, idx) => {
-                    const mRecsMonth = state.realKpiRecords.filter(r => normalizeMonth(r.recorded_month) === normalizeMonth(month) && r.axis_id === axis.id);
+                    const mRecsMonth = (kpiRecordByMonthAxes.get(normalizeMonth(month)) || []).filter(r => r.axis_id === axis.id);
                     let tAch = 0;
                     let c = 0;
                     mRecsMonth.forEach(rec => {
@@ -722,10 +759,7 @@ export function useDashboardData(
                     return calculateProductivity(avgAch, pulseHistory[idx]);
                 }),
                 kpiAchHistory: last13Months.map((month) => {
-                    const mRecsMonth = state.realKpiRecords.filter(r =>
-                        normalizeMonth(r.recorded_month) === normalizeMonth(month) &&
-                        r.axis_id === axis.id
-                    );
+                    const mRecsMonth = (kpiRecordByMonthAxes.get(normalizeMonth(month)) || []).filter(r => r.axis_id === axis.id);
                     let tAch = 0, c = 0;
                     mRecsMonth.forEach(rec => {
                         const def = state.realKpis.find(k => k.id === rec.kpi_definition_id);
