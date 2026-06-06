@@ -7,7 +7,8 @@ import { NextResponse } from "next/server";
 import { normalizeMonth, getLastNMonths } from "@/lib/utils/date";
 import { sendAiSummaryNotification, sendAnomalyAlertNotification } from "@/lib/notifications-server";
 
-export const maxDuration = 300; // Vercel関数の最大実行時間を300秒に延長
+export const runtime = "nodejs"; // Edge RuntimeではなくNode.jsで実行（maxDuration延長のため）
+export const maxDuration = 300; // Vercel Pro: 最大300秒
 
 const DEFAULT_SYSTEM_PROMPT = `あなたは組織改善AI「Signs AI」の経営コンサルタントです。
 組織の状態（アンケートスコア）と業績（KPI）、さらにリソース（人数・人件費）を、会社が定めた「組織方針」に照らし合わせ、客観的かつ鋭い洞察を提供してください。
