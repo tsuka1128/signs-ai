@@ -6,6 +6,7 @@
  */
 
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 /** Supabase の接続に必要な環境変数 */
@@ -35,5 +36,21 @@ export async function createServerSupabaseClient() {
                 }
             },
         },
+    });
+}
+
+/**
+ * サービスロール（RLS バイパス）の Supabase クライアントを生成する。
+ *
+ * 通常の操作には使用しない。RLS では実行できない管理操作（オンボーディング失敗時の
+ * 企業レコード削除など）に限って使用する。SUPABASE_SERVICE_ROLE_KEY が未設定の場合は
+ * null を返すため、呼び出し側でフォールバックすること。
+ */
+export function createServiceRoleClient() {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !key) return null;
+    return createClient(url, key, {
+        auth: { autoRefreshToken: false, persistSession: false },
     });
 }

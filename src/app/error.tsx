@@ -6,6 +6,7 @@
  */
 
 import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { AlertCircle, RefreshCcw, Home } from "lucide-react";
 
 export default function Error({
@@ -16,7 +17,8 @@ export default function Error({
     reset: () => void;
 }) {
     useEffect(() => {
-        // ここで Sentry 等にエラーを送信する処理を入れるのが理想的
+        // App Router のエラーバウンダリで捕捉した例外は Sentry が自動送信しないため、明示的に送信する。
+        Sentry.captureException(error);
         console.error("[Signs AI Critical Error]:", error);
     }, [error]);
 
