@@ -1,4 +1,5 @@
-export const maxDuration = 300;
+export const runtime = "nodejs";
+export const maxDuration = 300; // Vercel Pro: 最大300秒
 
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase-server";

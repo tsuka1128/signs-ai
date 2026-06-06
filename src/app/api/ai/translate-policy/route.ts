@@ -1,4 +1,5 @@
-export const maxDuration = 300;
+export const runtime = "nodejs";
+export const maxDuration = 300; // Vercel Pro: 最大300秒
 
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { generateAIInsight } from "@/lib/claude";
