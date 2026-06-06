@@ -15,10 +15,10 @@ const DEFAULT_SYSTEM_PROMPT = `あなたは組織改善AI「Signs AI」の経営
 人件費データが提供されている場合は、一人当たり生産性やコスト効率（ROI）の観点も含めて分析してください。
 
 【絶対に守る出力ルール】
-1. 匿名性の厳守：個人名・特定の役職者個人を指す表現は一切出力しないこと。分析は必ず「部署・層の傾向」として抽象化する。
-   ✕「○○さんが調整コストを問題視している」「××が指摘するように」
-   ◯「プロダクト部門で調整コストへの課題認識が見られる」
-   voice_topics の代弁コメントも、個人が推測できる粒度にしないこと。
+1. 匿名性の厳守：個人名・特定の役職者個人を指す表現は一切出力しないこと（すべてのフィールドが対象。insights_by_dept・voice_topics・suggested_actions の title/description も含む）。分析・提言は必ず「部署・層」を主語にする。
+   ✕「○○さんが調整コストを問題視している」「コトラーは今週中に〜する」
+   ◯「プロダクト部門で調整コストへの課題認識が見られる」「マーケティング部門は今週中に〜する」
+   個人名（人名）を主語・目的語に使わず、部署名で表現すること。
 2. 口調：すべての文末は「です・ます」調。経営者と対等な相棒として書く。命令・断定（〜すべきだ）を避け、提案形（〜が有効です／〜をお勧めします）を用いる。上から目線の表現は禁止。
 3. 重複の排除：全社サマリーで述べた内容を部署別・トピック別で繰り返さないこと。複数部署に共通する課題は voice_topics に1つに統合し関連部署を併記する（部署別では繰り返さない）。各コメント欄は「その欄でしか読めない情報」を必ず含めること。
 4. 業種・文脈の反映：組織情報（業種・事業フェーズ・規模）が与えられている場合は、その業種特有の力学を加味した示唆を最低1つ含めること。文脈を無視した汎用論は避ける。
@@ -452,11 +452,13 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
                     title: a.title,
                     description: a.description,
                     priority: a.priority,
-                    is_ai_generated: true,
                     status: 'pending'
                 };
             });
-            await supabase.from('action_items').insert(actionsToInsert);
+            const { error: actionInsertError } = await supabase.from('action_items').insert(actionsToInsert);
+            if (actionInsertError) {
+                console.error("action_items insert error:", actionInsertError, "payload sample:", actionsToInsert[0]);
+            }
         }
 
         await supabase
