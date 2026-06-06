@@ -147,7 +147,7 @@ export default function AdminSettingsPage() {
 
             const { error } = await supabase
                 .from("system_settings")
-                .upsert(updates);
+                .upsert(updates, { onConflict: 'key' });
 
             if (error) throw error;
 
