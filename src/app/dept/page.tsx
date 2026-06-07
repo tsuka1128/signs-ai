@@ -77,6 +77,7 @@ export default function DeptDashboardPage() {
     const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
     const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
     const [deptLoading, setDeptLoading] = useState<boolean>(false);
+    const [deptFeedback, setDeptFeedback] = useState<any[]>([]);
 
     useEffect(() => {
         checkRoleAndInit();
@@ -330,6 +331,18 @@ export default function DeptDashboardPage() {
 
             if (actionPlanErr) throw actionPlanErr;
             setActionPlans(actionPlansData || []);
+
+            // ── 最新 AI 分析から「組織として話したいこと」（部署間フィードバック）を取得 ──
+            const { data: latestInsight } = await supabase
+                .from('ai_insights')
+                .select('content')
+                .eq('company_id', companyId)
+                .eq('insight_type', 'full_report')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            const feedback = (latestInsight?.content as any)?.department_feedback;
+            setDeptFeedback(Array.isArray(feedback) ? feedback : []);
 
         } catch (e: any) {
             setError(e?.message || "データの取得に失敗しました");
@@ -1253,6 +1266,39 @@ export default function DeptDashboardPage() {
                                 </div>
                             )}
                         </section>
+
+                        {/* 組織として話したいこと（AI部署間フィードバック） */}
+                        {deptFeedback.length > 0 && (
+                            <section className="bg-slate-50/50 rounded-2xl border border-slate-100 px-6 py-5 space-y-4">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                    組織として話したいこと
+                                </span>
+                                <div className="space-y-3 pt-1">
+                                    {deptFeedback.map((f: any, i: number) => {
+                                        const typeMap: Record<string, { icon: string; color: string }> = {
+                                            positive: { icon: "👍", color: "text-emerald-600" },
+                                            warning:  { icon: "⚠️", color: "text-amber-600" },
+                                            alert:    { icon: "🚨", color: "text-rose-600" },
+                                            info:     { icon: "💬", color: "text-slate-500" },
+                                        };
+                                        const t = typeMap[f.type] || typeMap.info;
+                                        return (
+                                            <div key={i} className="flex items-start gap-3 bg-white rounded-xl px-4 py-3 border border-slate-100">
+                                                <span className="text-base mt-0.5">{t.icon}</span>
+                                                <div className="flex-1 min-w-0">
+                                                    {(f.from_dept || f.to_dept) && (
+                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                                                            {f.from_dept}{f.from_dept && f.to_dept ? " → " : ""}{f.to_dept}
+                                                        </p>
+                                                    )}
+                                                    <p className={`text-sm font-medium leading-relaxed ${t.color}`}>{f.text}</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </section>
+                        )}
                     </div>
                 )}
             </main>

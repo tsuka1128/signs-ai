@@ -3,7 +3,6 @@
 import { TabBar } from "@/components/ui/TabBar";
 import { AxisComparisonSection } from "@/components/dashboard/AxisComparisonSection";
 import { OrganizationCard } from "@/components/dashboard/OrganizationCard";
-import { FeedbackItem } from "@/components/dashboard/FeedbackItem";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Users } from "lucide-react";
 import { cn } from "@/lib/utils/index";
@@ -125,34 +124,7 @@ export function OrganizationSection({
                 )}
             </div>
 
-            {/* 下層：組織への問いかけ（部署ビューの時のみ表示） */}
-            {orgView === "dept" && (
-                <div className="bg-slate-50/50 rounded-2xl border border-slate-100 px-6 py-5 space-y-4">
-                    <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                            組織として話したいこと
-                        </span>
-                    </div>
-
-                    {/* 部署間フィードバック */}
-                    {aiContent?.department_feedback?.length > 0 ? (
-                        <div className="space-y-2">
-                            {aiContent.department_feedback.map((f: any, i: number) => (
-                                <FeedbackItem key={i} from={f.from_dept} to={f.to_dept}
-                                    type={f.type === "positive" || f.type === "warning" || f.type === "alert" || f.type === "info" ? f.type : "info"}
-                                    text={f.text}
-                                />
-                            ))}
-                        </div>
-                    ) : (
-                        /* フォールバック：データがない場合は汎用の問いかけ */
-                        <div className="space-y-3 text-sm text-slate-500 font-medium leading-relaxed">
-                            <p>💭 各部署のKPIの達成状況を見て、何か気づいたことはありますか？うまくいっている部署の工夫を、組織全体で共有できると良いかもしれません。</p>
-                            <p>💭 体温とKPIのバランスはいかがでしょうか。どちらか一方に偏っている部署があれば、その背景について話し合ってみる価値があります。</p>
-                        </div>
-                    )}
-                </div>
-            )}
+            {/* 「組織として話したいこと」は部署マネジメント (/dept) に移動 */}
         </div>
     );
 }

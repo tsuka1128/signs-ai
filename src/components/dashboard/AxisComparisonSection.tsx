@@ -221,27 +221,29 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
                 </div>
             )}
 
-            {/* Block 3: AI 領域横断インサイト */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
-                <div>
-                    <h3 className="text-sm font-black text-slate-800 tracking-tight">
-                        {secondaryAxisName}横断インサイト（AI）
-                    </h3>
-                    <p className="text-[10px] text-slate-400 font-bold mt-0.5 uppercase tracking-widest">
-                        領域間の学びと資源配分の観点
-                    </p>
+            {/* Block 3: AI 領域横断インサイト（2軸以上ある場合のみ表示） */}
+            {axes.length >= 2 && (
+                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
+                    <div>
+                        <h3 className="text-sm font-black text-slate-800 tracking-tight">
+                            {secondaryAxisName}横断インサイト（AI）
+                        </h3>
+                        <p className="text-[10px] text-slate-400 font-bold mt-0.5 uppercase tracking-widest">
+                            領域間の学びと資源配分の観点
+                        </p>
+                    </div>
+                    <div className="text-sm text-slate-600 font-medium leading-relaxed">
+                        {aiContent?.deep_report?.strategic_alignment ? (
+                            <p>{aiContent.deep_report.strategic_alignment}</p>
+                        ) : (
+                            <div className="space-y-3 text-slate-400 italic">
+                                <p>💭 達成率に差がある領域間で、好調な領域の打ち手を他に横展開できる可能性はないでしょうか。</p>
+                                <p>💭 どの領域にリソースを集中・分散させるか、定期的に議論するきっかけにしてみてください。</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
-                <div className="text-sm text-slate-600 font-medium leading-relaxed">
-                    {aiContent?.deep_report?.strategic_alignment ? (
-                        <p>{aiContent.deep_report.strategic_alignment}</p>
-                    ) : (
-                        <div className="space-y-3 text-slate-400 italic">
-                            <p>💭 達成率に差がある領域間で、好調な領域の打ち手を他に横展開できる可能性はないでしょうか。</p>
-                            <p>💭 どの領域にリソースを集中・分散させるか、定期的に議論するきっかけにしてみてください。</p>
-                        </div>
-                    )}
-                </div>
-            </div>
+            )}
 
             {/* Block 4: 詳細カード一覧（折りたたみ可能） */}
             <AxisDetailList axes={axes} />
