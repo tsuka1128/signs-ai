@@ -1453,23 +1453,23 @@ export default function DeptDashboardPage() {
                                                         {new Date(action.created_at).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
                                                     </span>
                                                 </div>
-                                                {/* 判断ボタン */}
+                                                {/* 判断ボタン（未選択状態。いずれもホバーで色が出る） */}
                                                 <div className="flex items-center gap-2 pt-1">
                                                     <button
                                                         onClick={() => handleExecActionDecision(action.id, 'completed')}
-                                                        className="flex items-center gap-1.5 px-4 py-2 bg-emerald-500 text-white text-[11px] font-black rounded-xl hover:bg-emerald-600 transition-colors"
+                                                        className="flex items-center gap-1.5 px-4 py-2 bg-white text-slate-500 border border-slate-200 text-[11px] font-black rounded-xl hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
                                                     >
                                                         <Check className="w-3 h-3" /> 完了
                                                     </button>
                                                     <button
                                                         onClick={() => handleExecActionDecision(action.id, 'kept')}
-                                                        className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-600 text-[11px] font-black rounded-xl hover:bg-slate-200 transition-colors"
+                                                        className="flex items-center gap-1.5 px-4 py-2 bg-white text-slate-500 border border-slate-200 text-[11px] font-black rounded-xl hover:border-amber-300 hover:bg-amber-50 hover:text-amber-600 transition-colors"
                                                     >
                                                         ⏸ キープ
                                                     </button>
                                                     <button
                                                         onClick={() => handleExecActionDecision(action.id, 'rejected')}
-                                                        className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-600 text-[11px] font-black rounded-xl hover:bg-slate-200 transition-colors"
+                                                        className="flex items-center gap-1.5 px-4 py-2 bg-white text-slate-500 border border-slate-200 text-[11px] font-black rounded-xl hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 transition-colors"
                                                     >
                                                         <X className="w-3 h-3" /> 不採用
                                                     </button>
