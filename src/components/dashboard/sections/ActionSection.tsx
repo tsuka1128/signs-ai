@@ -2,7 +2,8 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import { ActionItem } from "@/components/dashboard/ActionItem";
-import { Plus, X, Check, RefreshCcw, Target } from "lucide-react";
+import { ActionHistoryTable } from "@/components/dashboard/ActionHistoryTable";
+import { Plus, X, Check, Target } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { HelpLink } from "@/components/ui/HelpLink";
 import { toast } from "sonner";
@@ -10,9 +11,12 @@ import { toast } from "sonner";
 interface ActionSectionProps {
     actions: any[];
     depts?: any[];
+    companyId?: string;
+    /** ステータス/優先度変更後に useDashboardData 側の realActionItems を同期するコールバック */
+    onActionUpdated?: (id: string, updates: Record<string, unknown>) => void;
 }
 
-export function ActionSection({ actions: initialActions, depts = [] }: ActionSectionProps) {
+export function ActionSection({ actions: initialActions, depts = [], companyId, onActionUpdated }: ActionSectionProps) {
     const [actions, setActions] = useState(initialActions);
 
     // AI分析実行後など、親コンポーネントから新しいアクションが渡された場合に同期する
@@ -20,8 +24,8 @@ export function ActionSection({ actions: initialActions, depts = [] }: ActionSec
         setActions(initialActions);
     }, [initialActions]);
 
+    const [activeTab, setActiveTab] = useState<"current" | "history">("current");
     const [isAdding, setIsAdding] = useState(false);
-    const [showArchived, setShowArchived] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
     // フォーム用ステート
@@ -37,11 +41,11 @@ export function ActionSection({ actions: initialActions, depts = [] }: ActionSec
         normal: 1
     };
 
-    // 表示対象のアクションをフィルタリング & ソート
+    // 表示対象のアクションをフィルタリング & ソート（今月の提案タブ: アーカイブ未済のもの）
     const sortedActions = useMemo(() => {
         const filtered = actions.filter(a => {
             const archived = a.is_archived ?? a.isArchived;
-            return showArchived ? archived : !archived;
+            return !archived;
         });
 
         return [...filtered].sort((a, b) => {
@@ -49,7 +53,7 @@ export function ActionSection({ actions: initialActions, depts = [] }: ActionSec
             const weightB = priorityWeight[b.priority as keyof typeof priorityWeight] || 0;
             return weightB - weightA;
         });
-    }, [actions, showArchived]);
+    }, [actions]);
 
     const handleAddAction = async () => {
         if (!newTitle.trim() || isSubmitting) return;
@@ -124,21 +128,30 @@ export function ActionSection({ actions: initialActions, depts = [] }: ActionSec
 
         if (action.id) {
             try {
-                await fetch('/api/actions', {
+                const res = await fetch('/api/actions', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        id: action.id, 
-                        updates: { 
+                    body: JSON.stringify({
+                        id: action.id,
+                        updates: {
                             status: newStatus,
                             is_archived: shouldArchive,
                             archived_at: shouldArchive ? now : null
-                        } 
+                        }
                     })
                 });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                // sec切替でActionSectionがアンマウントされても状態が消えないよう親フック側も同期
+                onActionUpdated?.(action.id, {
+                    status: newStatus,
+                    is_archived: shouldArchive,
+                    archived_at: shouldArchive ? now : null
+                });
             } catch (error) {
-                console.error(error);
-                // 失敗時はロールバックする処理を入れることも可能
+                console.error('アクション保存エラー:', error);
+                toast.error('ステータスの保存に失敗しました。再度お試しください。');
+                // ロールバック: ローカル状態を元に戻す
+                setActions(prev => prev.map((a, i) => i === index ? action : a));
             }
         }
     };
@@ -151,13 +164,17 @@ export function ActionSection({ actions: initialActions, depts = [] }: ActionSec
 
         if (action.id) {
             try {
-                await fetch('/api/actions', {
+                const res = await fetch('/api/actions', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id: action.id, updates: { priority: newPriority } })
                 });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                onActionUpdated?.(action.id, { priority: newPriority });
             } catch (error) {
-                console.error(error);
+                console.error('優先度保存エラー:', error);
+                toast.error('優先度の保存に失敗しました。');
+                setActions(prev => prev.map((a, i) => i === index ? action : a));
             }
         }
     };
@@ -182,46 +199,112 @@ export function ActionSection({ actions: initialActions, depts = [] }: ActionSec
         }
     };
 
-    const currentMonth = "3月";
+    /**
+     * 履歴テーブルの「復活」ボタン用ハンドラ。
+     * 不採用アクションを pending に戻し、「今月の提案」リストに追加する。
+     */
+    const handleReviveFromHistory = async (item: { id: string; title: string; description: string | null; department_id: string | null; priority: string; status: string; created_at: string }) => {
+        const res = await fetch('/api/actions', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: item.id,
+                updates: { status: 'pending', is_archived: false, archived_at: null }
+            })
+        });
+        if (!res.ok) {
+            toast.error('復活に失敗しました。再度お試しください。');
+            throw new Error(`HTTP ${res.status}`);
+        }
+        // 今月の提案リストに追加（先頭に挿入）
+        const deptName = item.department_id
+            ? (depts.find(d => d.id === item.department_id)?.name || '不明')
+            : '全社';
+        const revived = {
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            department_id: item.department_id,
+            dept: deptName,
+            priority: item.priority,
+            status: 'pending',
+            initialStatus: 'pending',
+            is_archived: false,
+            is_ai_generated: true,
+            owner: '',
+            created_at: item.created_at,
+        };
+        setActions(prev => [revived, ...prev]);
+        onActionUpdated?.(item.id, { status: 'pending', is_archived: false, archived_at: null });
+        toast.success('アクションを今月の提案に復活しました');
+        // 復活したら「今月の提案」タブに切り替え
+        setActiveTab('current');
+    };
 
     return (
         <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                 <div className="flex flex-wrap items-center gap-3">
                     <Target className="text-teal" size={20} />
-                    <h3 className="text-base font-bold text-slate-800 font-display text-nowrap">今月のアクション提案</h3>
+                    <h3 className="text-base font-bold text-slate-800 font-display text-nowrap">アクション提案</h3>
                     <HelpLink href="/docs/action-guide" label="活用のコツ" />
                 </div>
                 <div className="flex items-center gap-2">
-                    <button 
-                        onClick={() => setIsAdding(!isAdding)}
-                        className={cn(
-                            "flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm border",
-                            isAdding 
-                                ? "bg-slate-100 text-slate-500 border-slate-200" 
-                                : "bg-teal text-white border-teal hover:bg-teal-600"
-                        )}
-                    >
-                        {isAdding ? <X size={14} /> : <Plus size={14} />}
-                        {isAdding ? "キャンセル" : "アクションを追加"}
-                    </button>
-                    <button 
-                        onClick={() => setShowArchived(!showArchived)}
-                        className={cn(
-                            "flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all border shadow-sm",
-                            showArchived 
-                                ? "bg-slate-800 text-white border-slate-800" 
-                                : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
-                        )}
-                    >
-                        <RefreshCcw size={12} className={showArchived ? "animate-spin-slow" : ""} />
-                        {showArchived ? "リストに戻る" : "振り返り (アーカイブ)"}
-                    </button>
+                    {/* タブ切り替え */}
+                    <div className="flex rounded-xl border border-slate-200 overflow-hidden text-xs font-bold">
+                        <button
+                            onClick={() => setActiveTab("current")}
+                            className={cn(
+                                "px-4 py-2 transition-all",
+                                activeTab === "current"
+                                    ? "bg-teal text-white"
+                                    : "bg-white text-slate-500 hover:bg-slate-50"
+                            )}
+                        >
+                            今月の提案
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("history")}
+                            className={cn(
+                                "px-4 py-2 transition-all border-l border-slate-200",
+                                activeTab === "history"
+                                    ? "bg-teal text-white"
+                                    : "bg-white text-slate-500 hover:bg-slate-50"
+                            )}
+                        >
+                            過去の履歴
+                        </button>
+                    </div>
+                    {activeTab === "current" && (
+                        <button
+                            onClick={() => setIsAdding(!isAdding)}
+                            className={cn(
+                                "flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm border",
+                                isAdding
+                                    ? "bg-slate-100 text-slate-500 border-slate-200"
+                                    : "bg-teal text-white border-teal hover:bg-teal-600"
+                            )}
+                        >
+                            {isAdding ? <X size={14} /> : <Plus size={14} />}
+                            {isAdding ? "キャンセル" : "アクションを追加"}
+                        </button>
+                    )}
                 </div>
             </div>
 
-            {/* 新規登録フォーム (アーカイブ表示時は非表示) */}
-            {isAdding && !showArchived && (
+            {/* 過去の履歴タブ */}
+            {activeTab === "history" && (
+                companyId ? (
+                    <ActionHistoryTable companyId={companyId} depts={depts} onRevive={handleReviveFromHistory} />
+                ) : (
+                    <p className="text-center py-10 text-slate-400 text-sm italic">
+                        会社情報を取得中です...
+                    </p>
+                )
+            )}
+
+            {/* 新規登録フォーム (今月の提案タブのみ表示) */}
+            {activeTab === "current" && isAdding && (
                 <div className="p-6 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 animate-in slide-in-from-top-2 duration-300">
                     <div className="space-y-4">
                         <div>
@@ -285,37 +368,39 @@ export function ActionSection({ actions: initialActions, depts = [] }: ActionSec
                 </div>
             )}
 
-            <div className="space-y-4">
-                {sortedActions.length > 0 ? (
-                    sortedActions.map((a, i) => {
-                        const deptName = a.dept || (a.department_id ? (depts.find(d => d.id === a.department_id)?.name || "不明") : "全社");
-                        
-                        return (
-                            <ActionItem
-                                key={a.id || `${a.title}-${i}`}
-                                id={a.id}
-                                priority={a.priority}
-                                title={a.title}
-                                description={a.description || a.desc}
-                                dept={deptName}
-                                owner={a.owner}
-                                isAiGenerated={a.is_ai_generated ?? a.isAiGenerated}
-                                isArchived={showArchived}
-                                archivedAt={a.archived_at ?? a.archivedAt}
-                                createdAt={a.created_at ? new Date(a.created_at).toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }) : a.createdAt}
-                                initialStatus={a.status ?? a.initialStatus}
-                                onPriorityChange={(p) => handlePriorityChange(actions.indexOf(a), p)}
-                                onStatusChange={(s) => handleStatusChange(actions.indexOf(a), s)}
-                                onRevive={() => handleRevive(a.title, actions.indexOf(a))}
-                            />
-                        );
-                    })
-                ) : (
-                    <p className="text-center py-10 text-slate-400 text-sm italic">
-                        {showArchived ? "アーカイブされたアクションはありません。" : "提案されたアクションはまだありません。"}
-                    </p>
-                )}
-            </div>
+            {activeTab === "current" && (
+                <div className="space-y-4">
+                    {sortedActions.length > 0 ? (
+                        sortedActions.map((a, i) => {
+                            const deptName = a.dept || (a.department_id ? (depts.find((d: any) => d.id === a.department_id)?.name || "不明") : "全社");
+
+                            return (
+                                <ActionItem
+                                    key={a.id || `${a.title}-${i}`}
+                                    id={a.id}
+                                    priority={a.priority}
+                                    title={a.title}
+                                    description={a.description || a.desc}
+                                    dept={deptName}
+                                    owner={a.owner}
+                                    isAiGenerated={a.is_ai_generated ?? a.isAiGenerated}
+                                    isArchived={false}
+                                    archivedAt={a.archived_at ?? a.archivedAt}
+                                    createdAt={a.created_at ? new Date(a.created_at).toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }) : a.createdAt}
+                                    initialStatus={a.status ?? a.initialStatus}
+                                    onPriorityChange={(p) => handlePriorityChange(actions.indexOf(a), p)}
+                                    onStatusChange={(s) => handleStatusChange(actions.indexOf(a), s)}
+                                    onRevive={() => handleRevive(a.title, actions.indexOf(a))}
+                                />
+                            );
+                        })
+                    ) : (
+                        <p className="text-center py-10 text-slate-400 text-sm italic">
+                            提案されたアクションはまだありません。
+                        </p>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
