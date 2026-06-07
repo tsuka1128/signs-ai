@@ -309,8 +309,9 @@ export default function DeptDashboardPage() {
 
             if (focusErr) throw focusErr;
 
-            const curFocus = focusList?.find(f => f.month === currentYM) || null;
-            const pstFocus = (focusList || []).filter(f => f.month !== currentYM).slice(0, 6);
+            // 経営方針は「当月（calendarYM）」で探す。latestDataYM（最新回答月）と混同しないこと
+            const curFocus = focusList?.find(f => f.month === calendarYM) || null;
+            const pstFocus = (focusList || []).filter(f => f.month !== calendarYM).slice(0, 6);
             setCurrentFocus(curFocus);
             setPastFocus(pstFocus);
 

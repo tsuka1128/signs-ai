@@ -22,7 +22,8 @@ import {
     Brain,
     Wallet,
     Crown,
-    Building2
+    Building2,
+    CalendarDays
 } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { useState, useEffect } from "react";
@@ -326,6 +327,22 @@ export function Sidebar({
                             </button>
                         );
                     })}
+                    {/* 組織方針の下：今月の組織目標（executive/admin/super_admin のみ） */}
+                    {(userRole === 'super_admin' || userRole === 'admin' || userRole === 'executive') && (
+                        <Link
+                            href="/settings?tab=focus"
+                            onClick={() => setIsMobileOpen?.(false)}
+                            className={cn(
+                                "flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-bold transition-all",
+                                pathname === '/settings' && typeof window !== 'undefined' && window.location.search.includes('tab=focus')
+                                    ? "text-teal bg-teal/5"
+                                    : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                            )}
+                        >
+                            <CalendarDays className="w-3.5 h-3.5 text-slate-300" />
+                            今月の組織目標
+                        </Link>
+                    )}
                 </div>
             )}
         </div>
