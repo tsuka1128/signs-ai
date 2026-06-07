@@ -7,6 +7,7 @@ import { FeedbackItem } from "@/components/dashboard/FeedbackItem";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Users } from "lucide-react";
 import { cn } from "@/lib/utils/index";
+import { useState } from "react";
 
 interface OrganizationSectionProps {
     secondaryAxisName: string;
@@ -25,6 +26,7 @@ export function OrganizationSection({
     displayAxes,
     aiContent
 }: OrganizationSectionProps) {
+    const [summaryExpanded, setSummaryExpanded] = useState(false);
     // displayDepts から計算
     const avgPulse = displayDepts.filter(d => d.pulse > 0).length > 0
         ? (displayDepts.filter(d => d.pulse > 0).reduce((s, d) => s + d.pulse, 0) / displayDepts.filter(d => d.pulse > 0).length).toFixed(1)
@@ -81,13 +83,26 @@ export function OrganizationSection({
                         )}
                     </div>
 
-                    {/* AI 1行コメント */}
+                    {/* AI サマリーコメント（展開ボタン付き） */}
                     {aiContent?.summary && (
                         <>
                             <div className="w-px h-5 bg-slate-100 hidden md:block" />
-                            <p className="text-[11px] text-slate-400 font-medium hidden md:block flex-1">
-                                💭 {aiContent.summary.slice(0, 60)}{aiContent.summary.length > 60 ? "…" : ""}
-                            </p>
+                            <div className="hidden md:flex items-start gap-1 flex-1 min-w-0">
+                                <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+                                    💭{" "}
+                                    {summaryExpanded
+                                        ? aiContent.summary
+                                        : `${aiContent.summary.slice(0, 60)}${aiContent.summary.length > 60 ? "…" : ""}`}
+                                </p>
+                                {aiContent.summary.length > 60 && (
+                                    <button
+                                        onClick={() => setSummaryExpanded(v => !v)}
+                                        className="text-[10px] font-bold text-teal shrink-0 hover:underline ml-1"
+                                    >
+                                        {summaryExpanded ? "閉じる" : "もっと見る"}
+                                    </button>
+                                )}
+                            </div>
                         </>
                     )}
                 </div>
