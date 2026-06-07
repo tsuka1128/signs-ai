@@ -275,6 +275,24 @@ export async function POST(req: Request) {
         });
         const policy = semantic.data?.content || "組織方針がまだ設定されていません。";
 
+        // 過去のアクション提案履歴を取得（重複排除用）
+        const { data: pastActions } = await supabase
+            .from('action_items')
+            .select('title, status, created_at')
+            .eq('company_id', companyId)
+            .order('created_at', { ascending: false })
+            .limit(60);
+
+        const pastActionsSummary = pastActions && pastActions.length > 0
+            ? pastActions.map((a: { title: string; status: string; created_at: string }) => {
+                const label = a.status === 'rejected' ? '❌不採用' :
+                              a.status === 'accepted' ? '▶実行中' :
+                              a.status === 'completed' ? '✅完了' :
+                              a.status === 'kept' ? '⏸キープ' : '⏳未判断';
+                return `${label}: ${a.title}`;
+              }).join('\n')
+            : null;
+
         const prompt = `対象月: ${latestMonth}
 各データセクションは ### DATA START と ### DATA END で区切られています。
 
@@ -291,7 +309,20 @@ ${JSON.stringify(historicalContext, null, 2)}
 - 部署別詳細: ${JSON.stringify(deptDetails)}
 - KPI定義: ${JSON.stringify(kpiDefs.data?.map(k => ({ name: k.name, unit: k.unit })))}
 ### DATA END
+${pastActionsSummary ? `
+### DATA START (過去の提案履歴・重複排除用)
+# 過去の提案履歴（必ず参照すること）
+${pastActionsSummary}
 
+【厳守ルール】
+- 上記のいずれとも「実質的に同じ内容」の提案は絶対にしないこと
+- ❌不採用 の提案は、組織が明示的に却下した提案であるため、再提案禁止
+- ▶実行中 / ⏳未判断 の提案は、既に対処中または検討中であるため、再提案禁止
+- ✅完了 した提案は、次のステップ・発展形を提案すること（同じ内容の再提案は禁止）
+- ⏸キープ の提案は、来月以降の候補として温存されているため、そのまま再提案しないこと
+- 上記を全て考慮した上で、まだ手をつけていない新しい課題・改善領域を発見して提案すること
+### DATA END
+` : ''}
 分析の要件:
 1. 全社的な傾向をサマリーしてください。
 2. insights_by_dept には、全ての部署に対する診断テキストを含めてください。

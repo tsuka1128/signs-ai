@@ -341,7 +341,7 @@ export default function DashboardPage() {
           )}
 
           {sec === "action" && (
-            <ActionSection actions={state.realActionItems} depts={state.realDepts} onActionUpdated={handlers.updateActionItem} />
+            <ActionSection actions={state.realActionItems} depts={state.realDepts} companyId={company?.id} onActionUpdated={handlers.updateActionItem} />
           )}
 
           {sec === "semantic" && (
