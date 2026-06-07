@@ -10,9 +10,11 @@ import { toast } from "sonner";
 interface ActionSectionProps {
     actions: any[];
     depts?: any[];
+    /** ステータス/優先度変更後に useDashboardData 側の realActionItems を同期するコールバック */
+    onActionUpdated?: (id: string, updates: Record<string, unknown>) => void;
 }
 
-export function ActionSection({ actions: initialActions, depts = [] }: ActionSectionProps) {
+export function ActionSection({ actions: initialActions, depts = [], onActionUpdated }: ActionSectionProps) {
     const [actions, setActions] = useState(initialActions);
 
     // AI分析実行後など、親コンポーネントから新しいアクションが渡された場合に同期する
@@ -124,21 +126,30 @@ export function ActionSection({ actions: initialActions, depts = [] }: ActionSec
 
         if (action.id) {
             try {
-                await fetch('/api/actions', {
+                const res = await fetch('/api/actions', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        id: action.id, 
-                        updates: { 
+                    body: JSON.stringify({
+                        id: action.id,
+                        updates: {
                             status: newStatus,
                             is_archived: shouldArchive,
                             archived_at: shouldArchive ? now : null
-                        } 
+                        }
                     })
                 });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                // sec切替でActionSectionがアンマウントされても状態が消えないよう親フック側も同期
+                onActionUpdated?.(action.id, {
+                    status: newStatus,
+                    is_archived: shouldArchive,
+                    archived_at: shouldArchive ? now : null
+                });
             } catch (error) {
-                console.error(error);
-                // 失敗時はロールバックする処理を入れることも可能
+                console.error('アクション保存エラー:', error);
+                toast.error('ステータスの保存に失敗しました。再度お試しください。');
+                // ロールバック: ローカル状態を元に戻す
+                setActions(prev => prev.map((a, i) => i === index ? action : a));
             }
         }
     };
@@ -151,13 +162,17 @@ export function ActionSection({ actions: initialActions, depts = [] }: ActionSec
 
         if (action.id) {
             try {
-                await fetch('/api/actions', {
+                const res = await fetch('/api/actions', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id: action.id, updates: { priority: newPriority } })
                 });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                onActionUpdated?.(action.id, { priority: newPriority });
             } catch (error) {
-                console.error(error);
+                console.error('優先度保存エラー:', error);
+                toast.error('優先度の保存に失敗しました。');
+                setActions(prev => prev.map((a, i) => i === index ? action : a));
             }
         }
     };

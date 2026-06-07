@@ -956,9 +956,24 @@ export function useDashboardData(
         ];
     }, [state.realDepts, userRole, userDepartmentId]);
 
+    /**
+     * アクション更新後にフック側の realActionItems を同期する。
+     * ActionSection は sec 切替でアンマウント→リマウントされるため、
+     * ローカル state だけを更新しても remount 時に古いデータで上書きされる。
+     * この関数を呼ぶことで useDashboardData 側も最新化し、remount 後も正しい値が使われる。
+     */
+    const updateActionItem = useCallback((id: string, updates: Partial<ActionItem>) => {
+        setState(prev => ({
+            ...prev,
+            realActionItems: prev.realActionItems.map(a =>
+                a.id === id ? { ...a, ...updates } : a
+            )
+        }));
+    }, []);
+
     return {
         state: { ...state, isAnalyzing, last13Months, monthLabels, fullMonthLabels, aiContent, hrStrategyContent, hrStrategyMonth, ...financialMetrics },
         derived: { getCurrentSurveyData: currentSurveyData, displayDepts, displayKpis, displayAxes, deptTabs },
-        handlers: { handleRunAnalyze, handleSaveSemantic, handleDeleteSemantic }
+        handlers: { handleRunAnalyze, handleSaveSemantic, handleDeleteSemantic, updateActionItem }
     };
 }
