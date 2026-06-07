@@ -110,29 +110,38 @@ export function OrganizationCard({ name, head, pulse, weather, arrow, kpis, labo
                                         </span>
                                     )}
                                 </div>
-                                {/* 値と達成率を横並び（右端に飛ばさない） */}
-                                <div className="flex items-end gap-3">
-                                    <div className="text-2xl font-black text-slate-800 tabular-nums leading-tight">
-                                        {primaryKpi.val}
-                                    </div>
-                                    {primaryKpi.ach !== null && (
-                                        <div className={cn(
-                                            "text-3xl font-black tabular-nums leading-tight",
-                                            primaryKpi.ach >= 100 ? "text-emerald-500" : primaryKpi.ach >= 80 ? "text-amber-500" : "text-rose-500"
-                                        )}>
-                                            {primaryKpi.ach}%
-                                        </div>
-                                    )}
-                                </div>
-                                {primaryKpi.ach !== null && (
-                                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                        <div
-                                            className={cn(
-                                                "h-full rounded-full transition-all duration-1000",
-                                                primaryKpi.ach >= 100 ? "bg-emerald-400" : primaryKpi.ach >= 80 ? "bg-amber-400" : "bg-rose-400"
+                                {/* 達成率を主役に、実績値はサブ表示 */}
+                                {primaryKpi.ach !== null ? (
+                                    <>
+                                        <div className="flex items-baseline gap-2">
+                                            <span className={cn(
+                                                "text-3xl font-black tabular-nums leading-tight",
+                                                primaryKpi.ach >= 100 ? "text-emerald-500" : primaryKpi.ach >= 80 ? "text-amber-500" : "text-rose-500"
+                                            )}>
+                                                {primaryKpi.ach}%
+                                            </span>
+                                            {primaryKpi.val && !primaryKpi.val.startsWith("-") && (
+                                                <span className="text-xs font-bold text-slate-400 tabular-nums">
+                                                    {primaryKpi.val}
+                                                </span>
                                             )}
-                                            style={{ width: `${Math.min(primaryKpi.ach, 120) / 1.2}%` }}
-                                        />
+                                        </div>
+                                        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                            <div
+                                                className={cn(
+                                                    "h-full rounded-full transition-all duration-1000",
+                                                    primaryKpi.ach >= 100 ? "bg-emerald-400" : primaryKpi.ach >= 80 ? "bg-amber-400" : "bg-rose-400"
+                                                )}
+                                                style={{ width: `${Math.min(primaryKpi.ach, 120) / 1.2}%` }}
+                                            />
+                                        </div>
+                                    </>
+                                ) : (
+                                    /* 達成率なし（目標未設定）は実績値のみ表示 */
+                                    <div className="text-2xl font-black text-slate-700 tabular-nums leading-tight">
+                                        {primaryKpi.val && !primaryKpi.val.startsWith("-") ? primaryKpi.val : (
+                                            <span className="text-slate-300 text-base font-bold">データなし</span>
+                                        )}
                                     </div>
                                 )}
                             </div>
