@@ -44,6 +44,12 @@ export function ActionItem({ priority: initialPriority, title, description, dept
         if (onStatusChange) onStatusChange(nextStatus);
     };
 
+    // 委譲を取り消す（部署への委譲を解除して未判断に戻す）
+    const handleRevoke = () => {
+        setStatus('pending');
+        if (onStatusChange) onStatusChange('pending');
+    };
+
     // 優先度を切り替える（サイクル：最優先 -> 重要 -> 推奨 -> 最優先）
     const handlePriorityToggle = () => {
         const cycle: Record<string, 'urgent' | 'high' | 'normal'> = {
@@ -75,6 +81,9 @@ export function ActionItem({ priority: initialPriority, title, description, dept
 
     const currentStatus = statusConfig[status];
     const currentPriority = priorityConfig[priority];
+
+    // 役割分離：実行中(accepted)かつ特定部署に紐づくものは部署へ委譲済み → 経営層側はロック
+    const isDelegatedToDept = status === 'accepted' && !!dept && dept !== '全社';
 
     return (
         <div className={cn(
@@ -145,9 +154,9 @@ export function ActionItem({ priority: initialPriority, title, description, dept
                         <Badge className="bg-slate-100 text-slate-600 border-none font-bold text-[10px] px-3 py-1.5 rounded-lg shrink-0">
                             {dept}
                         </Badge>
-                        {(status === 'accepted' || status === 'kept') && dept && dept !== '全社' && (
-                            <Badge className="bg-teal/5 text-teal border border-teal/20 font-bold text-[9px] px-2 py-1 rounded-lg shrink-0">
-                                📬 {dept} に通知済み
+                        {status === 'kept' && dept && dept !== '全社' && (
+                            <Badge className="bg-amber-50 text-amber-600 border border-amber-100 font-bold text-[9px] px-2 py-1 rounded-lg shrink-0">
+                                ⏸ {dept} で保留中
                             </Badge>
                         )}
                         <Badge className="bg-amber-50/50 text-amber-600/70 border-none font-bold text-[10px] px-3 py-1.5 rounded-lg shrink-0">
@@ -173,13 +182,29 @@ export function ActionItem({ priority: initialPriority, title, description, dept
                 {/* 操作パネル（グリッドで幅を統一） */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {isArchived ? (
-                        <button 
+                        <button
                             onClick={onRevive}
                             className="col-span-2 md:col-span-4 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[11px] font-bold transition-all bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 shadow-sm"
                         >
                             <RefreshCcw size={14} />
                             このアクションを復活させる（未判断に戻す）
                         </button>
+                    ) : isDelegatedToDept ? (
+                        /* 委譲済み：部署マネジメントで判断されるため経営層側はロック（役割分離） */
+                        <div className="col-span-2 md:col-span-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 rounded-xl bg-teal/5 border border-teal/20">
+                            <span className="text-[11px] font-bold text-teal flex items-center gap-1.5">
+                                <PlayCircle size={14} className="shrink-0" />
+                                {dept} に委譲済み — 完了・不採用は部署マネジメントで判断されます
+                            </span>
+                            <button
+                                onClick={handleRevoke}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold text-slate-500 border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 transition-all shrink-0"
+                                title="委譲を取り消して未判断に戻す"
+                            >
+                                <RefreshCcw size={12} />
+                                指示を取り消す
+                            </button>
+                        </div>
                     ) : (
                         <>
                             {/* 実行する */}
