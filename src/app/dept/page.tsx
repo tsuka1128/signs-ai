@@ -79,6 +79,8 @@ export default function DeptDashboardPage() {
     const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
     const [deptLoading, setDeptLoading] = useState<boolean>(false);
     const [deptFeedback, setDeptFeedback] = useState<any[]>([]);
+    // calendarYM: 書き込み用の当月。latestDataYM はローカル変数として fetchDeptData 内で使用
+    const [calendarMonthYM, setCalendarMonthYM] = useState<string | null>(null);
 
     useEffect(() => {
         checkRoleAndInit();
@@ -257,8 +259,16 @@ export default function DeptDashboardPage() {
 
             if (questionErr) throw questionErr;
 
-            // 6. 今月の設問別平均スコア集計
-            const currentYM = months[months.length - 1].ym;
+            // 6. 設問別平均スコア集計
+            // calendarYM: 当月（メモ・アクションプラン等の書き込み先）
+            // latestDataYM: 回答が1件以上ある最新月（スコア・AI要約の表示用）
+            const calendarYM = months[months.length - 1].ym;
+            setCalendarMonthYM(calendarYM); // メモ・アクションプランの書き込み先として保持
+            const latestDataYM = [...months]
+                .reverse()
+                .find(m => (responsesByMonth[m.ym] || []).length > 0)?.ym ?? calendarYM;
+            const currentYM = latestDataYM; // 表示系はlatestDataYMを使用
+
             const currentResponseIds = responsesByMonth[currentYM] || [];
 
             const qScores: QuestionScore[] = (questions || []).map(q => {
@@ -297,13 +307,13 @@ export default function DeptDashboardPage() {
             setCurrentFocus(curFocus);
             setPastFocus(pstFocus);
 
-            // 2. 自分のメモ（今月分、本人のみ取得可能）
+            // 2. 自分のメモ（当月分、本人のみ取得可能）— calendarYM で取得
             if (userId) {
                 const { data: noteData, error: noteErr } = await supabase
                     .from('manager_directive_notes')
                     .select('note, focus_id')
                     .eq('manager_user_id', userId)
-                    .eq('month', currentYM)
+                    .eq('month', calendarYM)
                     .maybeSingle();
 
                 if (noteErr) throw noteErr;
@@ -321,12 +331,12 @@ export default function DeptDashboardPage() {
                 .maybeSingle();
             setAiSummary(summaryData || null);
 
-            // ── アクションプラン取得（proposed含む全ステータス、dismissed以外） ──
+            // ── アクションプラン取得（当月 calendarYM、proposed含む全ステータス、dismissed以外） ──
             const { data: actionPlansData, error: actionPlanErr } = await supabase
                 .from('dept_action_plans')
                 .select('*')
                 .eq('department_id', deptId)
-                .eq('month', currentYM)
+                .eq('month', calendarYM)
                 .neq('status', 'dismissed')
                 .order('created_at', { ascending: true });
 
@@ -361,8 +371,8 @@ export default function DeptDashboardPage() {
         }
         try {
             setSavingNote(true);
-            const currentYM = deptScores[deptScores.length - 1]?.month;
-            if (!currentYM) {
+            const noteYM = calendarMonthYM ?? deptScores[deptScores.length - 1]?.month;
+            if (!noteYM) {
                 toast.error("現在の月情報を取得できませんでした");
                 return;
             }
@@ -373,7 +383,7 @@ export default function DeptDashboardPage() {
                     company_id: companyId,
                     department_id: departmentId,
                     manager_user_id: userId,
-                    month: currentYM,
+                    month: noteYM,
                     focus_id: currentFocus?.id ?? null,
                     note: note,
                 }, {
@@ -391,8 +401,9 @@ export default function DeptDashboardPage() {
 
     const handleGenerateSummary = async () => {
         if (!selectedDepartmentId) return;
-        const currentYM = deptScores[deptScores.length - 1]?.month;
-        if (!currentYM) {
+        // AI要約は回答がある最新月（deptScores末尾）で生成
+        const summaryYM = deptScores[deptScores.length - 1]?.month;
+        if (!summaryYM) {
             toast.error("現在の月情報を取得できませんでした");
             return;
         }
@@ -404,7 +415,7 @@ export default function DeptDashboardPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     department_id: selectedDepartmentId,
-                    month: currentYM,
+                    month: summaryYM,
                 }),
             });
             if (!res.ok) {
@@ -425,7 +436,7 @@ export default function DeptDashboardPage() {
                 await fetch('/api/ai/dept-action-proposals', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ department_id: selectedDepartmentId, month: currentYM }),
+                    body: JSON.stringify({ department_id: selectedDepartmentId, month: summaryYM }),
                 });
             } catch (proposalErr) {
                 // サイレントフェイル（提案生成の失敗は要約生成の成否に影響しない）
@@ -592,13 +603,9 @@ export default function DeptDashboardPage() {
 
     // ② 回答数が3名未満（匿名ガード発動中）
     if (currentMonthScore && !passesAnonymityGuard(currentMonthScore.respondentCount)) {
-        const prevWithData = [...deptScores].reverse().find(s => s.respondentCount >= 3);
-        const prevLabel = prevWithData ? `（直近データ: ${prevWithData.label}）` : "";
         signals.push({
             level: 'warning',
-            message: currentMonthScore.respondentCount === 0
-                ? `今月（${currentMonthScore.label}）はまだ回答がありません。前月以前のデータを参照してください${prevLabel}`
-                : `今月の回答数が ${currentMonthScore.respondentCount} 名です。集計には 3 名以上の回答が必要です`,
+            message: `${currentMonthScore.label}の回答数が ${currentMonthScore.respondentCount} 名です。集計には 3 名以上の回答が必要です`,
         });
     }
 
