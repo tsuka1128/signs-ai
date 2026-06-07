@@ -199,6 +199,48 @@ export function ActionSection({ actions: initialActions, depts = [], companyId, 
         }
     };
 
+    /**
+     * 履歴テーブルの「復活」ボタン用ハンドラ。
+     * 不採用アクションを pending に戻し、「今月の提案」リストに追加する。
+     */
+    const handleReviveFromHistory = async (item: { id: string; title: string; description: string | null; department_id: string | null; priority: string; status: string; created_at: string }) => {
+        const res = await fetch('/api/actions', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: item.id,
+                updates: { status: 'pending', is_archived: false, archived_at: null }
+            })
+        });
+        if (!res.ok) {
+            toast.error('復活に失敗しました。再度お試しください。');
+            throw new Error(`HTTP ${res.status}`);
+        }
+        // 今月の提案リストに追加（先頭に挿入）
+        const deptName = item.department_id
+            ? (depts.find(d => d.id === item.department_id)?.name || '不明')
+            : '全社';
+        const revived = {
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            department_id: item.department_id,
+            dept: deptName,
+            priority: item.priority,
+            status: 'pending',
+            initialStatus: 'pending',
+            is_archived: false,
+            is_ai_generated: true,
+            owner: '',
+            created_at: item.created_at,
+        };
+        setActions(prev => [revived, ...prev]);
+        onActionUpdated?.(item.id, { status: 'pending', is_archived: false, archived_at: null });
+        toast.success('アクションを今月の提案に復活しました');
+        // 復活したら「今月の提案」タブに切り替え
+        setActiveTab('current');
+    };
+
     return (
         <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -253,7 +295,7 @@ export function ActionSection({ actions: initialActions, depts = [], companyId, 
             {/* 過去の履歴タブ */}
             {activeTab === "history" && (
                 companyId ? (
-                    <ActionHistoryTable companyId={companyId} depts={depts} />
+                    <ActionHistoryTable companyId={companyId} depts={depts} onRevive={handleReviveFromHistory} />
                 ) : (
                     <p className="text-center py-10 text-slate-400 text-sm italic">
                         会社情報を取得中です...

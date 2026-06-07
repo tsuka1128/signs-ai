@@ -3,10 +3,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils/index";
+import { RefreshCcw } from "lucide-react";
 
 interface ActionHistoryTableProps {
   companyId: string;
   depts?: { id: string; name: string }[];
+  /** 不採用アクションを「今月の提案」に復活させるコールバック */
+  onRevive?: (item: ActionHistoryItem) => Promise<void>;
 }
 
 interface ActionHistoryItem {
@@ -63,7 +66,7 @@ function formatMonthDay(dateStr: string | null): string {
 function SkeletonRow() {
   return (
     <tr className="border-b border-slate-100">
-      {[...Array(6)].map((_, i) => (
+      {[...Array(7)].map((_, i) => (
         <td key={i} className="px-4 py-3">
           <div className="h-4 bg-slate-100 rounded animate-pulse w-full" />
         </td>
@@ -72,9 +75,10 @@ function SkeletonRow() {
   );
 }
 
-export function ActionHistoryTable({ companyId, depts = [] }: ActionHistoryTableProps) {
+export function ActionHistoryTable({ companyId, depts = [], onRevive }: ActionHistoryTableProps) {
   const [items, setItems] = useState<ActionHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [revivingId, setRevivingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!companyId) return;
@@ -122,6 +126,7 @@ export function ActionHistoryTable({ companyId, depts = [] }: ActionHistoryTable
               <th className="px-4 py-2">優先度</th>
               <th className="px-4 py-2">判断</th>
               <th className="px-4 py-2">判断日</th>
+              <th className="px-4 py-2"></th>
             </tr>
           </thead>
           <tbody>
@@ -151,13 +156,14 @@ export function ActionHistoryTable({ companyId, depts = [] }: ActionHistoryTable
             <th className="px-4 py-2 font-bold whitespace-nowrap">優先度</th>
             <th className="px-4 py-2 font-bold whitespace-nowrap">判断</th>
             <th className="px-4 py-2 font-bold whitespace-nowrap">判断日</th>
+            <th className="px-4 py-2 font-bold whitespace-nowrap"></th>
           </tr>
         </thead>
         <tbody>
           {Array.from(grouped.entries()).map(([month, monthItems]) => (
             <React.Fragment key={month}>
               <tr>
-                <td colSpan={6} className="px-4 pt-5 pb-1">
+                <td colSpan={7} className="px-4 pt-5 pb-1">
                   <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
                     {month} ({monthItems.length}件)
                   </span>
@@ -170,6 +176,9 @@ export function ActionHistoryTable({ companyId, depts = [] }: ActionHistoryTable
                 const actionText = `${item.title}${item.description ? ` ${item.description}` : ""}`;
                 const truncated = actionText.length > 50 ? actionText.slice(0, 50) + "…" : actionText;
                 const decisionDate = item.archived_at ?? item.updated_at;
+
+                const isRejected = item.status === "rejected";
+                const isReviving = revivingId === item.id;
 
                 return (
                   <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
@@ -200,6 +209,29 @@ export function ActionHistoryTable({ companyId, depts = [] }: ActionHistoryTable
                     </td>
                     <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">
                       {formatMonthDay(decisionDate)}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {isRejected && onRevive && (
+                        <button
+                          disabled={isReviving}
+                          onClick={async () => {
+                            setRevivingId(item.id);
+                            await onRevive(item);
+                            // 楽観的削除：履歴から消す（今月の提案に戻るため）
+                            setItems(prev => prev.filter(i => i.id !== item.id));
+                            setRevivingId(null);
+                          }}
+                          className={cn(
+                            "inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold border transition-all",
+                            "text-slate-400 border-slate-200 hover:text-teal-600 hover:border-teal-300 hover:bg-teal-50",
+                            "disabled:opacity-40 disabled:cursor-not-allowed"
+                          )}
+                          title="不採用を取り消して今月の提案に戻す"
+                        >
+                          <RefreshCcw size={11} className={isReviving ? "animate-spin" : ""} />
+                          復活
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );
