@@ -197,7 +197,8 @@ export function ActionHistoryTable({ companyId, depts = [], onRevive }: ActionHi
                 const truncated = actionText.length > 50 ? actionText.slice(0, 50) + "…" : actionText;
                 const decisionDate = item.archived_at ?? item.updated_at;
 
-                const isRejected = item.status === "rejected";
+                // 未判断(pending)以外はすべて「未判断に戻す」復活が可能
+                const canRevive = item.status !== "pending";
                 const isReviving = revivingId === item.id;
 
                 return (
@@ -231,7 +232,7 @@ export function ActionHistoryTable({ companyId, depts = [], onRevive }: ActionHi
                       {formatMonthDay(decisionDate)}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      {isRejected && onRevive && (
+                      {canRevive && onRevive && (
                         <button
                           disabled={isReviving}
                           onClick={async () => {
@@ -246,7 +247,7 @@ export function ActionHistoryTable({ companyId, depts = [], onRevive }: ActionHi
                             "text-slate-400 border-slate-200 hover:text-teal-600 hover:border-teal-300 hover:bg-teal-50",
                             "disabled:opacity-40 disabled:cursor-not-allowed"
                           )}
-                          title="不採用を取り消して今月の提案に戻す"
+                          title="このアクションを未判断に戻して今月の提案に戻す"
                         >
                           <RefreshCcw size={11} className={isReviving ? "animate-spin" : ""} />
                           復活
