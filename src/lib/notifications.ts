@@ -22,6 +22,7 @@ export type NotificationType =
   | "ai_analysis_done"
   | "anomaly_detected"
   | "action_request"
+  | "action_decided"
   | "kpi_reminder"
   | "survey_response_low"
   | "member_joined"

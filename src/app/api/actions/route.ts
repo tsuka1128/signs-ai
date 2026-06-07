@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
+import { createNotification } from "@/lib/notifications";
 
 export async function POST(req: Request) {
     try {
@@ -80,6 +81,13 @@ export async function PATCH(req: Request) {
             return NextResponse.json({ error: "id and updates are required" }, { status: 400 });
         }
 
+        // 更新者のロールを取得（部署マネージャーの判断時に経営層へ通知するため）
+        const { data: actorProfile } = await supabase
+            .from("users")
+            .select("role")
+            .eq("id", user.id)
+            .single();
+
         // 削除ではなくアーカイブする場合もあるためupdatesには is_archived 等が含まれる
         const { data, error } = await supabase
             .from("action_items")
@@ -92,6 +100,41 @@ export async function PATCH(req: Request) {
             .single();
 
         if (error) throw error;
+
+        // 部署マネージャーがステータスを変更したら、経営層（admin/executive）に通知
+        if (
+            actorProfile?.role === 'manager' &&
+            typeof updates.status === 'string' &&
+            data?.department_id
+        ) {
+            const statusLabel: Record<string, string> = {
+                completed: '完了', rejected: '不採用', kept: 'キープ', accepted: '実行中',
+            };
+            const label = statusLabel[updates.status] || updates.status;
+            // 部署名を取得（通知文面用）
+            const { data: dept } = await supabase
+                .from("departments")
+                .select("name")
+                .eq("id", data.department_id)
+                .single();
+            const deptName = dept?.name || '担当部署';
+            void createNotification({
+                companyId: data.company_id,
+                type: 'action_decided',
+                title: `${deptName}がアクションを「${label}」に更新`,
+                body: `「${data.title}」が ${deptName} で${label}と判断されました。`,
+                link: '/?sec=action',
+                targetRole: 'admin',
+            });
+            void createNotification({
+                companyId: data.company_id,
+                type: 'action_decided',
+                title: `${deptName}がアクションを「${label}」に更新`,
+                body: `「${data.title}」が ${deptName} で${label}と判断されました。`,
+                link: '/?sec=action',
+                targetRole: 'executive',
+            });
+        }
 
         return NextResponse.json({ success: true, data });
 
