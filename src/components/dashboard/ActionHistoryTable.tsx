@@ -103,16 +103,35 @@ export function ActionHistoryTable({ companyId, depts = [], onRevive }: ActionHi
     fetchHistory();
   }, [companyId]);
 
+  // キープ項目はタイトルが同じなら最新の1件だけ残す（毎月同じものが並ぶのを防ぐ）
+  const deduplicatedItems = useMemo(() => {
+    const keptLatest = new Map<string, ActionHistoryItem>();
+    const others: ActionHistoryItem[] = [];
+    for (const item of items) {
+      if (item.status === "kept") {
+        const existing = keptLatest.get(item.title);
+        if (!existing || new Date(item.created_at) > new Date(existing.created_at)) {
+          keptLatest.set(item.title, item);
+        }
+      } else {
+        others.push(item);
+      }
+    }
+    return [...others, ...keptLatest.values()].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  }, [items]);
+
   // 月別グループ化
   const grouped = useMemo(() => {
     const map = new Map<string, ActionHistoryItem[]>();
-    for (const item of items) {
+    for (const item of deduplicatedItems) {
       const key = formatYearMonth(item.created_at);
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(item);
     }
     return map;
-  }, [items]);
+  }, [deduplicatedItems]);
 
   if (loading) {
     return (
