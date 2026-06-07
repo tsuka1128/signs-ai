@@ -473,25 +473,39 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
             }
         })();
 
-        // アクションを action_items に保存
+        // アクションを action_items に保存（月1回まで。AI分析を月に複数回実行しても提案は重複生成しない）
         if (aiResult.suggested_actions) {
-            const actionsToInsert = aiResult.suggested_actions.map((a: any) => {
-                const targetDeptId = a.dept_id;
-                const resolvedDeptId = depts.data?.find(d => d.id === targetDeptId)?.id || 
-                                     depts.data?.find(d => d.name === a.dept_id)?.id || null;
-                
-                return {
-                    company_id: companyId,
-                    department_id: resolvedDeptId,
-                    title: a.title,
-                    description: a.description,
-                    priority: a.priority,
-                    status: 'pending'
-                };
-            });
-            const { error: actionInsertError } = await supabase.from('action_items').insert(actionsToInsert);
-            if (actionInsertError) {
-                console.error("action_items insert error:", actionInsertError, "payload sample:", actionsToInsert[0]);
+            // 今月すでにAI生成アクションが存在するかチェック
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+            const { count: existingAiActionCount } = await supabase
+                .from('action_items')
+                .select('id', { count: 'exact', head: true })
+                .eq('company_id', companyId)
+                .eq('is_ai_generated', true)
+                .gte('created_at', monthStart);
+
+            if (!existingAiActionCount || existingAiActionCount === 0) {
+                const actionsToInsert = aiResult.suggested_actions.map((a: any) => {
+                    const targetDeptId = a.dept_id;
+                    const resolvedDeptId = depts.data?.find(d => d.id === targetDeptId)?.id ||
+                                         depts.data?.find(d => d.name === a.dept_id)?.id || null;
+
+                    return {
+                        company_id: companyId,
+                        department_id: resolvedDeptId,
+                        title: a.title,
+                        description: a.description,
+                        priority: a.priority,
+                        status: 'pending',
+                        is_ai_generated: true
+                    };
+                });
+                const { error: actionInsertError } = await supabase.from('action_items').insert(actionsToInsert);
+                if (actionInsertError) {
+                    console.error("action_items insert error:", actionInsertError, "payload sample:", actionsToInsert[0]);
+                }
+            } else {
+                console.log(`action_items: 今月は既にAI提案を生成済み（${existingAiActionCount}件）のため新規生成をスキップ`);
             }
         }
 
