@@ -26,7 +26,8 @@ import {
     X,
     Plus,
     Trash2,
-    Sparkles
+    Sparkles,
+    Rocket
 } from "lucide-react";
 import { toast } from "sonner";
 import { FeedbackItem } from "@/components/dashboard/FeedbackItem";
@@ -79,6 +80,11 @@ export default function DeptDashboardPage() {
     const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
     const [deptLoading, setDeptLoading] = useState<boolean>(false);
     const [deptFeedback, setDeptFeedback] = useState<any[]>([]);
+    // 経営層から委譲されたアクション（accepted/kept）
+    const [execActions, setExecActions] = useState<any[]>([]);
+    // 部署で判断済みのアクション履歴（completed/rejected/kept-archived）
+    const [execActionHistory, setExecActionHistory] = useState<any[]>([]);
+    const [showExecHistory, setShowExecHistory] = useState(false);
     // calendarYM: 書き込み用の当月。latestDataYM はローカル変数として fetchDeptData 内で使用
     const [calendarMonthYM, setCalendarMonthYM] = useState<string | null>(null);
 
@@ -343,6 +349,28 @@ export default function DeptDashboardPage() {
             if (actionPlanErr) throw actionPlanErr;
             setActionPlans(actionPlansData || []);
 
+            // ── 経営層から委譲されたアクション（accepted/kept かつ未アーカイブ）──
+            const { data: execActionsData } = await supabase
+                .from('action_items')
+                .select('*')
+                .eq('company_id', companyId)
+                .eq('department_id', deptId)
+                .in('status', ['accepted', 'kept'])
+                .eq('is_archived', false)
+                .order('created_at', { ascending: false });
+            setExecActions(execActionsData || []);
+
+            // ── 部署の判断済みアクション履歴（completed/rejected/archived）──
+            const { data: execHistoryData } = await supabase
+                .from('action_items')
+                .select('*')
+                .eq('company_id', companyId)
+                .eq('department_id', deptId)
+                .or('is_archived.eq.true,status.in.(completed,rejected)')
+                .order('updated_at', { ascending: false })
+                .limit(30);
+            setExecActionHistory(execHistoryData || []);
+
             // ── 最新 AI 分析から「組織として話したいこと」（部署間フィードバック）を取得 ──
             const { data: latestInsight } = await supabase
                 .from('ai_insights')
@@ -449,6 +477,52 @@ export default function DeptDashboardPage() {
             toast.error('AI要約の生成に失敗しました');
         } finally {
             setSummaryLoading(false);
+        }
+    };
+
+    /**
+     * マネージャーが経営層委譲アクションを判断する（完了/キープ/不採用）
+     */
+    const handleExecActionDecision = async (
+        actionId: string,
+        decision: 'completed' | 'kept' | 'rejected'
+    ) => {
+        const shouldArchive = decision === 'completed' || decision === 'rejected';
+        const now = new Date().toISOString();
+
+        // 楽観的UI: execActions から除去
+        const target = execActions.find(a => a.id === actionId);
+        setExecActions(prev => prev.filter(a => a.id !== actionId));
+        if (target) {
+            setExecActionHistory(prev => [
+                { ...target, status: decision, is_archived: shouldArchive, archived_at: shouldArchive ? now : null, updated_at: now },
+                ...prev
+            ]);
+        }
+
+        const res = await fetch('/api/actions', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: actionId,
+                updates: {
+                    status: decision,
+                    is_archived: shouldArchive,
+                    archived_at: shouldArchive ? now : null
+                }
+            })
+        });
+
+        if (!res.ok) {
+            toast.error('判断の保存に失敗しました');
+            // ロールバック
+            if (target) {
+                setExecActions(prev => [target, ...prev]);
+                setExecActionHistory(prev => prev.filter(a => a.id !== actionId));
+            }
+        } else {
+            const labelMap = { completed: '完了', kept: 'キープ', rejected: '不採用' };
+            toast.success(`「${target?.title}」を${labelMap[decision]}にしました`);
         }
     };
 
@@ -1275,6 +1349,126 @@ export default function DeptDashboardPage() {
                                     <p className="text-xs text-slate-500 max-w-md leading-relaxed">
                                         プライバシーと個人の匿名性を保護するため、今月の回答総数が3名未満の場合、設問ごとの詳細なスコアは一括してマスクされます。
                                     </p>
+                                </div>
+                            )}
+                        </section>
+
+                        {/* ═══ 経営層からのアクション指示 ═══ */}
+                        <section className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                            <div className="px-6 py-4 border-b border-slate-50 flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                                        <Rocket className="w-4 h-4 text-teal" />
+                                        経営層からのアクション指示
+                                    </h3>
+                                    <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                                        経営層が「実行する」「キープ」に設定したアクションです。判断してください。
+                                    </p>
+                                </div>
+                                {execActionHistory.length > 0 && (
+                                    <button
+                                        onClick={() => setShowExecHistory(v => !v)}
+                                        className="text-[10px] font-black text-slate-400 hover:text-teal transition-colors flex items-center gap-1"
+                                    >
+                                        {showExecHistory ? "履歴を隠す" : `過去の履歴 (${execActionHistory.length}件)`}
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* アクティブな委譲アクション */}
+                            {execActions.length > 0 ? (
+                                <div className="divide-y divide-slate-50">
+                                    {execActions.map((action: any) => {
+                                        const priorityMap: Record<string, { label: string; cls: string }> = {
+                                            urgent: { label: "最優先", cls: "bg-rose-500 text-white" },
+                                            high:   { label: "重要",   cls: "bg-amber-400 text-white" },
+                                            normal: { label: "推奨",   cls: "bg-slate-400 text-white" },
+                                        };
+                                        const p = priorityMap[action.priority] || priorityMap.normal;
+                                        const isKept = action.status === 'kept';
+                                        return (
+                                            <div key={action.id} className="px-6 py-5 space-y-3">
+                                                <div className="flex items-start gap-3">
+                                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shrink-0 mt-0.5 ${p.cls}`}>
+                                                        {p.label}
+                                                    </span>
+                                                    {isKept && (
+                                                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-600 shrink-0 mt-0.5">
+                                                            ⏸ キープ中
+                                                        </span>
+                                                    )}
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-black text-slate-800">{action.title}</p>
+                                                        {action.description && (
+                                                            <p className="text-xs text-slate-500 font-medium leading-relaxed mt-1">{action.description}</p>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-[10px] text-slate-300 font-bold shrink-0">
+                                                        {new Date(action.created_at).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}
+                                                    </span>
+                                                </div>
+                                                {/* 判断ボタン */}
+                                                <div className="flex items-center gap-2 pt-1">
+                                                    <button
+                                                        onClick={() => handleExecActionDecision(action.id, 'completed')}
+                                                        className="flex items-center gap-1.5 px-4 py-2 bg-emerald-500 text-white text-[11px] font-black rounded-xl hover:bg-emerald-600 transition-colors"
+                                                    >
+                                                        <Check className="w-3 h-3" /> 完了
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleExecActionDecision(action.id, 'kept')}
+                                                        className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-600 text-[11px] font-black rounded-xl hover:bg-slate-200 transition-colors"
+                                                    >
+                                                        ⏸ キープ
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleExecActionDecision(action.id, 'rejected')}
+                                                        className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-600 text-[11px] font-black rounded-xl hover:bg-slate-200 transition-colors"
+                                                    >
+                                                        <X className="w-3 h-3" /> 不採用
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="px-6 py-8 text-center text-slate-400 text-xs font-medium">
+                                    現在、経営層からの指示はありません
+                                </div>
+                            )}
+
+                            {/* 判断済み履歴（折りたたみ） */}
+                            {showExecHistory && execActionHistory.length > 0 && (
+                                <div className="border-t border-slate-100 bg-slate-50/50">
+                                    <div className="px-6 py-3">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                            判断済み履歴
+                                        </span>
+                                    </div>
+                                    <div className="divide-y divide-slate-100">
+                                        {execActionHistory.map((action: any) => {
+                                            const statusMap: Record<string, { label: string; cls: string }> = {
+                                                completed: { label: "✅ 完了",  cls: "text-emerald-600 bg-emerald-50" },
+                                                rejected:  { label: "❌ 不採用", cls: "text-rose-500 bg-rose-50" },
+                                                kept:      { label: "⏸ キープ", cls: "text-amber-600 bg-amber-50" },
+                                                accepted:  { label: "▶ 実行中", cls: "text-teal bg-teal/10" },
+                                            };
+                                            const s = statusMap[action.status] || { label: action.status, cls: "text-slate-400 bg-slate-100" };
+                                            const date = action.archived_at ?? action.updated_at;
+                                            return (
+                                                <div key={action.id} className="px-6 py-3 flex items-center gap-3">
+                                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shrink-0 ${s.cls}`}>
+                                                        {s.label}
+                                                    </span>
+                                                    <span className="text-xs font-bold text-slate-600 flex-1 truncate">{action.title}</span>
+                                                    <span className="text-[10px] text-slate-300 font-bold shrink-0">
+                                                        {date ? new Date(date).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' }) : "—"}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             )}
                         </section>

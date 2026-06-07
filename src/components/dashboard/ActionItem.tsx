@@ -145,6 +145,11 @@ export function ActionItem({ priority: initialPriority, title, description, dept
                         <Badge className="bg-slate-100 text-slate-600 border-none font-bold text-[10px] px-3 py-1.5 rounded-lg shrink-0">
                             {dept}
                         </Badge>
+                        {(status === 'accepted' || status === 'kept') && dept && dept !== '全社' && (
+                            <Badge className="bg-teal/5 text-teal border border-teal/20 font-bold text-[9px] px-2 py-1 rounded-lg shrink-0">
+                                📬 {dept} に通知済み
+                            </Badge>
+                        )}
                         <Badge className="bg-amber-50/50 text-amber-600/70 border-none font-bold text-[10px] px-3 py-1.5 rounded-lg shrink-0">
                             推奨担当: {owner}
                         </Badge>
