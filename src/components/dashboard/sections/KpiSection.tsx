@@ -166,10 +166,15 @@ export function KpiSection({
                     {/* 部署別 KPI コンディション診断テーブル */}
                     <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm mt-6 animate-in fade-in slide-in-from-bottom-4 duration-700 relative z-10">
                         <div className="px-8 py-6 border-b border-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/30 rounded-t-[32px]">
-                            <h3 className="text-sm font-black text-slate-800 tracking-tight flex items-center gap-2">
-                                <TrendingDown className="w-4 h-4 text-slate-400" />
-                                部署別 KPI コンディション診断
-                            </h3>
+                            <div>
+                                <h3 className="text-sm font-black text-slate-800 tracking-tight flex items-center gap-2">
+                                    <TrendingDown className="w-4 h-4 text-slate-400" />
+                                    部署別 KPI コンディション診断
+                                </h3>
+                                <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                                    担当KPI・達成率はリアルタイム反映。コンディション診断はAI分析実行後に更新されます。
+                                </p>
+                            </div>
                             <div className="flex flex-wrap items-center gap-4">
                                 <div className="flex items-center gap-3">
                                     {[
@@ -237,7 +242,9 @@ export function KpiSection({
                                         const setHealth = calcKpiSetHealth(d.kpiAchHistory ?? []);
                                         const shMeta = KPI_SET_HEALTH_META[setHealth];
                                         
-                                        const deptKpi = displayKpis.find(k => k.dept === d.name);
+                                        // is_main=true のKPIを代表として優先、なければsort_order順で最初
+                                        const deptKpis = displayKpis.filter(k => k.dept === d.name);
+                                        const deptKpi = deptKpis.find(k => k.is_main) ?? deptKpis[0];
 
                                         return (
                                             <tr key={d.id} className="group hover:bg-slate-50/30 transition-colors border-b border-slate-50/50">
@@ -245,7 +252,13 @@ export function KpiSection({
                                                     <span className="text-sm font-black text-slate-700">{d.name}</span>
                                                 </td>
                                                 <td className="py-5 px-4">
-                                                    <span className="text-[11px] font-black text-slate-400 bg-slate-100/50 px-2.5 py-1 rounded-lg border border-slate-200/50">{deptKpi?.name || "---"}</span>
+                                                    {deptKpi ? (
+                                                        <span className="text-[11px] font-black text-slate-400 bg-slate-100/50 px-2.5 py-1 rounded-lg border border-slate-200/50">
+                                                            {deptKpi.name}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[10px] text-slate-300 italic">未設定</span>
+                                                    )}
                                                 </td>
                                                 <td className="py-5 px-4">
                                                     <span className={cn(
