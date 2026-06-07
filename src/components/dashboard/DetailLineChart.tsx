@@ -217,20 +217,40 @@ export function DetailLineChart({
                 })}
             </svg>
 
-            {hasTargetLine && (
-                <div className="flex items-center gap-4 mt-1 ml-1">
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-4 h-0.5 rounded-full" style={{ backgroundColor: color }} />
-                        <span className="text-[10px] font-bold text-slate-400">実績</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <svg width="16" height="2" viewBox="0 0 16 2">
-                            <line x1="0" y1="1" x2="16" y2="1" stroke="#CBD5E1" strokeWidth="1.5" strokeDasharray="5 3" />
-                        </svg>
-                        <span className="text-[10px] font-bold text-slate-400">目標</span>
-                    </div>
-                </div>
-            )}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 ml-1">
+                {hasTargetLine && (
+                    <>
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-4 h-0.5 rounded-full" style={{ backgroundColor: color }} />
+                            <span className="text-[10px] font-bold text-slate-400">実績</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <svg width="16" height="2" viewBox="0 0 16 2">
+                                <line x1="0" y1="1" x2="16" y2="1" stroke="#CBD5E1" strokeWidth="1.5" strokeDasharray="5 3" />
+                            </svg>
+                            <span className="text-[10px] font-bold text-slate-400">目標</span>
+                        </div>
+                        <div className="w-px h-3 bg-slate-200" />
+                    </>
+                )}
+                {/* 背景ヒートマップの凡例（体温データがある場合のみ） */}
+                {pulseHistory.some(p => p > 0) && (
+                    <>
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-3 h-3 rounded-sm bg-emerald-100 border border-emerald-200 opacity-80" />
+                            <span className="text-[10px] font-bold text-slate-400">高体温 (≥3.8)</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-3 h-3 rounded-sm bg-yellow-100 border border-yellow-200 opacity-80" />
+                            <span className="text-[10px] font-bold text-slate-400">標準 (≥3.0)</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-3 h-3 rounded-sm bg-rose-100 border border-rose-200 opacity-80" />
+                            <span className="text-[10px] font-bold text-slate-400">低体温 (&lt;3.0)</span>
+                        </div>
+                    </>
+                )}
+            </div>
 
             {/* Tooltip */}
             {hoveredIndex !== null && (
