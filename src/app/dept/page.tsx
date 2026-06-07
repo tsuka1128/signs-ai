@@ -29,6 +29,7 @@ import {
     Sparkles
 } from "lucide-react";
 import { toast } from "sonner";
+import { FeedbackItem } from "@/components/dashboard/FeedbackItem";
 
 interface DeptMonthlyScore {
     month: string;     // YYYY-MM
@@ -591,9 +592,13 @@ export default function DeptDashboardPage() {
 
     // ② 回答数が3名未満（匿名ガード発動中）
     if (currentMonthScore && !passesAnonymityGuard(currentMonthScore.respondentCount)) {
+        const prevWithData = [...deptScores].reverse().find(s => s.respondentCount >= 3);
+        const prevLabel = prevWithData ? `（直近データ: ${prevWithData.label}）` : "";
         signals.push({
             level: 'warning',
-            message: `今月の回答数が ${currentMonthScore.respondentCount} 名です。集計には ${3} 名以上の回答が必要です`,
+            message: currentMonthScore.respondentCount === 0
+                ? `今月（${currentMonthScore.label}）はまだ回答がありません。前月以前のデータを参照してください${prevLabel}`
+                : `今月の回答数が ${currentMonthScore.respondentCount} 名です。集計には 3 名以上の回答が必要です`,
         });
     }
 
@@ -1269,33 +1274,20 @@ export default function DeptDashboardPage() {
 
                         {/* 組織として話したいこと（AI部署間フィードバック） */}
                         {deptFeedback.length > 0 && (
-                            <section className="bg-slate-50/50 rounded-2xl border border-slate-100 px-6 py-5 space-y-4">
+                            <section className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 py-5 space-y-4">
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                                     組織として話したいこと
                                 </span>
-                                <div className="space-y-3 pt-1">
-                                    {deptFeedback.map((f: any, i: number) => {
-                                        const typeMap: Record<string, { icon: string; color: string }> = {
-                                            positive: { icon: "👍", color: "text-emerald-600" },
-                                            warning:  { icon: "⚠️", color: "text-amber-600" },
-                                            alert:    { icon: "🚨", color: "text-rose-600" },
-                                            info:     { icon: "💬", color: "text-slate-500" },
-                                        };
-                                        const t = typeMap[f.type] || typeMap.info;
-                                        return (
-                                            <div key={i} className="flex items-start gap-3 bg-white rounded-xl px-4 py-3 border border-slate-100">
-                                                <span className="text-base mt-0.5">{t.icon}</span>
-                                                <div className="flex-1 min-w-0">
-                                                    {(f.from_dept || f.to_dept) && (
-                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                                                            {f.from_dept}{f.from_dept && f.to_dept ? " → " : ""}{f.to_dept}
-                                                        </p>
-                                                    )}
-                                                    <p className={`text-sm font-medium leading-relaxed ${t.color}`}>{f.text}</p>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
+                                <div className="space-y-1">
+                                    {deptFeedback.map((f: any, i: number) => (
+                                        <FeedbackItem
+                                            key={i}
+                                            from={f.from_dept || ""}
+                                            to={f.to_dept || ""}
+                                            text={f.text}
+                                            type={["positive","warning","alert","info"].includes(f.type) ? f.type : "info"}
+                                        />
+                                    ))}
                                 </div>
                             </section>
                         )}
