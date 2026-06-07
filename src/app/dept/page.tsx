@@ -27,7 +27,8 @@ import {
     Plus,
     Trash2,
     Sparkles,
-    Rocket
+    Rocket,
+    RefreshCcw
 } from "lucide-react";
 import { toast } from "sonner";
 import { FeedbackItem } from "@/components/dashboard/FeedbackItem";
@@ -360,13 +361,13 @@ export default function DeptDashboardPage() {
                 .order('created_at', { ascending: false });
             setExecActions(execActionsData || []);
 
-            // ── 部署の判断済みアクション履歴（completed/rejected/archived）──
+            // ── 部署の判断済みアクション履歴（completed/rejected のみ。keptはアクティブに残すため除外）──
             const { data: execHistoryData } = await supabase
                 .from('action_items')
                 .select('*')
                 .eq('company_id', companyId)
                 .eq('department_id', deptId)
-                .or('is_archived.eq.true,status.in.(completed,rejected)')
+                .in('status', ['completed', 'rejected'])
                 .order('updated_at', { ascending: false })
                 .limit(30);
             setExecActionHistory(execHistoryData || []);
@@ -482,6 +483,8 @@ export default function DeptDashboardPage() {
 
     /**
      * マネージャーが経営層委譲アクションを判断する（完了/キープ/不採用）
+     * - completed / rejected: アーカイブして履歴へ移動
+     * - kept: アクティブリストに残したままステータスのみ更新（履歴には載せない）
      */
     const handleExecActionDecision = async (
         actionId: string,
@@ -489,15 +492,22 @@ export default function DeptDashboardPage() {
     ) => {
         const shouldArchive = decision === 'completed' || decision === 'rejected';
         const now = new Date().toISOString();
-
-        // 楽観的UI: execActions から除去
         const target = execActions.find(a => a.id === actionId);
-        setExecActions(prev => prev.filter(a => a.id !== actionId));
-        if (target) {
-            setExecActionHistory(prev => [
-                { ...target, status: decision, is_archived: shouldArchive, archived_at: shouldArchive ? now : null, updated_at: now },
-                ...prev
-            ]);
+        const prevExecActions = execActions;
+
+        // 楽観的UI更新
+        if (shouldArchive) {
+            // 完了・不採用 → 履歴へ移動
+            setExecActions(prev => prev.filter(a => a.id !== actionId));
+            if (target) {
+                setExecActionHistory(prev => [
+                    { ...target, status: decision, is_archived: true, archived_at: now, updated_at: now },
+                    ...prev
+                ]);
+            }
+        } else {
+            // キープ → アクティブに残してステータスだけ更新
+            setExecActions(prev => prev.map(a => a.id === actionId ? { ...a, status: 'kept', updated_at: now } : a));
         }
 
         const res = await fetch('/api/actions', {
@@ -516,13 +526,49 @@ export default function DeptDashboardPage() {
         if (!res.ok) {
             toast.error('判断の保存に失敗しました');
             // ロールバック
-            if (target) {
-                setExecActions(prev => [target, ...prev]);
+            setExecActions(prevExecActions);
+            if (shouldArchive) {
                 setExecActionHistory(prev => prev.filter(a => a.id !== actionId));
             }
         } else {
             const labelMap = { completed: '完了', kept: 'キープ', rejected: '不採用' };
             toast.success(`「${target?.title}」を${labelMap[decision]}にしました`);
+        }
+    };
+
+    /**
+     * 部署判断済みのアクションを「実行中」に復活させる（履歴 → アクティブ）
+     */
+    const handleReviveExecAction = async (actionId: string) => {
+        const now = new Date().toISOString();
+        const target = execActionHistory.find(a => a.id === actionId);
+        const prevHistory = execActionHistory;
+
+        // 楽観的UI更新
+        setExecActionHistory(prev => prev.filter(a => a.id !== actionId));
+        if (target) {
+            setExecActions(prev => [
+                { ...target, status: 'accepted', is_archived: false, archived_at: null, updated_at: now },
+                ...prev
+            ]);
+        }
+
+        const res = await fetch('/api/actions', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: actionId,
+                updates: { status: 'accepted', is_archived: false, archived_at: null }
+            })
+        });
+
+        if (!res.ok) {
+            toast.error('復活に失敗しました');
+            // ロールバック
+            setExecActionHistory(prevHistory);
+            setExecActions(prev => prev.filter(a => a.id !== actionId));
+        } else {
+            toast.success(`「${target?.title}」を実行中に戻しました`);
         }
     };
 
@@ -1457,7 +1503,7 @@ export default function DeptDashboardPage() {
                                             const s = statusMap[action.status] || { label: action.status, cls: "text-slate-400 bg-slate-100" };
                                             const date = action.archived_at ?? action.updated_at;
                                             return (
-                                                <div key={action.id} className="px-6 py-3 flex items-center gap-3">
+                                                <div key={action.id} className="px-6 py-3 flex items-center gap-3 group/hist">
                                                     <span className={`text-[10px] font-black px-2 py-0.5 rounded-full shrink-0 ${s.cls}`}>
                                                         {s.label}
                                                     </span>
@@ -1465,6 +1511,14 @@ export default function DeptDashboardPage() {
                                                     <span className="text-[10px] text-slate-300 font-bold shrink-0">
                                                         {date ? new Date(date).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' }) : "—"}
                                                     </span>
+                                                    <button
+                                                        onClick={() => handleReviveExecAction(action.id)}
+                                                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black text-slate-400 border border-slate-200 hover:text-teal hover:border-teal/30 hover:bg-teal/5 transition-all shrink-0"
+                                                        title="このアクションを実行中に戻す"
+                                                    >
+                                                        <RefreshCcw size={11} />
+                                                        復活
+                                                    </button>
                                                 </div>
                                             );
                                         })}
