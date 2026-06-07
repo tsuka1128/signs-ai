@@ -90,7 +90,7 @@ export function ActionHistoryTable({ companyId, depts = [], onRevive }: ActionHi
         .from("action_items")
         .select("id, title, description, department_id, priority, status, created_at, archived_at, updated_at")
         .eq("company_id", companyId)
-        .or("is_archived.eq.true,status.in.(accepted,completed,rejected,kept)")
+        .or("is_archived.eq.true,status.in.(accepted,completed,rejected,kept,pending)")
         .order("created_at", { ascending: false })
         .limit(200);
 
@@ -103,21 +103,22 @@ export function ActionHistoryTable({ companyId, depts = [], onRevive }: ActionHi
     fetchHistory();
   }, [companyId]);
 
-  // キープ項目はタイトルが同じなら最新の1件だけ残す（毎月同じものが並ぶのを防ぐ）
+  // キープ・未判断は同タイトルなら最新1件だけ残す（毎月同じものが溜まるのを防ぐ）
   const deduplicatedItems = useMemo(() => {
-    const keptLatest = new Map<string, ActionHistoryItem>();
+    const deduped = new Map<string, ActionHistoryItem>(); // key = `${status}::${title}`
     const others: ActionHistoryItem[] = [];
     for (const item of items) {
-      if (item.status === "kept") {
-        const existing = keptLatest.get(item.title);
+      if (item.status === "kept" || item.status === "pending") {
+        const key = `${item.status}::${item.title}`;
+        const existing = deduped.get(key);
         if (!existing || new Date(item.created_at) > new Date(existing.created_at)) {
-          keptLatest.set(item.title, item);
+          deduped.set(key, item);
         }
       } else {
         others.push(item);
       }
     }
-    return [...others, ...keptLatest.values()].sort(
+    return [...others, ...deduped.values()].sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
   }, [items]);
