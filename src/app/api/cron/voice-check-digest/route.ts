@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     // 4. 全部署を取得
     const { data: departments, error: deptsErr } = await supabaseAdmin
       .from("departments")
-      .select("id, name, company_id");
+      .select("id, name, company_id, headcount");
 
     if (deptsErr) throw deptsErr;
     if (!departments) {
@@ -50,18 +50,7 @@ export async function GET(request: Request) {
       if (!dept.company_id) continue;
 
       // 5.1 headcount (想定人数) の取得
-      const { data: deptData, error: deptErr } = await supabaseAdmin
-        .from("departments")
-        .select("headcount")
-        .eq("id", dept.id)
-        .single();
-
-      if (deptErr) {
-        console.error(`Error fetching headcount for dept ${dept.name}:`, deptErr);
-        continue;
-      }
-
-      const activeHeadcount = deptData?.headcount || 0;
+      const activeHeadcount = dept.headcount || 0;
 
       // 5.2 当月の回答者数のカウント
       const { count: respondentCount, error: responsesErr } = await supabaseAdmin

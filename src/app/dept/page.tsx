@@ -1536,7 +1536,7 @@ export default function DeptDashboardPage() {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <ComposedChart data={deptScores.map(s => ({
                                         ...s,
-                                        rate: s.headcount > 0 ? Math.round((s.respondentCount / s.headcount) * 100) : 0,
+                                        rate: s.headcount > 0 ? Math.round((s.respondentCount / s.headcount) * 100) : null,
                                     }))}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                                         <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} fontWeight="bold" />
