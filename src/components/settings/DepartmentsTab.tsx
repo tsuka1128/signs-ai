@@ -48,7 +48,7 @@ export const DepartmentsTab = ({
                         <ArrowRight className="w-5 h-5 text-amber-400 transition-transform group-hover:translate-x-1" />
                     </Link>
 
-                    <p className="text-[10px] text-slate-400">※ 各部署の人数は、システムに登録されているメンバー数（アカウント数）と自動的に連動しています。</p>
+                    <p className="text-[10px] text-slate-400">※ 各部署の想定人数（ボイスチェックの回答率算出に使用）は手動で設定してください。</p>
                 </div>
 
                 <div className="space-y-4">
@@ -62,7 +62,7 @@ export const DepartmentsTab = ({
                                 <div className="p-2 cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-400">
                                     <GripVertical className="w-5 h-5" />
                                 </div>
-                                <div className="flex-1 w-full flex items-center gap-4">
+                                <div className="flex-1 w-full flex flex-col md:flex-row gap-4">
                                     <div className="flex-1 min-w-[200px]">
                                         <label className="block text-[9px] font-bold text-slate-400 mb-1 ml-1 uppercase tracking-widest">部署名</label>
                                         <input
@@ -72,15 +72,19 @@ export const DepartmentsTab = ({
                                             className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-teal transition-all"
                                         />
                                     </div>
-                                    <div className="shrink-0 pt-4 hidden sm:block">
-                                        <div className="px-4 py-2 bg-slate-100/50 rounded-xl border border-slate-200/50 flex items-center gap-1.5 hover:bg-slate-100 transition-colors">
-                                            <Users className="w-3.5 h-3.5 text-slate-400" />
-                                            <div className="flex items-baseline gap-0.5">
-                                                <span className="text-sm font-black text-slate-700 tracking-tighter">
-                                                    {users.filter(u => u.department_id === d.id).length}
-                                                </span>
-                                                <span className="text-[9px] font-bold text-slate-400">名</span>
-                                            </div>
+                                    <div className="w-24 shrink-0">
+                                        <label className="block text-[9px] font-bold text-slate-400 mb-1 ml-1 uppercase tracking-widest">想定人数 (人)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={d.headcount || 0}
+                                            onChange={(e) => setDepts(depts.map(x => x.id === d.id ? { ...x, headcount: Math.max(0, parseInt(e.target.value) || 0) } : x))}
+                                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-teal transition-all text-center"
+                                        />
+                                    </div>
+                                    <div className="shrink-0 pt-4 flex flex-col justify-end">
+                                        <div className="px-4 py-2.5 bg-slate-100/50 rounded-xl border border-slate-200/50 flex items-center gap-1.5 text-xs text-slate-400 font-bold leading-none">
+                                            アカウント数: {users.filter(u => u.department_id === d.id).length}名
                                         </div>
                                     </div>
                                 </div>
