@@ -862,7 +862,7 @@ export default function DeptDashboardPage() {
                         )}
 
                         {/* 今月のボイスチェック回答状況バナー（機能②） */}
-                        {currentMonthScore && (
+                        {currentMonthScore && currentMonthScore.headcount > 0 && (
                             <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl border shadow-sm ${
                                 currentMonthScore.respondentCount >= currentMonthScore.headcount && currentMonthScore.headcount > 0
                                     ? 'bg-teal-50/50 border-teal-100 text-teal-900'
