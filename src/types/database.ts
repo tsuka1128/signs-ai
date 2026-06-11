@@ -294,6 +294,47 @@ export interface Database {
           updated_at: string
         }
       }
+      notifications: {
+        Row: {
+          id: string
+          company_id: string
+          user_id: string | null
+          target_role: string | null
+          target_department_id: string | null
+          type: string
+          title: string
+          body: string | null
+          link: string | null
+          is_read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          user_id?: string | null
+          target_role?: string | null
+          target_department_id?: string | null
+          type: string
+          title: string
+          body?: string | null
+          link?: string | null
+          is_read?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          user_id?: string | null
+          target_role?: string | null
+          target_department_id?: string | null
+          type?: string
+          title?: string
+          body?: string | null
+          link?: string | null
+          is_read?: boolean
+          created_at?: string
+        }
+      }
     }
   }
 }
@@ -318,3 +359,4 @@ export type ExecutiveMonthlyFocus = Database['public']['Tables']['executive_mont
 export type ManagerDirectiveNote = Database['public']['Tables']['manager_directive_notes']['Row']
 export type DeptAiSummary = Database['public']['Tables']['dept_ai_summaries']['Row']
 export type DeptActionPlan = Database['public']['Tables']['dept_action_plans']['Row']
+export type Notification = Database['public']['Tables']['notifications']['Row']

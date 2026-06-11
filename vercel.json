@@ -4,5 +4,11 @@
     "src/app/api/ai/**/*.ts": {
       "maxDuration": 300
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/voice-check-digest",
+      "schedule": "0 0 * * 1"
+    }
+  ]
 }
