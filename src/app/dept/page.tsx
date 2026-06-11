@@ -198,14 +198,15 @@ export default function DeptDashboardPage() {
         try {
             setDeptLoading(true);
 
-            // 部署の現在人数（usersカウント）を取得
-            const { count: headcountCount, error: headcountErr } = await supabase
-                .from('users')
-                .select('id', { count: 'exact', head: true })
-                .eq('department_id', deptId);
+            // 部署の想定人数を取得
+            const { data: deptData, error: deptErr } = await supabase
+                .from('departments')
+                .select('headcount')
+                .eq('id', deptId)
+                .single();
 
-            if (headcountErr) throw headcountErr;
-            const headcount = headcountCount || 0;
+            if (deptErr) throw deptErr;
+            const headcount = deptData?.headcount || 0;
 
             // ── 過去6ヶ月の月リスト生成 ──
             const now = new Date();
@@ -1543,9 +1544,13 @@ export default function DeptDashboardPage() {
                                         <YAxis yAxisId="right" orientation="right" stroke="#94a3b8" fontSize={11} fontWeight="bold" domain={[0, 100]} />
                                         <Tooltip
                                             contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 700 }}
-                                            formatter={(value: any, name: any) => {
+                                            formatter={(value: any, name: any, props: any) => {
                                                 if (name === 'respondentCount') return [`${value} 人`, '回答数'];
-                                                if (name === 'rate') return [`${value} %`, '回答率'];
+                                                if (name === 'rate') {
+                                                    const hc = props.payload?.headcount;
+                                                    if (hc === 0) return ['—', '回答率'];
+                                                    return [`${value} %`, '回答率'];
+                                                }
                                                 return [value, name];
                                             }}
                                         />

@@ -49,19 +49,19 @@ export async function GET(request: Request) {
     for (const dept of departments) {
       if (!dept.company_id) continue;
 
-      // 5.1 headcount (所属人数) のカウント
-      const { count: headcount, error: usersErr } = await supabaseAdmin
-        .from("users")
-        .select("id", { count: "exact", head: true })
-        .eq("company_id", dept.company_id)
-        .eq("department_id", dept.id);
+      // 5.1 headcount (想定人数) の取得
+      const { data: deptData, error: deptErr } = await supabaseAdmin
+        .from("departments")
+        .select("headcount")
+        .eq("id", dept.id)
+        .single();
 
-      if (usersErr) {
-        console.error(`Error fetching users count for dept ${dept.name}:`, usersErr);
+      if (deptErr) {
+        console.error(`Error fetching headcount for dept ${dept.name}:`, deptErr);
         continue;
       }
 
-      const activeHeadcount = headcount || 0;
+      const activeHeadcount = deptData?.headcount || 0;
 
       // 5.2 当月の回答者数のカウント
       const { count: respondentCount, error: responsesErr } = await supabaseAdmin
