@@ -27,7 +27,8 @@ export type NotificationType =
   | "survey_response_low"
   | "member_joined"
   | "voice_check_request"
-  | "survey_deadline_reminder";
+  | "survey_deadline_reminder"
+  | "voice_check_completed";
 
 export interface CreateNotificationParams {
   companyId: string;
