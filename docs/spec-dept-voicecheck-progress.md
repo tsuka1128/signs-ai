@@ -24,7 +24,12 @@
    - `src/app/api/cron/voice-check-digest/route.ts`：**当月の** head_count を分母にする。
    - **一貫性**：既存の経営層向け画面 `src/app/voice-check/page.tsx:282-312` も `departments.headcount` → 月次 `resource_records.head_count` に統一する（2画面で回答率が食い違わないように）。
 2. **月形式の変換**：`survey_responses.recorded_month`（**YYYY-MM**）⇔ `resource_records.recorded_month`（**YYYY-MM-01**）。突合時に変換する。
-3. **当月未入力時のフォールバック（重要）**：当月の `head_count` が無い／0なら、**直近の入力済み月の head_count を繰り越す**（carry-forward）。これが無いと「人件費を入力するまでボイスチェック機能が無反応」になる。どの月にも実績が無ければ分母0として率・完了判定・リマインドを出さない（改訂2のガード踏襲）。
+3. **当月は前月のコピーで分母を出す（計算時のみ・確定方針）**：回答率の分母を出すとき、**当月の `head_count` が無い／0なら、直近の入力済み月（前月→さらに前月…）の head_count をコピーして使う**（read-time copy-forward）。
+   - **`resource_records` のデータ自体は書き換えない**（seed・保存はしない）。あくまで分母を算出するときだけ前月値を借りてくる。
+   - これにより `/labor` を当月開いていなくても、前月に人数が入っていれば回答率・完了判定・リマインドが正しく動く（人件費入力までの無反応を防ぐ）。
+   - 実装は **共通ヘルパー**（例：`resolveHeadcount(departmentId, ym): number`）に切り出し、`dept/page.tsx`・`cron/route.ts`・`voice-check/page.tsx` の3か所から呼ぶ（ロジック重複・食い違い防止）。
+   - 探索範囲は取得済みの過去13ヶ月内で十分。どの月にも実績が無ければ分母0として率・完了判定・リマインドを出さない（改訂2のガード踏襲）。
+   - 影響範囲：ダッシュボードの人件費ROIやAIの `master_headcount` には**影響しない**（それらは実データを参照し続ける）。コピーは回答率算出の内部だけ。
 4. **`departments.headcount`（想定人数）は撤去しない**：AI分析の `master_headcount` や既存admin画面で使われる**別概念（計画基準値）**として残す。ただし改訂2で付けたラベル「想定人数（ボイスチェックの回答率算出に使用）」は誤りになるため、**「AI分析・計画用の基準人数」**等に修正し、回答率は `/labor` の月次実績ベースである旨を明記する。
    - これで「回答率の元になる人数入力は実質 `/labor` の1か所」に集約され、想定人数は計画値として別管理、という整理になる。
 
