@@ -1,10 +1,40 @@
 # 仕様書：部署マネジメント – ボイスチェック回答状況の可視化と通知
 
-> ステータス：**改訂2（分母の定義を訂正）**
+> ステータス：**改訂3（分母を月次実績人数に切替）**
 > 前提方針：**匿名性を維持する（人数だけを扱い、個人は特定しない）**
 > 関連画面：`src/app/dept/page.tsx`
 
-## ⚠️ 改訂2：分母（対象人数）の定義を訂正（最重要）
+## ⚠️ 改訂3：分母を「月次実績人数（resource_records.head_count）」に切替（最新・最重要）
+
+**改訂2では `departments.headcount`（想定人数・単一値）を分母にしたが、月次の実績人数 `resource_records.head_count` に切り替える。**
+
+### 背景：「人数」の入力欄が2か所あり連動していない（コードで確認済み）
+| | 設定ページ「想定人数」 | 人件費・人数入力ページ（`/labor`） |
+|---|---|---|
+| 保存先 | `departments.headcount`（単一値） | `resource_records.head_count`（**月次・13ヶ月の時系列**） |
+| 形式 | — | `recorded_month` = **YYYY-MM-01**、`axis_id IS NULL` が部署基本データ |
+| 本来の用途 | AI分析の `master_headcount`・計画基準値（`api/ai/analyze/route.ts:264`）、既存admin画面 | ダッシュボードの人件費ROI・一人当たり単価などの月次分析 |
+| 同期 | **`/labor`保存では更新されない**。CSVインポート時のみ最新月→headcountへ一方向コピー（`CSVImportModal.tsx:231`） | — |
+
+→ 2つは連動せず、放置すると `departments.headcount`（想定人数）が陳腐化する。一方 `resource_records` は**月ごとの実人数**を持ち、分析で使うためこまめに更新されやすい。回答率の分母として月次実績の方が正確。
+
+### 改訂3の変更内容（実装）
+1. **回答率の分母を月次実績人数に切替**：分母を、その月の `resource_records.head_count`（`department_id` 一致、`axis_id IS NULL`、`recorded_month = {YYYY-MM}-01`）に変更。
+   - `src/app/dept/page.tsx`：推移グラフの各月（過去6ヶ月）で、**その月の** head_count を分母にする（月ごとに正確な回答率）。
+   - `src/app/api/cron/voice-check-digest/route.ts`：**当月の** head_count を分母にする。
+   - **一貫性**：既存の経営層向け画面 `src/app/voice-check/page.tsx:282-312` も `departments.headcount` → 月次 `resource_records.head_count` に統一する（2画面で回答率が食い違わないように）。
+2. **月形式の変換**：`survey_responses.recorded_month`（**YYYY-MM**）⇔ `resource_records.recorded_month`（**YYYY-MM-01**）。突合時に変換する。
+3. **当月未入力時のフォールバック（重要）**：当月の `head_count` が無い／0なら、**直近の入力済み月の head_count を繰り越す**（carry-forward）。これが無いと「人件費を入力するまでボイスチェック機能が無反応」になる。どの月にも実績が無ければ分母0として率・完了判定・リマインドを出さない（改訂2のガード踏襲）。
+4. **`departments.headcount`（想定人数）は撤去しない**：AI分析の `master_headcount` や既存admin画面で使われる**別概念（計画基準値）**として残す。ただし改訂2で付けたラベル「想定人数（ボイスチェックの回答率算出に使用）」は誤りになるため、**「AI分析・計画用の基準人数」**等に修正し、回答率は `/labor` の月次実績ベースである旨を明記する。
+   - これで「回答率の元になる人数入力は実質 `/labor` の1か所」に集約され、想定人数は計画値として別管理、という整理になる。
+
+### 留意（実装時に確認）
+- `resource_records` の部署基本データが `axis_id IS NULL` で合っているか（`kpi_records` と同じ規約か）を実データで確認する。第2軸（`axis_id` 指定）の人数を二重計上しないこと。
+- carry-forward の探索範囲（直近何ヶ月遡るか）を決める。実装上は「取得済みの過去13ヶ月のうち、当該月以前で head_count>0 の最新値」で十分。
+
+---
+
+## ⚠️ 改訂2：分母（対象人数）の定義を訂正（※改訂3で月次実績へ再変更。経緯として残置）
 
 **初版で分母を `users`（アカウント数）と定義したのは誤り。`departments.headcount`（手入力の想定人数）に変更する。**
 
@@ -53,7 +83,7 @@
 |---|---|---|
 | 月次回答数 | `survey_responses`（`company_id, department_id, recorded_month`）| `recorded_month` は **YYYY-MM** 形式 |
 | 月次スコア | `survey_answers`（`response_id, score`）| 既存集計あり |
-| 部署人数（分母）| **`departments.headcount`（手入力の想定人数）**（改訂2） | ~~`users` を count~~ は誤り。匿名・未ログイン回答のため `users` には一般社員が載らない。既存 `src/app/voice-check/page.tsx:282` と同じく `departments.headcount` を使う |
+| 部署人数（分母）| **`resource_records.head_count`（月次実績人数）**（改訂3） | ~~`users` を count~~（初版・誤）→ ~~`departments.headcount`~~（改訂2）→ 月次実績へ。`department_id` 一致・`axis_id IS NULL`・`recorded_month = {YYYY-MM}-01`。当月未入力なら直近月を繰り越し |
 | 通知配信 | `notifications` テーブル + `createNotification()`（`src/lib/notifications.ts`）| サーバー専用・サービスロール |
 
 既に `src/app/dept/page.tsx:240` 付近で過去6ヶ月分の `{ month, label, avg, respondentCount }` を `deptScores[]` に取得済み。**①のデータはほぼ揃っており、UIが無いだけ。**
