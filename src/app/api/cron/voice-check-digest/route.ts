@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { createNotification } from "@/lib/notifications";
+import { resolveAllDepartmentsHeadcountsAcrossCompany } from "@/lib/headcount";
 
 /**
  * 週次で起動され、各部署のボイスチェック回答率に基づき、
@@ -43,14 +44,17 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: true, message: "No departments found." });
     }
 
+    // 全部署の当月実績人数を一括解決
+    const resolvedHeadcounts = await resolveAllDepartmentsHeadcountsAcrossCompany(supabaseAdmin, currentMonth);
+
     const results = [];
 
     // 5. 各部署をループ処理
     for (const dept of departments) {
       if (!dept.company_id) continue;
 
-      // 5.1 headcount (想定人数) の取得
-      const activeHeadcount = dept.headcount || 0;
+      // 5.1 headcount (月次実績人数) の解決
+      const activeHeadcount = resolvedHeadcounts[dept.id] || 0;
 
       // 5.2 当月の回答者数のカウント
       const { count: respondentCount, error: responsesErr } = await supabaseAdmin

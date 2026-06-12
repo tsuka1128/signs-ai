@@ -13,6 +13,8 @@ import {
 } from "@/lib/utils/anonymity";
 import { createClient } from "@/lib/supabase";
 import { DeptAiSummary, DeptActionPlan } from "@/types/database";
+import { resolveMonthlyHeadcounts } from "@/lib/headcount";
+
 import {
     Building2,
     Info,
@@ -198,16 +200,6 @@ export default function DeptDashboardPage() {
         try {
             setDeptLoading(true);
 
-            // 部署の想定人数を取得
-            const { data: deptData, error: deptErr } = await supabase
-                .from('departments')
-                .select('headcount')
-                .eq('id', deptId)
-                .single();
-
-            if (deptErr) throw deptErr;
-            const headcount = deptData?.headcount || 0;
-
             // ── 過去6ヶ月の月リスト生成 ──
             const now = new Date();
             const months: { ym: string; label: string }[] = [];
@@ -221,6 +213,9 @@ export default function DeptDashboardPage() {
             }
 
             const targetYMs = months.map(m => m.ym);
+
+            // 部署の月次実績人数を取得（過去6ヶ月分を一括解決）
+            const monthlyHeadcounts = await resolveMonthlyHeadcounts(supabase, deptId, targetYMs);
 
             // 1. survey_responses 取得
             const { data: responses, error: responseErr } = await supabase
@@ -263,6 +258,7 @@ export default function DeptDashboardPage() {
             const scored: DeptMonthlyScore[] = months.map(m => {
                 const ids = responsesByMonth[m.ym] || [];
                 const respondentCount = ids.length;
+                const headcount = monthlyHeadcounts[m.ym] || 0;
                 const allScores: number[] = [];
                 ids.forEach(rid => {
                     (answerByResponse[rid] || []).forEach(ans => allScores.push(ans.score));

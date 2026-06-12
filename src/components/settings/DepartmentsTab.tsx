@@ -48,7 +48,7 @@ export const DepartmentsTab = ({
                         <ArrowRight className="w-5 h-5 text-amber-400 transition-transform group-hover:translate-x-1" />
                     </Link>
 
-                    <p className="text-[10px] text-slate-400">※ 各部署の想定人数（ボイスチェックの回答率算出に使用）は手動で設定してください。</p>
+                    <p className="text-[10px] text-slate-400">※ 各部署の「想定人数」は AI分析・計画用の基準人数 として使用されます。回答率の算出には、人件費・人数入力（/labor）画面の月次実績人数が使用されます。</p>
                 </div>
 
                 <div className="space-y-4">
@@ -72,8 +72,8 @@ export const DepartmentsTab = ({
                                             className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-teal transition-all"
                                         />
                                     </div>
-                                    <div className="w-24 shrink-0">
-                                        <label className="block text-[9px] font-bold text-slate-400 mb-1 ml-1 uppercase tracking-widest">想定人数 (人)</label>
+                                    <div className="w-48 shrink-0">
+                                        <label className="block text-[9px] font-bold text-slate-400 mb-1 ml-1 uppercase tracking-widest">AI分析・計画用の基準人数 (人)</label>
                                         <input
                                             type="number"
                                             min="0"
