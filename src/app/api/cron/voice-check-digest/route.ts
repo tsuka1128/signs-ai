@@ -37,7 +37,7 @@ export async function GET(request: Request) {
     // 4. 全部署を取得
     const { data: departments, error: deptsErr } = await supabaseAdmin
       .from("departments")
-      .select("id, name, company_id, headcount");
+      .select("id, name, company_id");
 
     if (deptsErr) throw deptsErr;
     if (!departments) {
