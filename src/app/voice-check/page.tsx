@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
+import { resolveAllDepartmentsHeadcounts } from "@/lib/headcount";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/Badge";
 import {
@@ -72,18 +73,26 @@ export default function VoiceCheckPage() {
                 return;
             }
 
-            // Load company and departments
-            const [comp, d] = await Promise.all([
-                supabase.from('companies').select('*').eq('id', effectiveId).single(),
-                supabase.from('departments').select('*').eq('company_id', effectiveId).order('sort_order', { ascending: true })
-            ]);
-
-            if (comp.data) setCompany(comp.data);
-            if (d.data) setDepts(d.data);
-
             // Load Voice Check stats for current month
             const now = new Date();
             const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+            // Load company, departments, and resolved headcounts
+            const [comp, d, headcounts] = await Promise.all([
+                supabase.from('companies').select('*').eq('id', effectiveId).single(),
+                supabase.from('departments').select('*').eq('company_id', effectiveId).order('sort_order', { ascending: true }),
+                resolveAllDepartmentsHeadcounts(supabase, effectiveId, currentMonth)
+            ]);
+
+            if (comp.data) setCompany(comp.data);
+            if (d.data) {
+                const updatedDepts = d.data.map((dept: any) => ({
+                    ...dept,
+                    resolvedHeadcount: headcounts[dept.id] || 0
+                }));
+                setDepts(updatedDepts);
+            }
+
             const { data: respData } = await supabase
                 .from('survey_responses')
                 .select('department_id')
@@ -279,7 +288,7 @@ export default function VoiceCheckPage() {
                                         <div className="text-2xl font-black text-teal tabular-nums">
                                             {(() => {
                                                 const totalResp = Object.values(voiceCheckStats).reduce((a, b) => a + b, 0);
-                                                const totalHead = depts.reduce((a, b) => a + (b.headcount || 0), 0);
+                                                const totalHead = depts.reduce((a, b) => a + (b.resolvedHeadcount || 0), 0);
                                                 return totalHead > 0 ? Math.round((totalResp / totalHead) * 100) : 0;
                                             })()}%
                                         </div>
@@ -299,7 +308,7 @@ export default function VoiceCheckPage() {
                                     <tbody className="divide-y divide-slate-100">
                                         {depts.map(d => {
                                             const respCount = voiceCheckStats[d.id] || 0;
-                                            const headcount = d.headcount || 0;
+                                            const headcount = d.resolvedHeadcount || 0;
                                             const rate = headcount > 0 ? Math.min(100, Math.round((respCount / headcount) * 100)) : 0;
                                             
                                             return (
