@@ -1024,16 +1024,16 @@ export default function DeptDashboardPage() {
                         </section>
                 
 
-                        {/* ═══ 経営層からのアクション指示（経営方針インボックスの直後に配置） ═══ */}
+                        {/* ═══ 部署アクションの提案（経営方針インボックスの直後に配置） ═══ */}
                         <section className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                             <div className="px-6 py-4 border-b border-slate-50 flex items-center justify-between">
                                 <div>
                                     <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
                                         <Rocket className="w-4 h-4 text-teal" />
-                                        経営層からのアクション指示
+                                        部署に届いたアクション提案
                                     </h3>
                                     <p className="text-[10px] text-slate-400 font-medium mt-0.5">
-                                        経営層が「実行する」「キープ」に設定したアクションです。判断してください。
+                                        部署での実施を提案しています。状況に合わせて判断してください。
                                     </p>
                                 </div>
                                 {execActionHistory.length > 0 && (
