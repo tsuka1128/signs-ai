@@ -868,18 +868,19 @@ export default function DeptDashboardPage() {
 
                         {/* 今月のボイスチェック回答状況バナー（機能②）：クリックで推移グラフを開閉 */}
                         {currentMonthScore && currentMonthScore.headcount > 0 && (
-                            <div>
+                            <div className={`rounded-3xl border shadow-sm overflow-hidden ${
+                                currentMonthScore.respondentCount >= currentMonthScore.headcount
+                                    ? 'bg-teal-50/50 border-teal-100'
+                                    : 'bg-indigo-50/50 border-indigo-100'
+                            }`}>
+                                {/* ヘッダー行：クリックで開閉 */}
                                 <button
                                     onClick={() => setShowResponseTrend(v => !v)}
-                                    className={`w-full text-left flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl border shadow-sm transition-all hover:opacity-80 ${
-                                        currentMonthScore.respondentCount >= currentMonthScore.headcount && currentMonthScore.headcount > 0
-                                            ? 'bg-teal-50/50 border-teal-100 text-teal-900'
-                                            : 'bg-indigo-50/50 border-indigo-100 text-indigo-900'
-                                    }`}
+                                    className="w-full text-left flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 hover:opacity-80 transition-all"
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className={`w-9 h-9 rounded-2xl flex items-center justify-center ${
-                                            currentMonthScore.respondentCount >= currentMonthScore.headcount && currentMonthScore.headcount > 0
+                                            currentMonthScore.respondentCount >= currentMonthScore.headcount
                                                 ? 'bg-teal-100/50 text-teal'
                                                 : 'bg-indigo-100/50 text-indigo-500'
                                         }`}>
@@ -888,10 +889,10 @@ export default function DeptDashboardPage() {
                                         <div>
                                             <h3 className="text-xs font-black tracking-tight text-slate-500 uppercase">今月のボイスチェック回答状況</h3>
                                             <p className="text-sm font-black mt-1">
-                                                {currentMonthScore.respondentCount >= currentMonthScore.headcount && currentMonthScore.headcount > 0 ? (
+                                                {currentMonthScore.respondentCount >= currentMonthScore.headcount ? (
                                                     <span className="text-teal-700">✅ 今月は全員回答済み（{currentMonthScore.respondentCount} / {currentMonthScore.headcount} 名）</span>
                                                 ) : (
-                                                    <span className="text-indigo-900">回答数：<strong>{currentMonthScore.respondentCount} / {currentMonthScore.headcount} 名</strong> ({currentMonthScore.headcount > 0 ? ((currentMonthScore.respondentCount / currentMonthScore.headcount) * 100).toFixed(1) : 0}%)</span>
+                                                    <span className="text-indigo-900">回答数：<strong>{currentMonthScore.respondentCount} / {currentMonthScore.headcount} 名</strong>（{((currentMonthScore.respondentCount / currentMonthScore.headcount) * 100).toFixed(1)}%）</span>
                                                 )}
                                             </p>
                                         </div>
@@ -901,44 +902,36 @@ export default function DeptDashboardPage() {
                                     </span>
                                 </button>
 
-                                {/* 📈 推移グラフ：バナー直下に展開 */}
+                                {/* 📈 推移グラフ：カード内に展開 */}
                                 {showResponseTrend && (
-                                    <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm mt-3">
-                                        <div className="mb-6">
-                                            <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-2">
-                                                <TrendingUp className="w-4 h-4" /> 回答状況の推移
-                                            </h2>
-                                            <p className="text-xs text-slate-500 font-medium">過去6ヶ月の回答数と回答率の推移を確認できます</p>
-                                        </div>
-                                        <div className="h-64">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <ComposedChart data={deptScores.map(s => ({
-                                                    ...s,
-                                                    rate: s.headcount > 0 ? Math.round((s.respondentCount / s.headcount) * 100) : null,
-                                                }))}>
-                                                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                                                    <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} fontWeight="bold" />
-                                                    <YAxis yAxisId="left" stroke="#94a3b8" fontSize={11} fontWeight="bold" />
-                                                    <YAxis yAxisId="right" orientation="right" stroke="#94a3b8" fontSize={11} fontWeight="bold" domain={[0, 100]} />
-                                                    <Tooltip
-                                                        contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 700 }}
-                                                        formatter={(value: any, name: any, props: any) => {
-                                                            if (name === 'respondentCount') return [`${value} 人`, '回答数'];
-                                                            if (name === 'rate') {
-                                                                const hc = props.payload?.headcount;
-                                                                if (hc === 0) return ['—', '回答率'];
-                                                                return [`${value} %`, '回答率'];
-                                                            }
-                                                            return [value, name];
-                                                        }}
-                                                    />
-                                                    <Legend verticalAlign="top" height={36} iconType="circle" />
-                                                    <Bar yAxisId="left" dataKey="respondentCount" name="回答数" fill="#cbd5e1" radius={[4, 4, 0, 0]} barSize={30} />
-                                                    <Line yAxisId="right" type="monotone" dataKey="rate" name="回答率" stroke="#14b8a6" strokeWidth={3} dot={{ r: 5, fill: '#14b8a6' }} />
-                                                </ComposedChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                    </section>
+                                    <div className="px-6 pb-6 pt-2 border-t border-white/40">
+                                        <ResponsiveContainer width="100%" height={180}>
+                                            <ComposedChart data={deptScores.map(s => ({
+                                                ...s,
+                                                rate: s.headcount > 0 ? Math.round((s.respondentCount / s.headcount) * 100) : null,
+                                            }))}>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                                <XAxis dataKey="label" stroke="#94a3b8" fontSize={10} fontWeight="bold" />
+                                                <YAxis yAxisId="left" stroke="#94a3b8" fontSize={10} fontWeight="bold" width={20} />
+                                                <YAxis yAxisId="right" orientation="right" stroke="#94a3b8" fontSize={10} fontWeight="bold" domain={[0, 100]} width={28} />
+                                                <Tooltip
+                                                    contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 11, fontWeight: 700 }}
+                                                    formatter={(value: any, name: any, props: any) => {
+                                                        if (name === 'respondentCount') return [`${value} 人`, '回答数'];
+                                                        if (name === 'rate') {
+                                                            const hc = props.payload?.headcount;
+                                                            if (hc === 0) return ['—', '回答率'];
+                                                            return [`${value} %`, '回答率'];
+                                                        }
+                                                        return [value, name];
+                                                    }}
+                                                />
+                                                <Legend verticalAlign="top" height={28} iconType="circle" iconSize={8} />
+                                                <Bar yAxisId="left" dataKey="respondentCount" name="回答数" fill="#cbd5e1" radius={[3, 3, 0, 0]} barSize={20} />
+                                                <Line yAxisId="right" type="monotone" dataKey="rate" name="回答率" stroke="#14b8a6" strokeWidth={2} dot={{ r: 3, fill: '#14b8a6' }} />
+                                            </ComposedChart>
+                                        </ResponsiveContainer>
+                                    </div>
                                 )}
                             </div>
                         )}
