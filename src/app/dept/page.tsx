@@ -1030,7 +1030,7 @@ export default function DeptDashboardPage() {
                                 <div>
                                     <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
                                         <Rocket className="w-4 h-4 text-teal" />
-                                        部署アクションの提案
+                                        部署に届いたアクション提案
                                     </h3>
                                     <p className="text-[10px] text-slate-400 font-medium mt-0.5">
                                         部署での実施を提案しています。状況に合わせて判断してください。
