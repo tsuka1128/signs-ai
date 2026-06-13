@@ -101,6 +101,7 @@ export default function DeptDashboardPage() {
     // 部署で判断済みのアクション履歴（completed/rejected/kept-archived）
     const [execActionHistory, setExecActionHistory] = useState<any[]>([]);
     const [showExecHistory, setShowExecHistory] = useState(false);
+    const [showResponseTrend, setShowResponseTrend] = useState(false);
     // calendarYM: 書き込み用の当月。latestDataYM はローカル変数として fetchDeptData 内で使用
     const [calendarMonthYM, setCalendarMonthYM] = useState<string | null>(null);
 
@@ -865,13 +866,16 @@ export default function DeptDashboardPage() {
                             </div>
                         )}
 
-                        {/* 今月のボイスチェック回答状況バナー（機能②） */}
+                        {/* 今月のボイスチェック回答状況バナー（機能②）：クリックで推移グラフを開閉 */}
                         {currentMonthScore && currentMonthScore.headcount > 0 && (
-                            <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl border shadow-sm ${
-                                currentMonthScore.respondentCount >= currentMonthScore.headcount && currentMonthScore.headcount > 0
-                                    ? 'bg-teal-50/50 border-teal-100 text-teal-900'
-                                    : 'bg-indigo-50/50 border-indigo-100 text-indigo-900'
-                            }`}>
+                            <button
+                                onClick={() => setShowResponseTrend(v => !v)}
+                                className={`w-full text-left flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl border shadow-sm transition-all hover:opacity-80 ${
+                                    currentMonthScore.respondentCount >= currentMonthScore.headcount && currentMonthScore.headcount > 0
+                                        ? 'bg-teal-50/50 border-teal-100 text-teal-900'
+                                        : 'bg-indigo-50/50 border-indigo-100 text-indigo-900'
+                                }`}
+                            >
                                 <div className="flex items-center gap-3">
                                     <div className={`w-9 h-9 rounded-2xl flex items-center justify-center ${
                                         currentMonthScore.respondentCount >= currentMonthScore.headcount && currentMonthScore.headcount > 0
@@ -891,7 +895,10 @@ export default function DeptDashboardPage() {
                                         </p>
                                     </div>
                                 </div>
-                            </div>
+                                <span className="text-xs font-bold text-slate-400 shrink-0">
+                                    {showResponseTrend ? '推移を隠す ▲' : '推移を見る ▼'}
+                                </span>
+                            </button>
                         )}
 
                         {/* 📥 経営方針インボックス */}
@@ -1526,8 +1533,8 @@ export default function DeptDashboardPage() {
                             </>
                         )}
 
-                        {/* 📈 回答状況の推移（機能①） */}
-                        <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+                        {/* 📈 回答状況の推移（機能①）：バナークリックで開閉 */}
+                        {showResponseTrend && <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
                             <div className="mb-6">
                                 <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-2">
                                     <TrendingUp className="w-4 h-4" /> 回答状況の推移
@@ -1563,7 +1570,7 @@ export default function DeptDashboardPage() {
                                     </ComposedChart>
                                 </ResponsiveContainer>
                             </div>
-                        </section>
+                        </section>}
 
                         {/* 📊 今月の設問別スコア */}
                         <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
