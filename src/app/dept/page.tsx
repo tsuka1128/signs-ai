@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Loading } from "@/components/ui/Loading";
@@ -66,6 +66,14 @@ interface QuestionScore {
     avg: number | null;
 }
 
+const THEME_MAPPING: Record<string, string[]> = {
+    "意思決定・実行": ["speed", "friction"],
+    "方向づけ": ["clarity", "readiness", "transparency"],
+    "関係性・安全": ["safety", "feedback"],
+    "意欲・成長": ["engagement", "challenge", "impact"],
+    "働きやすさ": ["workload"]
+};
+
 export default function DeptDashboardPage() {
     const supabase = createClient();
     const router = useRouter();
@@ -114,6 +122,9 @@ export default function DeptDashboardPage() {
     const [radarData, setRadarData] = useState<any[]>([]);
     const [dept3mResponsesCount, setDept3mResponsesCount] = useState<number>(0);
     const [company3mResponsesCount, setCompany3mResponsesCount] = useState<number>(0);
+
+    // 全社データ取得重複防止のためのキャッシュ
+    const companyDataCache = useRef<Record<string, { companyResponses: any[], companyAnswers: any[] }>>({});
 
     useEffect(() => {
         checkRoleAndInit();
@@ -231,7 +242,7 @@ export default function DeptDashboardPage() {
             // 1. survey_responses 取得
             const { data: responses, error: responseErr } = await supabase
                 .from('survey_responses')
-                .select('id, recorded_month')
+                .select('id, recorded_month, user_id, fingerprint')
                 .eq('company_id', companyId)
                 .eq('department_id', deptId)
                 .in('recorded_month', targetYMs);
@@ -344,27 +355,40 @@ export default function DeptDashboardPage() {
                 ? targetYMs.slice(Math.max(0, latestIdx - 2), latestIdx + 1)
                 : targetYMs.slice(-3);
 
-            // 全社の3ヶ月窓（calendarYM 基準）
-            const companyTrailingMonths = targetYMs.slice(-3);
+            // 全社も同じ3ヶ月窓（latestDataYM 基準）に統一し、期間の不整合を防ぐ
+            const companyTrailingMonths = deptTrailingMonths;
 
-            // 全社回答データのフェッチ
-            const { data: companyResponses, error: companyResponsesErr } = await supabase
-                .from('survey_responses')
-                .select('id, recorded_month')
-                .eq('company_id', companyId)
-                .in('recorded_month', companyTrailingMonths);
+            // 全社回答データのキャッシュ付きフェッチ
+            const cacheKey = `${companyId}-${companyTrailingMonths.join(',')}`;
+            let companyResponses = [];
+            let companyAnswers = [];
 
-            if (companyResponsesErr) throw companyResponsesErr;
+            if (companyDataCache.current[cacheKey]) {
+                companyResponses = companyDataCache.current[cacheKey].companyResponses;
+                companyAnswers = companyDataCache.current[cacheKey].companyAnswers;
+            } else {
+                const { data: compRes, error: compResErr } = await supabase
+                    .from('survey_responses')
+                    .select('id, recorded_month, user_id, fingerprint')
+                    .eq('company_id', companyId)
+                    .in('recorded_month', companyTrailingMonths);
 
-            const companyResponseIds = (companyResponses || []).map(r => r.id);
-            const { data: companyAnswers, error: companyAnswersErr } = companyResponseIds.length > 0
-                ? await supabase
-                    .from('survey_answers')
-                    .select('response_id, question_id, score')
-                    .in('response_id', companyResponseIds)
-                : { data: [], error: null };
+                if (compResErr) throw compResErr;
 
-            if (companyAnswersErr) throw companyAnswersErr;
+                const compResIds = (compRes || []).map(r => r.id);
+                const { data: compAns, error: compAnsErr } = compResIds.length > 0
+                    ? await supabase
+                        .from('survey_answers')
+                        .select('response_id, question_id, score')
+                        .in('response_id', compResIds)
+                    : { data: [], error: null };
+
+                if (compAnsErr) throw compAnsErr;
+
+                companyResponses = compRes || [];
+                companyAnswers = compAns || [];
+                companyDataCache.current[cacheKey] = { companyResponses, companyAnswers };
+            }
 
             // 会社回答のマッピング
             const companyAnswerByResponse: Record<string, { questionId: string; score: number }[]> = {};
@@ -377,9 +401,10 @@ export default function DeptDashboardPage() {
                 });
             });
 
-            // 部署の3ヶ月回答者数および重複排除回答の抽出
+            // 部署の3ヶ月回答者数の算出（user_id / fingerprint による個人の重複排除）
             const dept3mResponses = (responses || []).filter(r => deptTrailingMonths.includes(r.recorded_month)) || [];
-            const dept3mCount = dept3mResponses.length;
+            const uniqueDeptUserIds = new Set(dept3mResponses.map(r => r.user_id || r.fingerprint || r.id).filter(Boolean));
+            const dept3mCount = uniqueDeptUserIds.size;
             setDept3mResponsesCount(dept3mCount);
 
             const deptUniqueAnswers: Array<{ response_id: string; question_id: string; score: number }> = [];
@@ -398,9 +423,10 @@ export default function DeptDashboardPage() {
                 });
             });
 
-            // 全社の3ヶ月回答者数および重複排除回答の抽出
+            // 全社の3ヶ月回答者数の算出（user_id / fingerprint による個人の重複排除）
             const company3mResponses = (companyResponses || []).filter(r => companyTrailingMonths.includes(r.recorded_month)) || [];
-            const company3mCount = company3mResponses.length;
+            const uniqueCompanyUserIds = new Set(company3mResponses.map(r => r.user_id || r.fingerprint || r.id).filter(Boolean));
+            const company3mCount = uniqueCompanyUserIds.size;
             setCompany3mResponsesCount(company3mCount);
 
             const companyUniqueAnswers: Array<{ response_id: string; question_id: string; score: number }> = [];
@@ -419,10 +445,13 @@ export default function DeptDashboardPage() {
                 });
             });
 
+            // questions.find() を O(1) にするための Map
+            const questionMap = new Map((questions || []).map(q => [q.id, q]));
+
             // 部署カテゴリ平均
             const deptCategoryScores: Record<string, number[]> = {};
             deptUniqueAnswers.forEach(ans => {
-                const q = questions.find(qu => qu.id === ans.question_id);
+                const q = questionMap.get(ans.question_id);
                 if (q && q.category) {
                     if (!deptCategoryScores[q.category]) {
                         deptCategoryScores[q.category] = [];
@@ -439,7 +468,7 @@ export default function DeptDashboardPage() {
             // 全社カテゴリ平均
             const companyCategoryScores: Record<string, number[]> = {};
             companyUniqueAnswers.forEach(ans => {
-                const q = questions.find(qu => qu.id === ans.question_id);
+                const q = questionMap.get(ans.question_id);
                 if (q && q.category) {
                     if (!companyCategoryScores[q.category]) {
                         companyCategoryScores[q.category] = [];
@@ -453,15 +482,7 @@ export default function DeptDashboardPage() {
                 companyCategoryAvgs[cat] = scores.reduce((sum, v) => sum + v, 0) / scores.length;
             });
 
-            // 5テーマ別集約（null時は0にフォールバック）
-            const THEME_MAPPING: Record<string, string[]> = {
-                "意思決定・実行": ["speed", "friction"],
-                "方向づけ": ["clarity", "readiness", "transparency"],
-                "関係性・安全": ["safety", "feedback"],
-                "意欲・成長": ["engagement", "challenge", "impact"],
-                "働きやすさ": ["workload"]
-            };
-
+            // 5テーマ別集約（データ欠損時は null）
             const calculatedRadarData = Object.keys(THEME_MAPPING).map(themeName => {
                 const cats = THEME_MAPPING[themeName];
 
@@ -471,7 +492,7 @@ export default function DeptDashboardPage() {
                     .filter(val => val !== undefined && val !== null);
                 const deptScore = deptScoresForTheme.length > 0
                     ? Number((deptScoresForTheme.reduce((sum, v) => sum + v, 0) / deptScoresForTheme.length).toFixed(2))
-                    : 0; // null時は0
+                    : null; // nullに変更（誤読防止）
 
                 // 全社スコア
                 const companyScoresForTheme = cats
@@ -479,7 +500,7 @@ export default function DeptDashboardPage() {
                     .filter(val => val !== undefined && val !== null);
                 const companyScore = companyScoresForTheme.length > 0
                     ? Number((companyScoresForTheme.reduce((sum, v) => sum + v, 0) / companyScoresForTheme.length).toFixed(2))
-                    : 0; // null時は0
+                    : null; // nullに変更
 
                 return {
                     subject: themeName,
@@ -1770,9 +1791,9 @@ export default function DeptDashboardPage() {
                                                         <span className="font-bold text-slate-700">{r.subject}</span>
                                                     </div>
                                                     <div className="flex items-center gap-2 shrink-0">
-                                                        <span className="font-black text-teal">{r.dept}</span>
+                                                        <span className="font-black text-teal">{r.dept !== null ? r.dept : "—"}</span>
                                                         <span className="text-slate-300">/</span>
-                                                        <span className="text-slate-400 font-medium">全社: {company3mResponsesCount >= 3 ? r.company : "—"}</span>
+                                                        <span className="text-slate-400 font-medium">全社: {company3mResponsesCount >= 3 && r.company !== null ? r.company : "—"}</span>
                                                     </div>
                                                 </div>
                                             ))}
