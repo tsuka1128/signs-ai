@@ -242,7 +242,7 @@ export default function DeptDashboardPage() {
             // 1. survey_responses 取得
             const { data: responses, error: responseErr } = await supabase
                 .from('survey_responses')
-                .select('id, recorded_month, user_id, fingerprint')
+                .select('id, recorded_month, fingerprint')
                 .eq('company_id', companyId)
                 .eq('department_id', deptId)
                 .in('recorded_month', targetYMs);
@@ -369,7 +369,7 @@ export default function DeptDashboardPage() {
             } else {
                 const { data: compRes, error: compResErr } = await supabase
                     .from('survey_responses')
-                    .select('id, recorded_month, user_id, fingerprint')
+                    .select('id, recorded_month, fingerprint')
                     .eq('company_id', companyId)
                     .in('recorded_month', companyTrailingMonths);
 
@@ -401,9 +401,9 @@ export default function DeptDashboardPage() {
                 });
             });
 
-            // 部署の3ヶ月回答者数の算出（user_id / fingerprint による個人の重複排除）
+            // 部署の3ヶ月回答者数の算出（fingerprint による個人の重複排除）
             const dept3mResponses = (responses || []).filter(r => deptTrailingMonths.includes(r.recorded_month)) || [];
-            const uniqueDeptUserIds = new Set(dept3mResponses.map(r => r.user_id || r.fingerprint || r.id).filter(Boolean));
+            const uniqueDeptUserIds = new Set(dept3mResponses.map(r => r.fingerprint || r.id).filter(Boolean));
             const dept3mCount = uniqueDeptUserIds.size;
             setDept3mResponsesCount(dept3mCount);
 
@@ -423,9 +423,9 @@ export default function DeptDashboardPage() {
                 });
             });
 
-            // 全社の3ヶ月回答者数の算出（user_id / fingerprint による個人の重複排除）
+            // 全社の3ヶ月回答者数の算出（fingerprint による個人の重複排除）
             const company3mResponses = (companyResponses || []).filter(r => companyTrailingMonths.includes(r.recorded_month)) || [];
-            const uniqueCompanyUserIds = new Set(company3mResponses.map(r => r.user_id || r.fingerprint || r.id).filter(Boolean));
+            const uniqueCompanyUserIds = new Set(company3mResponses.map(r => r.fingerprint || r.id).filter(Boolean));
             const company3mCount = uniqueCompanyUserIds.size;
             setCompany3mResponsesCount(company3mCount);
 
