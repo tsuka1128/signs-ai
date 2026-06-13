@@ -1,10 +1,40 @@
 # 仕様書：部署マネジメント – ボイスチェック回答状況の可視化と通知
 
-> ステータス：**改訂3（分母を月次実績人数に切替）**
+> ステータス：**改訂4（非Proプラン向けに基準人数フォールバックを追加）**
 > 前提方針：**匿名性を維持する（人数だけを扱い、個人は特定しない）**
 > 関連画面：`src/app/dept/page.tsx`
 
-## ⚠️ 改訂3：分母を「月次実績人数（resource_records.head_count）」に切替（最新・最重要）
+## ⚠️ 改訂4：分母に `departments.headcount` フォールバックを追加（最新・最重要）
+
+**改訂3で分母を `resource_records.head_count`（`/labor`の月次実績）にしたが、`/labor` は Pro限定（`PlanGate feature="labor_analytics"`）のため、非Proプランでは分母を入力できず回答率が常に0になる（機能が死ぬ）。**
+
+### 問題（コードで確認済み）
+| 機能 | プラン制限 |
+|---|---|
+| 回答率（`/dept`・`/voice-check`・週次cron） | **全プランで表示**（ロール制限のみ・プランゲートなし） |
+| 分母の入力元 `/labor` | **Pro限定**（`src/app/labor/page.tsx:29` の `PlanGate`） |
+| 設定の「基準人数」`departments.headcount` | **全プランで入力可**（`DepartmentsTab` はゲートなし） |
+
+→ 非Proは「回答率の枠は見えるのに分母を入れる手段が無い」。分母0で率も完了通知もリマインドも出ない。
+（改訂2の `departments.headcount` 版は全プランで動いていたが、改訂3で `/labor`(Pro)依存になり非Proが巻き添えになった。）
+
+### 改訂4の変更内容（実装）
+**分母解決を「resource_records があればそれ、無ければ `departments.headcount` にフォールバック」にする。**
+1. **共通ヘルパー `src/lib/headcount.ts` の3関数すべてにフォールバックを追加**：
+   - 各関数で対象部署の `departments.headcount` も一括取得しておく（N+1にしない）。
+   - 解決順：**① その月の `resource_records.head_count`（改訂3のcarry-forward込み） → ②それが0/無ければ `departments.headcount` → ③それも0なら0**。
+   - 結果：Pro＝`/labor`の月次実績、非Pro＝設定の基準人数、で回答率が出る。どちらも無ければ従来どおり分母0ガード。
+2. **`departments.headcount` のラベル／注記を再修正**：改訂3で「AI分析・計画用の基準人数」「回答率には/laborの月次実績を使用」と書いたが、**フォールバックで回答率にも使われる**ため文言を更新する。例：「基準人数（想定人数）。回答率は `/labor` の月次実績を優先し、未入力時はこの値を使用。AI分析・計画にも使用」。
+3. **挙動の一貫性**：Proで `/labor` に実績が入っている部署は従来どおり実績優先（`departments.headcount` は無視）。フォールバックは実績が無い月／部署のみ。
+
+### 留意（実装時）
+- フォールバックは**回答率の分母解決の内部だけ**。`resource_records` も `departments.headcount` も書き換えない。
+- 3関数の戻り値の意味は変えない（`{ ym: count }` / `{ deptId: count }`）。呼び出し側（`dept/page`・`voice-check`・`cron`）の変更は不要なはず。
+- carry-forward（改訂3）とフォールバック（改訂4）の順序：**先にcarry-forwardで月をさかのぼり、それでも0なら基準人数**。
+
+---
+
+## ⚠️ 改訂3：分母を「月次実績人数（resource_records.head_count）」に切替（※改訂4でフォールアウト先を追加）
 
 **改訂2では `departments.headcount`（想定人数・単一値）を分母にしたが、月次の実績人数 `resource_records.head_count` に切り替える。**
 
@@ -88,7 +118,7 @@
 |---|---|---|
 | 月次回答数 | `survey_responses`（`company_id, department_id, recorded_month`）| `recorded_month` は **YYYY-MM** 形式 |
 | 月次スコア | `survey_answers`（`response_id, score`）| 既存集計あり |
-| 部署人数（分母）| **`resource_records.head_count`（月次実績人数）**（改訂3） | ~~`users` を count~~（初版・誤）→ ~~`departments.headcount`~~（改訂2）→ 月次実績へ。`department_id` 一致・`axis_id IS NULL`・`recorded_month = {YYYY-MM}-01`。当月未入力なら直近月を繰り越し |
+| 部署人数（分母）| **`resource_records.head_count`（月次実績）→ 無ければ `departments.headcount` にフォールバック**（改訂4） | `users` count（初版・誤）→ `departments.headcount`（改訂2）→ 月次実績（改訂3）→ 月次実績＋基準人数フォールバック（改訂4・非Pro対応）。`axis_id IS NULL`・carry-forward込み |
 | 通知配信 | `notifications` テーブル + `createNotification()`（`src/lib/notifications.ts`）| サーバー専用・サービスロール |
 
 既に `src/app/dept/page.tsx:240` 付近で過去6ヶ月分の `{ month, label, avg, respondentCount }` を `deptScores[]` に取得済み。**①のデータはほぼ揃っており、UIが無いだけ。**
