@@ -166,7 +166,8 @@ export async function POST(req: Request) {
         }
 
         // 3. 分析に必要なデータの取得
-        const last13Months = getLastNMonths(13);
+        const last15Months = getLastNMonths(15);
+        const last13Months = last15Months.slice(2); // インデックス2以降（過去13ヶ月）
         const latestMonth = last13Months[12];
         const historicalMonths = {
             "1m": last13Months[11],
@@ -183,17 +184,17 @@ export async function POST(req: Request) {
             surveys,
             kpiRecs,
             semantic,
-            resources
+            resources,
+            questionsRes
         ] = await Promise.all([
             supabase.from('departments').select('*').eq('company_id', companyId),
             supabase.from('kpi_definitions').select('*').eq('company_id', companyId),
-            // survey_responses.recorded_month は YYYY-MM 形式で保存されるため、YYYY-MM-01 配列での
-            // .in() は一致せず常に0件になる（useDashboardData と同様の対処）。最古の対象月（YYYY-MM 境界）
-            // 以降の範囲フィルタにし、月の突合は後段の summarizeMonth が normalizeMonth で吸収する。
+            // survey_responses.recorded_month は YYYY-MM 形式で保存されるため、最古の対象月（latestMonthから14ヶ月前）
+            // 以降の範囲フィルタにし、月の突合は後段の getTrailing3Months / summarizeMonth が処理する。
             supabase.from('survey_responses')
                 .select('*, survey_answers(*)')
                 .eq('company_id', companyId)
-                .gte('recorded_month', targetMonths[targetMonths.length - 1].slice(0, 7)),
+                .gte('recorded_month', last15Months[0].slice(0, 7)),
             supabase.from('kpi_records')
                 .select('*')
                 .eq('company_id', companyId)
@@ -207,7 +208,12 @@ export async function POST(req: Request) {
             supabase.from('resource_records')
                 .select('*')
                 .eq('company_id', companyId)
-                .in('recorded_month', targetMonths)
+                .in('recorded_month', targetMonths),
+            supabase.from('survey_questions')
+                .select('id, text, category')
+                .or(`company_id.is.null,company_id.eq.${companyId}`)
+                .eq('is_active', true)
+                .order('sort_order', { ascending: true })
         ]);
         
         if (!depts.data || depts.data.length === 0) {
@@ -217,23 +223,82 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "診断に必要なアンケート回答データ（ボイスチェック実績）が不足しています。" }, { status: 400 });
         }
 
+        const activeQuestions = questionsRes.data || [];
+
+        const getTrailing3Months = (baseMonth: string): string[] => {
+            const idx = last15Months.indexOf(normalizeMonth(baseMonth));
+            if (idx === -1) {
+                return [normalizeMonth(baseMonth)];
+            }
+            const months = [];
+            for (let i = 2; i >= 0; i--) {
+                const targetIdx = idx - i;
+                if (targetIdx >= 0) {
+                    months.push(last15Months[targetIdx]);
+                }
+            }
+            return months;
+        };
+
         const summarizeMonth = (month: string) => {
-            const monthSurveys = surveys.data?.filter(s => normalizeMonth(s.recorded_month) === normalizeMonth(month)) || [];
+            const trailingMonths = getTrailing3Months(month);
+            const trailingSurveys = surveys.data?.filter(s => 
+                trailingMonths.includes(normalizeMonth(s.recorded_month))
+            ) || [];
             const monthKpis = kpiRecs.data?.filter(r => normalizeMonth(r.recorded_month) === normalizeMonth(month)) || [];
             
-            const avgPulse = monthSurveys.length > 0 
-                ? monthSurveys.flatMap(s => s.survey_answers || []).reduce((acc, a) => acc + a.score, 0) / (monthSurveys.flatMap(s => s.survey_answers || []).length || 1)
+            // 各レスポンス内での question_id の重複排除
+            const uniqueAnswers: Array<{ response_id: string; question_id: number; score: number }> = [];
+            trailingSurveys.forEach(s => {
+                const seenQuestionIds = new Set<number>();
+                const answers = s.survey_answers || [];
+                answers.forEach((a: any) => {
+                    if (a.question_id != null && !seenQuestionIds.has(a.question_id)) {
+                        seenQuestionIds.add(a.question_id);
+                        uniqueAnswers.push({
+                            response_id: s.id,
+                            question_id: a.question_id,
+                            score: a.score
+                        });
+                    }
+                });
+            });
+
+            const avgPulse = uniqueAnswers.length > 0 
+                ? uniqueAnswers.reduce((acc, a) => acc + a.score, 0) / uniqueAnswers.length
                 : 0;
+
+            // 設問別平均スコアの算出
+            const questionScoresMap = new Map<number, number[]>();
+            uniqueAnswers.forEach(a => {
+                if (!questionScoresMap.has(a.question_id)) {
+                    questionScoresMap.set(a.question_id, []);
+                }
+                questionScoresMap.get(a.question_id)!.push(a.score);
+            });
+
+            const questionScores = (activeQuestions || []).map(q => {
+                const scores = questionScoresMap.get(q.id) || [];
+                const avg = scores.length > 0
+                    ? parseFloat((scores.reduce((acc, s) => acc + s, 0) / scores.length).toFixed(2))
+                    : null;
+                return {
+                    category: q.category || "custom",
+                    label: q.text,
+                    avg
+                };
+            }).filter(qs => qs.avg !== null);
             
             return {
                 month,
-                avg_pulse: avgPulse.toFixed(2),
+                avg_pulse: uniqueAnswers.length > 0 ? avgPulse.toFixed(2) : null,
                 kpi_count: monthKpis.length,
                 kpi_summary: monthKpis.map(r => {
                     const def = kpiDefs.data?.find(d => d.id === r.kpi_definition_id);
                     const polarity = def?.is_higher_better !== false ? "最大化目標" : "最小化目標";
                     return `${def?.name || 'KPI'}: ${r.value}${def?.unit || ''} (目標: ${r.target_value}${def?.unit || ''}, 評価基準: ${polarity})`;
-                })
+                }),
+                question_scores: questionScores
             };
         };
 
@@ -248,23 +313,78 @@ export async function POST(req: Request) {
         // 部署別データの集約とスコア集計
         const deptScores: { deptId: string; deptName: string; avgScore: number }[] = [];
         const deptDetails = depts.data?.map(d => {
-            const deptSurveys = surveys.data?.filter(s => s.department_id === d.id && normalizeMonth(s.recorded_month) === normalizeMonth(latestMonth));
+            const trailingMonths = getTrailing3Months(latestMonth);
+            const deptTrailingSurveys = surveys.data?.filter(s => 
+                s.department_id === d.id && 
+                trailingMonths.includes(normalizeMonth(s.recorded_month))
+            ) || [];
             const deptKpis = kpiRecs.data?.filter(r => r.department_id === d.id && normalizeMonth(r.recorded_month) === normalizeMonth(latestMonth));
             const deptResource = resources.data?.find(r => r.department_id === d.id && normalizeMonth(r.recorded_month) === normalizeMonth(latestMonth));
-            const avgScore = deptSurveys && deptSurveys.length > 0 
-                ? deptSurveys.flatMap(s => s.survey_answers || []).reduce((acc, a) => acc + a.score, 0) / (deptSurveys.flatMap(s => s.survey_answers || []).length || 1)
+            
+            // 各レスポンス内での question_id の重複排除
+            const uniqueAnswers: Array<{ response_id: string; question_id: number; score: number }> = [];
+            deptTrailingSurveys.forEach(s => {
+                const seenQuestionIds = new Set<number>();
+                const answers = s.survey_answers || [];
+                answers.forEach((a: any) => {
+                    if (a.question_id != null && !seenQuestionIds.has(a.question_id)) {
+                        seenQuestionIds.add(a.question_id);
+                        uniqueAnswers.push({
+                            response_id: s.id,
+                            question_id: a.question_id,
+                            score: a.score
+                        });
+                    }
+                });
+            });
+
+            const avgScore = uniqueAnswers.length > 0 
+                ? uniqueAnswers.reduce((acc, a) => acc + a.score, 0) / uniqueAnswers.length
                 : 0;
             
             deptScores.push({ deptId: d.id, deptName: d.name, avgScore });
 
-            const comments = deptSurveys?.map(s => s.free_comment).filter(Boolean) || [];
+            // 部署ごとの回答者数（3ヶ月累計のレスポンス数）
+            const respondentCount = deptTrailingSurveys.length;
+
+            // 部署別の設問別平均スコアの算出
+            const questionScoresMap = new Map<number, number[]>();
+            uniqueAnswers.forEach(a => {
+                if (!questionScoresMap.has(a.question_id)) {
+                    questionScoresMap.set(a.question_id, []);
+                }
+                questionScoresMap.get(a.question_id)!.push(a.score);
+            });
+
+            const questionScores = (activeQuestions || []).map(q => {
+                const scores = questionScoresMap.get(q.id) || [];
+                const avg = scores.length > 0
+                    ? parseFloat((scores.reduce((acc, s) => acc + s, 0) / scores.length).toFixed(2))
+                    : null;
+                return {
+                    category: q.category || "custom",
+                    label: q.text,
+                    avg
+                };
+            }).filter(qs => qs.avg !== null);
+
+            // スコアが 3.0 未満の低スコア項目を抽出
+            const lowScoreItems = questionScores
+                .filter(qs => qs.avg !== null && qs.avg < 3.0)
+                .sort((a, b) => (a.avg || 0) - (b.avg || 0))
+                .map(qs => `${qs.label}: ${qs.avg}`);
+
+            const comments = deptTrailingSurveys.map(s => s.free_comment).filter(Boolean) || [];
             return {
                 id: d.id,
                 name: d.name,
                 master_headcount: d.headcount,
                 actual_headcount: deptResource?.head_count,
                 labor_cost: deptResource?.labor_cost,
-                avg_pulse: avgScore.toFixed(2),
+                avg_pulse: uniqueAnswers.length > 0 ? avgScore.toFixed(2) : null,
+                respondent_count_3m: respondentCount,
+                question_scores: questionScores,
+                low_score_items: lowScoreItems,
                 kpi_count: deptKpis?.length,
                 kpi_details: deptKpis?.map(r => {
                     const def = kpiDefs.data?.find(def => def.id === r.kpi_definition_id);
@@ -295,6 +415,12 @@ export async function POST(req: Request) {
 
         const prompt = `対象月: ${latestMonth}
 各データセクションは ### DATA START と ### DATA END で区切られています。
+
+【重要：体温データの特性と分析における解釈ルール】
+- 本データにおいて、組織の「体温」（avg_pulse）および設問別スコア（question_scores）は、当月を含む「直近3ヶ月の移動平均（トレーリング平均）」で算出されています。
+- 一方、業績データ「KPI」は「当月単月」の値です。
+- 直近3ヶ月の組織の健康状態（体温）が、当月の成果（KPI）にどう現れているかという相関を分析してください。すでに移動平均化されているため、AI側で時間的なズレ（翌月ラグなど）を考慮した二重ラグ解釈をしないでください。
+- 回答総数（respondent_count_3m）が少ない部署については、個人の主観が強く影響するため、断定的な因果関係の決めつけを避け、仮説として慎重に言及してください。
 
 ### DATA START (組織方針・フェーズ)
 組織方針: ${policy}
@@ -398,7 +524,10 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
                 const laborCostPerHead = (d.labor_cost && d.actual_headcount)
                     ? Math.round(d.labor_cost / d.actual_headcount * 10) / 10
                     : 0;
-                return `【${d.name}】体温:${d.avg_pulse} KPI:${d.kpi_details?.join(" / ") || "なし"} 1人あたり人件費:${laborCostPerHead}万円`;
+                const lowScoresStr = d.low_score_items && d.low_score_items.length > 0
+                    ? `（低スコア項目: ${d.low_score_items.join(", ")}）`
+                    : "";
+                return `【${d.name}】体温:${d.avg_pulse}${lowScoresStr} KPI:${d.kpi_details?.join(" / ") || "なし"} 1人あたり人件費:${laborCostPerHead}万円`;
             }).join("\n");
 
             const hrSystemPrompt = `あなたは人材マネジメントの専門家です。組織データを分析し、具体的かつ実行可能な人事戦略を提言してください。
@@ -410,7 +539,7 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
 
 各セクションは3〜4行で簡潔に。全体で400字以内を目安にしてください。`;
 
-            const hrPrompt = `対象月: ${latestMonth}\n\n■ 部署別データ\n${hrDeptSummary || "データなし"}`;
+            const hrPrompt = `対象月: ${latestMonth}（※体温は当月を含む直近3ヶ月の移動平均）\n\n■ 部署別データ\n${hrDeptSummary || "データなし"}`;
 
             const hrStrategy = await generateAIInsight(hrPrompt, {
                 systemPrompt: hrSystemPrompt,
