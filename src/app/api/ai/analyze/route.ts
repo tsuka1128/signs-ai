@@ -10,6 +10,33 @@ import { sendAiSummaryNotification, sendAnomalyAlertNotification } from "@/lib/n
 export const runtime = "nodejs"; // Edge RuntimeではなくNode.jsで実行（maxDuration延長のため）
 export const maxDuration = 300; // Vercel Pro: 最大300秒
 
+const STANDARD_QUESTION_MAP: Record<number, { category: string; label: string }> = {
+    1: { category: "engagement", label: "ワクワク度（エンゲージメント）" },
+    2: { category: "speed", label: "意思決定スピード" },
+    3: { category: "transparency", label: "情報の透明性" },
+    4: { category: "friction", label: "調整・根回し（摩擦）" },
+    5: { category: "safety", label: "心理的安全性" },
+    6: { category: "clarity", label: "業務のフォーカス（明確さ）" },
+    7: { category: "feedback", label: "フィードバック・賞賛" },
+    8: { category: "workload", label: "適切な業務量" },
+    9: { category: "impact", label: "顧客価値への集中（インパクト）" },
+    10: { category: "challenge", label: "挑戦・試行錯誤" },
+    11: { category: "readiness", label: "準備・段取り（レディネス）" }
+};
+
+const getUniqueAnswersForResponse = (response: any) => {
+    const answers = response.survey_answers || [];
+    const seen = new Set<number>();
+    const unique = [];
+    for (const a of answers) {
+        if (a.question_id != null && !seen.has(a.question_id)) {
+            seen.add(a.question_id);
+            unique.push(a);
+        }
+    }
+    return unique;
+};
+
 const DEFAULT_SYSTEM_PROMPT = `あなたは組織改善AI「Signs AI」の経営参謀です。
 組織の状態（アンケートスコア）と業績（KPI）、さらにリソース（人数・人件費）を、会社が定めた「組織方針」に照らし合わせ、客観的かつ鋭い洞察を提供してください。
 人件費データが提供されている場合は、一人当たり生産性やコスト効率（ROI）の観点も含めて分析してください。
@@ -22,6 +49,8 @@ const DEFAULT_SYSTEM_PROMPT = `あなたは組織改善AI「Signs AI」の経営
 2. 口調：すべての文末は「です・ます」調。経営者と対等な相棒として書く。命令・断定（〜すべきだ）を避け、提案形（〜が有効です／〜をお勧めします）を用いる。上から目線の表現は禁止。
 3. 重複の排除：全社サマリーで述べた内容を部署別・トピック別で繰り返さないこと。複数部署に共通する課題は voice_topics に1つに統合し関連部署を併記する（部署別では繰り返さない）。各コメント欄は「その欄でしか読めない情報」を必ず含めること。
 4. 業種・文脈の反映：組織情報（業種・事業フェーズ・規模）が与えられている場合は、その業種特有の力学を加味した示唆を最低1つ含めること。文脈を無視した汎用論は避ける。
+5. 体温とKPIの解釈：体温（アンケートスコア）は当月を含めた過去3ヶ月の移動平均（トレーリング平均）です。一方、KPIは当月単月の実績です。直近3ヶ月の組織状態の蓄積が当月の成果（KPI）にどう現れているかを分析してください。すでに3ヶ月移動平均化されているため、AI側でさらに時間的なラグ（翌月ラグなど）を考慮した二重ラグ解釈をしないでください。
+6. 小サンプル時の節度：回答総数が少ない部署（合計で少数、例：5件未満など）のデータに関しては、スコアの変動に個人の主観が強く影響している可能性があるため、断定的な因果関係の決めつけを避け、あくまで仮説としての言及に留めてください。
 
 回答は以下の構造を持ったJSON形式のみで出力してください。Markdown装飾(\`\`\`json等)は不要です。
 {
@@ -167,6 +196,7 @@ export async function POST(req: Request) {
 
         // 3. 分析に必要なデータの取得
         const last13Months = getLastNMonths(13);
+        const last15Months = getLastNMonths(15);
         const latestMonth = last13Months[12];
         const historicalMonths = {
             "1m": last13Months[11],
@@ -183,17 +213,17 @@ export async function POST(req: Request) {
             surveys,
             kpiRecs,
             semantic,
-            resources
+            resources,
+            questionsRes
         ] = await Promise.all([
             supabase.from('departments').select('*').eq('company_id', companyId),
             supabase.from('kpi_definitions').select('*').eq('company_id', companyId),
-            // survey_responses.recorded_month は YYYY-MM 形式で保存されるため、YYYY-MM-01 配列での
-            // .in() は一致せず常に0件になる（useDashboardData と同様の対処）。最古の対象月（YYYY-MM 境界）
-            // 以降の範囲フィルタにし、月の突合は後段の summarizeMonth が normalizeMonth で吸収する。
+            // 3ヶ月トレーリング平均を出すため、最古月（12mの時点）からさらに2ヶ月前まで含めて
+            // 15ヶ月分（last15Months[0]以降）の survey_responses を取得する
             supabase.from('survey_responses')
                 .select('*, survey_answers(*)')
                 .eq('company_id', companyId)
-                .gte('recorded_month', targetMonths[targetMonths.length - 1].slice(0, 7)),
+                .gte('recorded_month', last15Months[0].slice(0, 7)),
             supabase.from('kpi_records')
                 .select('*')
                 .eq('company_id', companyId)
@@ -207,8 +237,14 @@ export async function POST(req: Request) {
             supabase.from('resource_records')
                 .select('*')
                 .eq('company_id', companyId)
-                .in('recorded_month', targetMonths)
+                .in('recorded_month', targetMonths),
+            supabase.from('survey_questions')
+                .select('id, text, company_id')
+                .or(`company_id.is.null,company_id.eq.${companyId}`)
+                .eq('is_active', true)
         ]);
+
+        const activeQuestions = questionsRes.data || [];
         
         if (!depts.data || depts.data.length === 0) {
             return NextResponse.json({ error: "分析対象の部署が登録されていません。部署設定を先に完了させてください。" }, { status: 400 });
@@ -217,23 +253,69 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "診断に必要なアンケート回答データ（ボイスチェック実績）が不足しています。" }, { status: 400 });
         }
 
+        const getTrailing3Months = (baseMonth: string): string[] => {
+            const idx = last15Months.indexOf(normalizeMonth(baseMonth));
+            if (idx === -1) {
+                return [normalizeMonth(baseMonth)];
+            }
+            const months = [];
+            for (let i = 2; i >= 0; i--) {
+                const targetIdx = idx - i;
+                if (targetIdx >= 0) {
+                    months.push(last15Months[targetIdx]);
+                }
+            }
+            return months;
+        };
+
         const summarizeMonth = (month: string) => {
-            const monthSurveys = surveys.data?.filter(s => normalizeMonth(s.recorded_month) === normalizeMonth(month)) || [];
+            const trailingMonths = getTrailing3Months(month);
+            const trailingSurveys = surveys.data?.filter(s => 
+                trailingMonths.includes(normalizeMonth(s.recorded_month))
+            ) || [];
             const monthKpis = kpiRecs.data?.filter(r => normalizeMonth(r.recorded_month) === normalizeMonth(month)) || [];
             
-            const avgPulse = monthSurveys.length > 0 
-                ? monthSurveys.flatMap(s => s.survey_answers || []).reduce((acc, a) => acc + a.score, 0) / (monthSurveys.flatMap(s => s.survey_answers || []).length || 1)
+            // 1レスポンス内の重複を排除して、全回答を平坦化
+            const allAnswers = trailingSurveys.flatMap(s => getUniqueAnswersForResponse(s));
+            
+            const avgPulse = allAnswers.length > 0 
+                ? allAnswers.reduce((acc, a) => acc + a.score, 0) / allAnswers.length
                 : 0;
+            
+            // 設問別平均スコアの集計
+            const questionScoresMap = new Map<number, number[]>();
+            allAnswers.forEach(a => {
+                if (a.question_id != null) {
+                    if (!questionScoresMap.has(a.question_id)) {
+                        questionScoresMap.set(a.question_id, []);
+                    }
+                    questionScoresMap.get(a.question_id)!.push(a.score);
+                }
+            });
+
+            const questionScores = (activeQuestions || []).map(q => {
+                const scores = questionScoresMap.get(q.id) || [];
+                const avg = scores.length > 0
+                    ? parseFloat((scores.reduce((acc, s) => acc + s, 0) / scores.length).toFixed(2))
+                    : null;
+                const mapInfo = STANDARD_QUESTION_MAP[q.id];
+                return {
+                    category: mapInfo?.category || "custom",
+                    label: mapInfo?.label || q.text,
+                    avg
+                };
+            }).filter(qs => qs.avg !== null);
             
             return {
                 month,
-                avg_pulse: avgPulse.toFixed(2),
+                avg_pulse: avgPulse > 0 ? avgPulse.toFixed(2) : null,
                 kpi_count: monthKpis.length,
                 kpi_summary: monthKpis.map(r => {
                     const def = kpiDefs.data?.find(d => d.id === r.kpi_definition_id);
                     const polarity = def?.is_higher_better !== false ? "最大化目標" : "最小化目標";
                     return `${def?.name || 'KPI'}: ${r.value}${def?.unit || ''} (目標: ${r.target_value}${def?.unit || ''}, 評価基準: ${polarity})`;
-                })
+                }),
+                question_scores: questionScores
             };
         };
 
@@ -248,23 +330,66 @@ export async function POST(req: Request) {
         // 部署別データの集約とスコア集計
         const deptScores: { deptId: string; deptName: string; avgScore: number }[] = [];
         const deptDetails = depts.data?.map(d => {
-            const deptSurveys = surveys.data?.filter(s => s.department_id === d.id && normalizeMonth(s.recorded_month) === normalizeMonth(latestMonth));
+            const trailingMonths = getTrailing3Months(latestMonth);
+            const deptTrailingSurveys = surveys.data?.filter(s => s.department_id === d.id && trailingMonths.includes(normalizeMonth(s.recorded_month))) || [];
             const deptKpis = kpiRecs.data?.filter(r => r.department_id === d.id && normalizeMonth(r.recorded_month) === normalizeMonth(latestMonth));
             const deptResource = resources.data?.find(r => r.department_id === d.id && normalizeMonth(r.recorded_month) === normalizeMonth(latestMonth));
-            const avgScore = deptSurveys && deptSurveys.length > 0 
-                ? deptSurveys.flatMap(s => s.survey_answers || []).reduce((acc, a) => acc + a.score, 0) / (deptSurveys.flatMap(s => s.survey_answers || []).length || 1)
+            
+            // 1レスポンス内の重複を排除して、全回答を平坦化
+            const allAnswers = deptTrailingSurveys.flatMap(s => getUniqueAnswersForResponse(s));
+            
+            const avgScore = allAnswers.length > 0 
+                ? allAnswers.reduce((acc, a) => acc + a.score, 0) / allAnswers.length
                 : 0;
             
             deptScores.push({ deptId: d.id, deptName: d.name, avgScore });
 
-            const comments = deptSurveys?.map(s => s.free_comment).filter(Boolean) || [];
+            // 3ヶ月窓内での回答総数（小サンプル抑制の判定用）
+            const respondentCount = deptTrailingSurveys.length;
+
+            // 設問別平均スコアの集計
+            const questionScoresMap = new Map<number, number[]>();
+            allAnswers.forEach(a => {
+                if (a.question_id != null) {
+                    if (!questionScoresMap.has(a.question_id)) {
+                        questionScoresMap.set(a.question_id, []);
+                    }
+                    questionScoresMap.get(a.question_id)!.push(a.score);
+                }
+            });
+
+            const questionScores = (activeQuestions || []).map(q => {
+                const scores = questionScoresMap.get(q.id) || [];
+                const avg = scores.length > 0
+                    ? parseFloat((scores.reduce((acc, s) => acc + s, 0) / scores.length).toFixed(2))
+                    : null;
+                const mapInfo = STANDARD_QUESTION_MAP[q.id];
+                return {
+                    category: mapInfo?.category || "custom",
+                    label: mapInfo?.label || q.text,
+                    avg
+                };
+            }).filter(qs => qs.avg !== null);
+
+            // 低スコア項目の抽出 (3.0 未満のものを優先順位（低い順）で)
+            const lowScoreItems = questionScores
+                .filter(qs => qs.avg !== null && qs.avg < 3.0)
+                .sort((a, b) => (a.avg || 0) - (b.avg || 0))
+                .map(qs => `${qs.label}: ${qs.avg}`);
+
+            // フリーコメントは3ヶ月分を集約する
+            const comments = deptTrailingSurveys.map(s => s.free_comment).filter(Boolean) || [];
+
             return {
                 id: d.id,
                 name: d.name,
                 master_headcount: d.headcount,
                 actual_headcount: deptResource?.head_count,
                 labor_cost: deptResource?.labor_cost,
-                avg_pulse: avgScore.toFixed(2),
+                avg_pulse: avgScore > 0 ? avgScore.toFixed(2) : null,
+                respondent_count_3m: respondentCount,
+                question_scores: questionScores,
+                low_score_items: lowScoreItems,
                 kpi_count: deptKpis?.length,
                 kpi_details: deptKpis?.map(r => {
                     const def = kpiDefs.data?.find(def => def.id === r.kpi_definition_id);
@@ -323,11 +448,18 @@ ${pastActionsSummary}
 - 上記を全て考慮した上で、まだ手をつけていない新しい課題・改善領域を発見して提案すること
 ### DATA END
 ` : ''}
+
+【重要：体温とKPIの分析前提】
+- データに提供されている「体温 (avg_pulse)」および「設問別スコア (question_scores)」は、当月を含む「直近3ヶ月の移動平均（トレーリング平均）」です。
+- 一方、KPIや人件費データは「当月（対象月）」の単月実績です。
+- 直近3ヶ月の組織コンディションの蓄積（体温）が、当月の成果（KPI）にどのように表れているか、という相関分析を行ってください。すでに3ヶ月移動平均化されているため、AI側でさらに時間的なラグ（翌月ラグなど）を考慮した二重ラグ解釈をしないでください。
+- 各部署の回答総数（respondent_count_3m）が極めて少ない場合（例：5件未満など）は、個人の主観によるブレが大きいため、断定的な因果関係の主張を避け、仮説として慎重に言及してください。
+
 分析の要件:
 1. 全社的な傾向をサマリーしてください。
 2. insights_by_dept には、全ての部署に対する診断テキストを含めてください。
 3. voice_topics には、各部署から集まった「voice_comments（定性コメント）」を分析し、共通する課題や喜びを3〜5つのトピックに抽象化して抽出してください（※個人名や具体的すぎる業務内容は伏せること）。
-4. matrix_analysis には、過去と現在の推移データに基づく洞察を記述してください。
+4. matrix_analysis には、過去と現在の推移データ（トレーリング平均化されたもの）に基づく洞察を記述してください。
 5. suggested_actions は、即実行可能な具体的なアクションを少なくとも3つ提案してください。
 
 JSONの構造に従い詳細な分析結果を出力してください。`;
@@ -398,19 +530,27 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
                 const laborCostPerHead = (d.labor_cost && d.actual_headcount)
                     ? Math.round(d.labor_cost / d.actual_headcount * 10) / 10
                     : 0;
-                return `【${d.name}】体温:${d.avg_pulse} KPI:${d.kpi_details?.join(" / ") || "なし"} 1人あたり人件費:${laborCostPerHead}万円`;
+                const lowScoresStr = d.low_score_items && d.low_score_items.length > 0
+                    ? `（低スコア項目: ${d.low_score_items.join(", ")}）`
+                    : "";
+                return `【${d.name}】体温:${d.avg_pulse}${lowScoresStr} KPI:${d.kpi_details?.join(" / ") || "なし"} 1人あたり人件費:${laborCostPerHead}万円`;
             }).join("\n");
 
             const hrSystemPrompt = `あなたは人材マネジメントの専門家です。組織データを分析し、具体的かつ実行可能な人事戦略を提言してください。
+提供される体温および部署ごとの低スコア項目は「直近3ヶ月の移動平均（トレーリング平均）」によるものです。
 
 以下の3点を必ず含めてください：
 ① リスク対応（緊急）：体温・KPIが低迷している部署への即時施策
-② エンゲージメント改善：体温低下の主因と優先改善項目  
+② エンゲージメント改善：体温低下の主因（低スコア項目を参照）と優先改善項目  
 ③ 中長期の人事戦略：体制・報酬・育成の観点での提言
 
 各セクションは3〜4行で簡潔に。全体で400字以内を目安にしてください。`;
 
-            const hrPrompt = `対象月: ${latestMonth}\n\n■ 部署別データ\n${hrDeptSummary || "データなし"}`;
+            const hrPrompt = `対象月: ${latestMonth}
+各部署の体温および低スコア項目は直近3ヶ月の移動平均です。
+
+■ 部署別データ
+${hrDeptSummary || "データなし"}`;
 
             const hrStrategy = await generateAIInsight(hrPrompt, {
                 systemPrompt: hrSystemPrompt,
