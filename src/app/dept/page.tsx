@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Loading } from "@/components/ui/Loading";
@@ -45,6 +45,11 @@ import {
     Tooltip,
     Legend,
     ResponsiveContainer,
+    Radar,
+    RadarChart,
+    PolarGrid,
+    PolarAngleAxis,
+    PolarRadiusAxis,
 } from "recharts";
 
 interface DeptMonthlyScore {
@@ -60,6 +65,14 @@ interface QuestionScore {
     text: string;
     avg: number | null;
 }
+
+const THEME_MAPPING: Record<string, string[]> = {
+    "意思決定・実行": ["speed", "friction"],
+    "方向づけ": ["clarity", "readiness", "transparency"],
+    "関係性・安全": ["safety", "feedback"],
+    "意欲・成長": ["engagement", "challenge", "impact"],
+    "働きやすさ": ["workload"]
+};
 
 export default function DeptDashboardPage() {
     const supabase = createClient();
@@ -104,6 +117,14 @@ export default function DeptDashboardPage() {
     const [showResponseTrend, setShowResponseTrend] = useState(false);
     // calendarYM: 書き込み用の当月。latestDataYM はローカル変数として fetchDeptData 内で使用
     const [calendarMonthYM, setCalendarMonthYM] = useState<string | null>(null);
+
+    // 案A: 部署プロフィールレーダー用 State
+    const [radarData, setRadarData] = useState<any[]>([]);
+    const [dept3mResponsesCount, setDept3mResponsesCount] = useState<number>(0);
+    const [company3mResponsesCount, setCompany3mResponsesCount] = useState<number>(0);
+
+    // 全社データ取得重複防止のためのキャッシュ
+    const companyDataCache = useRef<Record<string, { companyResponses: any[], companyAnswers: any[] }>>({});
 
     useEffect(() => {
         checkRoleAndInit();
@@ -221,7 +242,7 @@ export default function DeptDashboardPage() {
             // 1. survey_responses 取得
             const { data: responses, error: responseErr } = await supabase
                 .from('survey_responses')
-                .select('id, recorded_month')
+                .select('id, recorded_month, user_id, fingerprint')
                 .eq('company_id', companyId)
                 .eq('department_id', deptId)
                 .in('recorded_month', targetYMs);
@@ -281,7 +302,7 @@ export default function DeptDashboardPage() {
             // 5. 設問一覧の取得（標準11問＋会社独自問を取得）
             const { data: questions, error: questionErr } = await supabase
                 .from('survey_questions')
-                .select('id, text, sort_order')
+                .select('id, text, category, sort_order')
                 .or(`company_id.is.null,company_id.eq.${companyId}`)
                 .eq('is_active', true)
                 .order('sort_order', { ascending: true });
@@ -326,6 +347,169 @@ export default function DeptDashboardPage() {
                 return a.avg - b.avg;           // 低スコア順
             });
             setQuestionScores(qScores);
+
+            // 7. 案A：部署プロフィールレーダー用 3ヶ月トレーリングデータ集計
+            // 部署の3ヶ月窓（latestDataYM 基準）
+            const latestIdx = targetYMs.indexOf(latestDataYM);
+            const deptTrailingMonths = latestIdx !== -1
+                ? targetYMs.slice(Math.max(0, latestIdx - 2), latestIdx + 1)
+                : targetYMs.slice(-3);
+
+            // 全社も同じ3ヶ月窓（latestDataYM 基準）に統一し、期間の不整合を防ぐ
+            const companyTrailingMonths = deptTrailingMonths;
+
+            // 全社回答データのキャッシュ付きフェッチ
+            const cacheKey = `${companyId}-${companyTrailingMonths.join(',')}`;
+            let companyResponses = [];
+            let companyAnswers = [];
+
+            if (companyDataCache.current[cacheKey]) {
+                companyResponses = companyDataCache.current[cacheKey].companyResponses;
+                companyAnswers = companyDataCache.current[cacheKey].companyAnswers;
+            } else {
+                const { data: compRes, error: compResErr } = await supabase
+                    .from('survey_responses')
+                    .select('id, recorded_month, user_id, fingerprint')
+                    .eq('company_id', companyId)
+                    .in('recorded_month', companyTrailingMonths);
+
+                if (compResErr) throw compResErr;
+
+                const compResIds = (compRes || []).map(r => r.id);
+                const { data: compAns, error: compAnsErr } = compResIds.length > 0
+                    ? await supabase
+                        .from('survey_answers')
+                        .select('response_id, question_id, score')
+                        .in('response_id', compResIds)
+                    : { data: [], error: null };
+
+                if (compAnsErr) throw compAnsErr;
+
+                companyResponses = compRes || [];
+                companyAnswers = compAns || [];
+                companyDataCache.current[cacheKey] = { companyResponses, companyAnswers };
+            }
+
+            // 会社回答のマッピング
+            const companyAnswerByResponse: Record<string, { questionId: string; score: number }[]> = {};
+            (companyAnswers || []).forEach(a => {
+                if (!a.response_id || !a.question_id) return;
+                if (!companyAnswerByResponse[a.response_id]) companyAnswerByResponse[a.response_id] = [];
+                companyAnswerByResponse[a.response_id].push({
+                    questionId: a.question_id,
+                    score: a.score,
+                });
+            });
+
+            // 部署の3ヶ月回答者数の算出（user_id / fingerprint による個人の重複排除）
+            const dept3mResponses = (responses || []).filter(r => deptTrailingMonths.includes(r.recorded_month)) || [];
+            const uniqueDeptUserIds = new Set(dept3mResponses.map(r => r.user_id || r.fingerprint || r.id).filter(Boolean));
+            const dept3mCount = uniqueDeptUserIds.size;
+            setDept3mResponsesCount(dept3mCount);
+
+            const deptUniqueAnswers: Array<{ response_id: string; question_id: string; score: number }> = [];
+            dept3mResponses.forEach(r => {
+                const seenQuestionIds = new Set<string>();
+                const ansList = answerByResponse[r.id] || [];
+                ansList.forEach(ans => {
+                    if (!seenQuestionIds.has(ans.questionId)) {
+                        seenQuestionIds.add(ans.questionId);
+                        deptUniqueAnswers.push({
+                            response_id: r.id,
+                            question_id: ans.questionId,
+                            score: ans.score
+                        });
+                    }
+                });
+            });
+
+            // 全社の3ヶ月回答者数の算出（user_id / fingerprint による個人の重複排除）
+            const company3mResponses = (companyResponses || []).filter(r => companyTrailingMonths.includes(r.recorded_month)) || [];
+            const uniqueCompanyUserIds = new Set(company3mResponses.map(r => r.user_id || r.fingerprint || r.id).filter(Boolean));
+            const company3mCount = uniqueCompanyUserIds.size;
+            setCompany3mResponsesCount(company3mCount);
+
+            const companyUniqueAnswers: Array<{ response_id: string; question_id: string; score: number }> = [];
+            company3mResponses.forEach(r => {
+                const seenQuestionIds = new Set<string>();
+                const ansList = companyAnswerByResponse[r.id] || [];
+                ansList.forEach(ans => {
+                    if (!seenQuestionIds.has(ans.questionId)) {
+                        seenQuestionIds.add(ans.questionId);
+                        companyUniqueAnswers.push({
+                            response_id: r.id,
+                            question_id: ans.questionId,
+                            score: ans.score
+                        });
+                    }
+                });
+            });
+
+            // questions.find() を O(1) にするための Map
+            const questionMap = new Map((questions || []).map(q => [q.id, q]));
+
+            // 部署カテゴリ平均
+            const deptCategoryScores: Record<string, number[]> = {};
+            deptUniqueAnswers.forEach(ans => {
+                const q = questionMap.get(ans.question_id);
+                if (q && q.category) {
+                    if (!deptCategoryScores[q.category]) {
+                        deptCategoryScores[q.category] = [];
+                    }
+                    deptCategoryScores[q.category].push(ans.score);
+                }
+            });
+            const deptCategoryAvgs: Record<string, number> = {};
+            Object.keys(deptCategoryScores).forEach(cat => {
+                const scores = deptCategoryScores[cat];
+                deptCategoryAvgs[cat] = scores.reduce((sum, v) => sum + v, 0) / scores.length;
+            });
+
+            // 全社カテゴリ平均
+            const companyCategoryScores: Record<string, number[]> = {};
+            companyUniqueAnswers.forEach(ans => {
+                const q = questionMap.get(ans.question_id);
+                if (q && q.category) {
+                    if (!companyCategoryScores[q.category]) {
+                        companyCategoryScores[q.category] = [];
+                    }
+                    companyCategoryScores[q.category].push(ans.score);
+                }
+            });
+            const companyCategoryAvgs: Record<string, number> = {};
+            Object.keys(companyCategoryScores).forEach(cat => {
+                const scores = companyCategoryScores[cat];
+                companyCategoryAvgs[cat] = scores.reduce((sum, v) => sum + v, 0) / scores.length;
+            });
+
+            // 5テーマ別集約（データ欠損時は null）
+            const calculatedRadarData = Object.keys(THEME_MAPPING).map(themeName => {
+                const cats = THEME_MAPPING[themeName];
+
+                // 部署スコア
+                const deptScoresForTheme = cats
+                    .map(cat => deptCategoryAvgs[cat])
+                    .filter(val => val !== undefined && val !== null);
+                const deptScore = deptScoresForTheme.length > 0
+                    ? Number((deptScoresForTheme.reduce((sum, v) => sum + v, 0) / deptScoresForTheme.length).toFixed(2))
+                    : null; // nullに変更（誤読防止）
+
+                // 全社スコア
+                const companyScoresForTheme = cats
+                    .map(cat => companyCategoryAvgs[cat])
+                    .filter(val => val !== undefined && val !== null);
+                const companyScore = companyScoresForTheme.length > 0
+                    ? Number((companyScoresForTheme.reduce((sum, v) => sum + v, 0) / companyScoresForTheme.length).toFixed(2))
+                    : null; // nullに変更
+
+                return {
+                    subject: themeName,
+                    dept: deptScore,
+                    company: companyScore
+                };
+            });
+
+            setRadarData(calculatedRadarData);
 
             // ── 経営方針インボックス用データ取得 ──
             const { data: focusList, error: focusErr } = await supabase
@@ -1568,6 +1752,64 @@ export default function DeptDashboardPage() {
                             </>
                         )}
 
+
+                        {/* 📊 体温プロフィール */}
+                        <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+                            <div className="mb-6">
+                                <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-2">
+                                    <TrendingUp className="w-4 h-4 text-teal" /> 体温プロフィール（5テーマ）
+                                </h2>
+                                <p className="text-xs text-slate-500 font-medium">直近3ヶ月のアンケート結果から部署のバランスと全社比較を確認します</p>
+                            </div>
+
+                            {dept3mResponsesCount >= 3 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                                    <div className="h-[280px]">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                                                <PolarGrid stroke="#e2e8f0" />
+                                                <PolarAngleAxis dataKey="subject" stroke="#64748b" fontSize={11} fontWeight="bold" />
+                                                <PolarRadiusAxis angle={30} domain={[0, 5]} tickCount={6} stroke="#cbd5e1" fontSize={10} />
+                                                <Radar name="自部署" dataKey="dept" stroke="#14b8a6" fill="#14b8a6" fillOpacity={0.3} strokeWidth={2} />
+                                                {company3mResponsesCount >= 3 && (
+                                                    <Radar name="全社平均" dataKey="company" stroke="#94a3b8" fill="#94a3b8" fillOpacity={0.05} strokeWidth={1.5} strokeDasharray="3 3" />
+                                                )}
+                                                <Tooltip
+                                                    contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 11, fontWeight: 700 }}
+                                                    formatter={(value: any) => [`${value} / 5.00`]}
+                                                />
+                                                <Legend verticalAlign="bottom" height={36} iconType="circle" iconSize={8} />
+                                            </RadarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                    <div className="space-y-4 bg-slate-50/50 border border-slate-100 rounded-2xl p-6">
+                                        <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest">テーマ解説</h3>
+                                        <div className="space-y-3">
+                                            {radarData.map(r => (
+                                                <div key={r.subject} className="flex justify-between items-start gap-4 text-xs">
+                                                    <div>
+                                                        <span className="font-bold text-slate-700">{r.subject}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 shrink-0">
+                                                        <span className="font-black text-teal">{r.dept !== null ? r.dept : "—"}</span>
+                                                        <span className="text-slate-300">/</span>
+                                                        <span className="text-slate-400 font-medium">全社: {company3mResponsesCount >= 3 && r.company !== null ? r.company : "—"}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-8 text-center flex flex-col items-center justify-center space-y-3">
+                                    <Info className="w-8 h-8 text-slate-400" />
+                                    <h3 className="text-sm font-black text-slate-700">回答数が不足しているためプロフィール非表示</h3>
+                                    <p className="text-xs text-slate-500 max-w-md leading-relaxed">
+                                        プライバシーと個人の匿名性を保護するため、直近3ヶ月の部署内の回答総数が3名未満の場合、体温プロフィールは表示されません。
+                                    </p>
+                                </div>
+                            )}
+                        </section>
 
                         {/* 📊 今月の設問別スコア */}
                         <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
