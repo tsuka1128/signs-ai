@@ -19,11 +19,12 @@ import { MembersTab } from "@/components/settings/MembersTab";
 import { IntegrationTab } from "@/components/settings/IntegrationTab";
 import { AITab } from "@/components/settings/AITab";
 import { SurveyTab } from "@/components/settings/SurveyTab";
+import { MonthlyFocusTab } from "@/components/settings/MonthlyFocusTab";
 
 // Modals
 import { MemberEditModal } from "@/components/settings/MemberEditModal";
 
-const VALID_TABS = ["company", "dept", "kpi", "axis", "ai", "survey", "users", "integration"] as const;
+const VALID_TABS = ["company", "dept", "kpi", "axis", "ai", "survey", "users", "integration", "focus"] as const;
 type TabId = typeof VALID_TABS[number];
 
 function SettingsContent() {
@@ -79,7 +80,8 @@ function SettingsContent() {
                         { id: "ai", label: "AI分析" },
                         { id: "survey", label: "ボイスチェック" },
                         { id: "users", label: "メンバー" },
-                        { id: "integration", label: "Slack連携" }
+                        { id: "integration", label: "Slack連携" },
+                        { id: "focus", label: "今月の組織目標" }
                     ].map(t => (
                         <button
                             key={t.id}
@@ -188,6 +190,10 @@ function SettingsContent() {
                             inviteRole={state.inviteRole}
                             setInviteRole={handlers.setInviteRole}
                         />
+                    )}
+
+                    {activeTab === "focus" && (
+                        <MonthlyFocusTab companyId={state.company?.id || ""} />
                     )}
 
                     {activeTab === "integration" && (
