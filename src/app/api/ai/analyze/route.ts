@@ -210,7 +210,7 @@ export async function POST(req: Request) {
                 .eq('company_id', companyId)
                 .in('recorded_month', targetMonths),
             supabase.from('survey_questions')
-                .select('id, text')
+                .select('id, text, category')
                 .or(`company_id.is.null,company_id.eq.${companyId}`)
                 .eq('is_active', true)
                 .order('sort_order', { ascending: true })
@@ -224,20 +224,6 @@ export async function POST(req: Request) {
         }
 
         const activeQuestions = questionsRes.data || [];
-
-        const STANDARD_QUESTION_MAP: Record<number, { category: string; label: string }> = {
-            1: { category: "engagement", label: "ワクワク度（エンゲージメント）" },
-            2: { category: "speed", label: "意思決定スピード" },
-            3: { category: "transparency", label: "情報の透明性" },
-            4: { category: "friction", label: "調整・根回し（摩擦）" },
-            5: { category: "safety", label: "心理的安全性" },
-            6: { category: "clarity", label: "業務のフォーカス（明確さ）" },
-            7: { category: "feedback", label: "フィードバック・賞賛" },
-            8: { category: "workload", label: "適切な業務量" },
-            9: { category: "impact", label: "顧客価値への集中（インパクト）" },
-            10: { category: "challenge", label: "挑戦・試行錯誤" },
-            11: { category: "readiness", label: "準備・段取り（レディネス）" }
-        };
 
         const getTrailing3Months = (baseMonth: string): string[] => {
             const idx = last15Months.indexOf(normalizeMonth(baseMonth));
@@ -296,10 +282,9 @@ export async function POST(req: Request) {
                 const avg = scores.length > 0
                     ? parseFloat((scores.reduce((acc, s) => acc + s, 0) / scores.length).toFixed(2))
                     : null;
-                const mapInfo = STANDARD_QUESTION_MAP[q.id];
                 return {
-                    category: mapInfo?.category || "custom",
-                    label: mapInfo?.label || q.text,
+                    category: q.category || "custom",
+                    label: q.text,
                     avg
                 };
             }).filter(qs => qs.avg !== null);
@@ -376,10 +361,9 @@ export async function POST(req: Request) {
                 const avg = scores.length > 0
                     ? parseFloat((scores.reduce((acc, s) => acc + s, 0) / scores.length).toFixed(2))
                     : null;
-                const mapInfo = STANDARD_QUESTION_MAP[q.id];
                 return {
-                    category: mapInfo?.category || "custom",
-                    label: mapInfo?.label || q.text,
+                    category: q.category || "custom",
+                    label: q.text,
                     avg
                 };
             }).filter(qs => qs.avg !== null);
