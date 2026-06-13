@@ -277,11 +277,12 @@ export default function DeptDashboardPage() {
 
             setDeptScores(scored);
 
-            // 5. 設問一覧の取得（company_id フィルタ必須）
+            // 5. 設問一覧の取得（標準11問＋会社独自問を取得）
             const { data: questions, error: questionErr } = await supabase
                 .from('survey_questions')
                 .select('id, text, sort_order')
-                .eq('company_id', companyId)
+                .or(`company_id.is.null,company_id.eq.${companyId}`)
+                .eq('is_active', true)
                 .order('sort_order', { ascending: true });
 
             if (questionErr) throw questionErr;
@@ -316,6 +317,12 @@ export default function DeptDashboardPage() {
                     text: q.text,
                     avg,
                 };
+            });
+            qScores.sort((a, b) => {
+                if (a.avg === null && b.avg === null) return 0;
+                if (a.avg === null) return 1;   // null は末尾
+                if (b.avg === null) return -1;
+                return a.avg - b.avg;           // 低スコア順
             });
             setQuestionScores(qScores);
 
