@@ -868,37 +868,79 @@ export default function DeptDashboardPage() {
 
                         {/* 今月のボイスチェック回答状況バナー（機能②）：クリックで推移グラフを開閉 */}
                         {currentMonthScore && currentMonthScore.headcount > 0 && (
-                            <button
-                                onClick={() => setShowResponseTrend(v => !v)}
-                                className={`w-full text-left flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl border shadow-sm transition-all hover:opacity-80 ${
-                                    currentMonthScore.respondentCount >= currentMonthScore.headcount && currentMonthScore.headcount > 0
-                                        ? 'bg-teal-50/50 border-teal-100 text-teal-900'
-                                        : 'bg-indigo-50/50 border-indigo-100 text-indigo-900'
-                                }`}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-9 h-9 rounded-2xl flex items-center justify-center ${
+                            <div>
+                                <button
+                                    onClick={() => setShowResponseTrend(v => !v)}
+                                    className={`w-full text-left flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl border shadow-sm transition-all hover:opacity-80 ${
                                         currentMonthScore.respondentCount >= currentMonthScore.headcount && currentMonthScore.headcount > 0
-                                            ? 'bg-teal-100/50 text-teal'
-                                            : 'bg-indigo-100/50 text-indigo-500'
-                                    }`}>
-                                        <Check className="w-4.5 h-4.5" />
+                                            ? 'bg-teal-50/50 border-teal-100 text-teal-900'
+                                            : 'bg-indigo-50/50 border-indigo-100 text-indigo-900'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-9 h-9 rounded-2xl flex items-center justify-center ${
+                                            currentMonthScore.respondentCount >= currentMonthScore.headcount && currentMonthScore.headcount > 0
+                                                ? 'bg-teal-100/50 text-teal'
+                                                : 'bg-indigo-100/50 text-indigo-500'
+                                        }`}>
+                                            <Check className="w-4.5 h-4.5" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xs font-black tracking-tight text-slate-500 uppercase">今月のボイスチェック回答状況</h3>
+                                            <p className="text-sm font-black mt-1">
+                                                {currentMonthScore.respondentCount >= currentMonthScore.headcount && currentMonthScore.headcount > 0 ? (
+                                                    <span className="text-teal-700">✅ 今月は全員回答済み（{currentMonthScore.respondentCount} / {currentMonthScore.headcount} 名）</span>
+                                                ) : (
+                                                    <span className="text-indigo-900">回答数：<strong>{currentMonthScore.respondentCount} / {currentMonthScore.headcount} 名</strong> ({currentMonthScore.headcount > 0 ? ((currentMonthScore.respondentCount / currentMonthScore.headcount) * 100).toFixed(1) : 0}%)</span>
+                                                )}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h3 className="text-xs font-black tracking-tight text-slate-500 uppercase">今月のボイスチェック回答状況</h3>
-                                        <p className="text-sm font-black mt-1">
-                                            {currentMonthScore.respondentCount >= currentMonthScore.headcount && currentMonthScore.headcount > 0 ? (
-                                                <span className="text-teal-700">✅ 今月は全員回答済み（{currentMonthScore.respondentCount} / {currentMonthScore.headcount} 名）</span>
-                                            ) : (
-                                                <span className="text-indigo-900">回答数：<strong>{currentMonthScore.respondentCount} / {currentMonthScore.headcount} 名</strong> ({currentMonthScore.headcount > 0 ? ((currentMonthScore.respondentCount / currentMonthScore.headcount) * 100).toFixed(1) : 0}%)</span>
-                                            )}
-                                        </p>
-                                    </div>
-                                </div>
-                                <span className="text-xs font-bold text-slate-400 shrink-0">
-                                    {showResponseTrend ? '推移を隠す ▲' : '推移を見る ▼'}
-                                </span>
-                            </button>
+                                    <span className="text-xs font-bold text-slate-400 shrink-0">
+                                        {showResponseTrend ? '推移を隠す ▲' : '推移を見る ▼'}
+                                    </span>
+                                </button>
+
+                                {/* 📈 推移グラフ：バナー直下に展開 */}
+                                {showResponseTrend && (
+                                    <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm mt-3">
+                                        <div className="mb-6">
+                                            <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-2">
+                                                <TrendingUp className="w-4 h-4" /> 回答状況の推移
+                                            </h2>
+                                            <p className="text-xs text-slate-500 font-medium">過去6ヶ月の回答数と回答率の推移を確認できます</p>
+                                        </div>
+                                        <div className="h-64">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <ComposedChart data={deptScores.map(s => ({
+                                                    ...s,
+                                                    rate: s.headcount > 0 ? Math.round((s.respondentCount / s.headcount) * 100) : null,
+                                                }))}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                                    <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} fontWeight="bold" />
+                                                    <YAxis yAxisId="left" stroke="#94a3b8" fontSize={11} fontWeight="bold" />
+                                                    <YAxis yAxisId="right" orientation="right" stroke="#94a3b8" fontSize={11} fontWeight="bold" domain={[0, 100]} />
+                                                    <Tooltip
+                                                        contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 700 }}
+                                                        formatter={(value: any, name: any, props: any) => {
+                                                            if (name === 'respondentCount') return [`${value} 人`, '回答数'];
+                                                            if (name === 'rate') {
+                                                                const hc = props.payload?.headcount;
+                                                                if (hc === 0) return ['—', '回答率'];
+                                                                return [`${value} %`, '回答率'];
+                                                            }
+                                                            return [value, name];
+                                                        }}
+                                                    />
+                                                    <Legend verticalAlign="top" height={36} iconType="circle" />
+                                                    <Bar yAxisId="left" dataKey="respondentCount" name="回答数" fill="#cbd5e1" radius={[4, 4, 0, 0]} barSize={30} />
+                                                    <Line yAxisId="right" type="monotone" dataKey="rate" name="回答率" stroke="#14b8a6" strokeWidth={3} dot={{ r: 5, fill: '#14b8a6' }} />
+                                                </ComposedChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </section>
+                                )}
+                            </div>
                         )}
 
                         {/* 📥 経営方針インボックス */}
@@ -1533,44 +1575,6 @@ export default function DeptDashboardPage() {
                             </>
                         )}
 
-                        {/* 📈 回答状況の推移（機能①）：バナークリックで開閉 */}
-                        {showResponseTrend && <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
-                            <div className="mb-6">
-                                <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-2">
-                                    <TrendingUp className="w-4 h-4" /> 回答状況の推移
-                                </h2>
-                                <p className="text-xs text-slate-500 font-medium">過去6ヶ月の回答数と回答率の推移を確認できます</p>
-                            </div>
-
-                            <div className="h-64">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <ComposedChart data={deptScores.map(s => ({
-                                        ...s,
-                                        rate: s.headcount > 0 ? Math.round((s.respondentCount / s.headcount) * 100) : null,
-                                    }))}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                                        <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} fontWeight="bold" />
-                                        <YAxis yAxisId="left" stroke="#94a3b8" fontSize={11} fontWeight="bold" />
-                                        <YAxis yAxisId="right" orientation="right" stroke="#94a3b8" fontSize={11} fontWeight="bold" domain={[0, 100]} />
-                                        <Tooltip
-                                            contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 700 }}
-                                            formatter={(value: any, name: any, props: any) => {
-                                                if (name === 'respondentCount') return [`${value} 人`, '回答数'];
-                                                if (name === 'rate') {
-                                                    const hc = props.payload?.headcount;
-                                                    if (hc === 0) return ['—', '回答率'];
-                                                    return [`${value} %`, '回答率'];
-                                                }
-                                                return [value, name];
-                                            }}
-                                        />
-                                        <Legend verticalAlign="top" height={36} iconType="circle" />
-                                        <Bar yAxisId="left" dataKey="respondentCount" name="回答数" fill="#cbd5e1" radius={[4, 4, 0, 0]} barSize={30} />
-                                        <Line yAxisId="right" type="monotone" dataKey="rate" name="回答率" stroke="#14b8a6" strokeWidth={3} dot={{ r: 5, fill: '#14b8a6' }} />
-                                    </ComposedChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </section>}
 
                         {/* 📊 今月の設問別スコア */}
                         <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
