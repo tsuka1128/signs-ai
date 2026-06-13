@@ -85,7 +85,7 @@ export function useDashboardData(
             supabase.from('ai_insights').select('*').eq('company_id', company.id).order('created_at', { ascending: false }).limit(10),
             supabase.from('action_items').select('*').eq('company_id', company.id).eq('is_archived', false).order('created_at', { ascending: false }),
             supabase.from('users').select('id, department_id, axis_id').eq('company_id', company.id),
-            supabase.from('survey_questions').select('id, text, hint, sort_order').eq('company_id', company.id).eq('is_active', true).order('sort_order', { ascending: true })
+            supabase.from('survey_questions').select('id, text, hint, sort_order').or(`company_id.is.null,company_id.eq.${company.id}`).eq('is_active', true).order('sort_order', { ascending: true })
         ]);
 
         const kpiIds = (k.data || []).map((def: any) => def.id);

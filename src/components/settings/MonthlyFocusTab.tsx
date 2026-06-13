@@ -43,7 +43,11 @@ export const MonthlyFocusTab = ({ companyId }: MonthlyFocusTabProps) => {
     })();
 
     useEffect(() => {
-        if (companyId) fetchHistory();
+        if (companyId) {
+            fetchHistory();
+        } else {
+            setLoading(false);
+        }
     }, [companyId]);
 
     useEffect(() => {
