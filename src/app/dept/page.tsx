@@ -649,7 +649,7 @@ export default function DeptDashboardPage() {
         }
     };
 
-    const handleGenerateSummary = async () => {
+    const handleGenerateSummary = async (force: boolean = false) => {
         if (!selectedDepartmentId) return;
         // AI要約は「回答がある最新月」で生成（暦の当月が未回答でも、直近で回答のある月を使う）
         const summaryYM = [...deptScores].reverse().find(s => s.respondentCount > 0)?.month
@@ -667,6 +667,7 @@ export default function DeptDashboardPage() {
                 body: JSON.stringify({
                     department_id: selectedDepartmentId,
                     month: summaryYM,
+                    force, // true のときキャッシュを無視して作り直す（回答が増えた後の更新用）
                 }),
             });
             if (!res.ok) {
@@ -680,7 +681,7 @@ export default function DeptDashboardPage() {
             }
             const data = await res.json();
             setAiSummary(data);
-            toast.success('AI要約を生成しました');
+            toast.success(force ? 'AI要約を再生成しました' : 'AI要約を生成しました');
 
             // AI要約生成成功後、続けてアクション提案も生成（失敗しても無視）
             try {
@@ -919,6 +920,11 @@ export default function DeptDashboardPage() {
     const summaryTargetLabel = formatYM(
         ([...deptScores].reverse().find(s => s.respondentCount > 0)?.month) ?? aiSummary?.month
     );
+
+    // 対象月のボイスチェックがまだ全員分揃っていない（途中集計）か
+    const isPartialSummaryMonth = !!currentMonthScore
+        && currentMonthScore.headcount > 0
+        && currentMonthScore.respondentCount < currentMonthScore.headcount;
 
 
     // 要注意シグナルの判定
@@ -1482,13 +1488,20 @@ export default function DeptDashboardPage() {
                                         </p>
                                     </div>
 
+                                    {/* 途中集計の注意（対象月がまだ全員分揃っていない場合） */}
+                                    {isPartialSummaryMonth && (
+                                        <div className="bg-amber-50/60 border border-amber-100 rounded-2xl px-4 py-3 text-[11px] font-bold text-amber-800 leading-relaxed">
+                                            ⚠️ {summaryTargetLabel || "対象月"}のボイスチェックはまだ全員分揃っていません（{currentMonthScore!.respondentCount} / {currentMonthScore!.headcount} 名）。途中集計での要約です。回答が揃ってから「再生成」で更新できます。
+                                        </div>
+                                    )}
+
                                     {/* 再生成・生成時間表示 */}
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-slate-100">
                                         <span className="text-[10px] text-slate-400 font-bold">
                                             対象月: {formatYM(aiSummary.month) || "—"} ／ 生成日時: {new Date(aiSummary.generated_at).toLocaleString('ja-JP')}
                                         </span>
                                         <button
-                                            onClick={handleGenerateSummary}
+                                            onClick={() => handleGenerateSummary(true)}
                                             disabled={summaryLoading}
                                             className="text-xs font-black text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-4 py-2 rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50"
                                         >
@@ -1499,12 +1512,17 @@ export default function DeptDashboardPage() {
                             ) : (
                                 /* キャッシュなし・匿名ガード通過済みの場合 */
                                 <div className="bg-slate-50 border border-slate-100 rounded-2xl p-8 text-center flex flex-col items-center justify-center space-y-4 animate-in fade-in">
+                                    {isPartialSummaryMonth && (
+                                        <div className="w-full bg-amber-50/60 border border-amber-100 rounded-2xl px-4 py-3 text-[11px] font-bold text-amber-800 leading-relaxed text-left">
+                                            ⚠️ {summaryTargetLabel || "対象月"}のボイスチェックはまだ全員分揃っていません（{currentMonthScore!.respondentCount} / {currentMonthScore!.headcount} 名）。今は途中集計での要約になります（回答が揃ったら「再生成」で更新できます）。
+                                        </div>
+                                    )}
                                     <p className="text-xs text-slate-500 font-medium max-w-md leading-relaxed">
                                         {summaryTargetLabel || "最新の回答がある月"}の従業員の自由回答を集約・分析し、AI要約を生成できます。
                                         個人を特定できないよう保護されたレポートが作成されます。
                                     </p>
                                     <button
-                                        onClick={handleGenerateSummary}
+                                        onClick={() => handleGenerateSummary(false)}
                                         disabled={summaryLoading}
                                         className="bg-teal hover:bg-teal-600 text-white text-xs font-black px-6 py-3 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-95 disabled:opacity-50"
                                     >
