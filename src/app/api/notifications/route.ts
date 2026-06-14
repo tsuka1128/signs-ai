@@ -11,7 +11,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const all = searchParams.get("all") === "1";
   const limitVal = parseInt(searchParams.get("limit") || "20", 10);
-  const limit = isNaN(limitVal) ? 20 : limitVal;
+  // 1〜200 にクランプ（負値・0・巨大値・NaN を防ぐ）
+  const limit = isNaN(limitVal) ? 20 : Math.min(Math.max(limitVal, 1), 200);
 
   let query = supabase
     .from("notifications")

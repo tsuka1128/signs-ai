@@ -55,12 +55,13 @@ export default function HistoryPage() {
 
     // AI分析履歴データの取得
     const fetchInsights = async () => {
-        if (!isExecutiveRole) return;
+        if (!isExecutiveRole || !company) return;
         try {
             setLoadingInsights(true);
             const { data, error } = await supabase
                 .from("ai_insights")
                 .select("id, target_month, content, created_at")
+                .eq("company_id", company.id) // super_admin は is_super_admin() RLSで全社返るため明示フィルタ必須
                 .eq("insight_type", "full_report")
                 .order("target_month", { ascending: false });
 
