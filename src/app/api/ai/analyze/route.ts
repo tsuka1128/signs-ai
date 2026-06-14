@@ -655,7 +655,7 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
                 type: "ai_analysis_done",
                 title: "AI分析が完了しました",
                 body: `${targetMonthLabel} の分析レポートが生成されました`,
-                link: "/history",
+                link: "/?sec=report",
                 targetRole: "admin",
                 targetDepartmentId: null,
             });
@@ -664,7 +664,7 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
                 type: "ai_analysis_done",
                 title: "AI分析が完了しました",
                 body: `${targetMonthLabel} の分析レポートが生成されました`,
-                link: "/history",
+                link: "/?sec=report",
                 targetRole: "executive",
                 targetDepartmentId: null,
             });
@@ -676,7 +676,7 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
                         type: "ai_analysis_done",
                         title: "AI分析が完了しました",
                         body: `${targetMonthLabel} の ${dept.name} の分析レポートが生成されました`,
-                        link: "/history",
+                        link: `/dept?dept=${dept.id}`,
                         targetRole: "manager",
                         targetDepartmentId: dept.id,
                     });
