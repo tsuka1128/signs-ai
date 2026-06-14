@@ -268,6 +268,44 @@ export async function POST(req: Request) {
                 ? uniqueAnswers.reduce((acc, a) => acc + a.score, 0) / uniqueAnswers.length
                 : 0;
 
+            // 直近3ヶ月の各単月スコア推移（古い順）
+            const monthlyPulseTrend = trailingMonths.map(m => {
+                const singleMonthSurveys = surveys.data?.filter(s => 
+                    normalizeMonth(s.recorded_month) === m
+                ) || [];
+
+                const singleMonthAnswers: Array<{ response_id: string; question_id: number; score: number }> = [];
+                const respondentsSet = new Set<string>();
+
+                singleMonthSurveys.forEach(s => {
+                    const seenQuestionIds = new Set<number>();
+                    const answers = s.survey_answers || [];
+                    answers.forEach((a: any) => {
+                        if (a.question_id != null && !seenQuestionIds.has(a.question_id)) {
+                            seenQuestionIds.add(a.question_id);
+                            singleMonthAnswers.push({
+                                response_id: s.id,
+                                question_id: a.question_id,
+                                score: a.score
+                            });
+                        }
+                    });
+
+                    const respondentKey = s.user_id || s.fingerprint || s.id;
+                    respondentsSet.add(respondentKey);
+                });
+
+                const pulse = singleMonthAnswers.length > 0
+                    ? parseFloat((singleMonthAnswers.reduce((acc, a) => acc + a.score, 0) / singleMonthAnswers.length).toFixed(2))
+                    : null;
+
+                return {
+                    month: m,
+                    pulse,
+                    respondents: respondentsSet.size
+                };
+            });
+
             // 設問別平均スコアの算出
             const questionScoresMap = new Map<number, number[]>();
             uniqueAnswers.forEach(a => {
@@ -292,6 +330,7 @@ export async function POST(req: Request) {
             return {
                 month,
                 avg_pulse: uniqueAnswers.length > 0 ? avgPulse.toFixed(2) : null,
+                monthly_pulse_trend: monthlyPulseTrend,
                 kpi_count: monthKpis.length,
                 kpi_summary: monthKpis.map(r => {
                     const def = kpiDefs.data?.find(d => d.id === r.kpi_definition_id);
@@ -347,6 +386,45 @@ export async function POST(req: Request) {
             // 部署ごとの回答者数（3ヶ月累計のレスポンス数）
             const respondentCount = deptTrailingSurveys.length;
 
+            // 部署別の直近3ヶ月の各単月スコア推移（古い順）
+            const monthlyPulseTrend = trailingMonths.map(m => {
+                const singleMonthSurveys = surveys.data?.filter(s => 
+                    s.department_id === d.id &&
+                    normalizeMonth(s.recorded_month) === m
+                ) || [];
+
+                const singleMonthAnswers: Array<{ response_id: string; question_id: number; score: number }> = [];
+                const respondentsSet = new Set<string>();
+
+                singleMonthSurveys.forEach(s => {
+                    const seenQuestionIds = new Set<number>();
+                    const answers = s.survey_answers || [];
+                    answers.forEach((a: any) => {
+                        if (a.question_id != null && !seenQuestionIds.has(a.question_id)) {
+                            seenQuestionIds.add(a.question_id);
+                            singleMonthAnswers.push({
+                                response_id: s.id,
+                                question_id: a.question_id,
+                                score: a.score
+                            });
+                        }
+                    });
+
+                    const respondentKey = s.user_id || s.fingerprint || s.id;
+                    respondentsSet.add(respondentKey);
+                });
+
+                const pulse = singleMonthAnswers.length > 0
+                    ? parseFloat((singleMonthAnswers.reduce((acc, a) => acc + a.score, 0) / singleMonthAnswers.length).toFixed(2))
+                    : null;
+
+                return {
+                    month: m,
+                    pulse,
+                    respondents: respondentsSet.size
+                };
+            });
+
             // 部署別の設問別平均スコアの算出
             const questionScoresMap = new Map<number, number[]>();
             uniqueAnswers.forEach(a => {
@@ -382,6 +460,7 @@ export async function POST(req: Request) {
                 actual_headcount: deptResource?.head_count,
                 labor_cost: deptResource?.labor_cost,
                 avg_pulse: uniqueAnswers.length > 0 ? avgScore.toFixed(2) : null,
+                monthly_pulse_trend: monthlyPulseTrend,
                 respondent_count_3m: respondentCount,
                 question_scores: questionScores,
                 low_score_items: lowScoreItems,
@@ -417,8 +496,10 @@ export async function POST(req: Request) {
 各データセクションは ### DATA START と ### DATA END で区切られています。
 
 【重要：体温データの特性と分析における解釈ルール】
-- 本データにおいて、組織の「体温」（avg_pulse）および設問別スコア（question_scores）は、当月を含む「直近3ヶ月の移動平均（トレーリング平均）」で算出されています。
-- 一方、業績データ「KPI」は「当月単月」の値です。
+- 本データにおいて、組織の「体温」（avg_pulse）および設問別スコア（question_scores）は、当月を含む「直近3ヶ月の移動平均（トレーリング平均）」で算出されています。これは安定した基調指標であり、誤検知を避けるための土台です。
+- 一方で、「月次推移データ」（monthly_pulse_trend）は、各月の「単月スコアと回答者数」を表す速報シグナルです。最新月ほど現在の状態を表しますが、回答数（respondents）が少ない月は個人の主観に振れるため鵜呑みにしないでください。
+- 着眼点として、「3ヶ月平均（avg_pulse）」と「直近月の単月スコア（monthly_pulse_trendの最新月）」の乖離（例: 平均は横ばいだが直近単月で急落している＝要注視）、および「月次推移」の向き（上昇/下降トレンド）を捉え、急変の兆しを早期に指摘してください。
+- 業績データ「KPI」は「当月単月」の値です。
 - 直近3ヶ月の組織の健康状態（体温）が、当月の成果（KPI）にどう現れているかという相関を分析してください。すでに移動平均化されているため、AI側で時間的なズレ（翌月ラグなど）を考慮した二重ラグ解釈をしないでください。
 - 回答総数（respondent_count_3m）が少ない部署については、個人の主観が強く影響するため、断定的な因果関係の決めつけを避け、仮説として慎重に言及してください。
 
@@ -527,7 +608,8 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
                 const lowScoresStr = d.low_score_items && d.low_score_items.length > 0
                     ? `（低スコア項目: ${d.low_score_items.join(", ")}）`
                     : "";
-                return `【${d.name}】体温:${d.avg_pulse}${lowScoresStr} KPI:${d.kpi_details?.join(" / ") || "なし"} 1人あたり人件費:${laborCostPerHead}万円`;
+                const avgPulseStr = d.avg_pulse !== null ? d.avg_pulse : "データなし";
+                return `【${d.name}】体温:${avgPulseStr}${lowScoresStr} KPI:${d.kpi_details?.join(" / ") || "なし"} 1人あたり人件費:${laborCostPerHead}万円`;
             }).join("\n");
 
             const hrSystemPrompt = `あなたは人材マネジメントの専門家です。組織データを分析し、具体的かつ実行可能な人事戦略を提言してください。
