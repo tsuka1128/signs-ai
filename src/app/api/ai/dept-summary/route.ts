@@ -43,21 +43,24 @@ export async function POST(req: Request) {
         }
 
         // リクエストボディのバリデーション
-        const { department_id, month } = await req.json();
+        const { department_id, month, force } = await req.json();
         if (!department_id || !month) {
             return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
         }
 
         // 4. キャッシュ確認：同部署 × 同月が既に生成されていれば即返却
-        const { data: cachedSummary } = await supabase
-            .from('dept_ai_summaries')
-            .select('*')
-            .eq('department_id', department_id)
-            .eq('month', month)
-            .maybeSingle();
+        //    ただし force=true（再生成）の場合はキャッシュを無視して作り直す（回答が増えた後の更新用）
+        if (!force) {
+            const { data: cachedSummary } = await supabase
+                .from('dept_ai_summaries')
+                .select('*')
+                .eq('department_id', department_id)
+                .eq('month', month)
+                .maybeSingle();
 
-        if (cachedSummary) {
-            return NextResponse.json(cachedSummary);
+            if (cachedSummary) {
+                return NextResponse.json(cachedSummary);
+            }
         }
 
         // 5. survey_responses から今月・該当部署の free_comment / cross_dept_feedback を取得
