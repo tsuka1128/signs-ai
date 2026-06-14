@@ -197,6 +197,15 @@ export function Header({ isMobile, onMobileMenuClick }: HeaderProps) {
                                         </div>
                                     )}
                                 </div>
+                                <div className="px-4 py-2.5 border-t border-slate-100 bg-slate-50/50 text-center">
+                                    <Link 
+                                        href="/history" 
+                                        onClick={() => setShowNotifications(false)}
+                                        className="text-[11px] font-bold text-teal hover:text-teal/80 transition-colors inline-block"
+                                    >
+                                        すべての通知を見る →
+                                    </Link>
+                                </div>
                             </div>
                         </>
                     )}
