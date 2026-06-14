@@ -74,6 +74,14 @@ const THEME_MAPPING: Record<string, string[]> = {
     "働きやすさ": ["workload"]
 };
 
+// "YYYY-MM"（または "YYYY-MM-01"）→ "YYYY年M月"
+const formatYM = (ym?: string | null): string => {
+    if (!ym) return "";
+    const [y, m] = ym.split("-");
+    if (!y || !m) return ym;
+    return `${y}年${parseInt(m, 10)}月`;
+};
+
 export default function DeptDashboardPage() {
     const supabase = createClient();
     const router = useRouter();
@@ -643,8 +651,9 @@ export default function DeptDashboardPage() {
 
     const handleGenerateSummary = async () => {
         if (!selectedDepartmentId) return;
-        // AI要約は回答がある最新月（deptScores末尾）で生成
-        const summaryYM = deptScores[deptScores.length - 1]?.month;
+        // AI要約は「回答がある最新月」で生成（暦の当月が未回答でも、直近で回答のある月を使う）
+        const summaryYM = [...deptScores].reverse().find(s => s.respondentCount > 0)?.month
+            ?? deptScores[deptScores.length - 1]?.month;
         if (!summaryYM) {
             toast.error("現在の月情報を取得できませんでした");
             return;
@@ -905,6 +914,11 @@ export default function DeptDashboardPage() {
 
     // 匿名ガード・AI要約表示の判定に使用。当月が未回答でも、回答がある最新月のスコアを採用する
     const currentMonthScore = [...deptScores].reverse().find(s => s.respondentCount > 0) ?? deptScores[deptScores.length - 1];
+
+    // AI要約の対象月ラベル（回答がある最新月 / なければキャッシュ済み要約の月）
+    const summaryTargetLabel = formatYM(
+        ([...deptScores].reverse().find(s => s.respondentCount > 0)?.month) ?? aiSummary?.month
+    );
 
 
     // 要注意シグナルの判定
@@ -1386,11 +1400,16 @@ export default function DeptDashboardPage() {
                                         <Info className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <h2 className="text-base font-black text-slate-800 tracking-tight">
+                                        <h2 className="text-base font-black text-slate-800 tracking-tight flex items-center gap-2 flex-wrap">
                                             ボイスチェックの声（AI要約）
+                                            {summaryTargetLabel && (
+                                                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-teal-50 text-teal border border-teal-100">
+                                                    対象月: {summaryTargetLabel}
+                                                </span>
+                                            )}
                                         </h2>
                                         <p className="text-xs text-slate-400 font-bold">
-                                            アンケートの自由回答から、個人が特定されない形で組織の状態をAI要約します
+                                            最新の回答がある月の自由回答から、個人が特定されない形で組織の状態をAI要約します
                                         </p>
                                     </div>
                                 </div>
@@ -1400,7 +1419,7 @@ export default function DeptDashboardPage() {
                             {currentMonthScore && !passesAnonymityGuard(currentMonthScore.respondentCount) ? (
                                 <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 text-center">
                                     <p className="text-xs text-slate-400 font-bold">
-                                        今月は回答数が3名未満のため要約を生成できません。
+                                        {summaryTargetLabel || "対象月"}は回答数が3名未満のため要約を生成できません。
                                     </p>
                                 </div>
                             ) : aiSummary ? (
@@ -1409,7 +1428,7 @@ export default function DeptDashboardPage() {
                                     {/* 今月のトピック */}
                                     <div>
                                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
-                                            今月の主要なトピック
+                                            {formatYM(aiSummary.month) || "対象月"}の主要なトピック
                                         </h3>
                                         <div className="flex flex-wrap gap-2">
                                             {aiSummary.topics && aiSummary.topics.length > 0 ? (
@@ -1466,7 +1485,7 @@ export default function DeptDashboardPage() {
                                     {/* 再生成・生成時間表示 */}
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-slate-100">
                                         <span className="text-[10px] text-slate-400 font-bold">
-                                            生成日時: {new Date(aiSummary.generated_at).toLocaleString('ja-JP')}
+                                            対象月: {formatYM(aiSummary.month) || "—"} ／ 生成日時: {new Date(aiSummary.generated_at).toLocaleString('ja-JP')}
                                         </span>
                                         <button
                                             onClick={handleGenerateSummary}
@@ -1481,7 +1500,7 @@ export default function DeptDashboardPage() {
                                 /* キャッシュなし・匿名ガード通過済みの場合 */
                                 <div className="bg-slate-50 border border-slate-100 rounded-2xl p-8 text-center flex flex-col items-center justify-center space-y-4 animate-in fade-in">
                                     <p className="text-xs text-slate-500 font-medium max-w-md leading-relaxed">
-                                        今月の従業員の自由回答を集約・分析し、AI要約を生成できます。
+                                        {summaryTargetLabel || "最新の回答がある月"}の従業員の自由回答を集約・分析し、AI要約を生成できます。
                                         個人を特定できないよう保護されたレポートが作成されます。
                                     </p>
                                     <button
