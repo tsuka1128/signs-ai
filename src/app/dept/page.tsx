@@ -1514,7 +1514,7 @@ export default function DeptDashboardPage() {
                                 <div className="bg-slate-50 border border-slate-100 rounded-2xl p-8 text-center flex flex-col items-center justify-center space-y-4 animate-in fade-in">
                                     {isPartialSummaryMonth && (
                                         <div className="w-full bg-amber-50/60 border border-amber-100 rounded-2xl px-4 py-3 text-[11px] font-bold text-amber-800 leading-relaxed text-left">
-                                            ⚠️ {summaryTargetLabel || "対象月"}のボイスチェックはまだ全員分揃っていません（{currentMonthScore!.respondentCount} / {currentMonthScore!.headcount} 名）。今生成すると途中集計の要約になります。回答が揃ってから生成・再生成するのがおすすめです。
+                                            ⚠️ {summaryTargetLabel || "対象月"}のボイスチェックはまだ全員分揃っていません（{currentMonthScore!.respondentCount} / {currentMonthScore!.headcount} 名）。今は途中集計での要約になります（回答が揃ったら「再生成」で更新できます）。
                                         </div>
                                     )}
                                     <p className="text-xs text-slate-500 font-medium max-w-md leading-relaxed">
