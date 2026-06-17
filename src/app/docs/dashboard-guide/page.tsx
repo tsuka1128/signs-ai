@@ -38,7 +38,7 @@ export default function DashboardGuidePage() {
                     {[
                         { icon: Grid3X3, label: "マトリックス", color: "bg-teal-50 text-teal-700 border-teal-100" },
                         { icon: BarChart3, label: "KPI推移", color: "bg-blue-50 text-blue-700 border-blue-100" },
-                        { icon: Building2, label: "組織のKPI", color: "bg-indigo-50 text-indigo-700 border-indigo-100" },
+                        { icon: Building2, label: "組織サマリー", color: "bg-indigo-50 text-indigo-700 border-indigo-100" },
                         { icon: Thermometer, label: "組織の体温", color: "bg-amber-50 text-amber-700 border-amber-100" },
                         { icon: ListTodo, label: "アクション", color: "bg-emerald-50 text-emerald-700 border-emerald-100" },
                         { icon: FileText, label: "組織方針", color: "bg-purple-50 text-purple-700 border-purple-100" },
@@ -135,9 +135,9 @@ export default function DashboardGuidePage() {
                 </div>
             </section>
 
-            {/* 組織のKPI */}
+            {/* 組織サマリー */}
             <section className="space-y-6">
-                <h2 id="org-kpi" className="text-2xl font-black text-slate-900">組織のKPIセクション</h2>
+                <h2 id="org-kpi" className="text-2xl font-black text-slate-900">組織サマリーセクション</h2>
                 <p className="text-sm text-slate-600 font-medium leading-relaxed">
                     部署ごと（または担当領域ごと）の組織コンディションをカード形式で一覧表示します。各カードには以下の情報が含まれます。
                 </p>
