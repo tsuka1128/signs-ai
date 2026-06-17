@@ -2,18 +2,29 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
 
 // GET /api/notifications -> 自分宛ての未読通知一覧 (最大20件)
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = await createServerSupabaseClient();
   
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: notifications, error } = await supabase
+  const { searchParams } = new URL(request.url);
+  const all = searchParams.get("all") === "1";
+  const limitVal = parseInt(searchParams.get("limit") || "20", 10);
+  // 1〜200 にクランプ（負値・0・巨大値・NaN を防ぐ）
+  const limit = isNaN(limitVal) ? 20 : Math.min(Math.max(limitVal, 1), 200);
+
+  let query = supabase
     .from("notifications")
     .select("*")
-    .eq("is_read", false)
     .order("created_at", { ascending: false })
-    .limit(20);
+    .limit(limit);
+
+  if (!all) {
+    query = query.eq("is_read", false);
+  }
+
+  const { data: notifications, error } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
