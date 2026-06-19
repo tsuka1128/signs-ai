@@ -64,6 +64,7 @@ interface QuestionScore {
     questionId: string;
     text: string;
     avg: number | null;
+    companyAvg: number | null;
 }
 
 const THEME_MAPPING: Record<string, string[]> = {
@@ -346,15 +347,9 @@ export default function DeptDashboardPage() {
                     questionId: q.id,
                     text: q.text,
                     avg,
+                    companyAvg: null,
                 };
             });
-            qScores.sort((a, b) => {
-                if (a.avg === null && b.avg === null) return 0;
-                if (a.avg === null) return 1;   // null は末尾
-                if (b.avg === null) return -1;
-                return a.avg - b.avg;           // 低スコア順
-            });
-            setQuestionScores(qScores);
 
             // 7. 案A：部署プロフィールレーダー用 3ヶ月トレーリングデータ集計
             // 部署の3ヶ月窓（latestDataYM 基準）
@@ -452,6 +447,51 @@ export default function DeptDashboardPage() {
                     }
                 });
             });
+
+            // 全社平均（同月・設問別）の算出と qScores へのマージ
+            const currentCompanyResponses = (companyResponses || []).filter(r => r.recorded_month === currentYM);
+            const currentCompanyUniqueUserIds = new Set(currentCompanyResponses.map(r => r.fingerprint || r.id).filter(Boolean));
+            const currentCompanyCount = currentCompanyUniqueUserIds.size;
+
+            const companyAvgByQuestion: Record<string, number | null> = {};
+            if (currentCompanyCount >= 3) {
+                const companyScoresMap: Record<string, number[]> = {};
+                currentCompanyResponses.forEach(r => {
+                    const seenQuestionIds = new Set<string>();
+                    const ansList = companyAnswerByResponse[r.id] || [];
+                    ansList.forEach(ans => {
+                        if (!seenQuestionIds.has(ans.questionId)) {
+                            seenQuestionIds.add(ans.questionId);
+                            if (!companyScoresMap[ans.questionId]) {
+                                companyScoresMap[ans.questionId] = [];
+                            }
+                            companyScoresMap[ans.questionId].push(ans.score);
+                        }
+                    });
+                });
+
+                Object.keys(companyScoresMap).forEach(qid => {
+                    const scores = companyScoresMap[qid];
+                    companyAvgByQuestion[qid] = scores.length > 0
+                        ? Number((scores.reduce((s, v) => s + v, 0) / scores.length).toFixed(2))
+                        : null;
+                });
+            }
+
+            const mergedQScores = qScores.map(qs => ({
+                ...qs,
+                companyAvg: companyAvgByQuestion[qs.questionId] ?? null
+            }));
+
+            // 低スコア順にソート (null は末尾)
+            mergedQScores.sort((a, b) => {
+                if (a.avg === null && b.avg === null) return 0;
+                if (a.avg === null) return 1;
+                if (b.avg === null) return -1;
+                return a.avg - b.avg;
+            });
+
+            setQuestionScores(mergedQScores);
 
             // questions.find() を O(1) にするための Map
             const questionMap = new Map((questions || []).map(q => [q.id, q]));
@@ -1870,23 +1910,54 @@ export default function DeptDashboardPage() {
                                             const isHigh = scoreVal >= 4.0;
 
                                             return (
-                                                <div key={qs.questionId} className="space-y-2 border-b border-slate-50 pb-4 last:border-none last:pb-0">
-                                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-                                                        <span className="text-sm font-bold text-slate-700">{qs.text}</span>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-base font-black text-slate-800">{qs.avg !== null ? qs.avg.toFixed(2) : "—"}</span>
-                                                            <span className="text-[10px] font-bold text-slate-400">/ 5.00</span>
-                                                        </div>
-                                                    </div>
+                                                <div key={qs.questionId} className="space-y-3 border-b border-slate-100 pb-5 last:border-none last:pb-0">
+                                                    {/* 設問テキスト */}
+                                                    <div className="text-sm font-bold text-slate-700">{qs.text}</div>
 
-                                                    <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                                                        <div
-                                                            className={`h-full rounded-full transition-all duration-500`}
-                                                            style={{
-                                                                width: `${(scoreVal / 5) * 100}%`,
-                                                                backgroundColor: isLow ? '#f43f5e' : isMid ? '#f59e0b' : isHigh ? '#14b8a6' : '#cbd5e1'
-                                                            }}
-                                                        />
+                                                    {/* バーと数値のレイアウト */}
+                                                    <div className="space-y-2.5">
+                                                        {/* 自部署スコアバー */}
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="flex-1 bg-slate-100 h-3 rounded-full overflow-hidden relative">
+                                                                <div
+                                                                    className="h-full rounded-full transition-all duration-500"
+                                                                    style={{
+                                                                        width: `${(scoreVal / 5) * 100}%`,
+                                                                        backgroundColor: isLow ? '#f43f5e' : isMid ? '#f59e0b' : isHigh ? '#14b8a6' : '#cbd5e1'
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            <div className="w-24 shrink-0 text-right">
+                                                                <span className="text-sm font-black text-slate-800">{qs.avg !== null ? qs.avg.toFixed(2) : "—"}</span>
+                                                                <span className="text-[10px] font-bold text-slate-400"> / 5.00</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* 全社平均スコアバー (細めグレー) */}
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="flex-1 bg-slate-100 h-1.5 rounded-full overflow-hidden relative">
+                                                                {qs.companyAvg !== null ? (
+                                                                    <div
+                                                                        className="h-full rounded-full bg-slate-400 transition-all duration-500"
+                                                                        style={{
+                                                                            width: `${(qs.companyAvg / 5) * 100}%`
+                                                                        }}
+                                                                    />
+                                                                ) : null}
+                                                            </div>
+                                                            <div className="w-24 shrink-0 text-right">
+                                                                <span className="text-[10px] font-extrabold text-slate-400">
+                                                                    {qs.companyAvg !== null ? `全社 ${qs.companyAvg.toFixed(2)}` : "全社 —"}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        {/* 自部署が全社平均を下回る場合に差分を表示 */}
+                                                        {qs.avg !== null && qs.companyAvg !== null && qs.avg < qs.companyAvg && (
+                                                            <div className="text-[10px] font-bold text-rose-500 flex items-center gap-1 mt-1 pl-1">
+                                                                <span>全社平均比: -{(qs.companyAvg - qs.avg).toFixed(2)}</span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             );
