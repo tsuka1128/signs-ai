@@ -18,7 +18,19 @@ module.exports = {
         dark: "#1A202C",
         blue: {
           light: "#DCEEFB",
-        }
+        },
+        // 目に優しい「黒とグレーの間」のダークインク。
+        // slate-900(#0f172a) は真っ黒で目が疲れるため、本文/ダーク文字の最暗色を
+        // 1段やわらげる（コントラストは白背景で約8.9:1＝AAA相当で可読性は維持）。
+        // 見出しは text-slate-800(#1e293b) のままで、サイズ・太さで強調する。
+        slate: {
+          900: "#334155",
+        },
+      },
+      // 本文(読ませる文字)の主体である text-sm を 14px → 13px に再定義。
+      // 見出し(text-lg/xl/2xl 等)・ラベル(text-xs=12px)は対象外。
+      fontSize: {
+        sm: ["0.8125rem", { lineHeight: "1.25rem" }], // 13px / 20px
       },
       fontFamily: {
         sans: ["var(--font-noto-sans-jp)", "var(--font-inter)", "sans-serif"],
