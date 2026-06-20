@@ -225,7 +225,7 @@ export function OrganizationCard({ name, head, pulse, weather, arrow, kpis, labo
                                     </span>
                                 )}
                             </div>
-                            <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
+                            <p className="text-[13px] text-slate-600 font-medium leading-relaxed">
                                 {deptInsight.text}
                             </p>
                         </div>
