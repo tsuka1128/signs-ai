@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Thermometer, Target, Shield, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils/index";
@@ -27,9 +27,18 @@ interface ScatterPlotProps {
     isProduct?: boolean;
     sizeKpiName?: string;
     yAxisMode: "kpi" | "productivity";
+    month?: string;
+    showTrajectory?: boolean;
 }
 
-export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成率", yAxisMode }: ScatterPlotProps) {
+export function ScatterPlot({ 
+    data, 
+    isProduct = false, 
+    sizeKpiName = "KPI達成率", 
+    yAxisMode,
+    month = "default",
+    showTrajectory = true
+}: ScatterPlotProps) {
     const [hoveredId, setHoveredId] = useState<string | null>(null);
     const W = 680;
     const H = 680; // 正方形に固定
@@ -63,6 +72,120 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
     const cx = (h: number) => PAD.l + offsetX + Math.max(0, Math.min(1, h / maxH)) * innerW;
     const cy = (val: number) => PAD.t + ph - offsetY - Math.max(0, Math.min(1, val / maxY)) * innerH;
 
+    // タイムラプス選択月の特定用
+    const targetIdx = useMemo(() => {
+        const monthsMap: Record<string, number> = {
+            "default": 12, "1m": 11, "3m": 9, "6m": 6, "12m": 0
+        };
+        return monthsMap[month] ?? 12;
+    }, [month]);
+
+    // 直近変化方向の決定論的算出（バッジ）
+    const getMovementDirection = useCallback((d: ScatterData) => {
+        if (targetIdx === 0) return { dir: "flat" as const, arrow: "→", diff: 0, color: "text-slate-400", rawColor: "#94A3B8" };
+
+        const currentVal = yAxisMode === "kpi"
+            ? (d as any).kpiAchHistory?.[targetIdx] ?? d.kpiAch
+            : (d as any).productivityHistory?.[targetIdx] ?? d.productivity;
+        const prevVal = yAxisMode === "kpi"
+            ? (d as any).kpiAchHistory?.[targetIdx - 1]
+            : (d as any).productivityHistory?.[targetIdx - 1];
+
+        if (prevVal === undefined || prevVal === null || prevVal === 0) {
+            return { dir: "flat" as const, arrow: "→", diff: 0, color: "text-slate-400", rawColor: "#94A3B8" };
+        }
+
+        const diff = currentVal - prevVal;
+        const threshold = yAxisMode === "kpi" ? 2.0 : 0.1;
+
+        if (diff >= threshold) {
+            return { dir: "up" as const, arrow: "↑", diff, color: "text-emerald-500", rawColor: "#10B981" };
+        } else if (diff <= -threshold) {
+            return { dir: "down" as const, arrow: "↓", diff, color: "text-rose-500", rawColor: "#EF4444" };
+        } else {
+            return { dir: "flat" as const, arrow: "→", diff, color: "text-slate-400", rawColor: "#94A3B8" };
+        }
+    }, [targetIdx, yAxisMode]);
+
+    // 衝突回避ロジック（近接ラベルの上下自動振り分け）
+    const labelPositions = useMemo(() => {
+        const positions: Record<string, "top" | "bottom"> = {};
+        const sorted = [...data].sort((a, b) => a.head - b.head);
+
+        data.forEach(d => {
+            positions[d.id] = "top";
+        });
+
+        for (let i = 0; i < sorted.length; i++) {
+            const a = sorted[i];
+            const ax = cx(a.head);
+            const ay = cy(yAxisMode === "kpi" ? a.kpiAch : a.productivity);
+
+            for (let j = i + 1; j < sorted.length; j++) {
+                const b = sorted[j];
+                const bx = cx(b.head);
+                const by = cy(yAxisMode === "kpi" ? b.kpiAch : b.productivity);
+
+                const dx = Math.abs(ax - bx);
+                const dy = Math.abs(ay - by);
+
+                if (dx < 45 && dy < 30) {
+                    if (positions[a.id] === "top") {
+                        positions[b.id] = "bottom";
+                    }
+                }
+            }
+        }
+        return positions;
+    }, [data, yAxisMode, maxH, maxY, cx, cy]);
+
+    // 軌跡の算出ロジック（欠損月をスキップする安全な処理）
+    const trajectories = useMemo(() => {
+        if (!showTrajectory) return [];
+
+        const list: Array<{ id: string; points: Array<{ x: number; y: number }>; color: string }> = [];
+
+        data.forEach(d => {
+            const points: Array<{ x: number; y: number }> = [];
+            // 過去3ヶ月前から現在（終点）に向かう順で有効ステップを算出
+            const steps = [3, 2, 1, 0];
+
+            steps.forEach(s => {
+                const i = targetIdx - s;
+                if (i < 0) return;
+
+                const pulse = (d as any).pulseHistory?.[i] ?? 0;
+                const head = (d as any).headHistory?.[i] ?? 0;
+                const val = yAxisMode === "kpi"
+                    ? (d as any).kpiAchHistory?.[i] ?? 0
+                    : (d as any).productivityHistory?.[i] ?? 0;
+
+                // 回答なし (pulse === 0) または リソースなし (head === 0) の欠損月はスキップ
+                if (pulse === 0 || head === 0) return;
+
+                points.push({
+                    x: cx(head),
+                    y: cy(val)
+                });
+            });
+
+            if (points.length >= 2) {
+                const hasEnoughResponses = d.respondentsCount !== undefined ? d.respondentsCount >= 1 : d.pulse > 0;
+                const isGrayOut = !hasEnoughResponses || d.pulse === 0;
+                // 体温4状態に応じた淡色の軌跡カラー
+                const rawCol = isGrayOut ? "#64748B" : (d.weather === "sun" ? "#059669" : d.weather === "rain" ? "#DC2626" : "#D97706");
+
+                list.push({
+                    id: d.id,
+                    points,
+                    color: rawCol
+                });
+            }
+        });
+
+        return list;
+    }, [data, yAxisMode, targetIdx, showTrajectory, maxH, maxY, cx, cy]);
+
     const yLabelWord = yAxisMode === "kpi" ? "高達成" : "高生産性";
     const yLabelWordLow = yAxisMode === "kpi" ? "低達成" : "低生産性";
 
@@ -93,6 +216,21 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
     const renderChart = () => (
         <div className="relative w-full">
             <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto font-sans select-none relative">
+                {/* 軌跡の矢印マーカー定義 */}
+                <defs>
+                    <marker
+                        id="trajectory-arrow"
+                        viewBox="0 0 10 10"
+                        refX="8"
+                        refY="5"
+                        markerWidth="6"
+                        markerHeight="6"
+                        orient="auto-start-reverse"
+                    >
+                        <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#94A3B8" />
+                    </marker>
+                </defs>
+
                 {/* 象限の背景 */}
                 {quads.map((q, i) => (
                     <g key={i}>
@@ -109,6 +247,26 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
                 {/* 外枠 */}
                 <rect x={PAD.l} y={PAD.t} width={pw} height={ph} fill="none" stroke="#E2E8F0" strokeWidth={1.5} />
 
+                {/* 過去から現在地への軌跡（薄い点線＋矢印） */}
+                {showTrajectory && trajectories.map((t) => {
+                    const dAttr = t.points.map((p, idx) => `${idx === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+                    return (
+                        <path
+                            key={`traj-${t.id}`}
+                            d={dAttr}
+                            fill="none"
+                            stroke={t.color}
+                            strokeWidth={1.5}
+                            strokeDasharray="4,3"
+                            opacity={0.35}
+                            markerEnd="url(#trajectory-arrow)"
+                            style={{
+                                transition: "d 900ms cubic-bezier(0.16, 1, 0.3, 1), stroke 300ms ease"
+                            }}
+                        />
+                    );
+                })}
+
                 {/* データプロット */}
                 {[...data].sort((a, b) => (a.id === hoveredId ? 1 : b.id === hoveredId ? -1 : 0)).map((d, i) => {
                     const x = cx(d.head);
@@ -124,13 +282,18 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
                     const isGrayOut = !hasEnoughResponses || d.pulse === 0;
                     const col = isGrayOut ? colors.gray : (d.weather === "sun" ? colors.sun : d.weather === "rain" ? colors.rain : colors.cloud);
 
+                    const movement = getMovementDirection(d);
+                    const labelPos = labelPositions[d.id] || "top";
+                    const labelY = labelPos === "top" ? -r - 6 : r + 15;
+
                     return (
                         <g
                             key={d.id || i}
-                            className="transition-all duration-500 ease-in-out cursor-pointer group"
+                            className="cursor-pointer group"
                             style={{ 
                                 transform: `translate(${x}px, ${y}px)`,
-                                opacity: hoveredId ? (d.id === hoveredId ? 1 : 0.3) : 1
+                                opacity: hoveredId ? (d.id === hoveredId ? 1 : 0.3) : 1,
+                                transition: "transform 900ms cubic-bezier(0.16, 1, 0.3, 1), opacity 300ms ease"
                             }}
                             onMouseEnter={() => setHoveredId(d.id)}
                             onMouseLeave={() => setHoveredId(null)}
@@ -152,6 +315,22 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
 
                             {/* ホバー時外枠リング */}
                             <circle cx={0} cy={0} r={r + 4} fill="none" stroke={col} strokeWidth={1.5} className="opacity-0 group-hover:opacity-70 transition-opacity duration-300 pointer-events-none" strokeDasharray="3,2" />
+
+                            {/* 常時ラベル（白縁取り＋衝突回避） */}
+                            <text
+                                x={0}
+                                y={labelY}
+                                textAnchor="middle"
+                                className="text-[9px] font-black fill-slate-800 pointer-events-none select-none"
+                                style={{
+                                    paintOrder: "stroke",
+                                    stroke: "#ffffff",
+                                    strokeWidth: "3px",
+                                    strokeLinejoin: "round"
+                                }}
+                            >
+                                {d.name} {movement.arrow}
+                            </text>
                         </g>
                     );
                 })}
@@ -219,9 +398,22 @@ export function ScatterPlot({ data, isProduct = false, sizeKpiName = "KPI達成�
                             transform: 'translate(-50%, -100%)'
                         }}
                     >
-                        <div className="font-black text-xs border-b border-slate-700/50 pb-2 mb-2 flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: dotCol }} />
-                            <span className="truncate">{d.name}</span>
+                        <div className="font-black text-xs border-b border-slate-700/50 pb-2 mb-2 flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 truncate">
+                                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: dotCol }} />
+                                <span className="truncate">{d.name}</span>
+                            </div>
+                            {(() => {
+                                const movement = getMovementDirection(d);
+                                let bgStyle = "bg-slate-800 text-slate-400 border-slate-700";
+                                if (movement.dir === "up") bgStyle = "bg-emerald-950 text-emerald-400 border-emerald-800/50";
+                                if (movement.dir === "down") bgStyle = "bg-rose-950 text-rose-400 border-rose-800/50";
+                                return (
+                                    <span className={cn("px-1.5 py-0.5 rounded text-[8px] font-black border uppercase tracking-wider flex items-center gap-0.5 shrink-0", bgStyle)}>
+                                        {movement.arrow} {movement.dir === "up" ? "改善" : movement.dir === "down" ? "悪化" : "維持"}
+                                    </span>
+                                );
+                            })()}
                         </div>
                         <div className="space-y-1.5 text-slate-300 font-medium">
                             <div className="flex justify-between gap-4">
