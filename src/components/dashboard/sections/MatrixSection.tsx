@@ -65,6 +65,7 @@ export function MatrixSection({
 }: MatrixSectionProps) {
     const [sizeBase, setSizeBase] = useState<"kpi" | "labor">("kpi");
     const [yAxisMode, setYAxisMode] = useState<"kpi" | "productivity">("kpi");
+    const [showTrajectory, setShowTrajectory] = useState(true);
 
     // 散布図へ流し込むためのデータ整形
     const deptScatterData = useMemo(() => {
@@ -145,6 +146,19 @@ export function MatrixSection({
                         </div>
                     </div>
 
+                    {/* 軌跡表示ON/OFF */}
+                    <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-full px-3.5 py-1.5 shadow-sm">
+                        <label className="flex items-center gap-2 cursor-pointer text-[10px] font-black text-slate-500 uppercase tracking-wider select-none">
+                            <input
+                                type="checkbox"
+                                checked={showTrajectory}
+                                onChange={(e) => setShowTrajectory(e.target.checked)}
+                                className="rounded border-slate-200 text-teal focus:ring-teal w-3.5 h-3.5 cursor-pointer accent-teal-600"
+                            />
+                            <span>軌跡（動く地図）を表示</span>
+                        </label>
+                    </div>
+
                     {/* サイズ基準 (人件費データがある場合のみ) */}
                     {hasLaborData && (
                         <div className="flex items-center gap-2 sm:ml-auto">
@@ -212,6 +226,8 @@ export function MatrixSection({
                             isProduct={false}
                             sizeKpiName={displaySizeKpiName}
                             yAxisMode={yAxisMode}
+                            month={month}
+                            showTrajectory={showTrajectory}
                         />
                     ) : (
                         <EmptyState
@@ -261,6 +277,8 @@ export function MatrixSection({
                             isProduct={true}
                             sizeKpiName={displaySizeKpiName}
                             yAxisMode={yAxisMode}
+                            month={month}
+                            showTrajectory={showTrajectory}
                         />
                     </div>
                 </div>
