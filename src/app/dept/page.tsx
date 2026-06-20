@@ -1534,7 +1534,7 @@ export default function DeptDashboardPage() {
                                                     .map((line: string) => line.startsWith('・') ? line.substring(1).trim() : line);
                                                 if (lines.length === 0) return <p className="text-xs text-slate-400">—</p>;
                                                 return (
-                                                    <ul className="list-disc pl-4 space-y-1.5 text-xs text-slate-600 font-bold leading-relaxed">
+                                                    <ul className="list-disc pl-4 space-y-1.5 text-xs text-slate-600 font-medium leading-relaxed">
                                                         {lines.map((line: string, idx: number) => (
                                                             <li key={idx}>{line}</li>
                                                         ))}
@@ -1553,7 +1553,7 @@ export default function DeptDashboardPage() {
                                                     .map((line: string) => line.startsWith('・') ? line.substring(1).trim() : line);
                                                 if (lines.length === 0) return <p className="text-xs text-slate-400">—</p>;
                                                 return (
-                                                    <ul className="list-disc pl-4 space-y-1.5 text-xs text-slate-600 font-bold leading-relaxed">
+                                                    <ul className="list-disc pl-4 space-y-1.5 text-xs text-slate-600 font-medium leading-relaxed">
                                                         {lines.map((line: string, idx: number) => (
                                                             <li key={idx}>{line}</li>
                                                         ))}
@@ -1570,7 +1570,7 @@ export default function DeptDashboardPage() {
                                                 <TrendingUp className="w-3.5 h-3.5" />
                                                 深掘り分析（背景と示唆）
                                             </h4>
-                                            <p className="text-xs text-slate-600 font-bold leading-relaxed whitespace-pre-wrap">
+                                            <p className="text-xs text-slate-600 font-medium leading-relaxed whitespace-pre-wrap">
                                                 {aiSummary.deep_dive}
                                             </p>
                                         </div>
@@ -1581,7 +1581,7 @@ export default function DeptDashboardPage() {
                                         <p className="text-xs font-black text-amber-700 mb-2 flex items-center gap-1.5">
                                             💡 マネージャーへの注目点
                                         </p>
-                                        <p className="text-xs text-slate-600 font-bold leading-relaxed whitespace-pre-wrap">
+                                        <p className="text-xs text-slate-600 font-medium leading-relaxed whitespace-pre-wrap">
                                             {aiSummary.manager_hint || "—"}
                                         </p>
                                     </div>
