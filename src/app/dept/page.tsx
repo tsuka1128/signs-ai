@@ -1532,17 +1532,30 @@ export default function DeptDashboardPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="bg-teal-50/30 border border-teal-100 rounded-2xl p-5 space-y-2">
                                             <h4 className="text-xs font-black text-teal">ポジティブな声</h4>
-                                            <p className="text-xs text-slate-700 font-bold leading-relaxed">
+                                            <p className="text-xs text-slate-700 font-bold leading-relaxed whitespace-pre-wrap">
                                                 {aiSummary.positive_summary || "—"}
                                             </p>
                                         </div>
                                         <div className="bg-rose-50/30 border border-rose-100 rounded-2xl p-5 space-y-2">
                                             <h4 className="text-xs font-black text-rose-700">課題・改善要望</h4>
-                                            <p className="text-xs text-slate-700 font-bold leading-relaxed">
+                                            <p className="text-xs text-slate-700 font-bold leading-relaxed whitespace-pre-wrap">
                                                 {aiSummary.negative_summary || "—"}
                                             </p>
                                         </div>
                                     </div>
+
+                                    {/* 🧠 深掘り分析（背景と示唆） */}
+                                    {aiSummary.deep_dive && (
+                                        <div className="bg-indigo-50/30 border border-indigo-100 rounded-2xl p-5 space-y-2.5">
+                                            <h4 className="text-xs font-black text-indigo-700 flex items-center gap-1.5">
+                                                <TrendingUp className="w-3.5 h-3.5" />
+                                                深掘り分析（背景と示唆）
+                                            </h4>
+                                            <p className="text-xs text-slate-700 font-bold leading-relaxed whitespace-pre-wrap">
+                                                {aiSummary.deep_dive}
+                                            </p>
+                                        </div>
+                                    )}
 
                                     {/* 注目ヒント */}
                                     <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-5 relative overflow-hidden">
@@ -1550,7 +1563,7 @@ export default function DeptDashboardPage() {
                                         <p className="text-xs font-black text-amber-700 mb-2 flex items-center gap-1.5">
                                             💡 マネージャーへの注目点
                                         </p>
-                                        <p className="text-xs text-amber-900 font-bold leading-relaxed">
+                                        <p className="text-xs text-amber-900 font-bold leading-relaxed whitespace-pre-wrap">
                                             {aiSummary.manager_hint || "—"}
                                         </p>
                                     </div>
