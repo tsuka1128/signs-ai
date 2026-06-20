@@ -182,7 +182,7 @@ export function MatrixSection({
                             <h3 className="text-sm font-black text-slate-800 tracking-tight">部署マトリックス</h3>
                             <span className="text-[8px] bg-emerald-50 text-emerald-600 font-bold px-2 py-0.5 rounded-full border border-emerald-100">規模 × 成果 × 健康</span>
                         </div>
-                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">X: メンバー数 ｜ Y: {deptYAxisMode === "kpi" ? "KPI達成率" : "一人当たり生産性"} ｜ 色: 組織体温</p>
+                        <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">X: メンバー数 ｜ Y: {deptYAxisMode === "kpi" ? "KPI達成率" : "一人当たり生産性"} ｜ 色: 組織体温</p>
                     </div>
                 </div>
 
@@ -223,8 +223,8 @@ export function MatrixSection({
                         <div className="w-full lg:w-[240px] shrink-0 bg-slate-50/50 border border-slate-100 rounded-2xl p-4 space-y-4">
                             {/* Y軸モード */}
                             <div className="space-y-1.5">
-                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Y軸モード:</span>
-                                <div className="flex bg-slate-100/60 p-0.5 rounded-xl text-[9px] font-bold shadow-inner">
+                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">Y軸モード:</span>
+                                <div className="flex bg-slate-100/60 p-0.5 rounded-xl text-[11px] font-bold shadow-inner">
                                     <button
                                         onClick={() => setDeptYAxisMode("kpi")}
                                         className={cn(
@@ -248,14 +248,14 @@ export function MatrixSection({
 
                             {/* タイムラプス */}
                             <div className="space-y-1.5">
-                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">タイムラプス:</span>
+                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">タイムラプス:</span>
                                 <div className="flex flex-wrap gap-1 bg-slate-100/60 p-1 rounded-xl">
                                     {[{ id: "default", label: "現在" }, { id: "1m", label: "1m前" }, { id: "3m", label: "3m前" }, { id: "6m", label: "6m前" }, { id: "12m", label: "1年前" }].map((t) => (
                                         <button
                                             key={t.id}
                                             onClick={() => setDeptMonth(t.id)}
                                             className={cn(
-                                                "flex-1 min-w-[38px] text-center py-1 px-1.5 rounded-lg transition-all text-[9px] font-black tracking-tighter whitespace-nowrap",
+                                                "flex-1 min-w-[38px] text-center py-1 px-1.5 rounded-lg transition-all text-[11px] font-black tracking-tighter whitespace-nowrap",
                                                 deptMonth === t.id ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
                                             )}
                                         >
@@ -267,7 +267,7 @@ export function MatrixSection({
 
                             {/* 軌跡とサイズ重視 */}
                             <div className="flex flex-col gap-2">
-                                <label className="flex items-center gap-2 cursor-pointer text-[9px] font-black text-slate-500 uppercase tracking-wider select-none">
+                                <label className="flex items-center gap-2 cursor-pointer text-[11px] font-black text-slate-500 uppercase tracking-wider select-none">
                                     <input
                                         type="checkbox"
                                         checked={showDeptTrajectory}
@@ -279,12 +279,12 @@ export function MatrixSection({
 
                                 {hasLaborData && (
                                     <div className="flex items-center justify-between border-t border-slate-100/80 pt-2 mt-1">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">サイズ重視:</span>
+                                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">サイズ重視:</span>
                                         <div className="flex bg-slate-100/60 p-0.5 rounded-lg shadow-inner">
                                             <button
                                                 onClick={() => setDeptSizeBase("kpi")}
                                                 className={cn(
-                                                    "px-2 py-0.5 rounded-md transition-all text-[8px] font-black tracking-tight",
+                                                    "px-2 py-0.5 rounded-md transition-all text-[10px] font-black tracking-tight",
                                                     deptSizeBase === "kpi" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
                                                 )}
                                             >
@@ -293,7 +293,7 @@ export function MatrixSection({
                                             <button
                                                 onClick={() => setDeptSizeBase("labor")}
                                                 className={cn(
-                                                    "px-2 py-0.5 rounded-md transition-all text-[8px] font-black tracking-tight",
+                                                    "px-2 py-0.5 rounded-md transition-all text-[10px] font-black tracking-tight",
                                                     deptSizeBase === "labor" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
                                                 )}
                                             >
@@ -307,18 +307,18 @@ export function MatrixSection({
                             {/* 凡例 ＆ フィルタ */}
                             <div className="border-t border-slate-100 pt-3.5 space-y-2">
                                 <div className="flex items-center justify-between pb-1">
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">凡例 ＆ フィルタ</span>
+                                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">凡例 ＆ フィルタ</span>
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => setExcludedDeptIds([])}
-                                            className="text-[9px] font-black text-teal-600 hover:text-teal-700 transition-colors"
+                                            className="text-[11px] font-black text-teal-600 hover:text-teal-700 transition-colors"
                                         >
                                             全選択
                                         </button>
-                                        <span className="text-slate-300 text-[9px]">|</span>
+                                        <span className="text-slate-300 text-[11px]">|</span>
                                         <button
                                             onClick={() => setExcludedDeptIds(deptScatterData.map(d => d.id))}
-                                            className="text-[9px] font-black text-slate-500 hover:text-slate-600 transition-colors"
+                                            className="text-[11px] font-black text-slate-500 hover:text-slate-600 transition-colors"
                                         >
                                             全解除
                                         </button>
@@ -355,9 +355,9 @@ export function MatrixSection({
                                                         className="w-2.5 h-2.5 rounded-full shrink-0" 
                                                         style={{ backgroundColor: isChecked ? dotColor : colors.gray }} 
                                                     />
-                                                    <span className="text-[10px] font-bold text-slate-700 truncate">{d.name}</span>
+                                                    <span className="text-[12px] font-bold text-slate-700 truncate">{d.name}</span>
                                                 </div>
-                                                <span className={cn("text-[8px] font-black shrink-0 ml-2", isChecked ? movement.color : "text-slate-400")}>
+                                                <span className={cn("text-[10px] font-black shrink-0 ml-2", isChecked ? movement.color : "text-slate-400")}>
                                                     {movement.arrow}
                                                 </span>
                                             </label>
@@ -387,7 +387,7 @@ export function MatrixSection({
                                 <h3 className="text-sm font-black text-slate-800 tracking-tight">{secondaryAxisName}マトリックス</h3>
                                 <span className="text-[8px] bg-teal-50 text-teal-600 font-bold px-2 py-0.5 rounded-full border border-teal-100">規模 × 成果 × 健康</span>
                             </div>
-                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">X: 領域人数 ｜ Y: {axisYAxisMode === "kpi" ? "KPI達成率" : "一人当たり生産性"} ｜ 色: 組織体温</p>
+                            <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">X: 領域人数 ｜ Y: {axisYAxisMode === "kpi" ? "KPI達成率" : "一人当たり生産性"} ｜ 色: 組織体温</p>
                         </div>
                     </div>
 
@@ -427,8 +427,8 @@ export function MatrixSection({
                         <div className="w-full lg:w-[240px] shrink-0 bg-slate-50/50 border border-slate-100 rounded-2xl p-4 space-y-4">
                             {/* Y軸モード */}
                             <div className="space-y-1.5">
-                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Y軸モード:</span>
-                                <div className="flex bg-slate-100/60 p-0.5 rounded-xl text-[9px] font-bold shadow-inner">
+                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">Y軸モード:</span>
+                                <div className="flex bg-slate-100/60 p-0.5 rounded-xl text-[11px] font-bold shadow-inner">
                                     <button
                                         onClick={() => setAxisYAxisMode("kpi")}
                                         className={cn(
@@ -452,14 +452,14 @@ export function MatrixSection({
 
                             {/* タイムラプス */}
                             <div className="space-y-1.5">
-                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">タイムラプス:</span>
+                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">タイムラプス:</span>
                                 <div className="flex flex-wrap gap-1 bg-slate-100/60 p-1 rounded-xl">
                                     {[{ id: "default", label: "現在" }, { id: "1m", label: "1m前" }, { id: "3m", label: "3m前" }, { id: "6m", label: "6m前" }, { id: "12m", label: "1年前" }].map((t) => (
                                         <button
                                             key={t.id}
                                             onClick={() => setAxisMonth(t.id)}
                                             className={cn(
-                                                "flex-1 min-w-[38px] text-center py-1 px-1.5 rounded-lg transition-all text-[9px] font-black tracking-tighter whitespace-nowrap",
+                                                "flex-1 min-w-[38px] text-center py-1 px-1.5 rounded-lg transition-all text-[11px] font-black tracking-tighter whitespace-nowrap",
                                                 axisMonth === t.id ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
                                             )}
                                         >
@@ -471,7 +471,7 @@ export function MatrixSection({
 
                             {/* 軌跡とサイズ重視 */}
                             <div className="flex flex-col gap-2">
-                                <label className="flex items-center gap-2 cursor-pointer text-[9px] font-black text-slate-500 uppercase tracking-wider select-none">
+                                <label className="flex items-center gap-2 cursor-pointer text-[11px] font-black text-slate-500 uppercase tracking-wider select-none">
                                     <input
                                         type="checkbox"
                                         checked={showAxisTrajectory}
@@ -483,12 +483,12 @@ export function MatrixSection({
 
                                 {hasLaborData && (
                                     <div className="flex items-center justify-between border-t border-slate-100/80 pt-2 mt-1">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">サイズ重視:</span>
+                                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">サイズ重視:</span>
                                         <div className="flex bg-slate-100/60 p-0.5 rounded-lg shadow-inner">
                                             <button
                                                 onClick={() => setAxisSizeBase("kpi")}
                                                 className={cn(
-                                                    "px-2 py-0.5 rounded-md transition-all text-[8px] font-black tracking-tight",
+                                                    "px-2 py-0.5 rounded-md transition-all text-[10px] font-black tracking-tight",
                                                     axisSizeBase === "kpi" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
                                                 )}
                                             >
@@ -497,7 +497,7 @@ export function MatrixSection({
                                             <button
                                                 onClick={() => setAxisSizeBase("labor")}
                                                 className={cn(
-                                                    "px-2 py-0.5 rounded-md transition-all text-[8px] font-black tracking-tight",
+                                                    "px-2 py-0.5 rounded-md transition-all text-[10px] font-black tracking-tight",
                                                     axisSizeBase === "labor" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
                                                 )}
                                             >
@@ -511,18 +511,18 @@ export function MatrixSection({
                             {/* 凡例 ＆ フィルタ */}
                             <div className="border-t border-slate-100 pt-3.5 space-y-2">
                                 <div className="flex items-center justify-between pb-1">
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">凡例 ＆ フィルタ</span>
+                                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">凡例 ＆ フィルタ</span>
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => setExcludedAxisIds([])}
-                                            className="text-[9px] font-black text-teal-600 hover:text-teal-700 transition-colors"
+                                            className="text-[11px] font-black text-teal-600 hover:text-teal-700 transition-colors"
                                         >
                                             全選択
                                         </button>
-                                        <span className="text-slate-300 text-[9px]">|</span>
+                                        <span className="text-slate-300 text-[11px]">|</span>
                                         <button
                                             onClick={() => setExcludedAxisIds(axisScatterData.map(d => d.id))}
-                                            className="text-[9px] font-black text-slate-500 hover:text-slate-600 transition-colors"
+                                            className="text-[11px] font-black text-slate-500 hover:text-slate-600 transition-colors"
                                         >
                                             全解除
                                         </button>
@@ -559,9 +559,9 @@ export function MatrixSection({
                                                         className="w-2.5 h-2.5 rounded-full shrink-0" 
                                                         style={{ backgroundColor: isChecked ? dotColor : colors.gray }} 
                                                     />
-                                                    <span className="text-[10px] font-bold text-slate-700 truncate">{d.name}</span>
+                                                    <span className="text-[12px] font-bold text-slate-700 truncate">{d.name}</span>
                                                 </div>
-                                                <span className={cn("text-[8px] font-black shrink-0 ml-2", isChecked ? movement.color : "text-slate-400")}>
+                                                <span className={cn("text-[10px] font-black shrink-0 ml-2", isChecked ? movement.color : "text-slate-400")}>
                                                     {movement.arrow}
                                                 </span>
                                             </label>
