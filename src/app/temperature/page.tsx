@@ -322,7 +322,7 @@ export default function TemperaturePage() {
                                     </span>
                                     <span className="text-sm font-bold text-slate-400">/ 5.0</span>
                                 </div>
-                                <p className="text-[11px] text-slate-400 font-bold mt-1">
+                                <p className="text-[13px] text-slate-400 font-bold mt-1">
                                     回答者数: {currentMonthScore.respondentCount}名（{currentMonthScore.month}）
                                 </p>
                             </div>
@@ -364,7 +364,7 @@ export default function TemperaturePage() {
                                     </LineChart>
                                 </ResponsiveContainer>
                             </div>
-                            <p className="text-[11px] text-slate-400 font-bold mt-2 flex items-center gap-1.5">
+                            <p className="text-[13px] text-slate-400 font-bold mt-2 flex items-center gap-1.5">
                                 <Info className="w-3 h-3" />
                                 3名未満の月はプライバシー保護のため非表示
                             </p>
@@ -423,7 +423,7 @@ export default function TemperaturePage() {
                             })}
                         </div>
                     )}
-                    <p className="text-[11px] text-slate-400 font-bold mt-4 flex items-center gap-1.5">
+                    <p className="text-[13px] text-slate-400 font-bold mt-4 flex items-center gap-1.5">
                         <Info className="w-3 h-3" />
                         経営層が「全社員に公開」と指定したKPIのみ表示されます
                     </p>

@@ -154,7 +154,7 @@ export const AITab = ({ isAnalyzing, handleRunAnalyze, company, plan, limits, di
                             </div>
 
                             <div className="bg-teal/5 border border-teal/10 rounded-2xl p-5">
-                                <p className="text-[11px] text-teal/80 font-bold leading-relaxed flex gap-3">
+                                <p className="text-[13px] text-teal/80 font-bold leading-relaxed flex gap-3">
                                     <Sparkles className="w-5 h-5 flex-shrink-0 mt-0.5" />
                                     <span>
                                         相関係数 r が高いほど、体温スコアが将来のKPIを先行して予測する傾向が強いことを示します。

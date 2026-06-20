@@ -21,7 +21,7 @@ export const SlackHelpTooltip = ({ mode = 'userId' }: SlackHelpTooltipProps) => 
             </button>
             {isOpen && (
                 <div className="absolute left-0 bottom-full mb-3 w-80 z-[60] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200">
-                    <div className="bg-slate-900/95 backdrop-blur-md text-white p-6 rounded-[2rem] shadow-2xl text-[11px] leading-relaxed border border-white/10">
+                    <div className="bg-slate-900/95 backdrop-blur-md text-white p-6 rounded-[2rem] shadow-2xl text-[13px] leading-relaxed border border-white/10">
                         <div className="flex justify-between items-start mb-4">
                             <span className="font-black text-teal-400 uppercase tracking-widest text-[9px]">
                                 {mode === 'userId' ? "IDの取得手順" : "Webhookの取得手順"}

@@ -48,7 +48,7 @@ export const IntegrationTab = ({
                                     Slack Webhook URL
                                     <SlackHelpTooltip mode="webhook" />
                                 </label>
-                                <p className="text-[11px] text-slate-500 mb-4 ml-1">
+                                <p className="text-[13px] text-slate-500 mb-4 ml-1">
                                     AI分析の完了時やリマインドが指定チャンネルに自動通知されます。
                                 </p>
                                 <div className="flex gap-2">
@@ -199,7 +199,7 @@ export const IntegrationTab = ({
                             <Eye className="w-5 h-5 text-teal" /> 通知プレビュー
                         </h2>
                         <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 space-y-4">
-                            <p className="text-[11px] text-slate-500 mb-4">
+                            <p className="text-[13px] text-slate-500 mb-4">
                                 実際に配信される通知のサンプルをSlackへ送信して確認できます。
                             </p>
                             <div className="grid grid-cols-1 gap-3">
@@ -238,7 +238,7 @@ export const IntegrationTab = ({
                                     <h3 className="text-sm font-black text-amber-800">未回答者への一斉催促</h3>
                                     <span className="text-[10px] font-bold text-amber-600 bg-amber-100/50 px-2 py-0.5 rounded-full">ボイスチェックリマインド設定を使用</span>
                                 </div>
-                                <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
+                                <p className="text-[13px] text-amber-700 font-medium leading-relaxed">
                                     今月のボイスチェック（アンケート）にまだ回答していないメンバー全員に対して、Slackで一斉に催促メッセージを送信します。
                                 </p>
                                 <div className="pt-2">
@@ -256,7 +256,7 @@ export const IntegrationTab = ({
                                     <h3 className="text-sm font-black text-amber-800">KPI未入力部署へのリマインド</h3>
                                     <span className="text-[10px] font-bold text-amber-600 bg-amber-100/50 px-2 py-0.5 rounded-full">KPI実績入力リマインド設定を使用</span>
                                 </div>
-                                <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
+                                <p className="text-[13px] text-amber-700 font-medium leading-relaxed">
                                     前月分のKPIが未入力の部署を検知し、その部署のマネージャーにSlackでリマインドを送信します。マネージャーが未設定の場合は、管理者・経営層（admin / executive ロール）にフォールバック通知されます。
                                 </p>
                                 <div className="pt-2">

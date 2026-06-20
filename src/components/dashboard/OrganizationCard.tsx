@@ -268,7 +268,7 @@ function ObservationComment({ pulse, primaryAch }: { pulse: number; primaryAch: 
 
     return (
         <div className="px-5 py-3 border-t border-slate-50">
-            <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+            <p className="text-[13px] text-slate-400 font-medium leading-relaxed">
                 💬 {text}
             </p>
         </div>
