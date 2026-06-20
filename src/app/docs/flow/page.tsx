@@ -287,7 +287,7 @@ const PANELS: Record<string, PanelContent> = {
         heading: "経営者のアクション承認",
         body: "経営者は全社の KPI・人件費・ボイスチェックを横断的に確認し、アクションを承認または新規作成します。\n\nこのタイミングで「今月の課題（executive_monthly_focus）」を設定すると、翌月の AI 分析に経営重点テーマとして反映されます。",
         links: [
-            { url: "/settings?tab=focus", label: "設定 → 今月の課題 を開く" },
+            { url: "/monthly-focus", label: "今月の組織目標 を開く" },
         ],
     },
     "exec-semantic": {
