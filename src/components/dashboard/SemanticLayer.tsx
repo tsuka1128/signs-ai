@@ -197,7 +197,7 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
                             <h4 className="text-sm font-bold text-slate-800">組織方針</h4>
                             <Badge className="bg-teal/10 text-teal border-none text-[10px]">AIの判断基準</Badge>
                         </div>
-                        <p className="text-[11px] text-slate-400 leading-relaxed font-medium">
+                        <p className="text-[13px] text-slate-400 leading-relaxed font-medium">
                             組織方針・KPIの解釈・組織のフェーズをMarkdownで記述。AIはこの文書を毎月の診断時に読み込み、数字の良し悪しを「あなたの会社の文脈」で判断します。
                         </p>
                     </div>
@@ -242,7 +242,7 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
                                             トーン: {aiContent?.insights_by_dept?.[dept.id]?.tone || '分析待ち'}
                                         </span>
                                     </div>
-                                    <div className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                                    <div className="text-[13px] text-slate-600 leading-relaxed font-medium">
                                         {/* アクション連携のシミュレーション */}
                                         {(() => {
                                             const deptInsight = aiContent?.insights_by_dept?.[dept.id];
