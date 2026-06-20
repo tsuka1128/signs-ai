@@ -1,201 +1,270 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { TabBar } from "@/components/ui/TabBar";
 import { ScatterPlot } from "@/components/dashboard/ScatterPlot";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { AreaChart, Lightbulb, TrendingDown } from "lucide-react";
+import { AreaChart, Lightbulb, TrendingUp, Users, Target, Shield, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils/index";
-import { HelpLink } from "@/components/ui/HelpLink";
 
 interface MatrixSectionProps {
     secondaryAxisName: string;
     sizeKpiName: string;
-    matView: string;
-    setMatView: (view: string) => void;
     month: string;
     setMonth: (m: string) => void;
-    currentMatData: any[];
+    deptData: any[];
+    axisData: any[];
     aiContent?: any;
     hasLaborData?: boolean;
 }
 
+// 自動読み取り見出し（クライアント計算）の生成関数
+function getAutoInsight(data: any[], yAxisMode: "kpi" | "productivity", isAxis: boolean, secondaryAxisName: string) {
+    if (!data || data.length === 0) return "";
+
+    const hValues = data.map((d) => d.head);
+    const yValues = data.map((d) => yAxisMode === "kpi" ? d.kpiAch : d.productivity);
+
+    const maxH = hValues.length > 0 ? Math.max(...hValues, 10) * 1.3 : 50;
+    const defaultMaxY = yAxisMode === "kpi" ? 100 : 10;
+    const maxY = yValues.length > 0 ? Math.max(...yValues, defaultMaxY) * 1.2 : 120;
+
+    const thresholdH = maxH / 2;
+    const thresholdY = maxY / 2;
+
+    const overweight = data.filter(d => d.head >= thresholdH && (yAxisMode === "kpi" ? d.kpiAch : d.productivity) < thresholdY);
+    const scale = data.filter(d => d.head >= thresholdH && (yAxisMode === "kpi" ? d.kpiAch : d.productivity) >= thresholdY);
+    const pioneer = data.filter(d => d.head < thresholdH && (yAxisMode === "kpi" ? d.kpiAch : d.productivity) >= thresholdY);
+
+    const typeLabel = isAxis ? secondaryAxisName : "部署";
+
+    if (overweight.length > 0) {
+        const target = overweight.find(d => d.weather === "rain" || d.weather === "cloud") || overweight[0];
+        const statusText = target.pulse > 0 ? `体温: ${target.pulse.toFixed(1)}点` : "体温未取得";
+        return `【要対応】多人数・低成果の「要テコ入れ」領域にある ${target.name}（${statusText}）の支援・ボトルネック解消が最優先課題です。`;
+    }
+    if (scale.length > 0) {
+        const leading = scale[0];
+        return `主力エンジンである ${leading.name} が「拡大期」領域で成果を維持し、組織を力強く牽引しています。`;
+    }
+    if (pioneer.length > 0) {
+        const star = pioneer[0];
+        return `少数精鋭の「開拓者」領域にある ${star.name} が、非常に高いリソース効率で優れた成果を創出しています。`;
+    }
+    return `各${typeLabel}ともにリソースと成果のバランスは概ね良好に推移しています。`;
+}
 
 export function MatrixSection({
     secondaryAxisName,
     sizeKpiName,
-    matView,
-    setMatView,
     month,
     setMonth,
-    currentMatData,
+    deptData,
+    axisData,
     aiContent,
     hasLaborData
 }: MatrixSectionProps) {
     const [sizeBase, setSizeBase] = useState<"kpi" | "labor">("kpi");
+    const [yAxisMode, setYAxisMode] = useState<"kpi" | "productivity">("kpi");
 
-    const scatterData = useMemo(() => {
-        return currentMatData.map(d => ({
+    // 散布図へ流し込むためのデータ整形
+    const deptScatterData = useMemo(() => {
+        return deptData.map(d => ({
             ...d,
             head: d.head || d.masterHeadcount || 0,
             sizeValue: sizeBase === "labor" ? d.totalLaborCost : d.sizeValue
         }));
-    }, [currentMatData, sizeBase]);
+    }, [deptData, sizeBase]);
+
+    const axisScatterData = useMemo(() => {
+        return axisData.map(d => ({
+            ...d,
+            head: d.head || d.masterHeadcount || 0,
+            sizeValue: sizeBase === "labor" ? d.totalLaborCost : d.sizeValue
+        }));
+    }, [axisData, sizeBase]);
 
     const displaySizeKpiName = sizeBase === "labor" ? "人件費の大きさ" : sizeKpiName;
 
+    // クライアント側自動見出し
+    const deptAutoInsight = useMemo(() => getAutoInsight(deptScatterData, yAxisMode, false, secondaryAxisName), [deptScatterData, yAxisMode, secondaryAxisName]);
+    const axisAutoInsight = useMemo(() => getAutoInsight(axisScatterData, yAxisMode, true, secondaryAxisName), [axisScatterData, yAxisMode, secondaryAxisName]);
+
     return (
-        <div className="space-y-4">
-            <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm transition-all">
-                <div className="flex flex-col gap-4 mb-6">
-                    <div className="flex justify-between items-start md:items-center flex-col md:flex-row gap-2">
-                        <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-3">
-                                <h3 className="text-sm font-bold text-slate-800 tracking-tight">部署 / {secondaryAxisName} マトリックス</h3>
-                                <HelpLink href="/docs/bubble-chart-guide" label="見方を確認" />
-                            </div>
-                            <div className="flex items-center gap-1.5 flex-wrap text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-tight">
-                                <div className="flex items-center gap-1">
-                                    <span>縦軸: 一人当たり生産性</span>
-                                    <div className="relative group/calc text-left">
-                                        <button className="w-3.5 h-3.5 rounded-full bg-slate-200 text-slate-500 hover:bg-slate-300 hover:text-slate-600 flex items-center justify-center text-[9px] font-black cursor-help transition-colors select-none">?</button>
-                                        <div className="absolute bottom-full left-0 mb-2 w-56 bg-slate-800 text-white p-3.5 rounded-xl shadow-xl text-[10px] leading-relaxed break-normal whitespace-normal hidden group-hover/calc:block z-[150] normal-case tracking-normal animate-in fade-in zoom-in-95 font-medium">
-                                            <div className="font-bold text-white mb-2 flex items-center gap-1.5"><TrendingDown className="w-4 h-4 text-emerald-400" />生産性スコアの計算式</div>
-                                            <div className="bg-slate-900/80 p-2 rounded-lg font-mono text-[9px] text-emerald-400 mb-2.5 border border-slate-700">
-                                                KPI達成率 × (体温スコア ÷ 3.0)
-                                            </div>
-                                            <div className="text-slate-200">
-                                                部署ごとに異なるKPIを<span className="font-bold text-white">「達成率」</span>で統一。
-                                                体温スコア3.0点を係数1.0の基準とし、それを上回るほど生産性が高く評価されます。
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <span>｜ 横軸: {matView === "product" ? "所属人数" : "リソース量"} ｜ 円サイズ: {displaySizeKpiName}</span>
-                            </div>
+        <div className="space-y-6">
+            {/* コントロールパネル (共通化・最上部に配置) */}
+            <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="space-y-1">
+                        <h4 className="text-sm font-black text-slate-800 tracking-tight">組織マップ制御</h4>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Map Configuration & Timeline</p>
+                    </div>
+
+                    {/* Y軸切り替えトグル */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Y軸モード:</span>
+                        <div className="flex bg-slate-100 p-0.5 rounded-full text-xs font-bold shadow-inner">
+                            <button
+                                onClick={() => setYAxisMode("kpi")}
+                                className={cn(
+                                    "px-3.5 py-1.5 rounded-full transition-all text-[10px] font-black uppercase tracking-wider",
+                                    yAxisMode === "kpi" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                )}
+                            >
+                                成果重視 (達成率)
+                            </button>
+                            <button
+                                onClick={() => setYAxisMode("productivity")}
+                                className={cn(
+                                    "px-3.5 py-1.5 rounded-full transition-all text-[10px] font-black uppercase tracking-wider",
+                                    yAxisMode === "productivity" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                )}
+                            >
+                                組織開発重視 (生産性)
+                            </button>
                         </div>
-                        {hasLaborData && (
-                            <div className="flex bg-slate-100/60 p-0.5 rounded-full self-start md:self-auto">
+                    </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4 border-t border-slate-50 pt-4">
+                    {/* タイムラプス (共通) */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Time Lapse:</span>
+                        <div className="flex bg-slate-100 p-0.5 rounded-full text-xs font-bold shadow-inner">
+                            {[{ id: "default", label: "現在" }, { id: "1m", label: "1ヶ月前" }, { id: "3m", label: "3ヶ月前" }, { id: "6m", label: "6ヶ月前" }, { id: "12m", label: "1年前" }].map((t) => (
+                                <button
+                                    key={t.id}
+                                    onClick={() => setMonth(t.id)}
+                                    className={cn(
+                                        "px-3 py-1.5 rounded-full transition-all text-[10px] font-black uppercase tracking-wider",
+                                        (month || "default") === t.id ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                    )}
+                                >
+                                    {t.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* サイズ基準 (人件費データがある場合のみ) */}
+                    {hasLaborData && (
+                        <div className="flex items-center gap-2 sm:ml-auto">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">サイズ重視:</span>
+                            <div className="flex bg-slate-100 p-0.5 rounded-full text-xs font-bold shadow-inner">
                                 <button
                                     onClick={() => setSizeBase("kpi")}
                                     className={cn(
-                                        "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all",
-                                        sizeBase === "kpi" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-500"
+                                        "px-3 py-1.5 rounded-full transition-all text-[10px] font-black uppercase tracking-wider",
+                                        sizeBase === "kpi" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
                                     )}
                                 >
-                                    重視: 達成率
+                                    均一
                                 </button>
                                 <button
                                     onClick={() => setSizeBase("labor")}
                                     className={cn(
-                                        "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all",
-                                        sizeBase === "labor" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-500"
+                                        "px-3 py-1.5 rounded-full transition-all text-[10px] font-black uppercase tracking-wider",
+                                        sizeBase === "labor" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
                                     )}
                                 >
-                                    重視: 人件費
+                                    人件費投資
                                 </button>
                             </div>
-                        )}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* 1. 部署マトリックス (主役) */}
+            <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm transition-all space-y-6">
+                <div className="flex justify-between items-start border-b border-slate-50 pb-4">
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-sm font-black text-slate-800 tracking-tight">部署マトリックス</h3>
+                            <span className="text-[8px] bg-emerald-50 text-emerald-600 font-bold px-2 py-0.5 rounded-full border border-emerald-100">規模 × 成果 × 健康</span>
+                        </div>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">X: メンバー数 ｜ Y: {yAxisMode === "kpi" ? "KPI達成率" : "一人当たり生産性"} ｜ 色: 組織体温</p>
                     </div>
-                    <div className="flex items-center gap-3 flex-wrap">
-                        <TabBar
-                            tabs={[{ id: "dept", label: "部署別" }, { id: "product", label: `${secondaryAxisName}別` }]}
-                            active={matView}
-                            onChange={setMatView}
-                            className="w-auto"
-                        />
-                        <div className="flex items-center gap-2 md:border-l border-slate-200 md:pl-3">
-                            <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase hidden md:inline">Time Lapse</span>
-                            <div className="flex items-center bg-slate-100/80 p-0.5 rounded-full">
-                                <button onClick={() => setMonth("default")} className={`px-4 py-1.5 rounded-full text-[10px] font-bold transition-all ${month === "default" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}>現在</button>
-                                <button onClick={() => setMonth("1m")} className={`px-4 py-1.5 rounded-full text-[10px] font-bold transition-all ${month === "1m" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}>1ヶ月前</button>
-                                <button onClick={() => setMonth("3m")} className={`px-4 py-1.5 rounded-full text-[10px] font-bold transition-all ${month === "3m" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}>3ヶ月前</button>
-                                <button onClick={() => setMonth("6m")} className={`px-4 py-1.5 rounded-full text-[10px] font-bold transition-all ${month === "6m" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}>6ヶ月前</button>
-                                <button onClick={() => setMonth("12m")} className={`px-4 py-1.5 rounded-full text-[10px] font-bold transition-all ${month === "12m" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}>1年前</button>
-                            </div>
+                </div>
+
+                {/* 自動結論 ＆ AI解説テキスト */}
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs leading-relaxed space-y-2">
+                    <div className="flex items-start gap-2">
+                        <span className="text-sm shrink-0">📊</span>
+                        <div>
+                            <p className="font-black text-slate-800">{deptAutoInsight}</p>
+                            {/* AIの matrix_insight.dept 解釈テキストを併置 (過去データ互換対応) */}
+                            {aiContent?.matrix_insight?.dept ? (
+                                <p className="text-slate-500 font-medium mt-1 border-t border-slate-200/50 pt-1">{aiContent.matrix_insight.dept}</p>
+                            ) : (
+                                <p className="text-[10px] text-slate-400 font-bold mt-1.5 italic">
+                                    ※AI分析を実行すると、ボトルネックの背景や具体的な組織課題についての詳細解説がここに表示されます。
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
-                <div className="px-4 max-w-[680px] mx-auto">
-                    {currentMatData.length > 0 ? (
+
+                {/* 散布図描画 */}
+                <div className="max-w-[560px] mx-auto">
+                    {deptScatterData.length > 0 ? (
                         <ScatterPlot
-                            data={scatterData}
-                            isProduct={matView === "product"}
+                            data={deptScatterData}
+                            isProduct={false}
                             sizeKpiName={displaySizeKpiName}
-                            month={month}
-                            onMonthChange={setMonth}
-                            onProductToggle={(isProd) => setMatView(isProd ? "product" : "dept")}
+                            yAxisMode={yAxisMode}
                         />
                     ) : (
                         <EmptyState
-                            title="分析データが十分にありません"
-                            description="マトリックス分析を表示するには、複数の部署のデータとKPI実績が必要です。アンケート回答やKPI入力が進むと、ここに組織のコンディションがプロットされます。"
-                            actionLabel="数値を入力する"
-                            actionHref="/kpi"
+                            title="表示可能な部署データがありません"
+                            description="部署の実績・アンケート結果を登録してください。"
                             icon={<AreaChart className="w-12 h-12 text-slate-200" />}
                         />
                     )}
                 </div>
+            </div>
 
-                {/* ヘルプテキスト */}
-                <div className="mt-4 flex items-center justify-end gap-2 text-right">
-                    {month === "default" ? (
-                        <>
-                            <span className="relative flex h-2 w-2">
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-300"></span>
-                            </span>
-                            <p className="text-[10px] text-slate-400 font-bold">タイムラプスで組織の変化を確認できます</p>
-                        </>
-                    ) : (
-                        <>
-                            <span className="relative flex h-2 w-2">
-                                <span className="absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75 animate-ping"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
-                            </span>
-                            <p className="text-[10px] text-teal-600 font-bold">過去データを表示中</p>
-                        </>
-                    )}
-                </div>
-            </div>
-            <div className="bg-white rounded-2xl p-6 border-l-4 border-teal shadow-sm">
-                <div className="flex items-center gap-2 mb-3">
-                    <h4 className="text-sm font-bold text-slate-800">AIのマトリックス分析</h4>
-                </div>
-                <div className="text-xs leading-loose text-slate-600 font-medium">
-                    {month !== "default" ? (
-                        aiContent?.matrix_analysis?.[month] ? (
-                            <div className="space-y-4">
-                                <p><strong>{aiContent.matrix_analysis[month].past_record.split("】")[0] + "】"}</strong> {aiContent.matrix_analysis[month].past_record.split("】")[1]?.trim()}</p>
-                                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
-                                    <p><strong>{aiContent.matrix_analysis[month].change.split("】")[0] + "】"}</strong> {aiContent.matrix_analysis[month].change.split("】")[1]?.trim()}</p>
-                                    <p className="text-slate-500 font-bold">
-                                        {aiContent.matrix_analysis[month].retrospective}
-                                    </p>
-                                </div>
+            {/* 2. 第2軸（プロダクト別等）マトリックス（第2軸が設定されている場合のみ表示） */}
+            {axisScatterData.length > 0 && (
+                <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm transition-all space-y-6 animate-fadeIn">
+                    <div className="flex justify-between items-start border-b border-slate-50 pb-4">
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-sm font-black text-slate-800 tracking-tight">{secondaryAxisName}マトリックス</h3>
+                                <span className="text-[8px] bg-teal-50 text-teal-600 font-bold px-2 py-0.5 rounded-full border border-teal-100">規模 × 成果 × 健康</span>
                             </div>
-                        ) : (
-                            <div className="space-y-4">
-                                <p className="text-slate-400 italic">過去の分析データが見つかりませんでした。AI分析を再実行してください。</p>
-                            </div>
-                        )
-                    ) : (
-                        <div className="space-y-4">
-                            <p><strong>【現在のAI組織分析】</strong> {aiContent?.summary || "最新のアンケートとKPIデータを統合した分析を表示します。"}</p>
-                            {aiContent?.deep_report?.executive_summary && (
-                                <div className="bg-teal/5 p-4 rounded-xl border border-teal/10 space-y-2">
-                                    <div className="flex items-center gap-2 text-teal font-black text-[10px] uppercase tracking-widest">
-                                        <Lightbulb className="w-3.5 h-3.5" />
-                                        経営への提言
-                                    </div>
-                                    <p className="text-xs text-slate-700 font-medium leading-relaxed">
-                                        {aiContent.deep_report.executive_summary}
-                                    </p>
-                                </div>
-                            )}
+                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">X: 領域人数 ｜ Y: {yAxisMode === "kpi" ? "KPI達成率" : "一人当たり生産性"} ｜ 色: 組織体温</p>
                         </div>
-                    )}
+                    </div>
+
+                    {/* 自動結論 ＆ AI解説テキスト */}
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs leading-relaxed space-y-2">
+                        <div className="flex items-start gap-2">
+                            <span className="text-sm shrink-0">🎯</span>
+                            <div>
+                                <p className="font-black text-slate-800">{axisAutoInsight}</p>
+                                {/* AIの matrix_insight.axis 解釈テキストを併置 (過去データ互換対応) */}
+                                {aiContent?.matrix_insight?.axis ? (
+                                    <p className="text-slate-500 font-medium mt-1 border-t border-slate-200/50 pt-1">{aiContent.matrix_insight.axis}</p>
+                                ) : (
+                                    <p className="text-[10px] text-slate-400 font-bold mt-1.5 italic">
+                                        ※AI分析を実行すると、この領域のコスト効率や配置リソースに関する詳細解説がここに表示されます。
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 散布図描画 */}
+                    <div className="max-w-[560px] mx-auto">
+                        <ScatterPlot
+                            data={axisScatterData}
+                            isProduct={true}
+                            sizeKpiName={displaySizeKpiName}
+                            yAxisMode={yAxisMode}
+                        />
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }
