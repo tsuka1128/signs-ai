@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { MainInsightCard } from "@/components/dashboard/MainInsightCard";
-import { TabBar } from "@/components/ui/TabBar";
 import { DeepReport } from "@/components/dashboard/DeepReport";
 import { ActionSection } from "@/components/dashboard/sections/ActionSection";
 import { SemanticSection } from "@/components/dashboard/sections/SemanticSection";
@@ -110,10 +109,6 @@ export default function DashboardPage() {
     };
   }, [derived, aiContent]);
 
-  // 部署別メッセージ用のタブリスト (allを除外)
-  const deptOnlyTabs = useMemo(() => {
-    return derived.deptTabs.filter((t: any) => t.id !== "all");
-  }, [derived.deptTabs]);
 
   // 全社体温
   const allSurveyData = useMemo(() => (derived as any).getCurrentSurveyData("all"), [derived]);
@@ -329,66 +324,6 @@ export default function DashboardPage() {
                     }
                   ]}
                 />
-              </div>
-
-              <hr className="border-slate-100 my-8" />
-
-              {/* B. 部署別の診断メッセージ */}
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-sm font-black text-slate-800 tracking-tight flex items-center gap-2">
-                    <Lightbulb className="w-4 h-4 text-teal/60" />
-                    部署別の診断メッセージ
-                  </h3>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
-                    Department-specific Translation Messages
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between border-b border-slate-50 pb-4">
-                  <TabBar tabs={deptOnlyTabs} active={tab} onChange={setTab} />
-                </div>
-
-                {tab === "all" ? (
-                  <div className="bg-slate-50/50 rounded-2xl p-6 border border-dashed border-slate-200 text-center">
-                    <p className="text-sm text-slate-400 font-medium italic">
-                      部署を選択すると、その部署専用のAI方針翻訳メッセージが表示されます。
-                    </p>
-                  </div>
-                ) : (
-                  (() => {
-                    const dept = state.realDepts.find(d => d.id === tab);
-                    if (!dept) return null;
-                    return (
-                      <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm animate-in fade-in slide-in-from-top-2 duration-500">
-                        <div className="flex items-center gap-2 mb-3">
-                          <h5 className="text-sm font-black text-slate-700">AI方針翻訳 — {dept.name}</h5>
-                          <span className="text-[10px] text-white font-bold px-2 py-0.5 bg-teal/80 rounded-full shadow-sm shadow-teal/20">最新の通知</span>
-                        </div>
-                        {(() => {
-                          const deptInsight = aiContent?.insights_by_dept?.[dept.id];
-                          if (deptInsight?.text) {
-                            return (
-                              <div className="space-y-2">
-                                {deptInsight.tone && (
-                                  <span className="inline-block text-[10px] text-teal-600 font-black px-2 py-0.5 bg-teal-50 rounded-full border border-teal-100">
-                                    {deptInsight.tone}
-                                  </span>
-                                )}
-                                <p className="text-sm text-slate-700 leading-relaxed font-medium">{deptInsight.text}</p>
-                              </div>
-                            );
-                          }
-                          return (
-                            <p className="text-sm text-slate-400 leading-relaxed font-medium italic">
-                              AI分析を実行すると、「{dept.name}」の体温と全社方針を掛け合わせた専用メッセージが表示されます。
-                            </p>
-                          );
-                        })()}
-                      </div>
-                    );
-                  })()
-                )}
               </div>
             </div>
           )}

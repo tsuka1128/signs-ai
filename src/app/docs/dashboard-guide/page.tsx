@@ -220,7 +220,7 @@ export default function DashboardGuidePage() {
                     AIインサイトカードの下に表示される<strong>部署タブ</strong>（全社、営業部、マーケティング部 など）をタップすると、ダッシュボード全体がその部署のデータに絞り込まれます。
                 </p>
                 <div className="bg-indigo-50/50 border border-indigo-100/50 rounded-xl px-5 py-4 text-xs font-bold text-indigo-800">
-                    💡 部署を選択すると、AIインサイトもその部署専用の診断テキストに切り替わり、「AI方針翻訳」カードが追加表示されて、全社方針がその部署にどう適用されるかが可視化されます。
+                    💡 各部署の具体的な診断テキストや「AI方針翻訳（全社方針がその部署にどう適用されるかの解説）」は、<strong>組織サマリー</strong>セクションの各部署カード下部にて確認できます。
                 </div>
             </section>
 
