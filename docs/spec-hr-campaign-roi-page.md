@@ -103,15 +103,23 @@ CREATE INDEX IF NOT EXISTS idx_hr_campaigns_company ON public.hr_campaigns(compa
 ### 3.4 チャネル②：売上インパクト（is_revenue KPIがある対象のみ・無ければ非表示）
 - 対象スコープに紐づく `is_revenue=true` KPI の月次実績合計 `R_m`（既存の dept/axis 紐付けロジックに準拠）。該当KPIが0件なら**このチャネルを描画しない**。
 - `R_before` = Before窓平均。各After月 `inc_m = (R_m − R_before) × salesAttribution`（`salesAttribution` 既定1.0、画面で調整可・「相関であり厳密な因果ではない」と明示）。
-- **売上インパクト = Σ_{m∈After} inc_m**（DiDネット適用可）。
+- **売上インパクト = Σ_{m∈After} inc_m（gross。DiDは適用しない）**。
+  - 理由（確定）：DiDは%等の**正規化指標**でこそ成立する。売上は部署ごとに別KPI・別ストリーム・桁違いの絶対額のため、対照群の売上を差し引くのは概念的に破綻する。よって売上は対象の gross 増分とする。
+  - 代わりに**全社売上の伸び率（%）を脇に併記**（例「全社売上トレンド +8%（参考）」）して市場の追い風を読み手が割り引けるようにする。全社売上 = 全社の is_revenue KPI 合計（or `companies.custom_mrr`）の Before→After 伸び率。
 - ラベル：「売上・利益への寄与（参考）」。見出しには使わない（オーナー方針）。
 
 ### 3.5 信頼性：DiD-lite（差分の差分）
 - 対照群 = **全社平均から対象を除いた系列**（部署指定時は他部署の人数加重平均、全社指定時は…対照なし＝gross表示）。
-- 各指標の `ratio`（生産性・KPI達成率・体温・売上）について `net = target_ratio − control_ratio`。
+- DiDを適用する指標 = **生産性・KPI達成率・体温（正規化された率系のみ）**。`net = target_ratio − control_ratio`。
+  - **売上はDiDを適用しない**（3.4参照。gross＋全社トレンド%併記）。
 - **見出しの効率価値は net ratio を使用**：`v_m = laborCost_m × net_ratio_m`。
 - 画面に gross / net 両方を出し、「全社トレンドを差し引いた純効果＝net」と注記。
 - 補助として「直近KPI vs その前3ヶ月」のトレンド差（既存の考え方）を Before→After のトレンド線として可視化。
+
+### 3.5.1 数値の堅牢性ガード（必須）
+- **ゼロ基準ガード**：`Value_before === 0`（対象・対照群いずれも）で `ratio` が Infinity/NaN にならないよう、その月/指標は効果集計からスキップ（または0扱い）する。Filled配列（PR#202）と整合。
+- **人件費欠損ステート**：効率インパクトは `labor_cost` 依存。対象期間に人件費データが無い場合は**金額を出さず**「金額換算には人件費データ（resource_records）が必要です」と案内（指標の%差分・netΔは表示可）。
+- 売上の全社トレンド併記は、全社 is_revenue / custom_mrr が無ければ省略（エラーにしない）。
 
 ### 3.6 ROI%・回収期間（invested_cost があるとき）
 - `ROI% = (見出し創出価値 − invested_cost) / invested_cost × 100`
@@ -165,7 +173,9 @@ CREATE INDEX IF NOT EXISTS idx_hr_campaigns_company ON public.hr_campaigns(compa
 - **DB乖離防止**：migrationファイルで作成・`db push`／`db pull`差分ゼロ。SQL Editor直変更なし。RLSは select=全員、insert/update/delete=admin/executive/super_admin の**個別ポリシー**（まとめ書きしていない）。`kpi_axes` を正しく参照。
 - **計算の正しさ**：Before窓/ラグ/After窓の index 範囲が正確か。Filled配列（PR#202）を使い欠損で破綻しないか。全社スコープの人数加重集計が妥当か。
 - **DiD**：対照群＝対象を除く他部署の加重平均で、net = target − control になっているか。全社スコープ時に対照が無いケースの扱い（grossにフォールバック）が明示されているか。
-- **売上チャネル**：is_revenue KPIが対象に紐づく時のみ描画。未登録で非表示・エラーにならないか。見出しには売上を使っていないか（効率がheadline）。
+- **売上チャネル**：is_revenue KPIが対象に紐づく時のみ描画。未登録で非表示・エラーにならないか。見出しには売上を使っていないか（効率がheadline）。**売上はDiD非適用＝gross**で、全社売上トレンド%が併記されているか。
+- **堅牢性ガード**：ゼロ基準（Value_before=0）でInfinity/NaNにならないか。人件費欠損時に金額を出さず案内ステートになるか（%差分は表示可）。
+- **バブル軌跡**：既存 `ScatterPlot` を再利用（Q1確定）。
 - **見出し金額**：net効率価値＝Σ(laborCost_m × netRatio_m)。離職回避を含めていないか。
 - **測定不足ステート**：launchIdx窓外／effectMonths<1 で金額を出さず案内表示か。
 - **ガード**：PROゲート＋ロール（admin/executive/super_admin）。プレイヤー/マネージャーはアクセス不可。
