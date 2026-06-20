@@ -97,6 +97,42 @@ export default function DashboardPage() {
     };
   }, [tab, state.realDepts, currentSurveyData, aiContent]);
 
+  // 全社固定データ用インサイト
+  const insAll = useMemo(() => {
+    const allSurveyData = (derived as any).getCurrentSurveyData("all");
+    const pulse = allSurveyData.pulse;
+    const prevPulse = allSurveyData.pulseHistory[11] || 0;
+    const weather = getWeatherFromPulse(pulse);
+    const trend = pulse > prevPulse ? "up" : pulse < prevPulse ? "down" : "flat";
+
+    return {
+      title: "全社",
+      tone: "戦略的分析",
+      text: aiContent?.summary || (allSurveyData.pulse > 0 ? allSurveyData.aiComment : "組織方針に基づき、各部署の体温スコアとKPI達成状況を俯瞰的に分析します。現在、実データの蓄積を開始した段階です。"),
+      weather,
+      trend
+    };
+  }, [derived, aiContent]);
+
+  // 部署別メッセージ用のタブリスト (allを除外)
+  const deptOnlyTabs = useMemo(() => {
+    return derived.deptTabs.filter((t: any) => t.id !== "all");
+  }, [derived.deptTabs]);
+
+  // 全社体温
+  const allSurveyData = useMemo(() => (derived as any).getCurrentSurveyData("all"), [derived]);
+  const overallPulse = allSurveyData.pulse;
+
+  // 主要KPI
+  const primaryKpi = derived.displayKpis[0];
+  const primaryKpiAch = useMemo(() => {
+    if (!primaryKpi || !primaryKpi.target) return null;
+    const v = Number(primaryKpi.val);
+    const t = Number(primaryKpi.target);
+    if (isNaN(v) || isNaN(t) || t <= 0) return 0;
+    return Math.round((v / t) * 100);
+  }, [primaryKpi]);
+
   // 異常検知バナーの表示判定
   const anomalyAlert = useMemo(() => {
     if (!aiContent?.risk_level || aiContent.risk_level === 'low') return null;
@@ -176,95 +212,229 @@ export default function DashboardPage() {
     >
       <TrialGuard>
         <div className="space-y-10">
-          {/* 異常検知バナー */}
-          {anomalyAlert && (
-            <div className={cn(
-              "rounded-2xl px-6 py-4 flex items-start gap-4 border animate-fadeIn",
-              anomalyAlert.level === 'high'
-                ? "bg-rose-50 border-rose-200"
-                : "bg-amber-50 border-amber-200"
-            )}>
-              <div className={cn(
-                "w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5",
-                anomalyAlert.level === 'high' ? "bg-rose-100" : "bg-amber-100"
-              )}>
-                <AlertTriangle className={cn(
-                  "w-4 h-4",
-                  anomalyAlert.level === 'high' ? "text-rose-500" : "text-amber-500"
-                )} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={cn(
-                  "text-xs font-black uppercase tracking-widest mb-1",
-                  anomalyAlert.level === 'high' ? "text-rose-500" : "text-amber-500"
-                )}>
-                  {anomalyAlert.level === 'high' ? '⚠️ 組織異常を検知' : '注意 — 要観察'}
-                </p>
-                <p className="text-sm font-medium text-slate-700 leading-relaxed">
-                  {anomalyAlert.reason || 'AI分析により、組織状態に注意が必要な兆候が検出されました。詳細はレポートセクションを確認してください。'}
-                </p>
-              </div>
-              <button
-                onClick={() => setSec('report')}
-                className={cn(
-                  "text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-xl flex-shrink-0 transition-all",
-                  anomalyAlert.level === 'high'
-                    ? "bg-rose-500 text-white hover:bg-rose-600"
-                    : "bg-amber-500 text-white hover:bg-amber-600"
-                )}
-              >
-                詳細を見る →
-              </button>
-            </div>
-          )}
           {sec === "report" && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between border-b border-slate-50 pb-4">
-                <TabBar tabs={derived.deptTabs} active={tab} onChange={setTab} />
-              </div>
+            <div className="space-y-10 animate-fadeIn">
+              {/* A. AI組織診断レポート（全社） */}
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-sm font-black text-slate-800 tracking-tight flex items-center gap-2">
+                    <Target className="w-4 h-4 text-teal/60" />
+                    AI組織診断レポート（全社）
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+                    Company-wide AI Organization Diagnosis
+                  </p>
+                </div>
 
-              <div className="space-y-4">
+                {/* ① 注意バナー */}
+                {anomalyAlert && (
+                  <div className={cn(
+                    "rounded-2xl px-6 py-4 flex items-start gap-4 border animate-fadeIn",
+                    anomalyAlert.level === 'high'
+                      ? "bg-rose-50 border-rose-200"
+                      : "bg-amber-50 border-amber-200"
+                  )}>
+                    <div className={cn(
+                      "w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5",
+                      anomalyAlert.level === 'high' ? "bg-rose-100" : "bg-amber-100"
+                    )}>
+                      <AlertTriangle className={cn(
+                        "w-4 h-4",
+                        anomalyAlert.level === 'high' ? "text-rose-500" : "text-amber-500"
+                      )} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={cn(
+                        "text-xs font-black uppercase tracking-widest mb-1",
+                        anomalyAlert.level === 'high' ? "text-rose-500" : "text-amber-500"
+                      )}>
+                        {anomalyAlert.level === 'high' ? '⚠️ 組織異常を検知' : '注意 — 要観察'}
+                      </p>
+                      <p className="text-sm font-medium text-slate-700 leading-relaxed">
+                        {anomalyAlert.reason || 'AI分析により、組織状態に注意が必要な兆候が検出されました。'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* ④ キー指標サマリー */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-5 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                  {/* 全体体温 */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0">
+                      <Thermometer className="w-4 h-4 text-slate-500" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">全体体温</p>
+                      <div className="flex items-baseline gap-1 mt-0.5">
+                        <span className="text-lg font-black text-slate-700">{overallPulse > 0 ? overallPulse.toFixed(1) : "—"}</span>
+                        <span className="text-[10px] font-bold text-slate-400">/ 5.0</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 主要KPI達成率 */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0">
+                      <Target className="w-4 h-4 text-slate-500" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                        主要KPI達成率{primaryKpi ? ` (${primaryKpi.name})` : ""}
+                      </p>
+                      <div className="flex items-baseline gap-1 mt-0.5">
+                        <span className="text-lg font-black text-slate-700">
+                          {primaryKpiAch !== null ? `${primaryKpiAch}%` : "—"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* リスクレベル */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0">
+                      <Shield className="w-4 h-4 text-slate-500" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">組織リスクレベル</p>
+                      <div className="mt-1 flex items-center">
+                        {(() => {
+                          const rLevel = aiContent?.risk_level || "low";
+                          let label = "低（安全）";
+                          let badgeClass = "border border-slate-100 text-slate-500 bg-slate-50/50";
+                          let dotClass = "bg-slate-400";
+                          if (rLevel === "high") {
+                            label = "高（要警戒）";
+                            badgeClass = "border border-rose-200 text-rose-600 bg-rose-50/30";
+                            dotClass = "bg-rose-500";
+                          } else if (rLevel === "medium") {
+                            label = "中（要観察）";
+                            badgeClass = "border border-amber-200 text-amber-600 bg-amber-50/30";
+                            dotClass = "bg-amber-500";
+                          }
+                          return (
+                            <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold", badgeClass)}>
+                              <span className={cn("w-1.5 h-1.5 rounded-full", dotClass)} />
+                              {label}
+                            </span>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ②-1. 全社固定 MainInsightCard */}
                 <MainInsightCard
-                  title={ins.title}
-                  tone={ins.tone}
-                  text={ins.text}
-                  weather={ins.weather as any}
-                  trend={ins.trend as any}
-                  onOpenDeepReport={tab === "all" ? () => setSec("report") : undefined}
+                  title={insAll.title}
+                  tone={insAll.tone}
+                  text={insAll.text}
+                  weather={insAll.weather as any}
+                  trend={insAll.trend as any}
+                  onOpenDeepReport={undefined}
                 />
 
-                {tab !== "all" && (() => {
-                  const dept = state.realDepts.find(d => d.id === tab);
-                  if (!dept) return null;
-                  return (
-                    <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm animate-in fade-in slide-in-from-top-2 duration-500">
-                      <div className="flex items-center gap-2 mb-3">
-                        <h5 className="text-xs font-bold text-slate-700">AI方針翻訳 — {dept.name}</h5>
-                        <span className="text-[9px] text-white font-bold px-2 py-0.5 bg-teal/80 rounded-full shadow-sm shadow-teal/20">最新の通知</span>
-                      </div>
-                  {(() => {
-                    const deptInsight = aiContent?.insights_by_dept?.[dept.id];
-                    if (deptInsight?.text) {
-                      return (
-                        <div className="space-y-2">
-                          {deptInsight.tone && (
-                            <span className="inline-block text-[9px] text-teal-600 font-black px-2 py-0.5 bg-teal-50 rounded-full border border-teal-100">
-                              {deptInsight.tone}
-                            </span>
-                          )}
-                          <p className="text-[11px] text-slate-700 leading-relaxed font-medium">{deptInsight.text}</p>
-                        </div>
-                      );
+                {/* ②-2. 全社固定 ReportSection */}
+                <ReportSection
+                  generatedAt={latestAi ? new Date(latestAi.created_at).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : ""}
+                  sections={[
+                    {
+                      id: "executive-summary",
+                      icon: <Target className="w-5 h-5" />,
+                      title: "総評：組織の健全性と戦略進捗",
+                      subtitle: "Executive Summary",
+                      content: aiContent?.deep_report?.executive_summary || "データに基づいた総評を分析中です..."
+                    },
+                    {
+                      id: "correlation",
+                      icon: <Thermometer className="w-5 h-5" />,
+                      title: "組織力とKPIの相関解析",
+                      subtitle: "Organizational Health × KPI Correlation",
+                      content: aiContent?.deep_report?.correlation || "相関の分析データを準備中です..."
+                    },
+                    {
+                      id: "strategic-alignment",
+                      icon: <Shield className="w-5 h-5" />,
+                      title: "組織方針との整合性チェック",
+                      subtitle: "Strategic Alignment",
+                      content: aiContent?.deep_report?.strategic_alignment || "方針との整合性を検証中です..."
+                    },
+                    {
+                      id: "risks",
+                      icon: <AlertTriangle className="w-5 h-5" />,
+                      title: "リスクと成長機会の特定",
+                      subtitle: "Risks & Opportunities",
+                      content: aiContent?.deep_report?.risks || "リスク項目を抽出中です..."
+                    },
+                    {
+                      id: "recommendations",
+                      icon: <Lightbulb className="w-5 h-5" />,
+                      title: "経営判断への具体的提言",
+                      subtitle: "Actionable Recommendations",
+                      content: aiContent?.deep_report?.recommendations || "提言を生成中です..."
                     }
+                  ]}
+                />
+              </div>
+
+              <hr className="border-slate-100 my-8" />
+
+              {/* B. 部署別の診断メッセージ */}
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-sm font-black text-slate-800 tracking-tight flex items-center gap-2">
+                    <Lightbulb className="w-4 h-4 text-teal/60" />
+                    部署別の診断メッセージ
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+                    Department-specific Translation Messages
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between border-b border-slate-50 pb-4">
+                  <TabBar tabs={deptOnlyTabs} active={tab} onChange={setTab} />
+                </div>
+
+                {tab === "all" ? (
+                  <div className="bg-slate-50/50 rounded-2xl p-6 border border-dashed border-slate-200 text-center">
+                    <p className="text-sm text-slate-400 font-medium italic">
+                      部署を選択すると、その部署専用のAI方針翻訳メッセージが表示されます。
+                    </p>
+                  </div>
+                ) : (
+                  (() => {
+                    const dept = state.realDepts.find(d => d.id === tab);
+                    if (!dept) return null;
                     return (
-                      <p className="text-[11px] text-slate-400 leading-relaxed font-medium italic">
-                        AI分析を実行すると、「{dept.name}」の体温と全社方針を掛け合わせた専用メッセージが表示されます。
-                      </p>
+                      <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm animate-in fade-in slide-in-from-top-2 duration-500">
+                        <div className="flex items-center gap-2 mb-3">
+                          <h5 className="text-sm font-black text-slate-700">AI方針翻訳 — {dept.name}</h5>
+                          <span className="text-[10px] text-white font-bold px-2 py-0.5 bg-teal/80 rounded-full shadow-sm shadow-teal/20">最新の通知</span>
+                        </div>
+                        {(() => {
+                          const deptInsight = aiContent?.insights_by_dept?.[dept.id];
+                          if (deptInsight?.text) {
+                            return (
+                              <div className="space-y-2">
+                                {deptInsight.tone && (
+                                  <span className="inline-block text-[10px] text-teal-600 font-black px-2 py-0.5 bg-teal-50 rounded-full border border-teal-100">
+                                    {deptInsight.tone}
+                                  </span>
+                                )}
+                                <p className="text-sm text-slate-700 leading-relaxed font-medium">{deptInsight.text}</p>
+                              </div>
+                            );
+                          }
+                          return (
+                            <p className="text-sm text-slate-400 leading-relaxed font-medium italic">
+                              AI分析を実行すると、「{dept.name}」の体温と全社方針を掛け合わせた専用メッセージが表示されます。
+                            </p>
+                          );
+                        })()}
+                      </div>
                     );
-                  })()}
-                    </div>
-                  );
-                })()}
+                  })()
+                )}
               </div>
             </div>
           )}
@@ -355,53 +525,9 @@ export default function DashboardPage() {
               aiContent={aiContent}
             />
           )}
-
-          {sec === "report" && (
-            <ReportSection
-              generatedAt={latestAi ? new Date(latestAi.created_at).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : ""}
-              sections={[
-                {
-                  id: "executive-summary",
-                  icon: <Target className="w-5 h-5" />,
-                  title: "総評：組織の健全性と戦略進捗",
-                  subtitle: "Executive Summary",
-                  content: aiContent?.deep_report?.executive_summary || "データに基づいた総評を分析中です..."
-                },
-                {
-                  id: "correlation",
-                  icon: <Thermometer className="w-5 h-5" />,
-                  title: "組織力とKPIの相関解析",
-                  subtitle: "Organizational Health × KPI Correlation",
-                  content: aiContent?.deep_report?.correlation || "相関の分析データを準備中です..."
-                },
-                {
-                  id: "strategic-alignment",
-                  icon: <Shield className="w-5 h-5" />,
-                  title: "組織方針との整合性チェック",
-                  subtitle: "Strategic Alignment",
-                  content: aiContent?.deep_report?.strategic_alignment || "方針との整合性を検証中です..."
-                },
-                {
-                  id: "risks",
-                  icon: <AlertTriangle className="w-5 h-5" />,
-                  title: "リスクと成長機会の特定",
-                  subtitle: "Risks & Opportunities",
-                  content: aiContent?.deep_report?.risks || "リスク項目を抽出中です..."
-                },
-                {
-                  id: "recommendations",
-                  icon: <Lightbulb className="w-5 h-5" />,
-                  title: "経営判断への具体的提言",
-                  subtitle: "Actionable Recommendations",
-                  content: aiContent?.deep_report?.recommendations || "提言を生成中です..."
-                }
-              ]}
-            />
-          )}
+          </div>
         </div>
-      </div>
-    </TrialGuard>
-
+      </TrialGuard>
     </AppLayout>
   );
 }
