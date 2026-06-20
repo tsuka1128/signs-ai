@@ -9,21 +9,20 @@ import { DeepReport } from "@/components/dashboard/DeepReport";
 import { ActionSection } from "@/components/dashboard/sections/ActionSection";
 import { SemanticSection } from "@/components/dashboard/sections/SemanticSection";
 import { MatrixSection } from "@/components/dashboard/sections/MatrixSection";
+import { ReportSection } from "@/components/dashboard/sections/ReportSection";
 
 const SurveySection = dynamic(() => import("@/components/dashboard/sections/SurveySection").then(m => ({ default: m.SurveySection })), { ssr: false });
 const OrganizationSection = dynamic(() => import("@/components/dashboard/sections/OrganizationSection").then(m => ({ default: m.OrganizationSection })), { ssr: false });
 const KpiSection = dynamic(() => import("@/components/dashboard/sections/KpiSection").then(m => ({ default: m.KpiSection })), { ssr: false });
 const LaborFinanceSection = dynamic(() => import("@/components/dashboard/sections/LaborFinanceSection").then(m => ({ default: m.LaborFinanceSection })), { ssr: false });
-const ReportSection = dynamic(() => import("@/components/dashboard/sections/ReportSection").then(m => ({ default: m.ReportSection })), { ssr: false });
 import { TrialGuard } from "@/components/layout/TrialGuard";
 import { cn } from "@/lib/utils/index";
-import { Target, Thermometer, Shield, AlertTriangle, Lightbulb, Rocket } from "lucide-react";
+import { Target, Thermometer, Shield, AlertTriangle, Lightbulb } from "lucide-react";
 import { PlanGate } from "@/components/ui/PlanGate";
 import { DEFAULT_SURVEY_QUESTIONS, DEFAULT_SEMANTIC_POLICY } from "@/lib/constants";
 import { useCompany } from "@/hooks/useCompany";
 import { Loading } from "@/components/ui/Loading";
 import { useDashboardData } from "@/hooks/useDashboardData";
-import { Department } from "@/types/database";
 import { getWeatherFromPulse } from "@/lib/logic/kpi-engine";
 
 export default function DashboardPage() {
@@ -33,7 +32,6 @@ export default function DashboardPage() {
   const [selKpi, setSelKpi] = useState("mrr");
   const [orgView, setOrgView] = useState("dept");
   const [month, setMonth] = useState("default");
-  const [showDeepReport, setShowDeepReport] = useState(false);
 
   const { company, loading: authLoading, supabase, isImpersonating, userRole, userDepartmentId } = useCompany();
   const { state, derived, handlers } = useDashboardData(company, supabase, isImpersonating, userRole, userDepartmentId);
@@ -79,7 +77,6 @@ export default function DashboardPage() {
     if (!dept) return { title: "全社", tone: "戦略的分析", text: "", weather, trend };
     
     const deptInsight = aiContent?.insights_by_dept?.[dept.id];
-    const deptIdx = state.realDepts.findIndex(d => d.id === tab);
 
     return {
       title: dept.name,
@@ -151,23 +148,23 @@ export default function DashboardPage() {
     return Math.round((v / t) * 100);
   }, [selectedKpiDef]);
 
+  // サイズKPI名：第2軸が定義されていれば第2軸優先、無ければ達成率
   const sizeKpiName = useMemo(() => {
-    if (matView === "dept") return "KPI達成率";
     const kpiDef = state.realKpis.find(k => k.id === company?.secondary_axis_size_kpi_id);
-    return kpiDef ? kpiDef.name : "MRRの大きさ";
-  }, [matView, company, state.realKpis]);
+    return kpiDef ? kpiDef.name : "KPI達成率";
+  }, [company, state.realKpis]);
 
-  const currentMatData = useMemo(() => {
+  // 部署用マトリックスデータ
+  const currentDeptMatData = useMemo(() => {
     const monthsMap: Record<string, number> = {
       "default": 12, "1m": 11, "3m": 9, "6m": 6, "12m": 0
     };
     const targetIdx = monthsMap[month] ?? 12;
 
-    return (matView === "product" ? derived.displayAxes : derived.displayDepts).map((d: any) => {
+    return derived.displayDepts.map((d: any) => {
       let pulseAtMonth = d.pulseHistory?.[targetIdx] || 0;
       const headAtMonth = d.headHistory?.[targetIdx] || 0;
       let prodAtMonth = d.productivityHistory?.[targetIdx] || 100;
-      const sizeAtMonth = (matView === "product" && d.sizeHistory) ? d.sizeHistory[targetIdx] : 100;
 
       // 回答なし（pulse === 0）の場合、前月（または直近の過去月）の生産性を位置のフォールバックとして使用する
       if (pulseAtMonth === 0 && d.pulseHistory && d.productivityHistory) {
@@ -181,12 +178,48 @@ export default function DashboardPage() {
 
       let head = headAtMonth;
       if (head === 0) {
-        if (matView === "dept") {
-          const deptDef = state.realDepts.find(rd => rd.id === d.id);
-          head = deptDef?.headcount || 0;
-        } else {
-          head = d.xAxisHead || 0;
+        const deptDef = state.realDepts.find(rd => rd.id === d.id);
+        head = deptDef?.headcount || 0;
+      }
+
+      return {
+        ...d,
+        head,
+        productivity: prodAtMonth,
+        pulse: pulseAtMonth,
+        weather: getWeatherFromPulse(pulseAtMonth || d.pulse),
+        mrr: 100,
+        sizeValue: 100
+      };
+    });
+  }, [month, derived.displayDepts, state.realDepts]);
+
+  // 第2軸用マトリックスデータ
+  const currentAxisMatData = useMemo(() => {
+    const monthsMap: Record<string, number> = {
+      "default": 12, "1m": 11, "3m": 9, "6m": 6, "12m": 0
+    };
+    const targetIdx = monthsMap[month] ?? 12;
+
+    return derived.displayAxes.map((d: any) => {
+      let pulseAtMonth = d.pulseHistory?.[targetIdx] || 0;
+      const headAtMonth = d.headHistory?.[targetIdx] || 0;
+      let prodAtMonth = d.productivityHistory?.[targetIdx] || 100;
+      const sizeAtMonth = d.sizeHistory ? d.sizeHistory[targetIdx] : 100;
+
+      // 回答なし（pulse === 0）の場合、前月（または直近の過去月）の生産性を位置のフォールバックとして使用する
+      if (pulseAtMonth === 0 && d.pulseHistory && d.productivityHistory) {
+        for (let i = targetIdx - 1; i >= 0; i--) {
+          if (d.pulseHistory[i] > 0) {
+            prodAtMonth = d.productivityHistory[i];
+            break;
+          }
         }
+      }
+
+      let head = headAtMonth;
+      if (head === 0) {
+        head = d.xAxisHead || 0;
       }
 
       return {
@@ -199,7 +232,7 @@ export default function DashboardPage() {
         sizeValue: sizeAtMonth
       };
     });
-  }, [matView, month, derived.displayAxes, derived.displayDepts, state.realDepts]);
+  }, [month, derived.displayAxes]);
 
   if (authLoading) return <Loading fullScreen message="データを準備しています..." />;
   if (!company) return null;
@@ -444,11 +477,10 @@ export default function DashboardPage() {
             <MatrixSection
               secondaryAxisName={secondaryAxisName}
               sizeKpiName={sizeKpiName}
-              matView={matView}
-              setMatView={setMatView}
               month={month}
               setMonth={setMonth}
-              currentMatData={currentMatData}
+              deptData={currentDeptMatData}
+              axisData={currentAxisMatData}
               aiContent={aiContent}
               hasLaborData={state.hasLaborData}
             />
