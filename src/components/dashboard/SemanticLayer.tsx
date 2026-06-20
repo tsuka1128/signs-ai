@@ -318,7 +318,7 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
                         </div>
                         <div className="flex-1">
                             <div className="text-sm font-black text-slate-800">最新の組織方針</div>
-                            <p className="text-[11px] text-slate-500 mt-1 leading-relaxed font-medium">AI分析の基準として使用されているアクティブなバージョン</p>
+                            <p className="text-[13px] text-slate-500 mt-1 leading-relaxed font-medium">AI分析の基準として使用されているアクティブなバージョン</p>
                         </div>
                     </button>
 
@@ -447,7 +447,7 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
                                     <Bot className="w-5 h-5 text-teal" />
                                     <h3 className="text-lg font-black text-slate-800">各部署へのAI通知文プレビュー</h3>
                                 </div>
-                                <p className="text-[11px] font-bold text-slate-500 leading-relaxed">
+                                <p className="text-[13px] font-bold text-slate-500 leading-relaxed">
                                     更新された方針と、毎月の「組織体温・KPI状況」を掛け合わせ、<br />
                                     AIが各部署の状況に寄り添ったトーンで方針変更を個別通知（連携）します。
                                 </p>
@@ -484,7 +484,7 @@ export function SemanticLayer({ initialText, history = [], onSave, onDelete, dep
                                                 <h6 className="text-[11px] font-black text-slate-800 uppercase tracking-tight">{dept.name} メンバーへの通知</h6>
                                                 <Badge className="bg-blue-50 text-blue-500 border-none text-[9px]">AI要約済</Badge>
                                             </div>
-                                            <p className="text-[11px] leading-relaxed text-slate-600 font-medium">
+                                            <p className="text-[13px] leading-relaxed text-slate-600 font-medium">
                                                 {translations[dept.id] || "方針変更の要約を生成中..."}
                                             </p>
                                         </div>

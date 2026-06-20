@@ -282,7 +282,7 @@ function LaborInputContent() {
         {activeTab === 'axis' && (
           <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-1">
             <span className="text-amber-500 mt-0.5">⚠️</span>
-            <p className="text-[11px] font-bold text-amber-700 leading-relaxed">
+            <p className="text-[13px] font-bold text-amber-700 leading-relaxed">
               ここで入力した人件費・人数は領域別分析（第2軸）にのみ使用されます。<br />
               全社合計および財務パフォーマンスの算出は、原則として「部署」タブで入力された数値が優先的に集計されます。
             </p>

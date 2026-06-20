@@ -186,7 +186,7 @@ export function KpiSection({
                                         <div key={g.key} className="flex items-center gap-1.5 group/g relative">
                                             <div className={`w-1.5 h-1.5 rounded-full ${g.dot}`} />
                                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-help">{g.label}</span>
-                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-56 p-4 bg-slate-800 text-white text-[11px] rounded-2xl shadow-2xl hidden group-hover/g:block z-[100] leading-relaxed font-medium animate-in fade-in zoom-in-95">
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-56 p-4 bg-slate-800 text-white text-[13px] rounded-2xl shadow-2xl hidden group-hover/g:block z-[100] leading-relaxed font-medium animate-in fade-in zoom-in-95">
                                                 <div className="font-black mb-1 border-b border-slate-700 pb-1">{g.label}</div>
                                                 {KPI_QUALITY_META[g.key as KpiQuality].description}
                                             </div>
@@ -212,7 +212,7 @@ export function KpiSection({
                                                 <span>目標設定の評価</span>
                                                 <div className="relative group/sethelp">
                                                     <button className="w-3.5 h-3.5 rounded-full bg-slate-200 text-slate-500 hover:bg-slate-300 hover:text-slate-600 flex items-center justify-center text-[9px] font-black cursor-help transition-colors select-none">?</button>
-                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-slate-800 text-white text-[11px] rounded-2xl shadow-2xl hidden group-hover/sethelp:block z-[60] leading-relaxed font-medium animate-in fade-in zoom-in-95 whitespace-normal normal-case tracking-normal">
+                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-slate-800 text-white text-[13px] rounded-2xl shadow-2xl hidden group-hover/sethelp:block z-[60] leading-relaxed font-medium animate-in fade-in zoom-in-95 whitespace-normal normal-case tracking-normal">
                                                         <div className="font-black text-white mb-2 border-b border-slate-700 pb-1.5">目標設定の健全性</div>
                                                         <p className="text-slate-300 mb-2">過去13ヶ月のKPI達成率の平均から、目標値の難易度が適切かを自動判定します。</p>
                                                         <div className="space-y-1.5">
@@ -283,7 +283,7 @@ export function KpiSection({
                                                         <span className={`text-[11px] font-black px-3.5 py-1.5 rounded-full cursor-help shadow-sm border border-white ${qMeta.bg} ${qMeta.color}`}>
                                                             {qMeta.icon} {qMeta.label}
                                                         </span>
-                                                        <div className="absolute bottom-full left-0 mb-3 w-64 p-5 bg-slate-800 text-white text-[11px] rounded-2xl shadow-2xl hidden group-hover/quality:block z-[60] leading-relaxed font-medium animate-in fade-in zoom-in-95">
+                                                        <div className="absolute bottom-full left-0 mb-3 w-64 p-5 bg-slate-800 text-white text-[13px] rounded-2xl shadow-2xl hidden group-hover/quality:block z-[60] leading-relaxed font-medium animate-in fade-in zoom-in-95">
                                                             <div className="font-black mb-1.5 border-b border-slate-700 pb-1.5 flex items-center gap-2">
                                                                 <span>{qMeta.icon}</span>
                                                                 <span>{qMeta.label}</span>
@@ -300,7 +300,7 @@ export function KpiSection({
                                                             <span className={`text-[11px] font-black cursor-help flex items-center gap-1.5 ${shMeta.color}`}>
                                                                 <span className="text-base">⚑</span> {shMeta.label}
                                                             </span>
-                                                            <div className="absolute bottom-full left-0 mb-3 w-64 p-5 bg-slate-800 text-white text-[11px] rounded-2xl shadow-2xl hidden group-hover/sethealth:block z-[60] leading-relaxed font-medium animate-in fade-in zoom-in-95">
+                                                            <div className="absolute bottom-full left-0 mb-3 w-64 p-5 bg-slate-800 text-white text-[13px] rounded-2xl shadow-2xl hidden group-hover/sethealth:block z-[60] leading-relaxed font-medium animate-in fade-in zoom-in-95">
                                                                 <div className="font-black mb-1.5 border-b border-slate-700 pb-1.5 flex items-center gap-2">
                                                                     <span>⚑</span>
                                                                     <span>{shMeta.label}</span>

@@ -1588,7 +1588,7 @@ export default function DeptDashboardPage() {
 
                                     {/* 途中集計の注意（対象月がまだ全員分揃っていない場合） */}
                                     {isPartialSummaryMonth && (
-                                        <div className="bg-amber-50/60 border border-amber-100 rounded-2xl px-4 py-3 text-[11px] font-bold text-amber-800 leading-relaxed">
+                                        <div className="bg-amber-50/60 border border-amber-100 rounded-2xl px-4 py-3 text-[13px] font-bold text-amber-800 leading-relaxed">
                                             ⚠️ {summaryTargetLabel || "対象月"}のボイスチェックはまだ全員分揃っていません（{currentMonthScore!.respondentCount} / {currentMonthScore!.headcount} 名）。途中集計での要約です。回答が揃ってから「再生成」で更新できます。
                                         </div>
                                     )}
@@ -1611,7 +1611,7 @@ export default function DeptDashboardPage() {
                                 /* キャッシュなし・匿名ガード通過済みの場合 */
                                 <div className="bg-slate-50 border border-slate-100 rounded-2xl p-8 text-center flex flex-col items-center justify-center space-y-4 animate-in fade-in">
                                     {isPartialSummaryMonth && (
-                                        <div className="w-full bg-amber-50/60 border border-amber-100 rounded-2xl px-4 py-3 text-[11px] font-bold text-amber-800 leading-relaxed text-left">
+                                        <div className="w-full bg-amber-50/60 border border-amber-100 rounded-2xl px-4 py-3 text-[13px] font-bold text-amber-800 leading-relaxed text-left">
                                             ⚠️ {summaryTargetLabel || "対象月"}のボイスチェックはまだ全員分揃っていません（{currentMonthScore!.respondentCount} / {currentMonthScore!.headcount} 名）。今は途中集計での要約になります（回答が揃ったら「再生成」で更新できます）。
                                         </div>
                                     )}

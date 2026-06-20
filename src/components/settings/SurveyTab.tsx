@@ -198,7 +198,7 @@ export function SurveyTab({ companyId }: SurveyTabProps) {
                             オリジナル質問
                             <Badge className="text-[9px] px-1.5 py-0 border border-slate-200 text-slate-400 bg-transparent">最大3問</Badge>
                         </h4>
-                        <p className="text-[11px] text-slate-400 font-bold mt-1">自社特有の課題や文化に合わせた質問を追加できます。</p>
+                        <p className="text-[13px] text-slate-400 font-bold mt-1">自社特有の課題や文化に合わせた質問を追加できます。</p>
                     </div>
                     <button
                         onClick={handleAddQuestion}
@@ -290,7 +290,7 @@ export function SurveyTab({ companyId }: SurveyTabProps) {
                 <Info className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                 <div className="space-y-1">
                     <p className="text-xs font-black text-amber-900">カスタム設問運用のアドバイス</p>
-                    <p className="text-[11px] text-amber-700/80 font-medium leading-relaxed">
+                    <p className="text-[13px] text-amber-700/80 font-medium leading-relaxed">
                         ボイスチェックは「継続的な変化」を追うためのものです。一度設定した質問を頻繁に変更すると、過去との比較ができなくなります。
                         最低でも3ヶ月〜半年は同じ設問で運用することをお勧めします。
                     </p>

@@ -431,7 +431,7 @@ export const MembersTab = ({
                                     </table>
                                 </div>
                                 <div className="flex items-center justify-between pt-1">
-                                    <p className="text-[11px] text-slate-500 font-bold">
+                                    <p className="text-[13px] text-slate-500 font-bold">
                                         送信可能: <span className="text-emerald-600">{bulkPreview.filter(r => r.valid).length}件</span>
                                         {bulkPreview.filter(r => !r.valid).length > 0 && (
                                             <span className="text-rose-500 ml-2">エラー: {bulkPreview.filter(r => !r.valid).length}件</span>
@@ -549,7 +549,7 @@ export const MembersTab = ({
                                     </table>
                                 </div>
                                 <div className="flex items-center justify-between pt-1">
-                                    <p className="text-[11px] text-slate-500 font-bold">
+                                    <p className="text-[13px] text-slate-500 font-bold">
                                         選択中: <span className="text-amber-600">{updateWarnings.filter((_, i) => warningSelections[i] !== false).length}件</span>を更新
                                     </p>
                                     <button
@@ -715,7 +715,7 @@ export const MembersTab = ({
                 {invitations.length > 0 && (
                     <div className="mt-10">
                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">招待中のメンバー ({invitations.length})</h3>
-                        <p className="text-[11px] text-slate-400 mt-1 mb-6 ml-1 leading-relaxed">
+                        <p className="text-[13px] text-slate-400 mt-1 mb-6 ml-1 leading-relaxed">
                             ※メールが届かない場合は、該当メンバーのカードをホバーし、右側に現れる [リンクコピー] ボタンから招待URLを送信してください。
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

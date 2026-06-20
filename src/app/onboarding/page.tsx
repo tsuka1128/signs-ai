@@ -781,7 +781,7 @@ function OnboardingContent() {
                                             <span className="w-5 h-5 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center text-xs">3</span>
                                             KPIの解釈ガイドライン
                                         </label>
-                                        <p className="text-[11px] text-slate-400 sm:pl-7">今の組織でKPIをどう捉えるべきかを設定します</p>
+                                        <p className="text-[13px] text-slate-400 sm:pl-7">今の組織でKPIをどう捉えるべきかを設定します</p>
                                     </div>
                                     <div className="space-y-3">
                                         {state.kpis.map((kpi, i) => {
@@ -831,7 +831,7 @@ function OnboardingContent() {
                                         onChange={(e) => setWizardState(s => ({ ...s, triggerWords: e.target.value }))}
                                         className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-400/5 transition-all bg-slate-50 hover:bg-white"
                                     />
-                                    <p className="text-[11px] text-slate-400 pl-1">AIに優先的に注目させたいキーワードを複数指定できます</p>
+                                    <p className="text-[13px] text-slate-400 pl-1">AIに優先的に注目させたいキーワードを複数指定できます</p>
                                 </div>
                             </div>
                         ) : (

@@ -272,7 +272,7 @@ export function SurveySection({
                                 </div>
                                 <div>
                                     <p className="text-sm font-black text-slate-700 mb-1">生データの閲覧が制限されています</p>
-                                    <p className="text-[11px] text-slate-400 font-medium leading-relaxed max-w-sm mx-auto">
+                                    <p className="text-[13px] text-slate-400 font-medium leading-relaxed max-w-sm mx-auto">
                                         個人の特定を防ぐ（心理的安全性を担保する）ため、対象グループの回答者が <b>3名以上</b> になるまで定性コメントおよびトピック抽出は表示されません。<br />
                                         現在の回答者：<span className="font-black text-rose-500">{data.responseCount} 名</span>
                                     </p>
@@ -304,7 +304,7 @@ export function SurveySection({
                                             <div className="absolute -top-2 left-4 px-2 bg-slate-50">
                                                 <Sparkles className="w-3 h-3 text-amber-400" />
                                             </div>
-                                            <p className="text-[11px] text-slate-600 font-bold leading-relaxed tracking-wide">
+                                            <p className="text-[13px] text-slate-600 font-bold leading-relaxed tracking-wide">
                                                 {v.abstractedVoice}
                                             </p>
                                         </div>
