@@ -31,6 +31,50 @@ interface ScatterPlotProps {
     showTrajectory?: boolean;
 }
 
+// 体温4状態の配色（落ち着いたトーン）
+export const colors = {
+    sun: "#059669",    // 落ち着いたエメラルド
+    cloud: "#D97706",  // 落ち着いたアンバー
+    rain: "#DC2626",   // 落ち着いたローズ/レッド
+    gray: "#64748B",   // スレートグレー
+    lightGray: "#CBD5E1",
+    gridLine: "#E2E8F0"
+};
+
+// 体温ドット色判定（一元化）
+export function getDotColor(d: any) {
+    const hasEnoughResponses = d.respondentsCount !== undefined ? d.respondentsCount >= 1 : d.pulse > 0;
+    const isGrayOut = !hasEnoughResponses || d.pulse === 0;
+    return isGrayOut ? colors.gray : (d.weather === "sun" ? colors.sun : d.weather === "rain" ? colors.rain : colors.cloud);
+}
+
+// 直近変化方向の決定論的算出（一元化）
+export function getMovementDirection(d: any, yAxisMode: "kpi" | "productivity", targetIdx: number) {
+    if (targetIdx === 0) return { dir: "flat" as const, arrow: "→", diff: 0, color: "text-slate-400", rawColor: "#94A3B8" };
+
+    const currentVal = yAxisMode === "kpi"
+        ? d.kpiAchHistory?.[targetIdx] ?? d.kpiAch
+        : d.productivityHistory?.[targetIdx] ?? d.productivity;
+    const prevVal = yAxisMode === "kpi"
+        ? d.kpiAchHistory?.[targetIdx - 1]
+        : d.productivityHistory?.[targetIdx - 1];
+
+    if (prevVal === undefined || prevVal === null || prevVal === 0) {
+        return { dir: "flat" as const, arrow: "→", diff: 0, color: "text-slate-400", rawColor: "#94A3B8" };
+    }
+
+    const diff = currentVal - prevVal;
+    const threshold = yAxisMode === "kpi" ? 2.0 : 0.1;
+
+    if (diff >= threshold) {
+        return { dir: "up" as const, arrow: "↑", diff, color: "text-emerald-500", rawColor: "#10B981" };
+    } else if (diff <= -threshold) {
+        return { dir: "down" as const, arrow: "↓", diff, color: "text-rose-500", rawColor: "#EF4444" };
+    } else {
+        return { dir: "flat" as const, arrow: "→", diff, color: "text-slate-400", rawColor: "#94A3B8" };
+    }
+}
+
 export function ScatterPlot({ 
     data, 
     isProduct = false, 
@@ -79,33 +123,6 @@ export function ScatterPlot({
         };
         return monthsMap[month] ?? 12;
     }, [month]);
-
-    // 直近変化方向の決定論的算出（バッジ）
-    const getMovementDirection = useCallback((d: ScatterData) => {
-        if (targetIdx === 0) return { dir: "flat" as const, arrow: "→", diff: 0, color: "text-slate-400", rawColor: "#94A3B8" };
-
-        const currentVal = yAxisMode === "kpi"
-            ? (d as any).kpiAchHistory?.[targetIdx] ?? d.kpiAch
-            : (d as any).productivityHistory?.[targetIdx] ?? d.productivity;
-        const prevVal = yAxisMode === "kpi"
-            ? (d as any).kpiAchHistory?.[targetIdx - 1]
-            : (d as any).productivityHistory?.[targetIdx - 1];
-
-        if (prevVal === undefined || prevVal === null || prevVal === 0) {
-            return { dir: "flat" as const, arrow: "→", diff: 0, color: "text-slate-400", rawColor: "#94A3B8" };
-        }
-
-        const diff = currentVal - prevVal;
-        const threshold = yAxisMode === "kpi" ? 2.0 : 0.1;
-
-        if (diff >= threshold) {
-            return { dir: "up" as const, arrow: "↑", diff, color: "text-emerald-500", rawColor: "#10B981" };
-        } else if (diff <= -threshold) {
-            return { dir: "down" as const, arrow: "↓", diff, color: "text-rose-500", rawColor: "#EF4444" };
-        } else {
-            return { dir: "flat" as const, arrow: "→", diff, color: "text-slate-400", rawColor: "#94A3B8" };
-        }
-    }, [targetIdx, yAxisMode]);
 
     // 衝突回避ロジック（近接ラベルの上下自動振り分け）
     const labelPositions = useMemo(() => {
@@ -197,21 +214,21 @@ export function ScatterPlot({
         { x: midX, y: midY, w: pw / 2, h: ph / 2, label: "OVERWEIGHT (要テコ入れ)", sub: `多人数×${yLabelWordLow} | 改善必須領域`, color: "#FDF5F5" } // 極薄レッド
     ];
 
-    // 体温4状態の配色（落ち着いたトーン）
-    const colors = {
-        sun: "#059669",    // 落ち着いたエメラルド
-        cloud: "#D97706",  // 落ち着いたアンバー
-        rain: "#DC2626",   // 落ち着いたローズ/レッド
-        gray: "#64748B",   // スレートグレー
-        lightGray: "#CBD5E1",
-        gridLine: "#E2E8F0"
-    };
-    
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
     const [showAxisHelp, setShowAxisHelp] = useState(false);
     
     useEffect(() => { setMounted(true); }, []);
+
+    if (data.length === 0) {
+        return (
+            <div className="w-full h-[360px] bg-slate-50/50 border border-dashed border-slate-200 rounded-[28px] flex flex-col items-center justify-center p-6 text-center select-none animate-in fade-in duration-300">
+                <HelpCircle className="w-8 h-8 text-slate-300 mb-2.5" />
+                <p className="text-xs font-black text-slate-600">表示対象がすべて非表示になっています</p>
+                <p className="text-[10px] text-slate-400 mt-1 max-w-[280px] leading-relaxed">右側の「凡例兼フィルタ」パネルから、表示したい項目にチェックを入れてください。</p>
+            </div>
+        );
+    }
 
     const renderChart = () => (
         <div className="relative w-full">
@@ -278,11 +295,8 @@ export function ScatterPlot({
                         r = Math.max(12, Math.min(32, 12 + (d.sizeValue / 5000) * 8));
                     }
 
-                    const hasEnoughResponses = d.respondentsCount !== undefined ? d.respondentsCount >= 1 : d.pulse > 0;
-                    const isGrayOut = !hasEnoughResponses || d.pulse === 0;
-                    const col = isGrayOut ? colors.gray : (d.weather === "sun" ? colors.sun : d.weather === "rain" ? colors.rain : colors.cloud);
-
-                    const movement = getMovementDirection(d);
+                    const col = getDotColor(d);
+                    const movement = getMovementDirection(d, yAxisMode, targetIdx);
                     const labelPos = labelPositions[d.id] || "top";
                     const labelY = labelPos === "top" ? -r - 6 : r + 15;
 
@@ -387,7 +401,7 @@ export function ScatterPlot({
 
                 const hasEnoughResponses = d.respondentsCount !== undefined ? d.respondentsCount >= 1 : d.pulse > 0;
                 const isGrayOut = !hasEnoughResponses || d.pulse === 0;
-                const dotCol = isGrayOut ? colors.gray : (d.weather === "sun" ? colors.sun : d.weather === "rain" ? colors.rain : colors.cloud);
+                const dotCol = getDotColor(d);
 
                 return (
                     <div 
@@ -404,7 +418,7 @@ export function ScatterPlot({
                                 <span className="truncate">{d.name}</span>
                             </div>
                             {(() => {
-                                const movement = getMovementDirection(d);
+                                const movement = getMovementDirection(d, yAxisMode, targetIdx);
                                 let bgStyle = "bg-slate-800 text-slate-400 border-slate-700";
                                 if (movement.dir === "up") bgStyle = "bg-emerald-950 text-emerald-400 border-emerald-800/50";
                                 if (movement.dir === "down") bgStyle = "bg-rose-950 text-rose-400 border-rose-800/50";

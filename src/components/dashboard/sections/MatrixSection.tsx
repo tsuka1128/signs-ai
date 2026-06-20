@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ScatterPlot } from "@/components/dashboard/ScatterPlot";
+import { ScatterPlot, colors, getDotColor, getMovementDirection } from "@/components/dashboard/ScatterPlot";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AreaChart, Lightbulb, TrendingUp, Users, Target, Shield, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils/index";
@@ -66,6 +66,8 @@ export function MatrixSection({
     const [sizeBase, setSizeBase] = useState<"kpi" | "labor">("kpi");
     const [yAxisMode, setYAxisMode] = useState<"kpi" | "productivity">("kpi");
     const [showTrajectory, setShowTrajectory] = useState(true);
+    const [excludedDeptIds, setExcludedDeptIds] = useState<string[]>([]);
+    const [excludedAxisIds, setExcludedAxisIds] = useState<string[]>([]);
 
     // 散布図へ流し込むためのデータ整形
     const deptScatterData = useMemo(() => {
@@ -84,11 +86,27 @@ export function MatrixSection({
         }));
     }, [axisData, sizeBase]);
 
+    const filteredDeptScatterData = useMemo(() => {
+        return deptScatterData.filter(d => !excludedDeptIds.includes(d.id));
+    }, [deptScatterData, excludedDeptIds]);
+
+    const filteredAxisScatterData = useMemo(() => {
+        return axisScatterData.filter(d => !excludedAxisIds.includes(d.id));
+    }, [axisScatterData, excludedAxisIds]);
+
     const displaySizeKpiName = sizeBase === "labor" ? "人件費の大きさ" : sizeKpiName;
 
+    // タイムラプス選択月の特定用
+    const targetIdx = useMemo(() => {
+        const monthsMap: Record<string, number> = {
+            "default": 12, "1m": 11, "3m": 9, "6m": 6, "12m": 0
+        };
+        return monthsMap[month] ?? 12;
+    }, [month]);
+
     // クライアント側自動見出し
-    const deptAutoInsight = useMemo(() => getAutoInsight(deptScatterData, yAxisMode, false, secondaryAxisName), [deptScatterData, yAxisMode, secondaryAxisName]);
-    const axisAutoInsight = useMemo(() => getAutoInsight(axisScatterData, yAxisMode, true, secondaryAxisName), [axisScatterData, yAxisMode, secondaryAxisName]);
+    const deptAutoInsight = useMemo(() => getAutoInsight(filteredDeptScatterData, yAxisMode, false, secondaryAxisName), [filteredDeptScatterData, yAxisMode, secondaryAxisName]);
+    const axisAutoInsight = useMemo(() => getAutoInsight(filteredAxisScatterData, yAxisMode, true, secondaryAxisName), [filteredAxisScatterData, yAxisMode, secondaryAxisName]);
 
     return (
         <div className="space-y-6">
@@ -219,24 +237,91 @@ export function MatrixSection({
                 </div>
 
                 {/* 散布図描画 */}
-                <div className="max-w-[560px] mx-auto">
-                    {deptScatterData.length > 0 ? (
-                        <ScatterPlot
-                            data={deptScatterData}
-                            isProduct={false}
-                            sizeKpiName={displaySizeKpiName}
-                            yAxisMode={yAxisMode}
-                            month={month}
-                            showTrajectory={showTrajectory}
-                        />
-                    ) : (
+                {deptScatterData.length > 0 ? (
+                    <div className="flex flex-col lg:flex-row gap-6 items-start justify-between">
+                        {/* 左側: 散布図 (560px固定) */}
+                        <div className="w-full lg:w-[560px] shrink-0">
+                            <ScatterPlot
+                                data={filteredDeptScatterData}
+                                isProduct={false}
+                                sizeKpiName={displaySizeKpiName}
+                                yAxisMode={yAxisMode}
+                                month={month}
+                                showTrajectory={showTrajectory}
+                            />
+                        </div>
+
+                        {/* 右側: 凡例兼フィルタパネル */}
+                        <div className="flex-1 w-full lg:max-w-[240px] bg-slate-50/50 border border-slate-100 rounded-2xl p-4 space-y-3.5">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">凡例 ＆ フィルタ</span>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setExcludedDeptIds([])}
+                                        className="text-[9px] font-black text-teal-600 hover:text-teal-700 transition-colors"
+                                    >
+                                        すべて選択
+                                    </button>
+                                    <span className="text-slate-300 text-[9px]">|</span>
+                                    <button
+                                        onClick={() => setExcludedDeptIds(deptScatterData.map(d => d.id))}
+                                        className="text-[9px] font-black text-slate-500 hover:text-slate-600 transition-colors"
+                                    >
+                                        すべて解除
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1">
+                                {deptScatterData.map((d) => {
+                                    const isChecked = !excludedDeptIds.includes(d.id);
+                                    const dotColor = getDotColor(d);
+                                    const movement = getMovementDirection(d, yAxisMode, targetIdx);
+                                    return (
+                                        <label
+                                            key={d.id}
+                                            className={cn(
+                                                "flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-transparent cursor-pointer transition-all hover:bg-slate-100/50 select-none",
+                                                isChecked ? "bg-white shadow-sm border-slate-100" : "opacity-50"
+                                            )}
+                                        >
+                                            <div className="flex items-center gap-2 truncate">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isChecked}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setExcludedDeptIds(prev => prev.filter(id => id !== d.id));
+                                                        } else {
+                                                            setExcludedDeptIds(prev => [...prev, d.id]);
+                                                        }
+                                                    }}
+                                                    className="rounded border-slate-200 text-teal focus:ring-teal w-3.5 h-3.5 cursor-pointer accent-teal-600"
+                                                />
+                                                <span 
+                                                    className="w-2.5 h-2.5 rounded-full shrink-0" 
+                                                    style={{ backgroundColor: isChecked ? dotColor : colors.gray }} 
+                                                />
+                                                <span className="text-[11px] font-bold text-slate-700 truncate">{d.name}</span>
+                                            </div>
+                                            <span className={cn("text-[9px] font-black shrink-0 ml-2", isChecked ? movement.color : "text-slate-400")}>
+                                                {movement.arrow}
+                                            </span>
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="max-w-[560px] mx-auto">
                         <EmptyState
                             title="表示可能な部署データがありません"
                             description="部署の実績・アンケート結果を登録してください。"
                             icon={<AreaChart className="w-12 h-12 text-slate-200" />}
                         />
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
 
             {/* 2. 第2軸（プロダクト別等）マトリックス（第2軸が設定されている場合のみ表示） */}
@@ -271,15 +356,80 @@ export function MatrixSection({
                     </div>
 
                     {/* 散布図描画 */}
-                    <div className="max-w-[560px] mx-auto">
-                        <ScatterPlot
-                            data={axisScatterData}
-                            isProduct={true}
-                            sizeKpiName={displaySizeKpiName}
-                            yAxisMode={yAxisMode}
-                            month={month}
-                            showTrajectory={showTrajectory}
-                        />
+                    <div className="flex flex-col lg:flex-row gap-6 items-start justify-between">
+                        {/* 左側: 散布図 (560px固定) */}
+                        <div className="w-full lg:w-[560px] shrink-0">
+                            <ScatterPlot
+                                data={filteredAxisScatterData}
+                                isProduct={true}
+                                sizeKpiName={displaySizeKpiName}
+                                yAxisMode={yAxisMode}
+                                month={month}
+                                showTrajectory={showTrajectory}
+                            />
+                        </div>
+
+                        {/* 右側: 凡例兼フィルタパネル */}
+                        <div className="flex-1 w-full lg:max-w-[240px] bg-slate-50/50 border border-slate-100 rounded-2xl p-4 space-y-3.5">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">凡例 ＆ フィルタ</span>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setExcludedAxisIds([])}
+                                        className="text-[9px] font-black text-teal-600 hover:text-teal-700 transition-colors"
+                                    >
+                                        すべて選択
+                                    </button>
+                                    <span className="text-slate-300 text-[9px]">|</span>
+                                    <button
+                                        onClick={() => setExcludedAxisIds(axisScatterData.map(d => d.id))}
+                                        className="text-[9px] font-black text-slate-500 hover:text-slate-600 transition-colors"
+                                    >
+                                        すべて解除
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1">
+                                {axisScatterData.map((d) => {
+                                    const isChecked = !excludedAxisIds.includes(d.id);
+                                    const dotColor = getDotColor(d);
+                                    const movement = getMovementDirection(d, yAxisMode, targetIdx);
+                                    return (
+                                        <label
+                                            key={d.id}
+                                            className={cn(
+                                                "flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-transparent cursor-pointer transition-all hover:bg-slate-100/50 select-none",
+                                                isChecked ? "bg-white shadow-sm border-slate-100" : "opacity-50"
+                                            )}
+                                        >
+                                            <div className="flex items-center gap-2 truncate">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isChecked}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setExcludedAxisIds(prev => prev.filter(id => id !== d.id));
+                                                        } else {
+                                                            setExcludedAxisIds(prev => [...prev, d.id]);
+                                                        }
+                                                    }}
+                                                    className="rounded border-slate-200 text-teal focus:ring-teal w-3.5 h-3.5 cursor-pointer accent-teal-600"
+                                                />
+                                                <span 
+                                                    className="w-2.5 h-2.5 rounded-full shrink-0" 
+                                                    style={{ backgroundColor: isChecked ? dotColor : colors.gray }} 
+                                                />
+                                                <span className="text-[11px] font-bold text-slate-700 truncate">{d.name}</span>
+                                            </div>
+                                            <span className={cn("text-[9px] font-black shrink-0 ml-2", isChecked ? movement.color : "text-slate-400")}>
+                                                {movement.arrow}
+                                            </span>
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
