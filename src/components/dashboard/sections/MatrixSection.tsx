@@ -5,12 +5,11 @@ import { ScatterPlot, colors, getDotColor, getMovementDirection } from "@/compon
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AreaChart, Lightbulb, TrendingUp, Users, Target, Shield, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils/index";
+import { getWeatherFromPulse } from "@/lib/logic/kpi-engine";
 
 interface MatrixSectionProps {
     secondaryAxisName: string;
     sizeKpiName: string;
-    month: string;
-    setMonth: (m: string) => void;
     deptData: any[];
     axisData: any[];
     aiContent?: any;
@@ -56,156 +55,125 @@ function getAutoInsight(data: any[], yAxisMode: "kpi" | "productivity", isAxis: 
 export function MatrixSection({
     secondaryAxisName,
     sizeKpiName,
-    month,
-    setMonth,
     deptData,
     axisData,
     aiContent,
     hasLaborData
 }: MatrixSectionProps) {
-    const [sizeBase, setSizeBase] = useState<"kpi" | "labor">("kpi");
-    const [yAxisMode, setYAxisMode] = useState<"kpi" | "productivity">("kpi");
-    const [showTrajectory, setShowTrajectory] = useState(true);
+    const [deptSizeBase, setDeptSizeBase] = useState<"kpi" | "labor">("kpi");
+    const [deptYAxisMode, setDeptYAxisMode] = useState<"kpi" | "productivity">("kpi");
+    const [showDeptTrajectory, setShowDeptTrajectory] = useState(true);
+    const [deptMonth, setDeptMonth] = useState("default");
     const [excludedDeptIds, setExcludedDeptIds] = useState<string[]>([]);
+
+    const [axisSizeBase, setAxisSizeBase] = useState<"kpi" | "labor">("kpi");
+    const [axisYAxisMode, setAxisYAxisMode] = useState<"kpi" | "productivity">("kpi");
+    const [showAxisTrajectory, setShowAxisTrajectory] = useState(true);
+    const [axisMonth, setAxisMonth] = useState("default");
     const [excludedAxisIds, setExcludedAxisIds] = useState<string[]>([]);
 
-    // 散布図へ流し込むためのデータ整形
-    const deptScatterData = useMemo(() => {
-        return deptData.map(d => ({
-            ...d,
-            head: d.head || d.masterHeadcount || 0,
-            sizeValue: sizeBase === "labor" ? d.totalLaborCost : d.sizeValue
-        }));
-    }, [deptData, sizeBase]);
+    // 部署用のタイムラプス選択月の特定用
+    const deptTargetIdx = useMemo(() => {
+        const monthsMap: Record<string, number> = {
+            "default": 12, "1m": 11, "3m": 9, "6m": 6, "12m": 0
+        };
+        return monthsMap[deptMonth] ?? 12;
+    }, [deptMonth]);
 
-    const axisScatterData = useMemo(() => {
-        return axisData.map(d => ({
-            ...d,
-            head: d.head || d.masterHeadcount || 0,
-            sizeValue: sizeBase === "labor" ? d.totalLaborCost : d.sizeValue
-        }));
-    }, [axisData, sizeBase]);
+    // 部署散布図データ整形
+    const deptScatterData = useMemo(() => {
+        return deptData.map(d => {
+            const pulseAtMonth = d.pulseHistory?.[deptTargetIdx] || 0;
+            const headAtMonth = d.headHistory?.[deptTargetIdx] || 0;
+            let prodAtMonth = d.productivityHistory?.[deptTargetIdx] || 100;
+
+            // 回答なし（pulse === 0）の場合、前月（または直近の過去月）の生産性を位置のフォールバックとして使用する
+            if (pulseAtMonth === 0 && d.pulseHistory && d.productivityHistory) {
+                for (let i = deptTargetIdx - 1; i >= 0; i--) {
+                    if (d.pulseHistory[i] > 0) {
+                        prodAtMonth = d.productivityHistory[i];
+                        break;
+                    }
+                }
+            }
+
+            let head = headAtMonth;
+            if (head === 0) {
+                head = d.masterHeadcount || d.headcount || 0;
+            }
+
+            return {
+                ...d,
+                head,
+                productivity: prodAtMonth,
+                pulse: pulseAtMonth,
+                weather: getWeatherFromPulse(pulseAtMonth || d.pulse),
+                mrr: 100,
+                sizeValue: deptSizeBase === "labor" ? d.totalLaborCost : d.sizeValue
+            };
+        });
+    }, [deptData, deptTargetIdx, deptSizeBase]);
 
     const filteredDeptScatterData = useMemo(() => {
         return deptScatterData.filter(d => !excludedDeptIds.includes(d.id));
     }, [deptScatterData, excludedDeptIds]);
 
+    // 第2軸用のタイムラプス選択月の特定用
+    const axisTargetIdx = useMemo(() => {
+        const monthsMap: Record<string, number> = {
+            "default": 12, "1m": 11, "3m": 9, "6m": 6, "12m": 0
+        };
+        return monthsMap[axisMonth] ?? 12;
+    }, [axisMonth]);
+
+    // 第2軸散布図データ整形
+    const axisScatterData = useMemo(() => {
+        return axisData.map(d => {
+            const pulseAtMonth = d.pulseHistory?.[axisTargetIdx] || 0;
+            const headAtMonth = d.headHistory?.[axisTargetIdx] || 0;
+            let prodAtMonth = d.productivityHistory?.[axisTargetIdx] || 100;
+            const sizeAtMonth = d.sizeHistory ? d.sizeHistory[axisTargetIdx] : 100;
+
+            // 回答なし（pulse === 0）の場合、前月（または直近の過去月）の生産性を位置のフォールバックとして使用する
+            if (pulseAtMonth === 0 && d.pulseHistory && d.productivityHistory) {
+                for (let i = axisTargetIdx - 1; i >= 0; i--) {
+                    if (d.pulseHistory[i] > 0) {
+                        prodAtMonth = d.productivityHistory[i];
+                        break;
+                    }
+                }
+            }
+
+            let head = headAtMonth;
+            if (head === 0) {
+                head = d.xAxisHead || 0;
+            }
+
+            return {
+                ...d,
+                head,
+                productivity: prodAtMonth,
+                pulse: pulseAtMonth,
+                weather: getWeatherFromPulse(pulseAtMonth || d.pulse),
+                mrr: sizeAtMonth,
+                sizeValue: axisSizeBase === "labor" ? d.totalLaborCost : sizeAtMonth
+            };
+        });
+    }, [axisData, axisTargetIdx, axisSizeBase]);
+
     const filteredAxisScatterData = useMemo(() => {
         return axisScatterData.filter(d => !excludedAxisIds.includes(d.id));
     }, [axisScatterData, excludedAxisIds]);
 
-    const displaySizeKpiName = sizeBase === "labor" ? "人件費の大きさ" : sizeKpiName;
-
-    // タイムラプス選択月の特定用
-    const targetIdx = useMemo(() => {
-        const monthsMap: Record<string, number> = {
-            "default": 12, "1m": 11, "3m": 9, "6m": 6, "12m": 0
-        };
-        return monthsMap[month] ?? 12;
-    }, [month]);
+    const displayDeptSizeKpiName = deptSizeBase === "labor" ? "人件費の大きさ" : sizeKpiName;
+    const displayAxisSizeKpiName = axisSizeBase === "labor" ? "人件費の大きさ" : sizeKpiName;
 
     // クライアント側自動見出し
-    const deptAutoInsight = useMemo(() => getAutoInsight(filteredDeptScatterData, yAxisMode, false, secondaryAxisName), [filteredDeptScatterData, yAxisMode, secondaryAxisName]);
-    const axisAutoInsight = useMemo(() => getAutoInsight(filteredAxisScatterData, yAxisMode, true, secondaryAxisName), [filteredAxisScatterData, yAxisMode, secondaryAxisName]);
+    const deptAutoInsight = useMemo(() => getAutoInsight(filteredDeptScatterData, deptYAxisMode, false, secondaryAxisName), [filteredDeptScatterData, deptYAxisMode, secondaryAxisName]);
+    const axisAutoInsight = useMemo(() => getAutoInsight(filteredAxisScatterData, axisYAxisMode, true, secondaryAxisName), [filteredAxisScatterData, axisYAxisMode, secondaryAxisName]);
 
     return (
         <div className="space-y-6">
-            {/* コントロールパネル (共通化・最上部に配置) */}
-            <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex flex-col gap-4">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div className="space-y-1">
-                        <h4 className="text-sm font-black text-slate-800 tracking-tight">組織マップ制御</h4>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Map Configuration & Timeline</p>
-                    </div>
-
-                    {/* Y軸切り替えトグル */}
-                    <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Y軸モード:</span>
-                        <div className="flex bg-slate-100 p-0.5 rounded-full text-xs font-bold shadow-inner">
-                            <button
-                                onClick={() => setYAxisMode("kpi")}
-                                className={cn(
-                                    "px-3.5 py-1.5 rounded-full transition-all text-[10px] font-black uppercase tracking-wider",
-                                    yAxisMode === "kpi" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
-                                )}
-                            >
-                                成果重視 (達成率)
-                            </button>
-                            <button
-                                onClick={() => setYAxisMode("productivity")}
-                                className={cn(
-                                    "px-3.5 py-1.5 rounded-full transition-all text-[10px] font-black uppercase tracking-wider",
-                                    yAxisMode === "productivity" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
-                                )}
-                            >
-                                組織開発重視 (生産性)
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-4 border-t border-slate-50 pt-4">
-                    {/* タイムラプス (共通) */}
-                    <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Time Lapse:</span>
-                        <div className="flex bg-slate-100 p-0.5 rounded-full text-xs font-bold shadow-inner">
-                            {[{ id: "default", label: "現在" }, { id: "1m", label: "1ヶ月前" }, { id: "3m", label: "3ヶ月前" }, { id: "6m", label: "6ヶ月前" }, { id: "12m", label: "1年前" }].map((t) => (
-                                <button
-                                    key={t.id}
-                                    onClick={() => setMonth(t.id)}
-                                    className={cn(
-                                        "px-3 py-1.5 rounded-full transition-all text-[10px] font-black uppercase tracking-wider",
-                                        (month || "default") === t.id ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
-                                    )}
-                                >
-                                    {t.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* 軌跡表示ON/OFF */}
-                    <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-full px-3.5 py-1.5 shadow-sm">
-                        <label className="flex items-center gap-2 cursor-pointer text-[10px] font-black text-slate-500 uppercase tracking-wider select-none">
-                            <input
-                                type="checkbox"
-                                checked={showTrajectory}
-                                onChange={(e) => setShowTrajectory(e.target.checked)}
-                                className="rounded border-slate-200 text-teal focus:ring-teal w-3.5 h-3.5 cursor-pointer accent-teal-600"
-                            />
-                            <span>軌跡（動く地図）を表示</span>
-                        </label>
-                    </div>
-
-                    {/* サイズ基準 (人件費データがある場合のみ) */}
-                    {hasLaborData && (
-                        <div className="flex items-center gap-2 sm:ml-auto">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">サイズ重視:</span>
-                            <div className="flex bg-slate-100 p-0.5 rounded-full text-xs font-bold shadow-inner">
-                                <button
-                                    onClick={() => setSizeBase("kpi")}
-                                    className={cn(
-                                        "px-3 py-1.5 rounded-full transition-all text-[10px] font-black uppercase tracking-wider",
-                                        sizeBase === "kpi" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
-                                    )}
-                                >
-                                    均一
-                                </button>
-                                <button
-                                    onClick={() => setSizeBase("labor")}
-                                    className={cn(
-                                        "px-3 py-1.5 rounded-full transition-all text-[10px] font-black uppercase tracking-wider",
-                                        sizeBase === "labor" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
-                                    )}
-                                >
-                                    人件費投資
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-
             {/* 1. 部署マトリックス (主役) */}
             <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm transition-all space-y-6">
                 <div className="flex justify-between items-start border-b border-slate-50 pb-4">
@@ -214,7 +182,7 @@ export function MatrixSection({
                             <h3 className="text-sm font-black text-slate-800 tracking-tight">部署マトリックス</h3>
                             <span className="text-[8px] bg-emerald-50 text-emerald-600 font-bold px-2 py-0.5 rounded-full border border-emerald-100">規模 × 成果 × 健康</span>
                         </div>
-                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">X: メンバー数 ｜ Y: {yAxisMode === "kpi" ? "KPI達成率" : "一人当たり生産性"} ｜ 色: 組織体温</p>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">X: メンバー数 ｜ Y: {deptYAxisMode === "kpi" ? "KPI達成率" : "一人当たり生産性"} ｜ 色: 組織体温</p>
                     </div>
                 </div>
 
@@ -238,78 +206,164 @@ export function MatrixSection({
 
                 {/* 散布図描画 */}
                 {deptScatterData.length > 0 ? (
-                    <div className="flex flex-col lg:flex-row gap-6 items-start justify-between">
-                        {/* 左側: 散布図 (560px固定) */}
-                        <div className="w-full lg:w-[560px] shrink-0">
+                    <div className="flex flex-col lg:flex-row gap-6 items-start">
+                        {/* 左側: 散布図 (広い画面で伸びる) */}
+                        <div className="flex-1 w-full">
                             <ScatterPlot
                                 data={filteredDeptScatterData}
                                 isProduct={false}
-                                sizeKpiName={displaySizeKpiName}
-                                yAxisMode={yAxisMode}
-                                month={month}
-                                showTrajectory={showTrajectory}
+                                sizeKpiName={displayDeptSizeKpiName}
+                                yAxisMode={deptYAxisMode}
+                                month={deptMonth}
+                                showTrajectory={showDeptTrajectory}
                             />
                         </div>
 
-                        {/* 右側: 凡例兼フィルタパネル */}
-                        <div className="flex-1 w-full lg:max-w-[240px] bg-slate-50/50 border border-slate-100 rounded-2xl p-4 space-y-3.5">
-                            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">凡例 ＆ フィルタ</span>
-                                <div className="flex gap-2">
+                        {/* 右側: 操作 ＆ フィルタパネル */}
+                        <div className="w-full lg:w-[240px] shrink-0 bg-slate-50/50 border border-slate-100 rounded-2xl p-4 space-y-4">
+                            {/* Y軸モード */}
+                            <div className="space-y-1.5">
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Y軸モード:</span>
+                                <div className="flex bg-slate-100/60 p-0.5 rounded-xl text-[9px] font-bold shadow-inner">
                                     <button
-                                        onClick={() => setExcludedDeptIds([])}
-                                        className="text-[9px] font-black text-teal-600 hover:text-teal-700 transition-colors"
+                                        onClick={() => setDeptYAxisMode("kpi")}
+                                        className={cn(
+                                            "flex-1 text-center py-1 px-1.5 rounded-lg transition-all font-black tracking-tight",
+                                            deptYAxisMode === "kpi" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                        )}
                                     >
-                                        すべて選択
+                                        成果 (達成率)
                                     </button>
-                                    <span className="text-slate-300 text-[9px]">|</span>
                                     <button
-                                        onClick={() => setExcludedDeptIds(deptScatterData.map(d => d.id))}
-                                        className="text-[9px] font-black text-slate-500 hover:text-slate-600 transition-colors"
+                                        onClick={() => setDeptYAxisMode("productivity")}
+                                        className={cn(
+                                            "flex-1 text-center py-1 px-1.5 rounded-lg transition-all font-black tracking-tight",
+                                            deptYAxisMode === "productivity" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                        )}
                                     >
-                                        すべて解除
+                                        組織 (生産性)
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1">
-                                {deptScatterData.map((d) => {
-                                    const isChecked = !excludedDeptIds.includes(d.id);
-                                    const dotColor = getDotColor(d);
-                                    const movement = getMovementDirection(d, yAxisMode, targetIdx);
-                                    return (
-                                        <label
-                                            key={d.id}
+                            {/* タイムラプス */}
+                            <div className="space-y-1.5">
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">タイムラプス:</span>
+                                <div className="flex flex-wrap gap-1 bg-slate-100/60 p-1 rounded-xl">
+                                    {[{ id: "default", label: "現在" }, { id: "1m", label: "1m前" }, { id: "3m", label: "3m前" }, { id: "6m", label: "6m前" }, { id: "12m", label: "1年前" }].map((t) => (
+                                        <button
+                                            key={t.id}
+                                            onClick={() => setDeptMonth(t.id)}
                                             className={cn(
-                                                "flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-transparent cursor-pointer transition-all hover:bg-slate-100/50 select-none",
-                                                isChecked ? "bg-white shadow-sm border-slate-100" : "opacity-50"
+                                                "flex-1 min-w-[38px] text-center py-1 px-1.5 rounded-lg transition-all text-[9px] font-black tracking-tighter whitespace-nowrap",
+                                                deptMonth === t.id ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
                                             )}
                                         >
-                                            <div className="flex items-center gap-2 truncate">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isChecked}
-                                                    onChange={(e) => {
-                                                        if (e.target.checked) {
-                                                            setExcludedDeptIds(prev => prev.filter(id => id !== d.id));
-                                                        } else {
-                                                            setExcludedDeptIds(prev => [...prev, d.id]);
-                                                        }
-                                                    }}
-                                                    className="rounded border-slate-200 text-teal focus:ring-teal w-3.5 h-3.5 cursor-pointer accent-teal-600"
-                                                />
-                                                <span 
-                                                    className="w-2.5 h-2.5 rounded-full shrink-0" 
-                                                    style={{ backgroundColor: isChecked ? dotColor : colors.gray }} 
-                                                />
-                                                <span className="text-[11px] font-bold text-slate-700 truncate">{d.name}</span>
-                                            </div>
-                                            <span className={cn("text-[9px] font-black shrink-0 ml-2", isChecked ? movement.color : "text-slate-400")}>
-                                                {movement.arrow}
-                                            </span>
-                                        </label>
-                                    );
-                                })}
+                                            {t.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 軌跡とサイズ重視 */}
+                            <div className="flex flex-col gap-2">
+                                <label className="flex items-center gap-2 cursor-pointer text-[9px] font-black text-slate-500 uppercase tracking-wider select-none">
+                                    <input
+                                        type="checkbox"
+                                        checked={showDeptTrajectory}
+                                        onChange={(e) => setShowDeptTrajectory(e.target.checked)}
+                                        className="rounded border-slate-200 text-teal focus:ring-teal w-3 h-3 cursor-pointer accent-teal-600"
+                                    />
+                                    <span>軌跡（動く地図）を表示</span>
+                                </label>
+
+                                {hasLaborData && (
+                                    <div className="flex items-center justify-between border-t border-slate-100/80 pt-2 mt-1">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">サイズ重視:</span>
+                                        <div className="flex bg-slate-100/60 p-0.5 rounded-lg shadow-inner">
+                                            <button
+                                                onClick={() => setDeptSizeBase("kpi")}
+                                                className={cn(
+                                                    "px-2 py-0.5 rounded-md transition-all text-[8px] font-black tracking-tight",
+                                                    deptSizeBase === "kpi" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                                )}
+                                            >
+                                                均一
+                                            </button>
+                                            <button
+                                                onClick={() => setDeptSizeBase("labor")}
+                                                className={cn(
+                                                    "px-2 py-0.5 rounded-md transition-all text-[8px] font-black tracking-tight",
+                                                    deptSizeBase === "labor" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                                )}
+                                            >
+                                                人件費
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* 凡例 ＆ フィルタ */}
+                            <div className="border-t border-slate-100 pt-3.5 space-y-2">
+                                <div className="flex items-center justify-between pb-1">
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">凡例 ＆ フィルタ</span>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setExcludedDeptIds([])}
+                                            className="text-[9px] font-black text-teal-600 hover:text-teal-700 transition-colors"
+                                        >
+                                            全選択
+                                        </button>
+                                        <span className="text-slate-300 text-[9px]">|</span>
+                                        <button
+                                            onClick={() => setExcludedDeptIds(deptScatterData.map(d => d.id))}
+                                            className="text-[9px] font-black text-slate-500 hover:text-slate-600 transition-colors"
+                                        >
+                                            全解除
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1 max-h-[180px] overflow-y-auto pr-1">
+                                    {deptScatterData.map((d) => {
+                                        const isChecked = !excludedDeptIds.includes(d.id);
+                                        const dotColor = getDotColor(d);
+                                        const movement = getMovementDirection(d, deptYAxisMode, deptTargetIdx);
+                                        return (
+                                            <label
+                                                key={d.id}
+                                                className={cn(
+                                                    "flex items-center justify-between px-2 py-1 rounded-lg border border-transparent cursor-pointer transition-all hover:bg-slate-100/50 select-none",
+                                                    isChecked ? "bg-white shadow-sm border-slate-100" : "opacity-50"
+                                                )}
+                                            >
+                                                <div className="flex items-center gap-1.5 truncate">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isChecked}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setExcludedDeptIds(prev => prev.filter(id => id !== d.id));
+                                                            } else {
+                                                                setExcludedDeptIds(prev => [...prev, d.id]);
+                                                            }
+                                                        }}
+                                                        className="rounded border-slate-200 text-teal focus:ring-teal w-3 h-3 cursor-pointer accent-teal-600"
+                                                    />
+                                                    <span 
+                                                        className="w-2.5 h-2.5 rounded-full shrink-0" 
+                                                        style={{ backgroundColor: isChecked ? dotColor : colors.gray }} 
+                                                    />
+                                                    <span className="text-[10px] font-bold text-slate-700 truncate">{d.name}</span>
+                                                </div>
+                                                <span className={cn("text-[8px] font-black shrink-0 ml-2", isChecked ? movement.color : "text-slate-400")}>
+                                                    {movement.arrow}
+                                                </span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -333,7 +387,7 @@ export function MatrixSection({
                                 <h3 className="text-sm font-black text-slate-800 tracking-tight">{secondaryAxisName}マトリックス</h3>
                                 <span className="text-[8px] bg-teal-50 text-teal-600 font-bold px-2 py-0.5 rounded-full border border-teal-100">規模 × 成果 × 健康</span>
                             </div>
-                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">X: 領域人数 ｜ Y: {yAxisMode === "kpi" ? "KPI達成率" : "一人当たり生産性"} ｜ 色: 組織体温</p>
+                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">X: 領域人数 ｜ Y: {axisYAxisMode === "kpi" ? "KPI達成率" : "一人当たり生産性"} ｜ 色: 組織体温</p>
                         </div>
                     </div>
 
@@ -356,78 +410,164 @@ export function MatrixSection({
                     </div>
 
                     {/* 散布図描画 */}
-                    <div className="flex flex-col lg:flex-row gap-6 items-start justify-between">
-                        {/* 左側: 散布図 (560px固定) */}
-                        <div className="w-full lg:w-[560px] shrink-0">
+                    <div className="flex flex-col lg:flex-row gap-6 items-start">
+                        {/* 左側: 散布図 (広い画面で伸びる) */}
+                        <div className="flex-1 w-full">
                             <ScatterPlot
                                 data={filteredAxisScatterData}
                                 isProduct={true}
-                                sizeKpiName={displaySizeKpiName}
-                                yAxisMode={yAxisMode}
-                                month={month}
-                                showTrajectory={showTrajectory}
+                                sizeKpiName={displayAxisSizeKpiName}
+                                yAxisMode={axisYAxisMode}
+                                month={axisMonth}
+                                showTrajectory={showAxisTrajectory}
                             />
                         </div>
 
-                        {/* 右側: 凡例兼フィルタパネル */}
-                        <div className="flex-1 w-full lg:max-w-[240px] bg-slate-50/50 border border-slate-100 rounded-2xl p-4 space-y-3.5">
-                            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">凡例 ＆ フィルタ</span>
-                                <div className="flex gap-2">
+                        {/* 右側: 操作 ＆ フィルタパネル */}
+                        <div className="w-full lg:w-[240px] shrink-0 bg-slate-50/50 border border-slate-100 rounded-2xl p-4 space-y-4">
+                            {/* Y軸モード */}
+                            <div className="space-y-1.5">
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Y軸モード:</span>
+                                <div className="flex bg-slate-100/60 p-0.5 rounded-xl text-[9px] font-bold shadow-inner">
                                     <button
-                                        onClick={() => setExcludedAxisIds([])}
-                                        className="text-[9px] font-black text-teal-600 hover:text-teal-700 transition-colors"
+                                        onClick={() => setAxisYAxisMode("kpi")}
+                                        className={cn(
+                                            "flex-1 text-center py-1 px-1.5 rounded-lg transition-all font-black tracking-tight",
+                                            axisYAxisMode === "kpi" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                        )}
                                     >
-                                        すべて選択
+                                        成果 (達成率)
                                     </button>
-                                    <span className="text-slate-300 text-[9px]">|</span>
                                     <button
-                                        onClick={() => setExcludedAxisIds(axisScatterData.map(d => d.id))}
-                                        className="text-[9px] font-black text-slate-500 hover:text-slate-600 transition-colors"
+                                        onClick={() => setAxisYAxisMode("productivity")}
+                                        className={cn(
+                                            "flex-1 text-center py-1 px-1.5 rounded-lg transition-all font-black tracking-tight",
+                                            axisYAxisMode === "productivity" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                        )}
                                     >
-                                        すべて解除
+                                        組織 (生産性)
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1">
-                                {axisScatterData.map((d) => {
-                                    const isChecked = !excludedAxisIds.includes(d.id);
-                                    const dotColor = getDotColor(d);
-                                    const movement = getMovementDirection(d, yAxisMode, targetIdx);
-                                    return (
-                                        <label
-                                            key={d.id}
+                            {/* タイムラプス */}
+                            <div className="space-y-1.5">
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">タイムラプス:</span>
+                                <div className="flex flex-wrap gap-1 bg-slate-100/60 p-1 rounded-xl">
+                                    {[{ id: "default", label: "現在" }, { id: "1m", label: "1m前" }, { id: "3m", label: "3m前" }, { id: "6m", label: "6m前" }, { id: "12m", label: "1年前" }].map((t) => (
+                                        <button
+                                            key={t.id}
+                                            onClick={() => setAxisMonth(t.id)}
                                             className={cn(
-                                                "flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-transparent cursor-pointer transition-all hover:bg-slate-100/50 select-none",
-                                                isChecked ? "bg-white shadow-sm border-slate-100" : "opacity-50"
+                                                "flex-1 min-w-[38px] text-center py-1 px-1.5 rounded-lg transition-all text-[9px] font-black tracking-tighter whitespace-nowrap",
+                                                axisMonth === t.id ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
                                             )}
                                         >
-                                            <div className="flex items-center gap-2 truncate">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isChecked}
-                                                    onChange={(e) => {
-                                                        if (e.target.checked) {
-                                                            setExcludedAxisIds(prev => prev.filter(id => id !== d.id));
-                                                        } else {
-                                                            setExcludedAxisIds(prev => [...prev, d.id]);
-                                                        }
-                                                    }}
-                                                    className="rounded border-slate-200 text-teal focus:ring-teal w-3.5 h-3.5 cursor-pointer accent-teal-600"
-                                                />
-                                                <span 
-                                                    className="w-2.5 h-2.5 rounded-full shrink-0" 
-                                                    style={{ backgroundColor: isChecked ? dotColor : colors.gray }} 
-                                                />
-                                                <span className="text-[11px] font-bold text-slate-700 truncate">{d.name}</span>
-                                            </div>
-                                            <span className={cn("text-[9px] font-black shrink-0 ml-2", isChecked ? movement.color : "text-slate-400")}>
-                                                {movement.arrow}
-                                            </span>
-                                        </label>
-                                    );
-                                })}
+                                            {t.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 軌跡とサイズ重視 */}
+                            <div className="flex flex-col gap-2">
+                                <label className="flex items-center gap-2 cursor-pointer text-[9px] font-black text-slate-500 uppercase tracking-wider select-none">
+                                    <input
+                                        type="checkbox"
+                                        checked={showAxisTrajectory}
+                                        onChange={(e) => setShowAxisTrajectory(e.target.checked)}
+                                        className="rounded border-slate-200 text-teal focus:ring-teal w-3 h-3 cursor-pointer accent-teal-600"
+                                    />
+                                    <span>軌跡（動く地図）を表示</span>
+                                </label>
+
+                                {hasLaborData && (
+                                    <div className="flex items-center justify-between border-t border-slate-100/80 pt-2 mt-1">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">サイズ重視:</span>
+                                        <div className="flex bg-slate-100/60 p-0.5 rounded-lg shadow-inner">
+                                            <button
+                                                onClick={() => setAxisSizeBase("kpi")}
+                                                className={cn(
+                                                    "px-2 py-0.5 rounded-md transition-all text-[8px] font-black tracking-tight",
+                                                    axisSizeBase === "kpi" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                                )}
+                                            >
+                                                均一
+                                            </button>
+                                            <button
+                                                onClick={() => setAxisSizeBase("labor")}
+                                                className={cn(
+                                                    "px-2 py-0.5 rounded-md transition-all text-[8px] font-black tracking-tight",
+                                                    axisSizeBase === "labor" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                                )}
+                                            >
+                                                人件費
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* 凡例 ＆ フィルタ */}
+                            <div className="border-t border-slate-100 pt-3.5 space-y-2">
+                                <div className="flex items-center justify-between pb-1">
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">凡例 ＆ フィルタ</span>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setExcludedAxisIds([])}
+                                            className="text-[9px] font-black text-teal-600 hover:text-teal-700 transition-colors"
+                                        >
+                                            全選択
+                                        </button>
+                                        <span className="text-slate-300 text-[9px]">|</span>
+                                        <button
+                                            onClick={() => setExcludedAxisIds(axisScatterData.map(d => d.id))}
+                                            className="text-[9px] font-black text-slate-500 hover:text-slate-600 transition-colors"
+                                        >
+                                            全解除
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1 max-h-[180px] overflow-y-auto pr-1">
+                                    {axisScatterData.map((d) => {
+                                        const isChecked = !excludedAxisIds.includes(d.id);
+                                        const dotColor = getDotColor(d);
+                                        const movement = getMovementDirection(d, axisYAxisMode, axisTargetIdx);
+                                        return (
+                                            <label
+                                                key={d.id}
+                                                className={cn(
+                                                    "flex items-center justify-between px-2 py-1 rounded-lg border border-transparent cursor-pointer transition-all hover:bg-slate-100/50 select-none",
+                                                    isChecked ? "bg-white shadow-sm border-slate-100" : "opacity-50"
+                                                )}
+                                            >
+                                                <div className="flex items-center gap-1.5 truncate">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isChecked}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setExcludedAxisIds(prev => prev.filter(id => id !== d.id));
+                                                            } else {
+                                                                setExcludedAxisIds(prev => [...prev, d.id]);
+                                                            }
+                                                        }}
+                                                        className="rounded border-slate-200 text-teal focus:ring-teal w-3 h-3 cursor-pointer accent-teal-600"
+                                                    />
+                                                    <span 
+                                                        className="w-2.5 h-2.5 rounded-full shrink-0" 
+                                                        style={{ backgroundColor: isChecked ? dotColor : colors.gray }} 
+                                                    />
+                                                    <span className="text-[10px] font-bold text-slate-700 truncate">{d.name}</span>
+                                                </div>
+                                                <span className={cn("text-[8px] font-black shrink-0 ml-2", isChecked ? movement.color : "text-slate-400")}>
+                                                    {movement.arrow}
+                                                </span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
                     </div>

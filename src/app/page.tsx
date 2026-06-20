@@ -31,7 +31,6 @@ export default function DashboardPage() {
   const [matView, setMatView] = useState("dept");
   const [selKpi, setSelKpi] = useState("mrr");
   const [orgView, setOrgView] = useState("dept");
-  const [month, setMonth] = useState("default");
 
   const { company, loading: authLoading, supabase, isImpersonating, userRole, userDepartmentId } = useCompany();
   const { state, derived, handlers } = useDashboardData(company, supabase, isImpersonating, userRole, userDepartmentId);
@@ -154,85 +153,7 @@ export default function DashboardPage() {
     return kpiDef ? kpiDef.name : "KPI達成率";
   }, [company, state.realKpis]);
 
-  // 部署用マトリックスデータ
-  const currentDeptMatData = useMemo(() => {
-    const monthsMap: Record<string, number> = {
-      "default": 12, "1m": 11, "3m": 9, "6m": 6, "12m": 0
-    };
-    const targetIdx = monthsMap[month] ?? 12;
 
-    return derived.displayDepts.map((d: any) => {
-      let pulseAtMonth = d.pulseHistory?.[targetIdx] || 0;
-      const headAtMonth = d.headHistory?.[targetIdx] || 0;
-      let prodAtMonth = d.productivityHistory?.[targetIdx] || 100;
-
-      // 回答なし（pulse === 0）の場合、前月（または直近の過去月）の生産性を位置のフォールバックとして使用する
-      if (pulseAtMonth === 0 && d.pulseHistory && d.productivityHistory) {
-        for (let i = targetIdx - 1; i >= 0; i--) {
-          if (d.pulseHistory[i] > 0) {
-            prodAtMonth = d.productivityHistory[i];
-            break;
-          }
-        }
-      }
-
-      let head = headAtMonth;
-      if (head === 0) {
-        const deptDef = state.realDepts.find(rd => rd.id === d.id);
-        head = deptDef?.headcount || 0;
-      }
-
-      return {
-        ...d,
-        head,
-        productivity: prodAtMonth,
-        pulse: pulseAtMonth,
-        weather: getWeatherFromPulse(pulseAtMonth || d.pulse),
-        mrr: 100,
-        sizeValue: 100
-      };
-    });
-  }, [month, derived.displayDepts, state.realDepts]);
-
-  // 第2軸用マトリックスデータ
-  const currentAxisMatData = useMemo(() => {
-    const monthsMap: Record<string, number> = {
-      "default": 12, "1m": 11, "3m": 9, "6m": 6, "12m": 0
-    };
-    const targetIdx = monthsMap[month] ?? 12;
-
-    return derived.displayAxes.map((d: any) => {
-      let pulseAtMonth = d.pulseHistory?.[targetIdx] || 0;
-      const headAtMonth = d.headHistory?.[targetIdx] || 0;
-      let prodAtMonth = d.productivityHistory?.[targetIdx] || 100;
-      const sizeAtMonth = d.sizeHistory ? d.sizeHistory[targetIdx] : 100;
-
-      // 回答なし（pulse === 0）の場合、前月（または直近の過去月）の生産性を位置のフォールバックとして使用する
-      if (pulseAtMonth === 0 && d.pulseHistory && d.productivityHistory) {
-        for (let i = targetIdx - 1; i >= 0; i--) {
-          if (d.pulseHistory[i] > 0) {
-            prodAtMonth = d.productivityHistory[i];
-            break;
-          }
-        }
-      }
-
-      let head = headAtMonth;
-      if (head === 0) {
-        head = d.xAxisHead || 0;
-      }
-
-      return {
-        ...d,
-        head,
-        productivity: prodAtMonth,
-        pulse: pulseAtMonth,
-        weather: getWeatherFromPulse(pulseAtMonth || d.pulse),
-        mrr: sizeAtMonth,
-        sizeValue: sizeAtMonth
-      };
-    });
-  }, [month, derived.displayAxes]);
 
   if (authLoading) return <Loading fullScreen message="データを準備しています..." />;
   if (!company) return null;
@@ -477,10 +398,8 @@ export default function DashboardPage() {
             <MatrixSection
               secondaryAxisName={secondaryAxisName}
               sizeKpiName={sizeKpiName}
-              month={month}
-              setMonth={setMonth}
-              deptData={currentDeptMatData}
-              axisData={currentAxisMatData}
+              deptData={derived.displayDepts}
+              axisData={derived.displayAxes}
               aiContent={aiContent}
               hasLaborData={state.hasLaborData}
             />
