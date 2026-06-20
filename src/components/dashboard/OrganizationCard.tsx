@@ -220,7 +220,7 @@ export function OrganizationCard({ name, head, pulse, weather, arrow, kpis, labo
                             <div className="flex items-center gap-2">
                                 <span className="text-[10px] font-black text-slate-400">AI診断</span>
                                 {deptInsight.tone && (
-                                    <span className="text-[8px] text-teal-600 bg-teal-50 border border-teal-100 px-1.5 py-0.5 rounded-full font-bold">
+                                    <span className="text-[9px] text-teal-600 bg-teal-50 border border-teal-100 px-1.5 py-0.5 rounded-full font-bold">
                                         {deptInsight.tone}
                                     </span>
                                 )}
