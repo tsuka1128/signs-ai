@@ -1530,40 +1530,65 @@ export default function DeptDashboardPage() {
 
                                     {/* 要約詳細 */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="bg-teal-50/30 border border-teal-100 rounded-2xl p-5 space-y-2">
+                                        <div className="bg-white border border-slate-100 border-l-4 border-l-teal-500 rounded-2xl p-5 space-y-2.5 shadow-sm">
                                             <h4 className="text-xs font-black text-teal">ポジティブな声</h4>
-                                            <p className="text-xs text-slate-700 font-bold leading-relaxed whitespace-pre-wrap">
-                                                {aiSummary.positive_summary || "—"}
-                                            </p>
+                                            {(() => {
+                                                if (!aiSummary.positive_summary) return <p className="text-xs text-slate-400">—</p>;
+                                                const lines = aiSummary.positive_summary
+                                                    .split('\n')
+                                                    .map((line: string) => line.trim())
+                                                    .filter((line: string) => line.length > 0)
+                                                    .map((line: string) => line.startsWith('・') ? line.substring(1).trim() : line);
+                                                if (lines.length === 0) return <p className="text-xs text-slate-400">—</p>;
+                                                return (
+                                                    <ul className="list-disc pl-4 space-y-1.5 text-xs text-slate-600 font-bold leading-relaxed">
+                                                        {lines.map((line: string, idx: number) => (
+                                                            <li key={idx}>{line}</li>
+                                                        ))}
+                                                    </ul>
+                                                );
+                                            })()}
                                         </div>
-                                        <div className="bg-rose-50/30 border border-rose-100 rounded-2xl p-5 space-y-2">
+                                        <div className="bg-white border border-slate-100 border-l-4 border-l-rose-500 rounded-2xl p-5 space-y-2.5 shadow-sm">
                                             <h4 className="text-xs font-black text-rose-700">課題・改善要望</h4>
-                                            <p className="text-xs text-slate-700 font-bold leading-relaxed whitespace-pre-wrap">
-                                                {aiSummary.negative_summary || "—"}
-                                            </p>
+                                            {(() => {
+                                                if (!aiSummary.negative_summary) return <p className="text-xs text-slate-400">—</p>;
+                                                const lines = aiSummary.negative_summary
+                                                    .split('\n')
+                                                    .map((line: string) => line.trim())
+                                                    .filter((line: string) => line.length > 0)
+                                                    .map((line: string) => line.startsWith('・') ? line.substring(1).trim() : line);
+                                                if (lines.length === 0) return <p className="text-xs text-slate-400">—</p>;
+                                                return (
+                                                    <ul className="list-disc pl-4 space-y-1.5 text-xs text-slate-600 font-bold leading-relaxed">
+                                                        {lines.map((line: string, idx: number) => (
+                                                            <li key={idx}>{line}</li>
+                                                        ))}
+                                                    </ul>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
 
                                     {/* 🧠 深掘り分析（背景と示唆） */}
                                     {aiSummary.deep_dive && (
-                                        <div className="bg-indigo-50/30 border border-indigo-100 rounded-2xl p-5 space-y-2.5">
+                                        <div className="bg-white border border-slate-100 border-l-4 border-l-indigo-500 rounded-2xl p-5 space-y-2.5 shadow-sm">
                                             <h4 className="text-xs font-black text-indigo-700 flex items-center gap-1.5">
                                                 <TrendingUp className="w-3.5 h-3.5" />
                                                 深掘り分析（背景と示唆）
                                             </h4>
-                                            <p className="text-xs text-slate-700 font-bold leading-relaxed whitespace-pre-wrap">
+                                            <p className="text-xs text-slate-600 font-bold leading-relaxed whitespace-pre-wrap">
                                                 {aiSummary.deep_dive}
                                             </p>
                                         </div>
                                     )}
 
                                     {/* 注目ヒント */}
-                                    <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-5 relative overflow-hidden">
-                                        <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-16 h-16 bg-amber-500/5 rounded-full blur-xl" />
+                                    <div className="bg-white border border-slate-100 border-l-4 border-l-amber-500 rounded-2xl p-5 shadow-sm">
                                         <p className="text-xs font-black text-amber-700 mb-2 flex items-center gap-1.5">
                                             💡 マネージャーへの注目点
                                         </p>
-                                        <p className="text-xs text-amber-900 font-bold leading-relaxed whitespace-pre-wrap">
+                                        <p className="text-xs text-slate-600 font-bold leading-relaxed whitespace-pre-wrap">
                                             {aiSummary.manager_hint || "—"}
                                         </p>
                                     </div>
