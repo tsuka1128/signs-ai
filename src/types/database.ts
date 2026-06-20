@@ -275,6 +275,7 @@ export interface Database {
           positive_summary: string
           negative_summary: string
           manager_hint: string
+          deep_dive: string | null
           generated_at: string
         }
       }
