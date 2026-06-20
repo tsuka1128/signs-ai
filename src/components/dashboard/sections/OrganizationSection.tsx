@@ -102,9 +102,16 @@ export function OrganizationSection({
                 {orgView === "dept" ? (
                     /* 部署別：既存のカード一覧（変更なし） */
                     displayDepts.length > 0 ? (
-                        displayDepts.map((d: any, i: number) => (
-                            <OrganizationCard key={i} {...d} />
-                        ))
+                        displayDepts.map((d: any, i: number) => {
+                            const deptInsight = aiContent?.insights_by_dept?.[d.id];
+                            return (
+                                <OrganizationCard
+                                    key={i}
+                                    {...d}
+                                    deptInsight={deptInsight}
+                                />
+                            );
+                        })
                     ) : (
                         <EmptyState
                             title="部署が登録されていません"

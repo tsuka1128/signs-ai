@@ -23,9 +23,10 @@ interface OrganizationCardProps {
     laborCostPerHead?: number;
     isStale?: boolean;
     dataMonth?: string | null;
+    deptInsight?: { tone?: string; text?: string };
 }
 
-export function OrganizationCard({ name, head, pulse, weather, arrow, kpis, laborCostPerHead, isStale, dataMonth }: OrganizationCardProps) {
+export function OrganizationCard({ name, head, pulse, weather, arrow, kpis, laborCostPerHead, isStale, dataMonth, deptInsight }: OrganizationCardProps) {
     const isNone = pulse === 0;
     const risk = isNone ? "none" : pulse < 2.5 ? "overheat" : pulse >= 3.5 ? "stable" : "caution";
     const pulseColorClass = isNone ? "text-slate-300" : pulse >= 3.5 ? "text-emerald-500" : pulse >= 2.5 ? "text-amber-500" : "text-rose-500";
@@ -213,8 +214,24 @@ export function OrganizationCard({ name, head, pulse, weather, arrow, kpis, labo
                         </div>
                     </div>
 
-                    {/* 観察コメント */}
-                    <ObservationComment pulse={pulse} primaryAch={primaryKpi.ach} />
+                    {/* AI診断 or 観察コメントの表示 */}
+                    {deptInsight?.text ? (
+                        <div className="px-5 py-3.5 border-t border-slate-50 space-y-1.5 bg-slate-50/20">
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black text-slate-400">AI診断</span>
+                                {deptInsight.tone && (
+                                    <span className="text-[9px] text-teal-600 bg-teal-50 border border-teal-100 px-1.5 py-0.5 rounded-full font-bold">
+                                        {deptInsight.tone}
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
+                                {deptInsight.text}
+                            </p>
+                        </div>
+                    ) : (
+                        <ObservationComment pulse={pulse} primaryAch={primaryKpi.ach} />
+                    )}
                 </div>
             )}
         </div>
