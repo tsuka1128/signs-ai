@@ -85,10 +85,10 @@ export function MatrixSection({
         return deptData.map(d => {
             const pulseAtMonth = d.pulseHistory?.[deptTargetIdx] || 0;
             const headAtMonth = d.headHistory?.[deptTargetIdx] || 0;
-            let prodAtMonth = d.productivityHistory?.[deptTargetIdx] || 100;
+            let prodAtMonth = d.productivityHistoryFilled?.[deptTargetIdx] ?? d.productivityHistory?.[deptTargetIdx] ?? 100;
 
-            // 回答なし（pulse === 0）の場合、前月（または直近の過去月）の生産性を位置のフォールバックとして使用する
-            if (pulseAtMonth === 0 && d.pulseHistory && d.productivityHistory) {
+            // 回答なし（pulse === 0）の場合、前月（または直近の過去月）の生産性を位置のフォールバックとして使用する（Filledが無い場合の安全策）
+            if (pulseAtMonth === 0 && !d.productivityHistoryFilled && d.pulseHistory && d.productivityHistory) {
                 for (let i = deptTargetIdx - 1; i >= 0; i--) {
                     if (d.pulseHistory[i] > 0) {
                         prodAtMonth = d.productivityHistory[i];
@@ -102,9 +102,12 @@ export function MatrixSection({
                 head = d.masterHeadcount || d.headcount || 0;
             }
 
+            const kpiAchAtMonth = d.kpiAchHistoryFilled?.[deptTargetIdx] ?? d.kpiAchHistory?.[deptTargetIdx] ?? d.kpiAch;
+
             return {
                 ...d,
                 head,
+                kpiAch: kpiAchAtMonth,
                 productivity: prodAtMonth,
                 pulse: pulseAtMonth,
                 weather: getWeatherFromPulse(pulseAtMonth || d.pulse),
@@ -131,11 +134,11 @@ export function MatrixSection({
         return axisData.map(d => {
             const pulseAtMonth = d.pulseHistory?.[axisTargetIdx] || 0;
             const headAtMonth = d.headHistory?.[axisTargetIdx] || 0;
-            let prodAtMonth = d.productivityHistory?.[axisTargetIdx] || 100;
+            let prodAtMonth = d.productivityHistoryFilled?.[axisTargetIdx] ?? d.productivityHistory?.[axisTargetIdx] ?? 100;
             const sizeAtMonth = d.sizeHistory ? d.sizeHistory[axisTargetIdx] : 100;
 
-            // 回答なし（pulse === 0）の場合、前月（または直近の過去月）の生産性を位置のフォールバックとして使用する
-            if (pulseAtMonth === 0 && d.pulseHistory && d.productivityHistory) {
+            // 回答なし（pulse === 0）の場合、前月（または直近の過去月）の生産性を位置のフォールバックとして使用する（Filledが無い場合の安全策）
+            if (pulseAtMonth === 0 && !d.productivityHistoryFilled && d.pulseHistory && d.productivityHistory) {
                 for (let i = axisTargetIdx - 1; i >= 0; i--) {
                     if (d.pulseHistory[i] > 0) {
                         prodAtMonth = d.productivityHistory[i];
@@ -149,9 +152,12 @@ export function MatrixSection({
                 head = d.xAxisHead || 0;
             }
 
+            const kpiAchAtMonth = d.kpiAchHistoryFilled?.[axisTargetIdx] ?? d.kpiAchHistory?.[axisTargetIdx] ?? d.kpiAch;
+
             return {
                 ...d,
                 head,
+                kpiAch: kpiAchAtMonth,
                 productivity: prodAtMonth,
                 pulse: pulseAtMonth,
                 weather: getWeatherFromPulse(pulseAtMonth || d.pulse),

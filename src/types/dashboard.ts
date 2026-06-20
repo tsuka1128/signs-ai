@@ -33,6 +33,9 @@ export interface DepartmentDisplayData {
     kpis: any[]; // 近い将来詳細な型を定義
     kpiName?: string;
     productivityHistory: number[];
+    kpiAchHistory?: number[];
+    kpiAchHistoryFilled?: number[];
+    productivityHistoryFilled?: number[];
     xAxisHead?: number;
     sizeValue?: number;
     sizeHistory?: number[];

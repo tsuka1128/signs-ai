@@ -23,6 +23,23 @@ function findLatestResource(
     return null;
 }
 
+/**
+ * データ欠損月に対して直近の既知値を引き継ぐキャリーフォワード処理
+ */
+function carryForwardHistory(historyWithData: { value: number; hasData: boolean }[]): number[] {
+    const result: number[] = [];
+    let lastKnown: number | null = null;
+    for (const item of historyWithData) {
+        if (item.hasData) {
+            lastKnown = item.value;
+            result.push(item.value);
+        } else {
+            result.push(lastKnown !== null ? lastKnown : 0);
+        }
+    }
+    return result;
+}
+
 interface DashboardState {
     realDepts: Department[];
     realKpis: any[];
@@ -537,6 +554,52 @@ export function useDashboardData(
             });
             const kpiAch = count > 0 ? Math.round(totalAch / count) : 0;
 
+            const deptKpiHistoryRaw = last13Months.map((month) => {
+                const monthRecs = kpiRecordByMonth.get(normalizeMonth(month)) || [];
+                let tAch = 0;
+                let c = 0;
+                mKpis.forEach(def => {
+                    const rec = monthRecs.find(r =>
+                        r.kpi_definition_id === def.id &&
+                        r.axis_id === null &&
+                        (r.department_id === d.id || (r.department_id === null && def.owner_dept_id === d.id))
+                    );
+                    if (rec && rec.target_value !== null) {
+                        const ach = calculateAchievementRate(rec.value, rec.target_value, def.is_higher_better !== false);
+                        if (ach !== null) { tAch += ach; c++; }
+                    }
+                });
+                return {
+                    value: c > 0 ? Math.round(tAch / c) : 0,
+                    hasData: c > 0
+                };
+            });
+            const kpiAchHistory = deptKpiHistoryRaw.map(h => h.value);
+            const kpiAchHistoryFilled = carryForwardHistory(deptKpiHistoryRaw);
+
+            const deptProdHistoryRaw = last13Months.map((month, idx) => {
+                const monthRecs = kpiRecordByMonth.get(normalizeMonth(month)) || [];
+                let tAch = 0;
+                let c = 0;
+                mKpis.forEach(def => {
+                    const rec = monthRecs.find(r => r.kpi_definition_id === def.id && r.axis_id === null && (r.department_id === d.id || (r.department_id === null && def.owner_dept_id === d.id)));
+                    if (rec && rec.target_value !== null) {
+                        const ach = calculateAchievementRate(rec.value, rec.target_value, def.is_higher_better !== false);
+                        if (ach !== null) {
+                            tAch += ach;
+                            c++;
+                        }
+                    }
+                });
+                const avgAch = c > 0 ? tAch / c : 0;
+                return {
+                    value: calculateProductivity(avgAch, pulseHistory[idx]),
+                    hasData: c > 0
+                };
+            });
+            const productivityHistory = deptProdHistoryRaw.map(h => h.value);
+            const productivityHistoryFilled = carryForwardHistory(deptProdHistoryRaw);
+
             return {
                 id: d.id,
                 name: d.name,
@@ -549,23 +612,8 @@ export function useDashboardData(
                 productivity: calculateProductivity(kpiAch, pulseScore),
                 pulse: Number(pulseScore.toFixed(1)),
                 pulseHistory,
-                kpiAchHistory: last13Months.map((month) => {
-                    const monthRecs = kpiRecordByMonth.get(normalizeMonth(month)) || [];
-                    let tAch = 0;
-                    let c = 0;
-                    mKpis.forEach(def => {
-                        const rec = monthRecs.find(r =>
-                            r.kpi_definition_id === def.id &&
-                            r.axis_id === null &&
-                            (r.department_id === d.id || (r.department_id === null && def.owner_dept_id === d.id))
-                        );
-                        if (rec && rec.target_value !== null) {
-                            const ach = calculateAchievementRate(rec.value, rec.target_value, def.is_higher_better !== false);
-                            if (ach !== null) { tAch += ach; c++; }
-                        }
-                    });
-                    return c > 0 ? Math.round(tAch / c) : 0;
-                }),
+                kpiAchHistory,
+                kpiAchHistoryFilled,
                 weather: getWeatherFromPulse(pulseScore),
                 arrow: "flat",
                 kpiAch,
@@ -585,23 +633,8 @@ export function useDashboardData(
                     }).slice(0, 3) as any[],
                 kpiName: state.realKpis.find(k => k.owner_dept_id === d.id && k.is_main)?.name ||
                         state.realKpis.find(k => k.owner_dept_id === d.id)?.name || "",
-                productivityHistory: last13Months.map((month, idx) => {
-                    const monthRecs = kpiRecordByMonth.get(normalizeMonth(month)) || [];
-                    let tAch = 0;
-                    let c = 0;
-                    mKpis.forEach(def => {
-                        const rec = monthRecs.find(r => r.kpi_definition_id === def.id && r.axis_id === null && (r.department_id === d.id || (r.department_id === null && def.owner_dept_id === d.id)));
-                        if (rec && rec.target_value !== null) {
-                            const ach = calculateAchievementRate(rec.value, rec.target_value, def.is_higher_better !== false);
-                            if (ach !== null) {
-                                tAch += ach;
-                                c++;
-                            }
-                        }
-                    });
-                    const avgAch = c > 0 ? tAch / c : 0;
-                    return calculateProductivity(avgAch, pulseHistory[idx]);
-                })
+                productivityHistory,
+                productivityHistoryFilled
             };
         });
     }, [state.realDepts, state.realResponses, state.realKpis, state.realKpiRecords, state.realResources, last13Months, userRole, userDepartmentId, state.latestSurveyMonth, state.latestKpiMonth]);
@@ -708,6 +741,43 @@ export function useDashboardData(
             });
             const kpiAch = count > 0 ? Math.round(totalAch / count) : 0;
 
+            const axisProdHistoryRaw = last13Months.map((month, idx) => {
+                const mRecsMonth = (kpiRecordByMonthAxes.get(normalizeMonth(month)) || []).filter(r => r.axis_id === axis.id);
+                let tAch = 0;
+                let c = 0;
+                mRecsMonth.forEach(rec => {
+                    const def = state.realKpis.find(k => k.id === rec.kpi_definition_id);
+                    const ach = calculateAchievementRate(rec.value, rec.target_value, def?.is_higher_better !== false);
+                    if (ach !== null) {
+                        tAch += ach;
+                        c++;
+                    }
+                });
+                const avgAch = c > 0 ? tAch / c : 0;
+                return {
+                    value: calculateProductivity(avgAch, pulseHistory[idx]),
+                    hasData: c > 0
+                };
+            });
+            const productivityHistory = axisProdHistoryRaw.map(h => h.value);
+            const productivityHistoryFilled = carryForwardHistory(axisProdHistoryRaw);
+
+            const axisKpiHistoryRaw = last13Months.map((month) => {
+                const mRecsMonth = (kpiRecordByMonthAxes.get(normalizeMonth(month)) || []).filter(r => r.axis_id === axis.id);
+                let tAch = 0, c = 0;
+                mRecsMonth.forEach(rec => {
+                    const def = state.realKpis.find(k => k.id === rec.kpi_definition_id);
+                    const ach = calculateAchievementRate(rec.value, rec.target_value, def?.is_higher_better !== false);
+                    if (ach !== null) { tAch += ach; c++; }
+                });
+                return {
+                    value: c > 0 ? Math.round(tAch / c) : 0,
+                    hasData: c > 0
+                };
+            });
+            const kpiAchHistory = axisKpiHistoryRaw.map(h => h.value);
+            const kpiAchHistoryFilled = carryForwardHistory(axisKpiHistoryRaw);
+
             return {
                 id: axis.id,
                 name: axis.name,
@@ -743,31 +813,10 @@ export function useDashboardData(
                 }).filter(Boolean)
                   .sort((a: any, b: any) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0))
                   .slice(0, 3) as any[],
-                productivityHistory: last13Months.map((month, idx) => {
-                    const mRecsMonth = (kpiRecordByMonthAxes.get(normalizeMonth(month)) || []).filter(r => r.axis_id === axis.id);
-                    let tAch = 0;
-                    let c = 0;
-                    mRecsMonth.forEach(rec => {
-                        const def = state.realKpis.find(k => k.id === rec.kpi_definition_id);
-                        const ach = calculateAchievementRate(rec.value, rec.target_value, def?.is_higher_better !== false);
-                        if (ach !== null) {
-                            tAch += ach;
-                            c++;
-                        }
-                    });
-                    const avgAch = c > 0 ? tAch / c : 0;
-                    return calculateProductivity(avgAch, pulseHistory[idx]);
-                }),
-                kpiAchHistory: last13Months.map((month) => {
-                    const mRecsMonth = (kpiRecordByMonthAxes.get(normalizeMonth(month)) || []).filter(r => r.axis_id === axis.id);
-                    let tAch = 0, c = 0;
-                    mRecsMonth.forEach(rec => {
-                        const def = state.realKpis.find(k => k.id === rec.kpi_definition_id);
-                        const ach = calculateAchievementRate(rec.value, rec.target_value, def?.is_higher_better !== false);
-                        if (ach !== null) { tAch += ach; c++; }
-                    });
-                    return c > 0 ? Math.round(tAch / c) : 0;
-                }),
+                productivityHistory,
+                productivityHistoryFilled,
+                kpiAchHistory,
+                kpiAchHistoryFilled
             };
         });
 

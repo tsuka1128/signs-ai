@@ -53,11 +53,11 @@ export function getMovementDirection(d: any, yAxisMode: "kpi" | "productivity", 
     if (targetIdx === 0) return { dir: "flat" as const, arrow: "→", diff: 0, color: "text-slate-400", rawColor: "#94A3B8" };
 
     const currentVal = yAxisMode === "kpi"
-        ? d.kpiAchHistory?.[targetIdx] ?? d.kpiAch
-        : d.productivityHistory?.[targetIdx] ?? d.productivity;
+        ? d.kpiAchHistoryFilled?.[targetIdx] ?? d.kpiAchHistory?.[targetIdx] ?? d.kpiAch
+        : d.productivityHistoryFilled?.[targetIdx] ?? d.productivityHistory?.[targetIdx] ?? d.productivity;
     const prevVal = yAxisMode === "kpi"
-        ? d.kpiAchHistory?.[targetIdx - 1]
-        : d.productivityHistory?.[targetIdx - 1];
+        ? d.kpiAchHistoryFilled?.[targetIdx - 1] ?? d.kpiAchHistory?.[targetIdx - 1]
+        : d.productivityHistoryFilled?.[targetIdx - 1] ?? d.productivityHistory?.[targetIdx - 1];
 
     if (prevVal === undefined || prevVal === null || prevVal === 0) {
         return { dir: "flat" as const, arrow: "→", diff: 0, color: "text-slate-400", rawColor: "#94A3B8" };
@@ -174,8 +174,8 @@ export function ScatterPlot({
                 const pulse = (d as any).pulseHistory?.[i] ?? 0;
                 const head = (d as any).headHistory?.[i] ?? 0;
                 const val = yAxisMode === "kpi"
-                    ? (d as any).kpiAchHistory?.[i] ?? 0
-                    : (d as any).productivityHistory?.[i] ?? 0;
+                    ? (d as any).kpiAchHistoryFilled?.[i] ?? (d as any).kpiAchHistory?.[i] ?? 0
+                    : (d as any).productivityHistoryFilled?.[i] ?? (d as any).productivityHistory?.[i] ?? 0;
 
                 // 回答なし (pulse === 0) または リソースなし (head === 0) の欠損月はスキップ
                 if (pulse === 0 || head === 0) return;
