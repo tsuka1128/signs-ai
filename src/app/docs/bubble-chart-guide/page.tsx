@@ -133,7 +133,7 @@ export default function BubbleChartGuidePage() {
                         <ScatterPlot 
                             data={dummyHistoricalData[guideMonth]}
                             sizeKpiName="KPI達成率"
-                            month={guideMonth}
+                            yAxisMode="productivity"
                         />
                     </div>
                 </div>
