@@ -602,7 +602,7 @@ export function LaborFinanceSection({
                     </div>
 
                     <div className="space-y-6">
-                        <div className="text-lg font-bold text-slate-700 leading-relaxed max-w-2xl italic border-l-4 border-teal-500 pl-6">
+                        <div className="text-sm font-medium text-slate-600 leading-relaxed max-w-2xl border-l-4 border-teal-500 pl-6">
                             {aiContent?.deep_report?.correlation ||
                              "AI分析を実行すると、体温とKPIの相関・人件費ROIに関する詳細な考察がここに表示されます。"}
                         </div>
