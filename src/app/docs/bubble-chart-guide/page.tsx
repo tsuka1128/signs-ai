@@ -18,41 +18,76 @@ import {
 } from "lucide-react";
 import { ScatterPlot } from "@/components/dashboard/ScatterPlot";
 
+const d1History = {
+    headHistory: [15, 17, 20, 20, 20, 20, 20, 22, 22, 22, 25, 25, 25],
+    pulseHistory: [4.2, 4.1, 3.9, 3.9, 3.9, 3.9, 3.9, 3.5, 3.2, 2.8, 2.8, 2.1, 2.1],
+    kpiAchHistory: [110, 110, 130, 130, 130, 130, 130, 125, 120, 120, 120, 110, 110],
+    productivityHistory: [140, 140, 170, 170, 170, 170, 170, 160, 160, 155, 155, 140, 140]
+};
+
+const d2History = {
+    headHistory: [20, 22, 25, 28, 30, 30, 30, 35, 35, 35, 40, 40, 45],
+    pulseHistory: [4.1, 4.0, 3.9, 3.8, 3.5, 3.5, 3.5, 3.4, 3.2, 3.2, 3.1, 3.0, 2.9],
+    kpiAchHistory: [115, 115, 110, 108, 105, 105, 105, 95, 95, 95, 90, 95, 80],
+    productivityHistory: [130, 130, 120, 110, 100, 100, 100, 80, 80, 80, 60, 65, 40]
+};
+
+const d3History = {
+    headHistory: [4, 4, 5, 5, 6, 6, 6, 7, 7, 8, 8, 8, 8],
+    pulseHistory: [4.0, 4.0, 3.9, 3.8, 3.7, 3.7, 3.7, 3.8, 4.0, 4.1, 4.1, 4.2, 4.2],
+    kpiAchHistory: [110, 110, 120, 120, 120, 120, 120, 130, 130, 140, 140, 150, 150],
+    productivityHistory: [120, 120, 130, 130, 140, 140, 140, 150, 150, 170, 170, 180, 180]
+};
+
+const d4History = {
+    headHistory: [2, 2, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5],
+    pulseHistory: [4.0, 4.0, 3.9, 3.9, 3.8, 3.8, 3.8, 3.9, 3.9, 4.0, 4.0, 4.0, 4.0],
+    kpiAchHistory: [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+    productivityHistory: [90, 90, 95, 95, 95, 95, 95, 100, 100, 110, 110, 110, 110]
+};
+
+const d5History = {
+    headHistory: [15, 15, 18, 20, 22, 22, 22, 25, 25, 25, 28, 28, 30],
+    pulseHistory: [4.0, 4.0, 3.8, 3.7, 3.5, 3.5, 3.5, 3.2, 3.2, 3.2, 3.0, 3.0, 2.8],
+    kpiAchHistory: [100, 100, 102, 105, 105, 105, 105, 100, 100, 100, 95, 95, 90],
+    productivityHistory: [100, 100, 100, 95, 85, 85, 85, 75, 75, 75, 65, 65, 60]
+};
+
 const dummyHistoricalData: Record<string, any[]> = {
     "default": [
-        { id: "d1", name: "営業部", head: 25, productivity: 140, pulse: 2.1, weather: "rain", kpiAch: 110, kpiName: "売上高", respondentsCount: 20, masterHeadcount: 25 },
-        { id: "d2", name: "開発部", head: 45, productivity: 40, pulse: 2.9, weather: "cloud", kpiAch: 80, kpiName: "リリース件数", respondentsCount: 40, masterHeadcount: 45 },
-        { id: "d3", name: "マーケ部", head: 8, productivity: 180, pulse: 4.2, weather: "sun", kpiAch: 150, kpiName: "リード数", respondentsCount: 8, masterHeadcount: 8 },
-        { id: "d4", name: "人事部", head: 5, productivity: 110, pulse: 4.0, weather: "sun", kpiAch: 100, kpiName: "採用数", respondentsCount: 5, masterHeadcount: 5 },
-        { id: "d5", name: "CS部", head: 30, productivity: 60, pulse: 2.8, weather: "cloud", kpiAch: 90, kpiName: "解約抑制率", respondentsCount: 28, masterHeadcount: 30 },
+        { id: "d1", name: "営業部", head: 25, productivity: 140, pulse: 2.1, weather: "rain", kpiAch: 110, kpiName: "売上高", respondentsCount: 20, masterHeadcount: 25, ...d1History },
+        { id: "d2", name: "開発部", head: 45, productivity: 40, pulse: 2.9, weather: "cloud", kpiAch: 80, kpiName: "リリース件数", respondentsCount: 40, masterHeadcount: 45, ...d2History },
+        { id: "d3", name: "マーケ部", head: 8, productivity: 180, pulse: 4.2, weather: "sun", kpiAch: 150, kpiName: "リード数", respondentsCount: 8, masterHeadcount: 8, ...d3History },
+        { id: "d4", name: "人事部", head: 5, productivity: 110, pulse: 4.0, weather: "sun", kpiAch: 100, kpiName: "採用数", respondentsCount: 5, masterHeadcount: 5, ...d4History },
+        { id: "d5", name: "CS部", head: 30, productivity: 60, pulse: 2.8, weather: "cloud", kpiAch: 90, kpiName: "解約抑制率", respondentsCount: 28, masterHeadcount: 30, ...d5History },
     ],
     "1m": [
-        { id: "d1", name: "営業部", head: 25, productivity: 155, pulse: 2.8, weather: "cloud", kpiAch: 120, kpiName: "売上高", respondentsCount: 22, masterHeadcount: 25 },
-        { id: "d2", name: "開発部", head: 40, productivity: 60, pulse: 3.1, weather: "cloud", kpiAch: 90, kpiName: "リリース件数", respondentsCount: 38, masterHeadcount: 40 },
-        { id: "d3", name: "マーケ部", head: 8, productivity: 170, pulse: 4.1, weather: "sun", kpiAch: 140, kpiName: "リード数", respondentsCount: 8, masterHeadcount: 8 },
-        { id: "d4", name: "人事部", head: 5, productivity: 110, pulse: 4.0, weather: "sun", kpiAch: 100, kpiName: "採用数", respondentsCount: 5, masterHeadcount: 5 },
-        { id: "d5", name: "CS部", head: 28, productivity: 65, pulse: 3.0, weather: "cloud", kpiAch: 95, kpiName: "解約抑制率", respondentsCount: 25, masterHeadcount: 28 },
+        { id: "d1", name: "営業部", head: 25, productivity: 155, pulse: 2.8, weather: "cloud", kpiAch: 120, kpiName: "売上高", respondentsCount: 22, masterHeadcount: 25, ...d1History },
+        { id: "d2", name: "開発部", head: 40, productivity: 60, pulse: 3.1, weather: "cloud", kpiAch: 90, kpiName: "リリース件数", respondentsCount: 38, masterHeadcount: 40, ...d2History },
+        { id: "d3", name: "マーケ部", head: 8, productivity: 170, pulse: 4.1, weather: "sun", kpiAch: 140, kpiName: "リード数", respondentsCount: 8, masterHeadcount: 8, ...d3History },
+        { id: "d4", name: "人事部", head: 5, productivity: 110, pulse: 4.0, weather: "sun", kpiAch: 100, kpiName: "採用数", respondentsCount: 5, masterHeadcount: 5, ...d4History },
+        { id: "d5", name: "CS部", head: 28, productivity: 65, pulse: 3.0, weather: "cloud", kpiAch: 95, kpiName: "解約抑制率", respondentsCount: 25, masterHeadcount: 28, ...d5History },
     ],
     "3m": [
-        { id: "d1", name: "営業部", head: 22, productivity: 160, pulse: 3.5, weather: "sun", kpiAch: 125, kpiName: "売上高", respondentsCount: 20, masterHeadcount: 22 },
-        { id: "d2", name: "開発部", head: 35, productivity: 80, pulse: 3.4, weather: "cloud", kpiAch: 95, kpiName: "リリース件数", respondentsCount: 33, masterHeadcount: 35 },
-        { id: "d3", name: "マーケ部", head: 7, productivity: 150, pulse: 3.8, weather: "sun", kpiAch: 130, kpiName: "リード数", respondentsCount: 7, masterHeadcount: 7 },
-        { id: "d4", name: "人事部", head: 4, productivity: 100, pulse: 3.9, weather: "sun", kpiAch: 100, kpiName: "採用数", respondentsCount: 4, masterHeadcount: 4 },
-        { id: "d5", name: "CS部", head: 25, productivity: 75, pulse: 3.2, weather: "cloud", kpiAch: 100, kpiName: "解約抑制率", respondentsCount: 22, masterHeadcount: 25 },
+        { id: "d1", name: "営業部", head: 22, productivity: 160, pulse: 3.5, weather: "sun", kpiAch: 125, kpiName: "売上高", respondentsCount: 20, masterHeadcount: 22, ...d1History },
+        { id: "d2", name: "開発部", head: 35, productivity: 80, pulse: 3.4, weather: "cloud", kpiAch: 95, kpiName: "リリース件数", respondentsCount: 33, masterHeadcount: 35, ...d2History },
+        { id: "d3", name: "マーケ部", head: 7, productivity: 150, pulse: 3.8, weather: "sun", kpiAch: 130, kpiName: "リード数", respondentsCount: 7, masterHeadcount: 7, ...d3History },
+        { id: "d4", name: "人事部", head: 4, productivity: 100, pulse: 3.9, weather: "sun", kpiAch: 100, kpiName: "採用数", respondentsCount: 4, masterHeadcount: 4, ...d4History },
+        { id: "d5", name: "CS部", head: 25, productivity: 75, pulse: 3.2, weather: "cloud", kpiAch: 100, kpiName: "解約抑制率", respondentsCount: 22, masterHeadcount: 25, ...d5History },
     ],
     "6m": [
-        { id: "d1", name: "営業部", head: 20, productivity: 170, pulse: 3.9, weather: "sun", kpiAch: 130, kpiName: "売上高", respondentsCount: 18, masterHeadcount: 20 },
-        { id: "d2", name: "開発部", head: 30, productivity: 100, pulse: 3.7, weather: "sun", kpiAch: 105, kpiName: "リリース件数", respondentsCount: 28, masterHeadcount: 30 },
-        { id: "d3", name: "マーケ部", head: 6, productivity: 140, pulse: 3.7, weather: "sun", kpiAch: 120, kpiName: "リード数", respondentsCount: 6, masterHeadcount: 6 },
-        { id: "d4", name: "人事部", head: 4, productivity: 95, pulse: 3.8, weather: "sun", kpiAch: 100, kpiName: "採用数", respondentsCount: 4, masterHeadcount: 4 },
-        { id: "d5", name: "CS部", head: 22, productivity: 85, pulse: 3.5, weather: "cloud", kpiAch: 105, kpiName: "解約抑制率", respondentsCount: 20, masterHeadcount: 22 },
+        { id: "d1", name: "営業部", head: 20, productivity: 170, pulse: 3.9, weather: "sun", kpiAch: 130, kpiName: "売上高", respondentsCount: 18, masterHeadcount: 20, ...d1History },
+        { id: "d2", name: "開発部", head: 30, productivity: 100, pulse: 3.7, weather: "sun", kpiAch: 105, kpiName: "リリース件数", respondentsCount: 28, masterHeadcount: 30, ...d2History },
+        { id: "d3", name: "マーケ部", head: 6, productivity: 140, pulse: 3.7, weather: "sun", kpiAch: 120, kpiName: "リード数", respondentsCount: 6, masterHeadcount: 6, ...d3History },
+        { id: "d4", name: "人事部", head: 4, productivity: 95, pulse: 3.8, weather: "sun", kpiAch: 100, kpiName: "採用数", respondentsCount: 4, masterHeadcount: 4, ...d4History },
+        { id: "d5", name: "CS部", head: 22, productivity: 85, pulse: 3.5, weather: "cloud", kpiAch: 105, kpiName: "解約抑制率", respondentsCount: 20, masterHeadcount: 22, ...d5History },
     ],
     "12m": [
-        { id: "d1", name: "営業部", head: 15, productivity: 140, pulse: 4.2, weather: "sun", kpiAch: 110, kpiName: "売上高", respondentsCount: 15, masterHeadcount: 15 },
-        { id: "d2", name: "開発部", head: 20, productivity: 130, pulse: 4.1, weather: "sun", kpiAch: 115, kpiName: "リリース件数", respondentsCount: 20, masterHeadcount: 20 },
-        { id: "d3", name: "マーケ部", head: 4, productivity: 120, pulse: 4.0, weather: "sun", kpiAch: 110, kpiName: "リード数", respondentsCount: 4, masterHeadcount: 4 },
-        { id: "d4", name: "人事部", head: 2, productivity: 90, pulse: 4.0, weather: "sun", kpiAch: 100, kpiName: "採用数", respondentsCount: 2, masterHeadcount: 2 },
-        { id: "d5", name: "CS部", head: 15, productivity: 100, pulse: 4.0, weather: "sun", kpiAch: 100, kpiName: "解約抑制率", respondentsCount: 15, masterHeadcount: 15 },
+        { id: "d1", name: "営業部", head: 15, productivity: 140, pulse: 4.2, weather: "sun", kpiAch: 110, kpiName: "売上高", respondentsCount: 15, masterHeadcount: 15, ...d1History },
+        { id: "d2", name: "開発部", head: 20, productivity: 130, pulse: 4.1, weather: "sun", kpiAch: 115, kpiName: "リリース件数", respondentsCount: 20, masterHeadcount: 20, ...d2History },
+        { id: "d3", name: "マーケ部", head: 4, productivity: 120, pulse: 4.0, weather: "sun", kpiAch: 110, kpiName: "リード数", respondentsCount: 4, masterHeadcount: 4, ...d3History },
+        { id: "d4", name: "人事部", head: 2, productivity: 90, pulse: 4.0, weather: "sun", kpiAch: 100, kpiName: "採用数", respondentsCount: 2, masterHeadcount: 2, ...d4History },
+        { id: "d5", name: "CS部", head: 15, productivity: 100, pulse: 4.0, weather: "sun", kpiAch: 100, kpiName: "解約抑制率", respondentsCount: 15, masterHeadcount: 15, ...d5History },
     ]
 };
 
@@ -134,6 +169,8 @@ export default function BubbleChartGuidePage() {
                             data={dummyHistoricalData[guideMonth]}
                             sizeKpiName="KPI達成率"
                             yAxisMode="productivity"
+                            month={guideMonth}
+                            showTrajectory={true}
                         />
                     </div>
                 </div>
