@@ -1276,7 +1276,7 @@ export default function DeptDashboardPage() {
                                                             <div className="flex-1 bg-slate-100 h-1.5 rounded-full overflow-hidden relative">
                                                                 {qs.companyAvg !== null ? (
                                                                     <div
-                                                                        className="h-full rounded-full bg-slate-400 transition-all duration-500"
+                                                                        className="h-full rounded-full bg-slate-300 transition-all duration-500"
                                                                         style={{
                                                                             width: `${(qs.companyAvg / 5) * 100}%`
                                                                         }}
@@ -1289,13 +1289,6 @@ export default function DeptDashboardPage() {
                                                                 </span>
                                                             </div>
                                                         </div>
-                                                        
-                                                        {/* 自部署が全社平均を下回る場合に差分を表示 */}
-                                                        {qs.avg !== null && qs.companyAvg !== null && qs.avg < qs.companyAvg && (
-                                                            <div className="text-[10px] font-bold text-rose-500 flex items-center gap-1 mt-1 pl-1">
-                                                                <span>全社平均比: -{(qs.companyAvg - qs.avg).toFixed(2)}</span>
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 </div>
                                             );
