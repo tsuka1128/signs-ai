@@ -214,6 +214,22 @@ export function Sidebar({
                         <Users className={cn("w-3.5 h-3.5", pathname === '/hr-strategy' ? "text-teal" : "text-slate-300")} />
                         人事インサイト
                     </button>
+                    <button
+                        onClick={() => {
+                            if (!isPro) { setShowProGate(true); return; }
+                            router.push('/hr-strategy/campaigns');
+                            setIsMobileOpen?.(false);
+                        }}
+                        className={cn(
+                            "flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-bold transition-all text-left",
+                            pathname === '/hr-strategy/campaigns'
+                                ? "text-teal bg-teal/5"
+                                : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                        )}
+                    >
+                        <Rocket className={cn("w-3.5 h-3.5", pathname === '/hr-strategy/campaigns' ? "text-teal" : "text-slate-300")} />
+                        施策ROI
+                    </button>
                 </div>
             )}
         </div>
