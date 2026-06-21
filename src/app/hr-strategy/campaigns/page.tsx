@@ -10,6 +10,7 @@ import { PlanGate } from "@/components/ui/PlanGate";
 import { calculateCampaignRoi, CampaignRoiResult } from "@/lib/logic/campaign-roi";
 import { HrCampaign } from "@/types/database";
 import { toast } from "sonner";
+import { calculateAchievementRate } from "@/lib/logic/kpi-engine";
 import {
   Rocket,
   Plus,
@@ -40,6 +41,12 @@ const CATEGORIES = [
   { id: "other", label: "その他 (Other)", color: "bg-slate-50 text-slate-600 border-slate-100" }
 ];
 
+const formatNumberWithCommas = (value: string): string => {
+  const clean = value.replace(/[^\d]/g, "");
+  if (!clean) return "";
+  return Number(clean).toLocaleString();
+};
+
 export default function HrCampaignsPage() {
   const router = useRouter();
   const { company, supabase, isImpersonating, userRole, userDepartmentId } = useCompany();
@@ -67,6 +74,7 @@ export default function HrCampaignsPage() {
   // 状態管理
   const [campaigns, setCampaigns] = useState<HrCampaign[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -79,6 +87,44 @@ export default function HrCampaignsPage() {
   const [formLaunchedAt, setFormLaunchedAt] = useState(""); // YYYY-MM
   const [formInvestedCost, setFormInvestedCost] = useState("");
   const [formMemo, setFormMemo] = useState("");
+  const [formTargetKpiId, setFormTargetKpiId] = useState("");
+
+  // フォームクリア処理
+  const clearForm = useCallback(() => {
+    setFormTitle("");
+    setFormCategory("culture");
+    setFormScope("all");
+    setFormLaunchedAt("");
+    setFormInvestedCost("");
+    setFormMemo("");
+    setFormTargetKpiId("");
+    setEditingId(null);
+  }, []);
+
+  const handleOpenAddModal = () => {
+    clearForm();
+    setShowAddModal(true);
+  };
+
+  const handleOpenEditModal = (c: HrCampaign) => {
+    setEditingId(c.id);
+    setFormTitle(c.title);
+    setFormCategory(c.category || "other");
+    
+    let scope = "all";
+    if (c.department_id) {
+      scope = `dept:${c.department_id}`;
+    } else if (c.axis_id) {
+      scope = `axis:${c.axis_id}`;
+    }
+    setFormScope(scope);
+    setFormLaunchedAt(c.launched_at.slice(0, 7));
+    setFormInvestedCost(c.invested_cost !== null ? formatNumberWithCommas(c.invested_cost.toString()) : "");
+    setFormMemo(c.memo || "");
+    setFormTargetKpiId(c.target_kpi_id || "");
+    
+    setShowAddModal(true);
+  };
 
   // 詳細画面での前提アサンプション調整用のローカル状態
   const [localLagMonths, setLocalLagMonths] = useState<number>(1);
@@ -173,6 +219,137 @@ export default function HrCampaignsPage() {
     });
   }, [selectedCampaign, company, localLagMonths, localWindowMonths, localSalesAttribution, displayDepts, displayAxes, state, last13Months]);
 
+  // 目報の特定KPIの Before/After/履歴 集約計算 (表示フォーカス専用)
+  const targetKpiResult = useMemo(() => {
+    if (!selectedCampaign || !selectedCampaign.target_kpi_id || !roiResult) return null;
+    const targetKpiId = selectedCampaign.target_kpi_id;
+    const kpiDef = state.realKpis.find(k => k.id === targetKpiId);
+    if (!kpiDef) return null;
+
+    const isHigherBetter = kpiDef.is_higher_better !== false;
+    const isDept = !!selectedCampaign.department_id;
+    const isAxis = !!selectedCampaign.axis_id;
+
+    // 13ヶ月の月初日付に補正
+    const months = roiResult.histories.months.map(m => m + "-01");
+
+    // 対象のKPI実績
+    const targetKpiAchFilled = months.map((month) => {
+      let recs = state.realKpiRecords.filter(r => 
+        r.kpi_definition_id === targetKpiId && 
+        r.recorded_month.slice(0, 7) === month.slice(0, 7)
+      );
+
+      if (isDept) {
+        recs = recs.filter(r => r.department_id === selectedCampaign.department_id);
+      } else if (isAxis) {
+        recs = recs.filter(r => r.axis_id === selectedCampaign.axis_id);
+      }
+
+      if (recs.length === 0) return 0;
+      
+      let sumAch = 0;
+      let count = 0;
+      recs.forEach(rec => {
+        const ach = calculateAchievementRate(rec.value, rec.target_value, isHigherBetter);
+        if (ach !== null) {
+          sumAch += ach;
+          count++;
+        }
+      });
+      return count > 0 ? sumAch / count : 0;
+    });
+
+    // 対照群のKPI実績
+    const controlKpiAchFilled = months.map((month) => {
+      let recs = state.realKpiRecords.filter(r => 
+        r.kpi_definition_id === targetKpiId && 
+        r.recorded_month.slice(0, 7) === month.slice(0, 7)
+      );
+
+      if (isDept) {
+        recs = recs.filter(r => r.department_id !== selectedCampaign.department_id);
+      } else if (isAxis) {
+        recs = recs.filter(r => r.axis_id !== selectedCampaign.axis_id);
+      } else {
+        return 0; // 全社は対照群なし
+      }
+
+      if (recs.length === 0) return 0;
+      
+      let sumAch = 0;
+      let count = 0;
+      recs.forEach(rec => {
+        const ach = calculateAchievementRate(rec.value, rec.target_value, isHigherBetter);
+        if (ach !== null) {
+          sumAch += ach;
+          count++;
+        }
+      });
+      return count > 0 ? sumAch / count : 0;
+    });
+
+    // 平均値計算用のインデックス範囲
+    const beforeRange = roiResult.launchIdx >= localWindowMonths 
+      ? Array.from({ length: localWindowMonths }, (_, i) => roiResult.launchIdx - localWindowMonths + i) 
+      : [];
+    const afterRange = roiResult.launchIdx !== -1 && roiResult.launchIdx + localLagMonths <= 12 
+      ? Array.from({ length: roiResult.effectMonths }, (_, i) => roiResult.launchIdx + localLagMonths + i) 
+      : [];
+
+    const getAvg = (arr: number[], range: number[]) => {
+      if (range.length === 0) return 0;
+      return range.reduce((s, idx) => s + (arr[idx] ?? 0), 0) / range.length;
+    };
+
+    const beforeVal = getAvg(targetKpiAchFilled, beforeRange);
+    const afterVal = getAvg(targetKpiAchFilled, afterRange);
+    const diffVal = afterVal - beforeVal;
+
+    const controlBefore = getAvg(controlKpiAchFilled, beforeRange);
+    const controlAfter = getAvg(controlKpiAchFilled, afterRange);
+    const controlDiff = controlAfter - controlBefore;
+
+    const hasControl = isDept || isAxis;
+    const netDiffVal = hasControl ? diffVal - controlDiff : diffVal;
+
+    return {
+      kpiName: kpiDef.name,
+      before: Math.round(beforeVal * 10) / 10,
+      after: Math.round(afterVal * 10) / 10,
+      diff: Math.round(diffVal * 10) / 10,
+      netDiff: Math.round(netDiffVal * 10) / 10,
+      history: targetKpiAchFilled,
+      isHigherBetter
+    };
+  }, [selectedCampaign, roiResult, state.realKpis, state.realKpiRecords, localWindowMonths, localLagMonths]);
+
+  // モーダル内で選択可能なKPIリストの絞り込み (対象スコープに存在するKPI定義のみ)
+  const availableKpis = useMemo(() => {
+    if (!company) return [];
+    
+    if (formScope === "all") {
+      return state.realKpis;
+    } else if (formScope.startsWith("dept:")) {
+      const deptId = formScope.replace("dept:", "");
+      const kpiIds = new Set(
+        state.realKpiRecords
+          .filter((r) => r.department_id === deptId && r.kpi_definition_id)
+          .map((r) => r.kpi_definition_id)
+      );
+      return state.realKpis.filter((k) => kpiIds.has(k.id));
+    } else if (formScope.startsWith("axis:")) {
+      const axisId = formScope.replace("axis:", "");
+      const kpiIds = new Set(
+        state.realKpiRecords
+          .filter((r) => r.axis_id === axisId && r.kpi_definition_id)
+          .map((r) => r.kpi_definition_id)
+      );
+      return state.realKpis.filter((k) => kpiIds.has(k.id));
+    }
+    return state.realKpis;
+  }, [company, formScope, state.realKpis, state.realKpiRecords]);
+
   // 全キャンペーンのROI計算結果（一覧表示用、保存されたDBデータ基準）
   const campaignsWithRoi = useMemo(() => {
     if (!company) return [];
@@ -239,7 +416,7 @@ export default function HrCampaignsPage() {
     }
   };
 
-  // 登録処理
+  // 登録・編集送信処理
   const handleAddCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!company) return;
@@ -264,51 +441,70 @@ export default function HrCampaignsPage() {
         axis_id = formScope.replace("axis:", "");
       }
 
-      // 開始月を YYYY-MM-01 形式にする
       const launchedDate = `${formLaunchedAt}-01`;
 
-      const newCampaign = {
+      const cleanCostStr = formInvestedCost.replace(/,/g, "");
+      const invested_cost = cleanCostStr ? parseFloat(cleanCostStr) : null;
+      if (cleanCostStr && isNaN(invested_cost as any)) {
+        toast.error("投資額には正しい数値を入力してください");
+        setIsSubmitLoading(false);
+        return;
+      }
+
+      const campaignData: any = {
         company_id: company.id,
         title: formTitle,
         category: formCategory,
         department_id,
         axis_id,
         launched_at: launchedDate,
-        invested_cost: formInvestedCost ? parseFloat(formInvestedCost) : null,
-        roi_assumptions: {
+        invested_cost,
+        memo: formMemo || null,
+        target_kpi_id: formTargetKpiId || null
+      };
+
+      if (editingId) {
+        campaignData.updated_at = new Date().toISOString();
+        const { data, error } = await supabase
+          .from("hr_campaigns")
+          .update(campaignData)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        toast.success("施策を更新しました");
+        setShowAddModal(false);
+        clearForm();
+
+        // 状態更新
+        setCampaigns(prev => prev.map(c => c.id === editingId ? data : c));
+      } else {
+        campaignData.roi_assumptions = {
           lagMonths: 1,
           windowMonths: 3,
           salesAttribution: 1.0
-        },
-        memo: formMemo || null,
-        status: "active"
-      };
+        };
+        campaignData.status = "active";
 
-      const { data, error } = await supabase
-        .from("hr_campaigns")
-        .insert(newCampaign)
-        .select()
-        .single();
+        const { data, error } = await supabase
+          .from("hr_campaigns")
+          .insert(campaignData)
+          .select()
+          .single();
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast.success("施策を新しく登録しました");
-      setShowAddModal(false);
-      // 入力初期化
-      setFormTitle("");
-      setFormCategory("culture");
-      setFormScope("all");
-      setFormLaunchedAt("");
-      setFormInvestedCost("");
-      setFormMemo("");
+        toast.success("施策を新しく登録しました");
+        setShowAddModal(false);
+        clearForm();
 
-      // 再フェッチ & 選択に設定
-      const updatedCampaigns = [data, ...campaigns];
-      setCampaigns(updatedCampaigns);
-      setSelectedId(data.id);
+        setCampaigns(prev => [data, ...prev]);
+        setSelectedId(data.id);
+      }
     } catch (err) {
-      console.error("施策の登録に失敗しました:", err);
-      toast.error("施策の登録に失敗しました");
+      console.error(editingId ? "施策の更新に失敗しました:" : "施策の登録に失敗しました:", err);
+      toast.error(editingId ? "施策の更新に失敗しました" : "施策の登録に失敗しました");
     } finally {
       setIsSubmitLoading(false);
     }
@@ -353,30 +549,38 @@ export default function HrCampaignsPage() {
 
   // 組織マップ用のバブル軌跡データを構築
   const scatterPlotData = useMemo(() => {
-    if (!roiResult || !company) return [];
+    if (!roiResult || !company || !selectedCampaign) return [];
 
-    // 基本データ（ displayDepts をそのままコピー）
-    const list = displayDepts.map((d: any) => ({
+    let rawList: any[] = [];
+    if (selectedCampaign.department_id) {
+      // 部署指定の場合: 対象部署1件のみ
+      rawList = displayDepts.filter((d: any) => d.id === selectedCampaign.department_id);
+    } else if (selectedCampaign.axis_id) {
+      // 軸指定の場合: 対象軸1件のみ
+      rawList = displayAxes.filter((a: any) => a.id === selectedCampaign.axis_id);
+    } else {
+      // 全社指定の場合: 全部署を表示
+      rawList = displayDepts;
+    }
+
+    return rawList.map((d: any) => ({
       id: d.id,
       name: d.name,
-      head: d.headHistory?.[12] ?? d.masterHeadcount ?? 0,
+      head: d.headHistory?.[12] ?? d.masterHeadcount ?? d.headcount ?? 0,
       productivity: d.productivity ?? 0,
       pulse: d.pulse ?? 0,
       weather: d.weather ?? "sun",
       kpiAch: d.kpiAch ?? 0,
-      kpiName: d.kpiName,
+      kpiName: d.kpiName || "KPI",
       pulseHistory: d.pulseHistory,
       headHistory: d.headHistory,
       kpiAchHistoryFilled: d.kpiAchHistoryFilled,
       productivityHistoryFilled: d.productivityHistoryFilled,
-      respondentsCount: d.respondentsCount,
-      masterHeadcount: d.masterHeadcount,
-      hasKpiData: d.hasKpiData
+      respondentsCount: d.respondentsCount ?? 0,
+      masterHeadcount: d.masterHeadcount ?? d.headcount ?? 0,
+      hasKpiData: d.hasKpiData ?? true
     }));
-
-    // 詳細表示用に、選択されているキャンペーン対象部署以外の軌跡表示を薄くするか、対象の軌跡を ScatterPlot で表示させます。
-    return list;
-  }, [roiResult, company, displayDepts]);
+  }, [roiResult, company, selectedCampaign, displayDepts, displayAxes]);
 
   // プラン保護画面
   if (!canUse("hr_strategy")) {
@@ -422,7 +626,7 @@ export default function HrCampaignsPage() {
             </div>
             
             <button
-              onClick={() => setShowAddModal(true)}
+              onClick={handleOpenAddModal}
               className="px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-slate-800 transition-all flex items-center gap-2 self-start md:self-auto shadow-md hover:scale-[1.02] active:scale-[0.98]"
             >
               <Plus className="w-4 h-4" />
@@ -448,7 +652,7 @@ export default function HrCampaignsPage() {
                 </p>
               </div>
               <button
-                onClick={() => setShowAddModal(true)}
+                onClick={handleOpenAddModal}
                 className="px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs rounded-xl transition-all shadow-md flex items-center gap-2 mx-auto hover:scale-[1.02]"
               >
                 <Plus className="w-4 h-4" />
@@ -575,6 +779,12 @@ export default function HrCampaignsPage() {
                         {/* アクションボタン */}
                         <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
                           <button
+                            onClick={() => handleOpenEditModal(selectedCampaign)}
+                            className="px-3 py-1.5 bg-white text-slate-500 border border-slate-200 rounded-lg hover:border-slate-300 hover:text-slate-700 text-[10px] font-black tracking-widest uppercase transition-all"
+                          >
+                            編集
+                          </button>
+                          <button
                             onClick={() => handleToggleArchive(selectedCampaign.id, selectedCampaign.status)}
                             className={cn(
                               "px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest uppercase transition-all border",
@@ -690,7 +900,7 @@ export default function HrCampaignsPage() {
                             <p className="text-xs font-black text-amber-700">効果測定が進行中または範囲外です</p>
                             <p className="text-[10px] text-amber-600 font-medium mt-1 leading-relaxed">
                               {roiResult.missingMonthsMessage}
-                              開始月を 13 ヶ月窓内（最新から 13 ヶ月以内）に指定し、かつ Before ウィンドウ用の過去月と After 用の将来月が十分に確保されているか確認してください。
+                              開始月を直近13ヶ月以内に指定し、かつ Before ウィンドウ用の過去月と After 用の将来月が十分に確保されているか確認してください。
                             </p>
                           </div>
                         </div>
@@ -726,11 +936,50 @@ export default function HrCampaignsPage() {
                               <th className="py-2.5 pb-4">指標</th>
                               <th className="py-2.5 pb-4 text-right">Before平均</th>
                               <th className="py-2.5 pb-4 text-right">After平均</th>
-                              <th className="py-2.5 pb-4 text-right">改善幅 (Gross)</th>
-                              <th className="py-2.5 pb-4 text-right">純効果 (Net)</th>
+                              <th className="py-2.5 pb-4 text-right">
+                                <span className="inline-flex items-center gap-1">
+                                  改善幅 (Gross)
+                                  <span className="relative group inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-slate-100 text-slate-400 text-[8px] font-bold cursor-help flex-shrink-0">
+                                    ?
+                                    <span className="absolute bottom-full right-0 mb-2 w-48 p-2 text-[9px] text-slate-500 bg-white border rounded shadow invisible group-hover:visible font-medium z-50 normal-case leading-normal text-left">
+                                      対象組織の Before→After の単純な変化量。全社的な追い風/逆風も含む。
+                                    </span>
+                                  </span>
+                                </span>
+                              </th>
+                              <th className="py-2.5 pb-4 text-right">
+                                <span className="inline-flex items-center gap-1">
+                                  純効果 (Net)
+                                  <span className="relative group inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-slate-100 text-slate-400 text-[8px] font-bold cursor-help flex-shrink-0">
+                                    ?
+                                    <span className="absolute bottom-full right-0 mb-2 w-48 p-2 text-[9px] text-slate-500 bg-white border rounded shadow invisible group-hover:visible font-medium z-50 normal-case leading-normal text-left">
+                                      他部署（対照群）の同期間の変化を差し引いた、施策固有の純効果。DiD-lite（差分の差分）で全社トレンドを除去済み。
+                                    </span>
+                                  </span>
+                                </span>
+                              </th>
                             </tr>
                           </thead>
                           <tbody className="font-medium text-slate-600">
+                            {/* ターゲットKPI (指定されている場合のみ強調表示) */}
+                            {targetKpiResult && (
+                              <tr className="border-b border-slate-50 bg-teal-50/20 hover:bg-teal-50/30 transition-colors ring-1 ring-teal-100/50">
+                                <td className="py-3 pl-2 font-black text-teal-800">
+                                  <span className="flex items-center gap-1">
+                                    🎯 目標KPI: {targetKpiResult.kpiName} (%)
+                                  </span>
+                                </td>
+                                <td className="py-3 text-right font-mono font-bold text-teal-700">{targetKpiResult.before.toFixed(0)}%</td>
+                                <td className="py-3 text-right font-mono font-bold text-teal-700">{targetKpiResult.after.toFixed(0)}%</td>
+                                <td className={cn("py-3 text-right font-mono font-bold", targetKpiResult.diff >= 0 ? "text-emerald-600" : "text-rose-500")}>
+                                  {targetKpiResult.diff > 0 ? "+" : ""}{targetKpiResult.diff.toFixed(0)}%
+                                </td>
+                                <td className={cn("py-3 text-right font-mono font-black", targetKpiResult.netDiff >= 0 ? "text-emerald-600" : "text-rose-500")}>
+                                  {targetKpiResult.netDiff > 0 ? "+" : ""}{targetKpiResult.netDiff.toFixed(0)}%
+                                  <span className="text-[8px] font-bold block text-slate-400">(対照控除)</span>
+                                </td>
+                              </tr>
+                            )}
                             {/* 1. 一人当たり生産性 */}
                             <tr className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
                               <td className="py-3 font-bold text-slate-800">一人当たり生産性</td>
@@ -889,18 +1138,24 @@ export default function HrCampaignsPage() {
 
                         {/* B: KPI達成率の推移 */}
                         <div className="space-y-2">
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">KPI達成率 (%) の推移</p>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            {targetKpiResult ? `目標KPI: ${targetKpiResult.kpiName} (%) の推移` : "KPI達成率 (%) の推移"}
+                          </p>
                           {(() => {
                             const W = 300, H = 100;
                             const pad = { top: 10, right: 10, bottom: 20, left: 25 };
                             const cw = W - pad.left - pad.right;
                             const ch = H - pad.top - pad.bottom;
                             
-                            const maxVal = Math.max(...roiResult.histories.kpiAchFilled, 100);
+                            const historyData = targetKpiResult ? targetKpiResult.history : roiResult.histories.kpiAchFilled;
+                            const beforeAvg = targetKpiResult ? targetKpiResult.before : roiResult.before.kpiAch;
+                            const afterAvg = targetKpiResult ? targetKpiResult.after : roiResult.after.kpiAch;
+
+                            const maxVal = Math.max(...historyData, 100);
                             const xPos = (i: number) => pad.left + (i / 12) * cw;
                             const yPos = (v: number) => pad.top + ch - (v / maxVal) * ch;
 
-                            const dAttr = roiResult.histories.kpiAchFilled.map((v, i) => `${i === 0 ? "M" : "L"} ${xPos(i)} ${yPos(v)}`).join(" ");
+                            const dAttr = historyData.map((v, i) => `${i === 0 ? "M" : "L"} ${xPos(i)} ${yPos(v)}`).join(" ");
 
                             return (
                               <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto border border-slate-50 rounded-xl bg-slate-50/20 select-none">
@@ -918,15 +1173,15 @@ export default function HrCampaignsPage() {
 
                                 {roiResult.isBeforeWindowValid && (
                                   <line
-                                    x1={xPos(roiResult.launchIdx - localWindowMonths)} y1={yPos(roiResult.before.kpiAch)}
-                                    x2={xPos(roiResult.launchIdx - 1)} y2={yPos(roiResult.before.kpiAch)}
+                                    x1={xPos(roiResult.launchIdx - localWindowMonths)} y1={yPos(beforeAvg)}
+                                    x2={xPos(roiResult.launchIdx - 1)} y2={yPos(beforeAvg)}
                                     stroke="#14B8A6" strokeWidth={1.5} strokeLinecap="round" opacity={0.6}
                                   />
                                 )}
                                 {roiResult.isAfterWindowValid && (
                                   <line
-                                    x1={xPos(roiResult.launchIdx + localLagMonths)} y1={yPos(roiResult.after.kpiAch)}
-                                    x2={xPos(12)} y2={yPos(roiResult.after.kpiAch)}
+                                    x1={xPos(roiResult.launchIdx + localLagMonths)} y1={yPos(afterAvg)}
+                                    x2={xPos(12)} y2={yPos(afterAvg)}
                                     stroke="#14B8A6" strokeWidth={1.5} strokeLinecap="round" opacity={0.6}
                                   />
                                 )}
@@ -1073,7 +1328,7 @@ export default function HrCampaignsPage() {
       {showAddModal && (
         <div
           className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-          onClick={() => setShowAddModal(false)}
+          onClick={() => clearForm()}
         >
           <div
             className="bg-white rounded-[28px] border border-slate-200 p-6 max-w-md w-full space-y-5 animate-in zoom-in-95 duration-200 shadow-2xl"
@@ -1082,10 +1337,10 @@ export default function HrCampaignsPage() {
             <div className="flex items-center justify-between border-b border-slate-50 pb-3">
               <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
                 <Rocket className="w-5 h-5 text-teal" />
-                人事施策（キャンペーン）を登録
+                {editingId ? "人事施策（キャンペーン）を編集" : "人事施策（キャンペーン）を登録"}
               </h3>
               <button
-                onClick={() => setShowAddModal(false)}
+                onClick={() => clearForm()}
                 className="w-7 h-7 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-400 transition-colors text-sm"
               >
                 ✕
@@ -1157,13 +1412,28 @@ export default function HrCampaignsPage() {
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">投資額 (円・任意)</label>
                   <input
-                    type="number" min="0"
-                    placeholder="例: 150000"
+                    type="text"
+                    placeholder="例: 150,000"
                     value={formInvestedCost}
-                    onChange={(e) => setFormInvestedCost(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-50/50 border border-slate-100 rounded-xl text-xs font-medium focus:outline-none focus:border-teal focus:bg-white transition-all text-slate-700"
+                    onChange={(e) => setFormInvestedCost(formatNumberWithCommas(e.target.value))}
+                    className="w-full px-4 py-3 bg-slate-50/50 border border-slate-100 rounded-xl text-xs font-medium focus:outline-none focus:border-teal focus:bg-white transition-all text-slate-700 text-right"
                   />
                 </div>
+              </div>
+
+              {/* 改善を狙うKPI（任意） */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">改善を狙うKPI（任意）</label>
+                <select
+                  value={formTargetKpiId}
+                  onChange={(e) => setFormTargetKpiId(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-50/50 border border-slate-100 rounded-xl text-xs font-medium focus:outline-none focus:border-teal focus:bg-white transition-all text-slate-700"
+                >
+                  <option value="">🎯 未選択 (特になし)</option>
+                  {availableKpis.map((k) => (
+                    <option key={k.id} value={k.id}>🎯 {k.name}</option>
+                  ))}
+                </select>
               </div>
 
               {/* メモ */}
@@ -1189,7 +1459,7 @@ export default function HrCampaignsPage() {
                   ) : (
                     <>
                       <Rocket className="w-4 h-4" />
-                      施策を登録する
+                      {editingId ? "施策を更新する" : "施策を登録する"}
                     </>
                   )}
                 </button>

@@ -22,6 +22,7 @@ const createMockCampaign = (overrides: Partial<HrCampaign> = {}): HrCampaign => 
   created_by: "test-user-id",
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
+  target_kpi_id: null,
   ...overrides
 });
 
