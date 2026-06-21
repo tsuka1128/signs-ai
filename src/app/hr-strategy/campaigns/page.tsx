@@ -122,9 +122,25 @@ export default function HrCampaignsPage() {
     setFormInvestedCost(c.invested_cost !== null ? formatNumberWithCommas(c.invested_cost.toString()) : "");
     setFormMemo(c.memo || "");
     setFormTargetKpiId(c.target_kpi_id || "");
-    
+
     setShowAddModal(true);
   };
+
+  // モーダルを閉じる（編集途中なら確認）。× とオーバーレイ両方から使用
+  const handleCloseModal = useCallback(() => {
+    const hasContent =
+      editingId !== null ||
+      formTitle.trim() !== "" ||
+      formMemo.trim() !== "" ||
+      formLaunchedAt !== "" ||
+      formInvestedCost !== "" ||
+      formTargetKpiId !== "";
+    if (hasContent && !window.confirm("編集途中の内容があります。破棄して閉じますか？")) {
+      return;
+    }
+    setShowAddModal(false);
+    clearForm();
+  }, [editingId, formTitle, formMemo, formLaunchedAt, formInvestedCost, formTargetKpiId, clearForm]);
 
   // 詳細画面での前提アサンプション調整用のローカル状態
   const [localLagMonths, setLocalLagMonths] = useState<number>(1);
@@ -325,30 +341,12 @@ export default function HrCampaignsPage() {
   }, [selectedCampaign, roiResult, state.realKpis, state.realKpiRecords, localWindowMonths, localLagMonths]);
 
   // モーダル内で選択可能なKPIリストの絞り込み (対象スコープに存在するKPI定義のみ)
+  // SignsAIに登録されたKPI全件を選択肢にする（スコープで絞り込まない。
+  // 絞り込むと保存済みKPIが一覧に無く、編集時にプリフィルが「未選択」表示になるため）
   const availableKpis = useMemo(() => {
     if (!company) return [];
-    
-    if (formScope === "all") {
-      return state.realKpis;
-    } else if (formScope.startsWith("dept:")) {
-      const deptId = formScope.replace("dept:", "");
-      const kpiIds = new Set(
-        state.realKpiRecords
-          .filter((r) => r.department_id === deptId && r.kpi_definition_id)
-          .map((r) => r.kpi_definition_id)
-      );
-      return state.realKpis.filter((k) => kpiIds.has(k.id));
-    } else if (formScope.startsWith("axis:")) {
-      const axisId = formScope.replace("axis:", "");
-      const kpiIds = new Set(
-        state.realKpiRecords
-          .filter((r) => r.axis_id === axisId && r.kpi_definition_id)
-          .map((r) => r.kpi_definition_id)
-      );
-      return state.realKpis.filter((k) => kpiIds.has(k.id));
-    }
     return state.realKpis;
-  }, [company, formScope, state.realKpis, state.realKpiRecords]);
+  }, [company, state.realKpis]);
 
   // 全キャンペーンのROI計算結果（一覧表示用、保存されたDBデータ基準）
   const campaignsWithRoi = useMemo(() => {
@@ -1328,10 +1326,10 @@ export default function HrCampaignsPage() {
       {showAddModal && (
         <div
           className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-          onClick={() => clearForm()}
+          onClick={handleCloseModal}
         >
           <div
-            className="bg-white rounded-[28px] border border-slate-200 p-6 max-w-md w-full space-y-5 animate-in zoom-in-95 duration-200 shadow-2xl"
+            className="bg-white rounded-[28px] border border-slate-200 p-6 max-w-2xl w-full space-y-5 animate-in zoom-in-95 duration-200 shadow-2xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-slate-50 pb-3">
@@ -1340,16 +1338,16 @@ export default function HrCampaignsPage() {
                 {editingId ? "人事施策（キャンペーン）を編集" : "人事施策（キャンペーン）を登録"}
               </h3>
               <button
-                onClick={() => clearForm()}
+                onClick={handleCloseModal}
                 className="w-7 h-7 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-400 transition-colors text-sm"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleAddCampaign} className="space-y-4">
+            <form onSubmit={handleAddCampaign} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* 施策名 */}
-              <div className="space-y-1">
+              <div className="space-y-1 sm:col-span-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">施策名 (必須)</label>
                 <input
                   type="text" required
@@ -1398,8 +1396,8 @@ export default function HrCampaignsPage() {
                 </select>
               </div>
 
-              {/* 開始月と投資額 */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* 開始月と投資額（display:contents で親グリッドに直接参加） */}
+              <div className="contents">
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">開始月 (必須)</label>
                   <input
@@ -1422,7 +1420,7 @@ export default function HrCampaignsPage() {
               </div>
 
               {/* 改善を狙うKPI（任意） */}
-              <div className="space-y-1">
+              <div className="space-y-1 sm:col-span-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">改善を狙うKPI（任意）</label>
                 <select
                   value={formTargetKpiId}
@@ -1437,7 +1435,7 @@ export default function HrCampaignsPage() {
               </div>
 
               {/* メモ */}
-              <div className="space-y-1">
+              <div className="space-y-1 sm:col-span-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">メモ・詳細</label>
                 <textarea
                   placeholder="施策の背景や投資の詳細情報など"
@@ -1448,7 +1446,7 @@ export default function HrCampaignsPage() {
                 />
               </div>
 
-              <div className="pt-2">
+              <div className="pt-2 sm:col-span-2">
                 <button
                   type="submit"
                   disabled={isSubmitLoading}
