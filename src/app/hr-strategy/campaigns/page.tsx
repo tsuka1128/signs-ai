@@ -466,6 +466,8 @@ export default function HrCampaignsPage() {
         const { data, error } = await supabase
           .from("hr_campaigns")
           .update(campaignData)
+          .eq("id", editingId)
+          .eq("company_id", company.id)
           .select()
           .single();
 
