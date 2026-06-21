@@ -336,6 +336,60 @@ export interface Database {
           created_at?: string
         }
       }
+      hr_campaigns: {
+        Row: {
+          id: string
+          company_id: string
+          title: string
+          category: 'hiring' | 'placement' | 'system' | 'development' | 'culture' | 'other' | null
+          department_id: string | null
+          axis_id: string | null
+          launched_at: string
+          invested_cost: number | null
+          roi_assumptions: {
+            lagMonths: number
+            windowMonths: number
+            salesAttribution: number
+          }
+          memo: string | null
+          status: 'active' | 'archived'
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          title: string
+          category?: 'hiring' | 'placement' | 'system' | 'development' | 'culture' | 'other' | null
+          department_id?: string | null
+          axis_id?: string | null
+          launched_at: string
+          invested_cost?: number | null
+          roi_assumptions?: Json
+          memo?: string | null
+          status?: 'active' | 'archived'
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          title?: string
+          category?: 'hiring' | 'placement' | 'system' | 'development' | 'culture' | 'other' | null
+          department_id?: string | null
+          axis_id?: string | null
+          launched_at?: string
+          invested_cost?: number | null
+          roi_assumptions?: Json
+          memo?: string | null
+          status?: 'active' | 'archived'
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
   }
 }
@@ -361,3 +415,4 @@ export type ManagerDirectiveNote = Database['public']['Tables']['manager_directi
 export type DeptAiSummary = Database['public']['Tables']['dept_ai_summaries']['Row']
 export type DeptActionPlan = Database['public']['Tables']['dept_action_plans']['Row']
 export type Notification = Database['public']['Tables']['notifications']['Row']
+export type HrCampaign = Database['public']['Tables']['hr_campaigns']['Row']
