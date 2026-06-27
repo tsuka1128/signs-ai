@@ -9,6 +9,7 @@ import { ActionSection } from "@/components/dashboard/sections/ActionSection";
 import { SemanticSection } from "@/components/dashboard/sections/SemanticSection";
 import { MatrixSection } from "@/components/dashboard/sections/MatrixSection";
 import { ReportSection } from "@/components/dashboard/sections/ReportSection";
+import { HomeOverview } from "@/components/dashboard/HomeOverview";
 
 const SurveySection = dynamic(() => import("@/components/dashboard/sections/SurveySection").then(m => ({ default: m.SurveySection })), { ssr: false });
 const OrganizationSection = dynamic(() => import("@/components/dashboard/sections/OrganizationSection").then(m => ({ default: m.OrganizationSection })), { ssr: false });
@@ -26,7 +27,7 @@ import { getWeatherFromPulse } from "@/lib/logic/kpi-engine";
 
 export default function DashboardPage() {
   const [tab, setTab] = useState<string>("all");
-  const [sec, setSec] = useState("matrix");
+  const [sec, setSec] = useState("home");
   const [matView, setMatView] = useState("dept");
   const [selKpi, setSelKpi] = useState("mrr");
   const [orgView, setOrgView] = useState("dept");
@@ -154,13 +155,36 @@ export default function DashboardPage() {
   if (!company) return null;
 
   return (
-    <AppLayout 
-      currentSection={sec} 
-      onSectionChange={setSec} 
+    <AppLayout
+      currentSection={sec}
+      onSectionChange={setSec}
       hasLaborData={state.hasLaborData}
+      fullWidth={sec === "home"}
     >
       <TrialGuard>
         <div className="space-y-10">
+          {sec === "home" && (
+            <div className="animate-fadeIn">
+              <HomeOverview
+                company={company}
+                userRole={userRole}
+                userDepartmentId={userDepartmentId}
+                displayDepts={derived.displayDepts}
+                overallPulse={overallPulse}
+                overallTrend={insAll.trend as any}
+                overallComment={insAll.text}
+                primaryKpi={primaryKpi}
+                primaryKpiAch={primaryKpiAch}
+                riskLevel={aiContent?.risk_level || "low"}
+                responseRate={allSurveyData.responseRate}
+                responseCount={allSurveyData.responseCount}
+                recentInsights={state.realAiInsights}
+                actions={state.realActionItems}
+                onSectionChange={setSec}
+              />
+            </div>
+          )}
+
           {sec === "report" && (
             <div className="space-y-10 animate-fadeIn">
               {/* A. AI組織診断レポート（全社） */}

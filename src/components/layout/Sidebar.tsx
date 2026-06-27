@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+    Home,
     LayoutDashboard,
     BarChart3,
     Thermometer,
@@ -66,6 +67,9 @@ export function Sidebar({
     const [userInitial, setUserInitial] = useState("?");
     const [userRole, setUserRole] = useState<string>("player");
     const isDashboardActive = pathname === '/' || pathname === '/dashboard';
+    // ホーム（/ かつ section 未指定 or 'home'）と、ダッシュボード各セクションを区別する
+    const isHomeActive = isDashboardActive && (!currentSection || currentSection === 'home');
+    const isDashSectionActive = isDashboardActive && !!currentSection && currentSection !== 'home';
     const isProActive = pathname === '/hr-strategy' || (isDashboardActive && currentSection === 'finance');
     const isPro = canUse('labor_analytics');
     const [showProGate, setShowProGate] = useState(false);
@@ -74,7 +78,7 @@ export function Sidebar({
     // トップレベルメニューを排他制御（同時に1つだけ展開）
     type ExpandedMenu = 'dashboard' | 'pro' | 'docs' | null;
     const initialMenu: ExpandedMenu =
-        isDashboardActive ? 'dashboard'
+        isDashSectionActive ? 'dashboard'
         : isProActive ? 'pro'
         : pathname.startsWith('/docs') ? 'docs'
         : null;
@@ -305,10 +309,10 @@ export function Sidebar({
                 onClick={() => toggleMenu('dashboard')}
                 className={cn(
                     "flex w-full items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all group",
-                    isDashboardActive ? "text-teal" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                    isDashSectionActive ? "text-teal" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
                 )}
             >
-                <LayoutDashboard className={cn("w-4.5 h-4.5", isDashboardActive ? "text-teal" : "text-slate-400 group-hover:text-slate-500")} />
+                <LayoutDashboard className={cn("w-4.5 h-4.5", isDashSectionActive ? "text-teal" : "text-slate-400 group-hover:text-slate-500")} />
                 ダッシュボード
                 <div className="ml-auto">
                     {isDashboardExpanded ? <ChevronDown className="w-3.5 h-3.5 opacity-50" /> : <ChevronRight className="w-3.5 h-3.5 opacity-50" />}
@@ -397,8 +401,27 @@ export function Sidebar({
                     <div className="space-y-1">
                         <p className="px-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.25em] mb-4">View</p>
                         
-                        {/* 組織の温度（全ユーザー） */}
-                        {renderLink('/temperature', '組織の温度', Thermometer, pathname === '/temperature')}
+                        {/* ホーム（全ユーザー）＝ 組織の温度を起点にしたメインダッシュボード */}
+                        <button
+                            onClick={() => {
+                                if (isDashboardActive) {
+                                    onSectionChange?.('home');
+                                    setIsMobileOpen?.(false);
+                                } else {
+                                    window.location.href = '/';
+                                }
+                            }}
+                            className={cn(
+                                "flex w-full items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all group",
+                                isHomeActive
+                                    ? "bg-teal/5 text-teal"
+                                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                            )}
+                        >
+                            <Home className={cn("w-4.5 h-4.5", isHomeActive ? "text-teal" : "text-slate-400 group-hover:text-slate-500")} />
+                            ホーム
+                            {isHomeActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-teal shadow-[0_0_8px_rgba(20,184,166,0.5)]" />}
+                        </button>
 
                         {/* 部署マネジメント（マネージャー以上） */}
                         {(userRole === 'super_admin' || userRole === 'admin' || userRole === 'executive' || userRole === 'manager') &&
