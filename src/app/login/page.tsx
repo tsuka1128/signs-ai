@@ -247,7 +247,7 @@ function LoginForm() {
 
                 <div className="text-center">
                     <Link
-                        href="/register"
+                        href={inviteCode.trim() ? `/register?token=${encodeURIComponent(inviteCode.trim())}` : "/register"}
                         className="text-xs text-slate-400 hover:text-teal-600 font-bold transition-colors"
                     >
                         新規アカウント作成はこちら

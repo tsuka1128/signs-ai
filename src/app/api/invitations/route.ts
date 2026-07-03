@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
             .single();
 
         const companyName = companyInfo?.name || "Signs AI";
-        const inviteUrl = `${getBaseURL()}/onboarding#token=${invitation.token}`;
+        const inviteUrl = `${getBaseURL()}/onboarding?token=${invitation.token}`;
 
         await sendInvitationEmail(email.trim(), companyName, inviteUrl);
         emailSent = true;

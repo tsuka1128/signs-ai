@@ -68,6 +68,13 @@ export async function middleware(request: NextRequest) {
         loginUrl.pathname = "/login";
         loginUrl.searchParams.set("redirect", pathname);
         loginUrl.searchParams.set("reason", "session_expired");
+        
+        // 招待トークン（tokenクエリ）がある場合はログイン画面にも引き継ぐ
+        const token = request.nextUrl.searchParams.get("token");
+        if (token) {
+            loginUrl.searchParams.set("token", token);
+        }
+        
         return NextResponse.redirect(loginUrl);
     }
 
