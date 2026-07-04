@@ -35,22 +35,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { FeedbackItem } from "@/components/dashboard/FeedbackItem";
-import {
-    ComposedChart,
-    Bar,
-    Line,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    Legend,
-    ResponsiveContainer,
-    Radar,
-    RadarChart,
-    PolarGrid,
-    PolarAngleAxis,
-    PolarRadiusAxis,
-} from "recharts";
+import dynamic from "next/dynamic";
+
+// recharts を初期チャンクから外すため、チャートは遅延ロード
+const ResponseTrendChart = dynamic(() => import("@/components/dept/DeptCharts").then(m => ({ default: m.ResponseTrendChart })), { ssr: false });
+const ThermometerRadarChart = dynamic(() => import("@/components/dept/DeptCharts").then(m => ({ default: m.ThermometerRadarChart })), { ssr: false });
 
 interface DeptMonthlyScore {
     month: string;     // YYYY-MM
@@ -1122,32 +1111,7 @@ export default function DeptDashboardPage() {
                                 {/* 📈 推移グラフ：カード内に展開 */}
                                 {showResponseTrend && (
                                     <div className="px-6 pb-6 pt-2 border-t border-white/40">
-                                        <ResponsiveContainer width="100%" height={180}>
-                                            <ComposedChart data={deptScores.map(s => ({
-                                                ...s,
-                                                rate: s.headcount > 0 ? Math.round((s.respondentCount / s.headcount) * 100) : null,
-                                            }))}>
-                                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                                                <XAxis dataKey="label" stroke="#94a3b8" fontSize={10} fontWeight="bold" />
-                                                <YAxis yAxisId="left" stroke="#94a3b8" fontSize={10} fontWeight="bold" width={20} />
-                                                <YAxis yAxisId="right" orientation="right" stroke="#94a3b8" fontSize={10} fontWeight="bold" domain={[0, 100]} width={28} />
-                                                <Tooltip
-                                                    contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 11, fontWeight: 700 }}
-                                                    formatter={(value: any, name: any, props: any) => {
-                                                        if (name === 'respondentCount') return [`${value} 人`, '回答数'];
-                                                        if (name === 'rate') {
-                                                            const hc = props.payload?.headcount;
-                                                            if (hc === 0) return ['—', '回答率'];
-                                                            return [`${value} %`, '回答率'];
-                                                        }
-                                                        return [value, name];
-                                                    }}
-                                                />
-                                                <Legend verticalAlign="top" height={28} iconType="circle" iconSize={8} />
-                                                <Bar yAxisId="left" dataKey="respondentCount" name="回答数" fill="#cbd5e1" radius={[3, 3, 0, 0]} barSize={20} />
-                                                <Line yAxisId="right" type="monotone" dataKey="rate" name="回答率" stroke="#14b8a6" strokeWidth={2} dot={{ r: 3, fill: '#14b8a6' }} />
-                                            </ComposedChart>
-                                        </ResponsiveContainer>
+                                        <ResponseTrendChart deptScores={deptScores} />
                                     </div>
                                 )}
                             </div>
@@ -1180,22 +1144,7 @@ export default function DeptDashboardPage() {
                             {dept3mResponsesCount >= 3 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                                     <div className="h-[280px]">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
-                                                <PolarGrid stroke="#e2e8f0" />
-                                                <PolarAngleAxis dataKey="subject" stroke="#64748b" fontSize={11} fontWeight="bold" />
-                                                <PolarRadiusAxis angle={30} domain={[0, 5]} tickCount={6} stroke="#cbd5e1" fontSize={10} />
-                                                <Radar name="自部署" dataKey="dept" stroke="#14b8a6" fill="#14b8a6" fillOpacity={0.3} strokeWidth={2} />
-                                                {company3mResponsesCount >= 3 && (
-                                                    <Radar name="全社平均" dataKey="company" stroke="#94a3b8" fill="#94a3b8" fillOpacity={0.05} strokeWidth={1.5} strokeDasharray="3 3" />
-                                                )}
-                                                <Tooltip
-                                                    contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 11, fontWeight: 700 }}
-                                                    formatter={(value: any) => [`${value} / 5.00`]}
-                                                />
-                                                <Legend verticalAlign="bottom" height={36} iconType="circle" iconSize={8} />
-                                            </RadarChart>
-                                        </ResponsiveContainer>
+                                        <ThermometerRadarChart radarData={radarData} showCompany={company3mResponsesCount >= 3} />
                                     </div>
                                     <div className="space-y-4 bg-slate-50/50 border border-slate-100 rounded-2xl p-6">
                                         <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest">テーマ解説</h3>
