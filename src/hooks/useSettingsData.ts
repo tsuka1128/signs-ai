@@ -31,6 +31,7 @@ export function useSettingsData() {
     const [inviteDeptId, setInviteDeptId] = useState("");
     const [inviteAxisId, setInviteAxisId] = useState("");
     const [inviteSlackUserId, setInviteSlackUserId] = useState("");
+    const [isInviting, setIsInviting] = useState(false); // 招待送信中（多重送信・連打防止）
 
 
     // Editing user state
@@ -438,18 +439,49 @@ export function useSettingsData() {
 
     const handleInvite = async () => {
         if (!company?.id || !currentUserId) return;
-        const supabase = createClient();
-        const { data: inv, error } = await supabase.from('invitations').insert({
-            email: inviteEmail,
-            company_id: company.id,
-            inviter_id: currentUserId,
-            role: inviteRole,
-            department_id: inviteDeptId || null,
-            axis_id: inviteAxisId || null,
-            slack_user_id: inviteSlackUserId || null
-        }).select().single();
+        if (isInviting) return; // 連打・多重送信を防止（障害時の再送で重複行が生まれるのを防ぐ）
 
-        if (!error && inv) {
+        const email = inviteEmail.trim();
+        if (!email) return;
+
+        setIsInviting(true);
+        try {
+            const supabase = createClient();
+
+            // 事前チェック：同一メールに pending の招待が既にあれば重複作成しない
+            const { data: existing } = await supabase
+                .from('invitations')
+                .select('id')
+                .eq('company_id', company.id)
+                .eq('email', email)
+                .eq('status', 'pending')
+                .limit(1);
+            if (existing && existing.length > 0) {
+                toast.error("このメールアドレスは既に招待済みです（「招待中のメンバー」をご確認ください）");
+                return;
+            }
+
+            const { data: inv, error } = await supabase.from('invitations').insert({
+                email,
+                company_id: company.id,
+                inviter_id: currentUserId,
+                role: inviteRole,
+                department_id: inviteDeptId || null,
+                axis_id: inviteAxisId || null,
+                slack_user_id: inviteSlackUserId || null
+            }).select().single();
+
+            if (error || !inv) {
+                // pending 重複の一意制約（partial unique index）に当たった場合は分かりやすく案内
+                if ((error as any)?.code === '23505') {
+                    toast.error("このメールアドレスは既に招待済みです");
+                } else {
+                    toast.error(`招待に失敗しました: ${error?.message ?? "不明なエラー"}`);
+                }
+                return;
+            }
+
+            // メール送信（失敗しても招待レコード自体は作成済み。リンクコピーで代替可能）
             try {
                 const mailRes = await fetch("/api/emails/invite", {
                     method: "POST",
@@ -459,12 +491,15 @@ export function useSettingsData() {
                 if (!mailRes.ok) {
                     const mailErr = await mailRes.json();
                     console.warn("Mail sending failed but invite was created:", mailErr);
+                    toast.success("招待を作成しました（メール配信に失敗。リンクコピーで送付できます）");
+                } else {
+                    toast.success("招待を送信しました（メールが配信されます）");
                 }
             } catch (e) {
                 console.error("Mail API Error:", e);
+                toast.success("招待を作成しました（メール配信に失敗。リンクコピーで送付できます）");
             }
 
-            toast.success("招待を送信しました（メールが配信されます）");
             setInviteEmail("");
             setInviteRole("player");
             setInviteDeptId("");
@@ -472,8 +507,8 @@ export function useSettingsData() {
             setInviteSlackUserId("");
             const { data } = await supabase.from('invitations').select('*').eq('company_id', company.id).eq('status', 'pending');
             if (data) setInvitations(data);
-        } else {
-            toast.error(`招待に失敗しました: ${error?.message}`);
+        } finally {
+            setIsInviting(false);
         }
     };
 
@@ -692,7 +727,7 @@ export function useSettingsData() {
     return {
         state: {
             loading, isAnalyzing, company, depts, kpis, axes, secondaryAxisName, users, invitations, inviteEmail,
-            copied, inviteDeptId, inviteAxisId, inviteSlackUserId, editingUser, editForm, inviteRole, displayDepts
+            copied, inviteDeptId, inviteAxisId, inviteSlackUserId, editingUser, editForm, inviteRole, displayDepts, isInviting
         },
         handlers: {
             setCompany, setDepts, setKpis, setAxes, setSecondaryAxisName, setInviteEmail, setInviteDeptId,

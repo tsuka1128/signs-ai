@@ -176,6 +176,7 @@ function SettingsContent() {
                             setInviteSlackUserId={handlers.setInviteSlackUserId}
                             handleTestMemberSlack={handlers.handleTestMemberSlack}
                             handleInvite={handlers.handleInvite}
+                            isInviting={state.isInviting}
                             handleBulkInvite={handlers.handleBulkInvite}
                             handleBulkUpdateUsers={handlers.handleBulkUpdateUsers}
                             users={state.users}
