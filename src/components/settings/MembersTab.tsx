@@ -28,6 +28,7 @@ interface MembersTabProps {
     setInviteSlackUserId: (id: string) => void;
     handleTestMemberSlack: (id: string) => void;
     handleInvite: () => void;
+    isInviting?: boolean;
     handleBulkInvite: (rows: { email: string; role: string; department_id: string | null; slack_user_id: string | null }[]) => Promise<{ success: number; failed: number; errors: { email: string; reason: string }[] }>;
     handleBulkUpdateUsers: (updates: { userId: string; email?: string; role?: string; department_id?: string | null; slack_user_id?: string | null }[]) => Promise<{ success: number; failed: number; errors: { email: string; reason: string }[] }>;
     users: any[];
@@ -55,6 +56,7 @@ export const MembersTab = ({
     setInviteSlackUserId,
     handleTestMemberSlack,
     handleInvite,
+    isInviting,
     handleBulkInvite,
     handleBulkUpdateUsers,
     users,
@@ -301,11 +303,18 @@ export const MembersTab = ({
                     <div className="flex justify-end pt-4">
                         <button
                             onClick={handleInvite}
-                            disabled={!inviteEmail || (inviteRole === 'manager' && !inviteDeptId)}
+                            disabled={!inviteEmail || isInviting || (inviteRole === 'manager' && !inviteDeptId)}
                             title={inviteRole === 'manager' && !inviteDeptId ? 'マネージャーには所属部署の設定が必要です' : undefined}
                             className="bg-teal text-white px-10 py-4 rounded-2xl font-black hover:bg-teal-600 transition-all shadow-xl shadow-teal/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            招待メールを送信 <ArrowRight className="w-5 h-5" />
+                            {isInviting ? (
+                                <>
+                                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
+                                    送信中...
+                                </>
+                            ) : (
+                                <>招待メールを送信 <ArrowRight className="w-5 h-5" /></>
+                            )}
                         </button>
                     </div>
                 </div>
