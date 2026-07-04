@@ -1,7 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
-
 interface LoadingProps {
     message?: string;
     fullScreen?: boolean;
@@ -10,17 +8,10 @@ interface LoadingProps {
 export function Loading({ message = "読み込み中...", fullScreen = false }: LoadingProps) {
     const content = (
         <div className="flex flex-col items-center justify-center gap-4 p-8">
-            <div className="relative">
-                <motion.div
-                    className="w-12 h-12 border-4 border-teal-100 rounded-full"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                />
-                <motion.div
-                    className="absolute top-0 left-0 w-12 h-12 border-4 border-t-teal-500 border-transparent rounded-full"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                />
+            <div className="relative w-12 h-12">
+                {/* CSS アニメーションで代替（framer-motion 依存を除去） */}
+                <div className="absolute inset-0 border-4 border-teal-100 rounded-full" />
+                <div className="absolute inset-0 border-4 border-t-teal-500 border-transparent rounded-full animate-spin" />
                 <div className="absolute inset-0 flex items-center justify-center">
                     <span className="text-[10px] font-black text-teal-500 italic">S</span>
                 </div>
