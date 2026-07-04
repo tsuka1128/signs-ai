@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
+import { normalizeMonth } from "@/lib/utils/date";
 import { MainInsightCard } from "@/components/dashboard/MainInsightCard";
 import { OrganizationCard } from "@/components/dashboard/OrganizationCard";
 import { SparkLine } from "@/components/dashboard/SparkLine";
@@ -50,6 +51,9 @@ interface HomeOverviewProps {
     userRole?: string | null;
     userDepartmentId?: string | null;
     displayDepts: any[];
+    /** useDashboardData 取得済みの KPI 定義・実績（重複フェッチ回避のため親から受け取る） */
+    realKpis: any[];
+    realKpiRecords: any[];
     overallPulse: number;
     overallTrend: "up" | "down" | "flat";
     overallComment: string;
@@ -63,11 +67,13 @@ interface HomeOverviewProps {
     onSectionChange?: (id: string) => void;
 }
 
-export function HomeOverview({
+function HomeOverviewImpl({
     company,
     userRole,
     userDepartmentId,
     displayDepts,
+    realKpis,
+    realKpiRecords,
     overallPulse,
     overallTrend,
     overallComment,
@@ -86,7 +92,6 @@ export function HomeOverview({
     const isPro = canUse("labor_analytics");
 
     const [currentFocus, setCurrentFocus] = useState<FocusEntry | null>(null);
-    const [publicKpis, setPublicKpis] = useState<PublicKpi[]>([]);
 
     const execView = isManagerUp(userRole);
     const myDept = userDepartmentId ? displayDepts.find((d) => d.id === userDepartmentId) : null;
@@ -106,19 +111,12 @@ export function HomeOverview({
     const currentYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     const monthLabel = `${now.getFullYear()}年${now.getMonth() + 1}月`;
 
+    // 今月の経営課題（最新1件）。useDashboardData には無いためここで取得。
     useEffect(() => {
         if (!company?.id) return;
         let cancelled = false;
 
-        const fetchHomeData = async () => {
-            const months: { ym: string; firstDay: string; label: string }[] = [];
-            for (let i = 5; i >= 0; i--) {
-                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-                months.push({ ym, firstDay: `${ym}-01`, label: `${d.getMonth() + 1}月` });
-            }
-
-            // ① 今月の経営課題（最新）
+        (async () => {
             const { data: focusData } = await supabase
                 .from("executive_monthly_focus")
                 .select("month, title, content")
@@ -128,57 +126,52 @@ export function HomeOverview({
             if (!cancelled) {
                 setCurrentFocus(focusData && focusData.length > 0 ? focusData[0] : null);
             }
+        })();
 
-            // ② 公開KPI（is_public_to_players=true / axis_id IS NULL / YYYY-MM-01）
-            const { data: kpis } = await supabase
-                .from("kpi_definitions")
-                .select("id, name, unit")
-                .eq("company_id", company.id)
-                .eq("is_public_to_players", true)
-                .order("sort_order", { ascending: true });
-
-            const kpiIds = (kpis || []).map((k: any) => k.id);
-            const { data: records } = kpiIds.length > 0
-                ? await supabase
-                    .from("kpi_records")
-                    .select("kpi_definition_id, recorded_month, value, target_value")
-                    .in("kpi_definition_id", kpiIds)
-                    .in("recorded_month", months.map((m) => m.firstDay))
-                    .is("axis_id", null)
-                : { data: [] };
-
-            const byKpi: Record<string, any[]> = {};
-            (records || []).forEach((r: any) => {
-                if (!r.kpi_definition_id) return;
-                (byKpi[r.kpi_definition_id] ||= []).push(r);
-            });
-
-            const formatted: PublicKpi[] = (kpis || []).map((k: any) => {
-                const history = months.map((m) => {
-                    const rec = (byKpi[k.id] || []).find((r) => r.recorded_month === m.firstDay);
-                    return rec?.value ?? null;
-                });
-                const latestRec = [...months].reverse()
-                    .map((m) => (byKpi[k.id] || []).find((r) => r.recorded_month === m.firstDay))
-                    .find((r) => r && r.value !== null);
-                return {
-                    id: k.id,
-                    name: k.name,
-                    unit: k.unit,
-                    history: history.map((v) => (v == null ? 0 : v)),
-                    latest: latestRec?.value ?? null,
-                    target: latestRec?.target_value ?? null,
-                };
-            });
-            if (!cancelled) setPublicKpis(formatted.slice(0, 4));
-        };
-
-        fetchHomeData();
         return () => {
             cancelled = true;
         };
+    }, [company?.id, supabase]);
+
+    // 公開KPI（is_public_to_players=true / axis_id IS NULL / 直近6ヶ月）は、
+    // 親（useDashboardData）が取得済みの realKpis / realKpiRecords から導出（重複フェッチ回避）。
+    const publicKpis: PublicKpi[] = useMemo(() => {
+        const months: string[] = [];
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`);
+        }
+
+        const pubDefs = (realKpis || [])
+            .filter((k) => k.is_public_to_players)
+            .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+
+        const byKpi: Record<string, any[]> = {};
+        (realKpiRecords || []).forEach((r: any) => {
+            if (!r.kpi_definition_id || r.axis_id != null) return; // 部署基本データ（axis_id=NULL）のみ
+            (byKpi[r.kpi_definition_id] ||= []).push(r);
+        });
+
+        return pubDefs.map((k: any) => {
+            const history = months.map((firstDay) => {
+                const rec = (byKpi[k.id] || []).find((r) => normalizeMonth(r.recorded_month) === firstDay);
+                return rec?.value ?? null;
+            });
+            const latestRec = [...months].reverse()
+                .map((firstDay) => (byKpi[k.id] || []).find((r) => normalizeMonth(r.recorded_month) === firstDay))
+                .find((r) => r && r.value !== null);
+            return {
+                id: k.id,
+                name: k.name,
+                unit: k.unit ?? null,
+                history: history.map((v) => (v == null ? 0 : v)),
+                latest: latestRec?.value ?? null,
+                target: latestRec?.target_value ?? null,
+            };
+        }).slice(0, 4);
+        // now は毎レンダー生成されるが月境界は同一。realKpis/realKpiRecords 変化時のみ再計算する。
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [company?.id]);
+    }, [realKpis, realKpiRecords]);
 
     const formatKpiValue = (v: number | null, unit: string | null) => {
         if (v === null) return "—";
@@ -512,3 +505,5 @@ export function HomeOverview({
         </div>
     );
 }
+
+export const HomeOverview = memo(HomeOverviewImpl);

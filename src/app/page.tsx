@@ -93,9 +93,12 @@ export default function DashboardPage() {
     };
   }, [tab, state.realDepts, currentSurveyData, aiContent]);
 
+  // 全社体温（getCurrentSurveyData("all") は重いので1回だけ計算し、insAll でも使い回す）
+  const allSurveyData = useMemo(() => (derived as any).getCurrentSurveyData("all"), [derived]);
+  const overallPulse = allSurveyData.pulse;
+
   // 全社固定データ用インサイト
   const insAll = useMemo(() => {
-    const allSurveyData = (derived as any).getCurrentSurveyData("all");
     const pulse = allSurveyData.pulse;
     const prevPulse = allSurveyData.pulseHistory[11] || 0;
     const weather = getWeatherFromPulse(pulse);
@@ -108,12 +111,7 @@ export default function DashboardPage() {
       weather,
       trend
     };
-  }, [derived, aiContent]);
-
-
-  // 全社体温
-  const allSurveyData = useMemo(() => (derived as any).getCurrentSurveyData("all"), [derived]);
-  const overallPulse = allSurveyData.pulse;
+  }, [allSurveyData, aiContent]);
 
   // 主要KPI
   const primaryKpi = derived.displayKpis[0];
@@ -170,6 +168,8 @@ export default function DashboardPage() {
                 userRole={userRole}
                 userDepartmentId={userDepartmentId}
                 displayDepts={derived.displayDepts}
+                realKpis={state.realKpis}
+                realKpiRecords={state.realKpiRecords}
                 overallPulse={overallPulse}
                 overallTrend={insAll.trend as any}
                 overallComment={insAll.text}

@@ -1,5 +1,7 @@
 "use client";
 
+import { memo, useId } from "react";
+
 interface SparkLineProps {
     data: number[];
     color?: string;
@@ -7,7 +9,10 @@ interface SparkLineProps {
     width?: number;
 }
 
-export function SparkLine({ data, color = "#10B981", height = 50, width = 200 }: SparkLineProps) {
+function SparkLineImpl({ data, color = "#10B981", height = 50, width = 200 }: SparkLineProps) {
+    // gradient id を一意化（従来は "areaGradient" 固定で、同一ページ内の全 SparkLine が衝突していた）
+    const gradientId = useId();
+
     const mn = Math.min(...data) * 0.95;
     const mx = Math.max(...data) * 1.05;
 
@@ -28,12 +33,12 @@ export function SparkLine({ data, color = "#10B981", height = 50, width = 200 }:
         <div className="w-full" style={{ height }}>
             <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
                 <defs>
-                    <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor={color} stopOpacity="0.15" />
                         <stop offset="100%" stopColor={color} stopOpacity="0.01" />
                     </linearGradient>
                 </defs>
-                <polygon points={areaPoints} fill="url(#areaGradient)" />
+                <polygon points={areaPoints} fill={`url(#${gradientId})`} />
                 <polyline
                     points={points}
                     fill="none"
@@ -47,3 +52,5 @@ export function SparkLine({ data, color = "#10B981", height = 50, width = 200 }:
         </div>
     );
 }
+
+export const SparkLine = memo(SparkLineImpl);
