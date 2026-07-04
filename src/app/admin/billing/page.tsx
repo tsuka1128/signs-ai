@@ -23,18 +23,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { toast } from "sonner";
-import {
-    AreaChart,
-    Area,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    LineChart,
-    Line,
-    Legend
-} from 'recharts';
+import dynamic from "next/dynamic";
+
+// recharts を初期チャンクから外すため、チャートは遅延ロード
+const MrrTrendChart = dynamic(() => import("@/components/admin/BillingCharts").then(m => ({ default: m.MrrTrendChart })), { ssr: false });
+const PlanDistributionChart = dynamic(() => import("@/components/admin/BillingCharts").then(m => ({ default: m.PlanDistributionChart })), { ssr: false });
 
 // プラン別の推定単価
 const PLAN_PRICES: Record<string, number> = {
@@ -391,35 +384,7 @@ export default function AdminBillingPage() {
                         <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Monthly Recurring Revenue</p>
                     </div>
                     <div className="flex-1 w-full min-h-0">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={chartData}>
-                                <defs>
-                                    <linearGradient id="colorMrr" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#2DD4BF" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#2DD4BF" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis
-                                    dataKey="label"
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 'bold' }}
-                                    dy={10}
-                                />
-                                <YAxis
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }}
-                                    tickFormatter={(value) => `¥${Number(value).toLocaleString()}`}
-                                />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#fff', borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                                    formatter={(value: any) => [`¥${Number(value).toLocaleString()}`, '推定MRR']}
-                                />
-                                <Area type="monotone" dataKey="mrr" stroke="#2DD4BF" strokeWidth={4} fillOpacity={1} fill="url(#colorMrr)" />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                        <MrrTrendChart chartData={chartData} />
                     </div>
                 </div>
 
@@ -433,32 +398,7 @@ export default function AdminBillingPage() {
                         <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Plan Distribution Trend</p>
                     </div>
                     <div className="flex-1 w-full min-h-0">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis
-                                    dataKey="label"
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 'bold' }}
-                                    dy={10}
-                                />
-                                <YAxis
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }}
-                                    tickFormatter={(value) => `${value}社`}
-                                />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#fff', borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                                />
-                                <Legend />
-                                <Line type="monotone" dataKey="Pro" stroke={PLAN_COLORS.Pro} strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                                <Line type="monotone" dataKey="Standard" stroke={PLAN_COLORS.Standard} strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                                <Line type="monotone" dataKey="Team" stroke={PLAN_COLORS.Team} strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                                <Line type="monotone" dataKey="Free" stroke={PLAN_COLORS.Free} strokeWidth={2} strokeDasharray="5 5" dot={false} />
-                            </LineChart>
-                        </ResponsiveContainer>
+                        <PlanDistributionChart chartData={chartData} planColors={PLAN_COLORS} />
                     </div>
                 </div>
             </div>
