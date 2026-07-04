@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import { WeatherIcon } from "@/components/ui/WeatherIcon";
 import { Arrow } from "@/components/ui/Arrow";
 import { Badge } from "@/components/ui/Badge";
@@ -26,7 +26,7 @@ interface OrganizationCardProps {
     deptInsight?: { tone?: string; text?: string };
 }
 
-export function OrganizationCard({ name, head, pulse, weather, arrow, kpis, laborCostPerHead, isStale, dataMonth, deptInsight }: OrganizationCardProps) {
+function OrganizationCardImpl({ name, head, pulse, weather, arrow, kpis, laborCostPerHead, isStale, dataMonth, deptInsight }: OrganizationCardProps) {
     const isNone = pulse === 0;
     const risk = isNone ? "none" : pulse < 2.5 ? "overheat" : pulse >= 3.5 ? "stable" : "caution";
     const pulseColorClass = isNone ? "text-slate-300" : pulse >= 3.5 ? "text-emerald-500" : pulse >= 2.5 ? "text-amber-500" : "text-rose-500";
@@ -237,6 +237,8 @@ export function OrganizationCard({ name, head, pulse, weather, arrow, kpis, labo
         </div>
     );
 }
+
+export const OrganizationCard = memo(OrganizationCardImpl);
 
 function ObservationComment({ pulse, primaryAch }: { pulse: number; primaryAch: number | null }) {
     if (pulse === 0 || primaryAch === null) return null;

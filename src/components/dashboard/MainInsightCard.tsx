@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { WeatherIcon } from "@/components/ui/WeatherIcon";
 import { Arrow } from "@/components/ui/Arrow";
 import { Badge } from "@/components/ui/Badge";
@@ -21,7 +22,7 @@ interface MainInsightCardProps {
  * ダッシュボード上部に表示される簡易AI分析サマリー
  * onOpenDeepReport が渡された場合、「詳細レポートを見る」ボタンを表示する
  */
-export function MainInsightCard({ title, tone, text, weather, trend, onOpenDeepReport }: MainInsightCardProps) {
+function MainInsightCardImpl({ title, tone, text, weather, trend, onOpenDeepReport }: MainInsightCardProps) {
     return (
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 animate-glow">
             <div className="flex items-center gap-5">
@@ -66,4 +67,6 @@ export function MainInsightCard({ title, tone, text, weather, trend, onOpenDeepR
         </div>
     );
 }
+
+export const MainInsightCard = memo(MainInsightCardImpl);
 

@@ -1020,9 +1020,17 @@ export function useDashboardData(
         }));
     }, []);
 
+    // derived を安定参照にする（各メンバーは既に memo 済み）。
+    // これにより page.tsx 側の insAll/allSurveyData/currentSurveyData の useMemo が
+    // 毎レンダー無効化されるのを防ぎ、重い getCurrentSurveyData の再計算を抑える。
+    const derived = useMemo(
+        () => ({ getCurrentSurveyData: currentSurveyData, displayDepts, displayKpis, displayAxes, deptTabs }),
+        [currentSurveyData, displayDepts, displayKpis, displayAxes, deptTabs]
+    );
+
     return {
         state: { ...state, isAnalyzing, last13Months, monthLabels, fullMonthLabels, aiContent, hrStrategyContent, hrStrategyMonth, ...financialMetrics },
-        derived: { getCurrentSurveyData: currentSurveyData, displayDepts, displayKpis, displayAxes, deptTabs },
+        derived,
         handlers: { handleRunAnalyze, handleSaveSemantic, handleDeleteSemantic, updateActionItem }
     };
 }
