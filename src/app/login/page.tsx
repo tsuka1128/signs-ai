@@ -28,6 +28,7 @@ function LoginForm() {
     const [isRegistered, setIsRegistered] = useState(false);
     const [sessionExpired, setSessionExpired] = useState(false);
     const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null);
+    const [inviteCompanyName, setInviteCompanyName] = useState<string | null>(null);
 
     useEffect(() => {
         if (searchParams.get("registered")) {
@@ -41,6 +42,28 @@ function LoginForm() {
             setInviteCode(token);
         }
     }, [searchParams]);
+
+    // 招待トークンから会社名を取得してバナー表示（未ログイン=anon でも RLS で読める）
+    useEffect(() => {
+        const token = inviteCode.trim();
+        if (!token) { setInviteCompanyName(null); return; }
+        if (token === "TAION") { setInviteCompanyName("株式会社 TAION (デモ)"); return; }
+
+        let cancelled = false;
+        (async () => {
+            const { createClient } = await import("@/lib/supabase");
+            const supabase = createClient();
+            const { data } = await supabase
+                .from("invitations")
+                .select("companies(name)")
+                .eq("token", token)
+                .eq("status", "pending")
+                .gt("expires_at", new Date().toISOString())
+                .maybeSingle();
+            if (!cancelled) setInviteCompanyName((data as any)?.companies?.name ?? null);
+        })();
+        return () => { cancelled = true; };
+    }, [inviteCode]);
 
     const handleGoogleLogin = async () => {
         try {
@@ -100,6 +123,15 @@ function LoginForm() {
 
     return (
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 p-8 space-y-6">
+            {inviteCompanyName && (
+                <div className="p-4 bg-teal-50 border border-teal-100 rounded-2xl text-center">
+                    <p className="text-[10px] font-black text-teal-500 uppercase tracking-widest mb-1">招待されています</p>
+                    <p className="text-sm font-black text-slate-800">
+                        <span className="text-teal-600">{inviteCompanyName}</span> への参加
+                    </p>
+                    <p className="text-[11px] text-slate-500 font-bold mt-1">ログインして参加、または下部から新規登録できます</p>
+                </div>
+            )}
             {isRegistered && (
                 <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-sm text-emerald-600 font-bold text-center">
                     アカウント登録が完了しました。

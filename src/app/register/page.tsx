@@ -19,11 +19,12 @@ function RegisterForm() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [inviteCode, setInviteCode] = useState("");
+    const [inviteCompanyName, setInviteCompanyName] = useState<string | null>(null);
 
     useEffect(() => {
         // 1. クエリパラメータからトークンを取得
         let token = searchParams.get("token");
-        
+
         // 2. なければハッシュフラグメントから取得（後方互換）
         if (!token && typeof window !== "undefined") {
             const hash = window.location.hash;
@@ -31,11 +32,33 @@ function RegisterForm() {
                 token = hash.substring(7);
             }
         }
-        
+
         if (token) {
             setInviteCode(token);
         }
     }, [searchParams]);
+
+    // 招待トークンから会社名を取得してバナー表示（未ログイン=anon でも RLS で読める）
+    useEffect(() => {
+        const token = inviteCode.trim();
+        if (!token) { setInviteCompanyName(null); return; }
+        if (token === "TAION") { setInviteCompanyName("株式会社 TAION (デモ)"); return; }
+
+        let cancelled = false;
+        (async () => {
+            const { createClient } = await import("@/lib/supabase");
+            const supabase = createClient();
+            const { data } = await supabase
+                .from("invitations")
+                .select("companies(name)")
+                .eq("token", token)
+                .eq("status", "pending")
+                .gt("expires_at", new Date().toISOString())
+                .maybeSingle();
+            if (!cancelled) setInviteCompanyName((data as any)?.companies?.name ?? null);
+        })();
+        return () => { cancelled = true; };
+    }, [inviteCode]);
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -75,6 +98,16 @@ function RegisterForm() {
 
     return (
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 p-8">
+            {/* 招待コンテキスト（招待トークンありのとき主役として表示） */}
+            {inviteCompanyName && (
+                <div className="mb-6 p-4 bg-teal-50 border border-teal-100 rounded-2xl text-center animate-fadeIn">
+                    <p className="text-[10px] font-black text-teal-500 uppercase tracking-widest mb-1">招待されています</p>
+                    <p className="text-sm font-black text-slate-800">
+                        <span className="text-teal-600">{inviteCompanyName}</span> への参加
+                    </p>
+                    <p className="text-[11px] text-slate-500 font-bold mt-1">アカウントを作成して参加しましょう</p>
+                </div>
+            )}
             {success ? (
                 <div className="text-center py-6 space-y-6 animate-fadeIn">
                     <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-3xl shadow-inner shadow-emerald-100/50">
