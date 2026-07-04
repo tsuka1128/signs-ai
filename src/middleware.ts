@@ -62,20 +62,25 @@ export async function middleware(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser();
 
-    // 未認証かつ保護されたルートへのアクセス → ログインページへ
+    // 未認証かつ保護されたルートへのアクセス
     if (!user && !isPublic) {
-        const loginUrl = request.nextUrl.clone();
-        loginUrl.pathname = "/login";
-        loginUrl.searchParams.set("redirect", pathname);
-        loginUrl.searchParams.set("reason", "session_expired");
-        
-        // 招待トークン（tokenクエリ）がある場合はログイン画面にも引き継ぐ
         const token = request.nextUrl.searchParams.get("token");
+        const redirectUrl = request.nextUrl.clone();
+
         if (token) {
-            loginUrl.searchParams.set("token", token);
+            // 招待トークンありは「新規登録」を主役に誘導（招待者の大半は未登録のため）。
+            // "セッション切れ" ではないので reason は付けない。
+            redirectUrl.pathname = "/register";
+            redirectUrl.searchParams.set("token", token);
+            redirectUrl.searchParams.delete("reason");
+            redirectUrl.searchParams.delete("redirect");
+        } else {
+            redirectUrl.pathname = "/login";
+            redirectUrl.searchParams.set("redirect", pathname);
+            redirectUrl.searchParams.set("reason", "session_expired");
         }
-        
-        return NextResponse.redirect(loginUrl);
+
+        return NextResponse.redirect(redirectUrl);
     }
 
     // 認証済みかつ /login へのアクセス → ダッシュボードへ
