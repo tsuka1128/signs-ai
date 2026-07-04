@@ -52,3 +52,9 @@ next-env.d.ts
 
 # Supabase seed files
 supabase/seed_*.sql
+
+# 画面レビュー用スクリーンショット（重い＆実データが映るためcommitしない）
+docs/reviews/screenshots/*.png
+docs/reviews/screenshots/*.jpg
+docs/reviews/screenshots/*.jpeg
+!docs/reviews/screenshots/.gitkeep
