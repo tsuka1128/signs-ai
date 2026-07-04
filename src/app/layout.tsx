@@ -7,12 +7,18 @@ import { Toaster } from "sonner";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
 });
 
+// Noto Sans JP は CJK フォントで容量が大きいため、preload は無効化して
+// 初期描画をブロックしないようにする（display: swap でフォールバック即表示 → 差し替え）。
+// weight は実使用に合わせて 400/500/700/900 を維持。
 const notoNSansJP = Noto_Sans_JP({
   variable: "--font-noto-sans-jp",
   subsets: ["latin"],
   weight: ["400", "500", "700", "900"],
+  display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {

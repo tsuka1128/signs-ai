@@ -4,17 +4,17 @@ import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { MainInsightCard } from "@/components/dashboard/MainInsightCard";
-import { DeepReport } from "@/components/dashboard/DeepReport";
-import { ActionSection } from "@/components/dashboard/sections/ActionSection";
-import { SemanticSection } from "@/components/dashboard/sections/SemanticSection";
-import { MatrixSection } from "@/components/dashboard/sections/MatrixSection";
-import { ReportSection } from "@/components/dashboard/sections/ReportSection";
 import { HomeOverview } from "@/components/dashboard/HomeOverview";
 
+// 条件表示（sec=...）のセクションは dynamic import で初期チャンクから外す
 const SurveySection = dynamic(() => import("@/components/dashboard/sections/SurveySection").then(m => ({ default: m.SurveySection })), { ssr: false });
 const OrganizationSection = dynamic(() => import("@/components/dashboard/sections/OrganizationSection").then(m => ({ default: m.OrganizationSection })), { ssr: false });
 const KpiSection = dynamic(() => import("@/components/dashboard/sections/KpiSection").then(m => ({ default: m.KpiSection })), { ssr: false });
 const LaborFinanceSection = dynamic(() => import("@/components/dashboard/sections/LaborFinanceSection").then(m => ({ default: m.LaborFinanceSection })), { ssr: false });
+const MatrixSection = dynamic(() => import("@/components/dashboard/sections/MatrixSection").then(m => ({ default: m.MatrixSection })), { ssr: false });
+const ActionSection = dynamic(() => import("@/components/dashboard/sections/ActionSection").then(m => ({ default: m.ActionSection })), { ssr: false });
+const SemanticSection = dynamic(() => import("@/components/dashboard/sections/SemanticSection").then(m => ({ default: m.SemanticSection })), { ssr: false });
+const ReportSection = dynamic(() => import("@/components/dashboard/sections/ReportSection").then(m => ({ default: m.ReportSection })), { ssr: false });
 import { TrialGuard } from "@/components/layout/TrialGuard";
 import { cn } from "@/lib/utils/index";
 import { Target, Thermometer, Shield, AlertTriangle, Lightbulb } from "lucide-react";

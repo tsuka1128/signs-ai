@@ -2,7 +2,10 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    // barrel import を per-module に最適化してツリーシェイクを確実化（lucide は 95 ファイルで使用）
+    optimizePackageImports: ["lucide-react", "recharts", "date-fns"],
+  },
 };
 
 export default withSentryConfig(nextConfig, {
