@@ -103,7 +103,14 @@ export async function POST(request: NextRequest) {
                 if (!freePlan) throw new Error("Freeプランが見つかりません。シードデータを確認してください。");
 
                 // 2. デモ企業作成
-                const { data: company, error: cErr } = await supabase.from("companies").insert({
+                // 企業レコードの作成・読み戻しはサービスロールで行う（profile.company_id 未設定のため
+                // companies の RLS では insert 直後の .select() が通らない。テナント分離のため
+                // companies_select_own の脆弱な "OR auth.uid() IS NOT NULL" 句は撤去済み）。
+                const admin = createServiceRoleClient();
+                if (!admin) {
+                    throw new Error("サーバー設定エラー: SUPABASE_SERVICE_ROLE_KEY が未設定です");
+                }
+                const { data: company, error: cErr } = await admin.from("companies").insert({
                     name: "株式会社 TAION (デモ)",
                     plan_id: freePlan.id,
                     status: "active",
@@ -253,7 +260,17 @@ export async function POST(request: NextRequest) {
         const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
         const tempId = Math.random().toString(36).substring(2, 6).toUpperCase();
 
-        const { data: company, error: companyError } = await supabase
+        // 企業レコードの作成・読み戻し・short_id 更新はサービスロールで行う。
+        // この時点ではユーザーの profile.company_id が未設定のため get_my_company_id() が null になり、
+        // companies の RLS（id = get_my_company_id()）では insert 直後の .select() 読み戻しも update も通らない。
+        // 以前は companies_select_own の "OR auth.uid() IS NOT NULL"（＝他社も読める脆弱な句）に依存していたが、
+        // テナント分離のため当該句を撤去したので、ブートストラップ処理はサービスロールで実施する。
+        const admin = createServiceRoleClient();
+        if (!admin) {
+            throw new Error("サーバー設定エラー: SUPABASE_SERVICE_ROLE_KEY が未設定です");
+        }
+
+        const { data: company, error: companyError } = await admin
             .from("companies")
             .insert({
                 name: companyName,
@@ -273,7 +290,7 @@ export async function POST(request: NextRequest) {
 
         // Update with actual UUID prefix
         const finalShortId = `${planChar}-${dateStr}-${company.id.split('-')[0].toUpperCase().slice(0, 4)}`;
-        await supabase.from('companies').update({ short_id: finalShortId }).eq('id', company.id);
+        await admin.from('companies').update({ short_id: finalShortId }).eq('id', company.id);
 
         // 2. ユーザープロフィールの更新 (管理者以外の場合のみ)
         if (!isSuperAdmin) {
