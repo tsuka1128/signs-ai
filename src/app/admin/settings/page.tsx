@@ -430,12 +430,9 @@ export default function AdminSettingsPage() {
                                                 onChange={(e) => handleChange('default_model', e.target.value)}
                                                 className="w-full px-4 py-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-teal/20 transition-all appearance-none pr-10"
                                             >
-                                                <option value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet (Latest Premium)</option>
-                                                <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet (Standard)</option>
-                                                <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku (Fast Logic)</option>
-                                                <option value="claude-3-opus-20240229">Claude 3 Opus (Most Intelligent)</option>
-                                                <option value="claude-3-sonnet-20240229">Claude 3 Sonnet (Legacy)</option>
-                                                <option value="claude-3-haiku-20240307">Claude 3 Haiku (Legacy Fast)</option>
+                                                <option value="claude-opus-4-8">Claude Opus 4.8 (最高精度)</option>
+                                                <option value="claude-sonnet-5">Claude Sonnet 5 (バランス・推奨)</option>
+                                                <option value="claude-haiku-4-5">Claude Haiku 4.5 (高速・低コスト)</option>
                                             </select>
                                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                                                 <Cpu className="w-4 h-4 text-slate-400" />
