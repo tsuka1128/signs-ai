@@ -99,6 +99,8 @@ const DEFAULT_SYSTEM_PROMPT = `あなたは組織改善AI「Signs AI」の経営
 - low: 正常範囲内。`;
 
 export async function POST(req: Request) {
+    // AI実行回数を予約済みか（Claude呼び出し失敗時に catch で返金するためのフラグ）
+    let runClaimed = false;
     try {
         const supabase = await createServerSupabaseClient();
         const sysSettings = await getSystemSettings();
@@ -160,13 +162,28 @@ export async function POST(req: Request) {
             usedRuns = 0;
         }
 
-        if (usedRuns >= maxRuns && profile?.role !== 'super_admin') {
-            return NextResponse.json({
-                error: `今月のAI分析実行回数の上限（${maxRuns}回）に達しました。来月までお待ちいただくか、プランのアップグレードをご検討ください。`,
-                limit: maxRuns,
-                used: usedRuns,
-                reset_month: currentMonthStr
-            }, { status: 429 });
+        // TOCTOU対策：非 super_admin は Claude 呼び出しの「前」にアトミックに1回分を予約する。
+        // （従来は read → 分析 → 最後に +1 の非原子処理で、並列連打すると全リクエストが
+        //   used=0 を読んで全通過し課金が暴走した。）会社・月・上限は RPC 内部で
+        //   認証コンテキストから導出するため、クライアントからの改ざんは不可能。
+        if (profile?.role !== 'super_admin') {
+            const { data: claim, error: claimErr } = await supabase.rpc('claim_manual_ai_run');
+            if (claimErr) {
+                console.error("claim_manual_ai_run error:", claimErr);
+                return NextResponse.json({ error: "レート制限の確認に失敗しました" }, { status: 500 });
+            }
+            const claimed = (claim as any)?.claimed === true;
+            if (!claimed) {
+                const limit = (claim as any)?.max ?? maxRuns;
+                return NextResponse.json({
+                    error: `今月のAI分析実行回数の上限（${limit}回）に達しました。来月までお待ちいただくか、プランのアップグレードをご検討ください。`,
+                    limit,
+                    used: (claim as any)?.used ?? usedRuns,
+                    reset_month: currentMonthStr
+                }, { status: 429 });
+            }
+            // 予約成功。以降で失敗したら catch で返金する。
+            runClaimed = true;
         }
 
         // 3. 分析に必要なデータの取得
@@ -729,13 +746,17 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
             }
         }
 
-        await supabase
-            .from('companies')
-            .update({ 
-                manual_ai_runs_used_this_month: usedRuns + 1,
-                manual_ai_runs_active_month: currentMonthStr
-            })
-            .eq('id', companyId);
+        // 非 super_admin は上部の claim_manual_ai_run で既にアトミックに +1 済み。
+        // super_admin はレート制限対象外だが、使用状況トラッキングのため従来通り記録する。
+        if (profile?.role === 'super_admin') {
+            await supabase
+                .from('companies')
+                .update({
+                    manual_ai_runs_used_this_month: usedRuns + 1,
+                    manual_ai_runs_active_month: currentMonthStr
+                })
+                .eq('id', companyId);
+        }
 
         void sendAiSummaryNotification(companyId);
 
@@ -761,6 +782,15 @@ JSONの構造に従い詳細な分析結果を出力してください。`;
 
     } catch (error: any) {
         console.error("AI Analysis API Error:", error);
+        // Claude呼び出し等が失敗した場合は予約した1回分を返金する（失敗で枠を消費しない）。
+        if (runClaimed) {
+            try {
+                const sb = await createServerSupabaseClient();
+                await sb.rpc('refund_manual_ai_run');
+            } catch (refundErr) {
+                console.error("refund_manual_ai_run failed:", refundErr);
+            }
+        }
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
