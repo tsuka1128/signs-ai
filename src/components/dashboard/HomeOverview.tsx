@@ -125,6 +125,11 @@ function HomeOverviewImpl({
         : currentYM;
     const responseCountLabel = surveyIsStale && surveyMonthNum ? `${surveyMonthNum}月の回答` : "今月の回答";
 
+    // 経営課題は order desc limit 1 で最新1件を出すため、当月未登録だと過去月の内容になる。
+    // 「今月の経営課題」と表示すると嘘になるので、当月でなければ「最新の経営課題」に切り替える。
+    const focusMonthYM = currentFocus?.month ? currentFocus.month.slice(0, 7) : null;
+    const focusHeading = currentFocus && focusMonthYM !== currentYM ? "最新の経営課題" : "今月の経営課題";
+
     // 今月の経営課題（最新1件）。useDashboardData には無いためここで取得。
     useEffect(() => {
         if (!company?.id) return;
@@ -259,10 +264,15 @@ function HomeOverviewImpl({
                                         <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider truncate">
                                             主要KPI達成率{primaryKpi ? `（${primaryKpi.name}）` : ""}
                                         </p>
-                                        <div className="flex items-baseline gap-1 mt-0.5">
-                                            <span className="text-lg font-black text-slate-800">
+                                        <div className="flex items-baseline gap-2 mt-0.5">
+                                            <span className={cn("text-lg font-black", primaryKpiAch !== null ? "text-slate-800" : "text-slate-300")}>
                                                 {primaryKpiAch !== null ? `${primaryKpiAch}%` : "—"}
                                             </span>
+                                            {primaryKpiAch === null && (
+                                                <span className="text-[10px] font-bold text-slate-400 bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded-md">
+                                                    {primaryKpi ? "目標未設定" : "KPI未登録"}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -298,7 +308,7 @@ function HomeOverviewImpl({
                     <section className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <Sparkles className="w-4 h-4 text-amber-400" /> 今月の経営課題
+                                <Sparkles className="w-4 h-4 text-amber-400" /> {focusHeading}
                             </h2>
                             {isExecUp(userRole) && (
                                 <button
