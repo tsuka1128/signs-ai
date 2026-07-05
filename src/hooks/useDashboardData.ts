@@ -6,6 +6,7 @@ import { Company, Department, KpiDefinition, KpiAxis, User, Invitation, Resource
 import { normalizeMonth, getLastNMonths, getMonthLabels, getFullMonthLabels } from "@/lib/utils/date";
 import { DEFAULT_SURVEY_QUESTIONS } from "@/lib/constants";
 import { calculateAchievementRate, calculateProductivity, getWeatherFromPulse, calculateGrowthRate } from "@/lib/logic/kpi-engine";
+import { passesAnonymityGuard } from "@/lib/utils/anonymity";
 import { toast } from "sonner";
 
 /**
@@ -312,8 +313,12 @@ export function useDashboardData(
         const responseCount = latestResponses.length;
         const responseRate = targetHeadcount > 0 ? Math.round((responseCount / targetHeadcount) * 100) : 0;
 
+        // 匿名性ガード：この集計ビュー（部署/第2軸/全社）の回答者が3名未満なら、
+        // 設問別スコア・体温を非開示にする（個人特定防止）。回答率・回答数の表示は残す。
+        const anonymityHidden = !passesAnonymityGuard(responseCount);
+
         const questions = DEFAULT_SURVEY_QUESTIONS;
-        const qScores = questions.map((_, qi) => {
+        const qScores = anonymityHidden ? questions.map(() => 0) : questions.map((_, qi) => {
             const scoresForQ: number[] = [];
             latestResponses.forEach(r => {
                 const ans = r.survey_answers || [];
@@ -327,8 +332,12 @@ export function useDashboardData(
         const targetMonthIdx = last13Months.indexOf(targetMonth);
         const prevMonth = targetMonthIdx > 0 ? last13Months[targetMonthIdx - 1] : null;
         
+        // 前月の回答者数も3名未満なら非開示（月ごとに母数で判定）
+        const prevMonthRespondents = prevMonth
+            ? filtered.filter(r => normalizeMonth(r.recorded_month) === prevMonth).length
+            : 0;
         const prevQScores = questions.map((_, qi) => {
-            if (!prevMonth) return 0;
+            if (!prevMonth || !passesAnonymityGuard(prevMonthRespondents)) return 0;
             const scoresForQ: number[] = [];
             filtered
                 .filter(r => normalizeMonth(r.recorded_month) === prevMonth)
@@ -340,20 +349,23 @@ export function useDashboardData(
             return scoresForQ.reduce((sum, s) => sum + s, 0) / scoresForQ.length;
         });
 
-        const avgPulse = latestAnswers.length > 0
-            ? latestAnswers.reduce((sum, a) => sum + (a as any).score, 0) / latestAnswers.length
-            : 0;
+        const avgPulse = anonymityHidden
+            ? 0
+            : (latestAnswers.length > 0
+                ? latestAnswers.reduce((sum, a) => sum + (a as any).score, 0) / latestAnswers.length
+                : 0);
 
         const pulseHistory = last13Months.map(month => {
-            const monthAnswers = filtered
-                .filter(r => normalizeMonth(r.recorded_month) === month)
-                .flatMap(r => r.survey_answers || []);
+            const monthResponses = filtered.filter(r => normalizeMonth(r.recorded_month) === month);
+            // 月ごとに回答者3名未満は非開示
+            if (!passesAnonymityGuard(monthResponses.length)) return 0;
+            const monthAnswers = monthResponses.flatMap(r => r.survey_answers || []);
             if (monthAnswers.length === 0) return 0;
             return monthAnswers.reduce((sum, a) => sum + (a as any).score, 0) / monthAnswers.length;
         });
 
         // カスタム設問スコア（question_id で紐付け）
-        const customQScores = state.realCustomQuestions.map(cq => {
+        const customQScores = anonymityHidden ? state.realCustomQuestions.map(() => 0 as any) : state.realCustomQuestions.map(cq => {
             const scoresForQ: number[] = [];
             latestResponses.forEach(r => {
                 const ans = r.survey_answers || [];
@@ -498,6 +510,8 @@ export function useDashboardData(
                 : 0;
             let isStale = false;
             let dataMonth: string | null = null;
+            // 表示している pulse の母数（回答者数）。フォールバック時はその月の回答者数を採用する。
+            let pulseRespondents = deptResponseCountIndex.get(`${latestMonth}:${d.id}`) || 0;
 
             if (latestAnswers.length === 0) {
                 for (let i = last13Months.length - 2; i >= 0; i--) {
@@ -506,12 +520,22 @@ export function useDashboardData(
                         pulseScore = prevAnswers.reduce((sum, a) => sum + (a as any).score, 0) / prevAnswers.length;
                         isStale = true;
                         dataMonth = `${parseInt(last13Months[i].split('-')[1])}月`;
+                        pulseRespondents = deptResponseCountIndex.get(`${last13Months[i]}:${d.id}`) || 0;
                         break;
                     }
                 }
             }
 
+            // 匿名性ガード：回答者が3名未満の集計は個人特定リスクがあるため体温を非開示にする
+            // （pulse=0 とすることで OrganizationCard 等の既存「未計測」表示に合流する）。
+            if (!passesAnonymityGuard(pulseRespondents)) {
+                pulseScore = 0;
+            }
+
             const pulseHistory = last13Months.map(month => {
+                // 各月も回答者3名未満の月は非開示（推移グラフからの逆算による特定を防ぐ）
+                const monthRespondents = deptResponseCountIndex.get(`${month}:${d.id}`) || 0;
+                if (!passesAnonymityGuard(monthRespondents)) return 0;
                 const monthAnswers = deptAnswerIndex.get(`${month}:${d.id}`) || [];
                 if (monthAnswers.length === 0) return 0;
                 return monthAnswers.reduce((sum, a) => sum + (a as any).score, 0) / monthAnswers.length;
@@ -682,6 +706,7 @@ export function useDashboardData(
                 : 0;
             let isStale = false;
             let dataMonth: string | null = null;
+            let pulseRespondents = axisResponseCountIndex.get(`${latestMonth}:${axis.id}`) || 0;
 
             if (latestAnswers.length === 0) {
                 for (let i = last13Months.length - 2; i >= 0; i--) {
@@ -690,12 +715,20 @@ export function useDashboardData(
                         pulseScore = prevAnswers.reduce((sum, a) => sum + (a as any).score, 0) / prevAnswers.length;
                         isStale = true;
                         dataMonth = `${parseInt(last13Months[i].split('-')[1])}月`;
+                        pulseRespondents = axisResponseCountIndex.get(`${last13Months[i]}:${axis.id}`) || 0;
                         break;
                     }
                 }
             }
 
+            // 匿名性ガード：回答者3名未満の第2軸集計は体温を非開示にする（未計測扱い）
+            if (!passesAnonymityGuard(pulseRespondents)) {
+                pulseScore = 0;
+            }
+
             const pulseHistory = last13Months.map(month => {
+                const monthRespondents = axisResponseCountIndex.get(`${month}:${axis.id}`) || 0;
+                if (!passesAnonymityGuard(monthRespondents)) return 0;
                 const monthAnswers = axisAnswerIndex.get(`${month}:${axis.id}`) || [];
                 if (monthAnswers.length === 0) return 0;
                 return monthAnswers.reduce((sum, a) => sum + (a as any).score, 0) / monthAnswers.length;
