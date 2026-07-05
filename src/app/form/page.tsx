@@ -144,8 +144,8 @@ function SurveyFormContent() {
             }
             return toast.success("すべての5段階評価に回答してください。");
         }
-        if (kpiImprovement.length < 100) {
-            return toast.error("Step 3の記述は100文字以上で入力してください。");
+        if (kpiImprovement.length < 20) {
+            return toast.error("Step 3は20文字以上で入力してください。");
         }
 
         setIsSubmitting(true);
@@ -373,7 +373,7 @@ const progress = questions.length > 0 ? Math.round((Object.keys(answers).length 
                                         最近1ヶ月の状況について
                                     </label>
                                     <div className="text-[10px] font-bold text-slate-400 bg-slate-50 px-3 py-1.5 rounded-full">
-                                        全くない(1) → 強く想う(5)
+                                        あてはまらない(1) → あてはまる(5)
                                     </div>
                                 </div>
 
@@ -405,6 +405,11 @@ const progress = questions.length > 0 ? Math.round((Object.keys(answers).length 
                                                     );
                                                 })}
                                             </div>
+                                            {/* 各設問に端点ラベルを薄く再掲（1と5が何を意味するか） */}
+                                            <div className="flex justify-between px-2 mt-1.5 text-[9px] font-medium text-slate-300">
+                                                <span>あてはまらない</span>
+                                                <span>あてはまる</span>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -418,7 +423,7 @@ const progress = questions.length > 0 ? Math.round((Object.keys(answers).length 
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2">
                                                 <span>KPI達成・成長のために、改善すると良さそうな点はありますか？</span>
-                                                <span className="px-1.5 py-0.5 bg-red-100 text-red-600 text-[10px] rounded shrink-0">100字以上</span>
+                                                <span className="px-1.5 py-0.5 bg-slate-100 text-slate-500 text-[10px] rounded shrink-0">20字以上</span>
                                             </div>
                                         </div>
                                     </label>
@@ -427,12 +432,12 @@ const progress = questions.length > 0 ? Math.round((Object.keys(answers).length 
                                             value={kpiImprovement}
                                             onChange={(e) => setKpiImprovement(e.target.value)}
                                             required
-                                            minLength={100}
+                                            minLength={20}
                                             className="w-full bg-slate-50 border-transparent rounded-2xl p-4 pb-8 text-[13px] text-slate-600 outline-none focus:ring-2 focus:ring-teal/20 min-h-[140px]"
-                                            placeholder="例：マーケ部が集めてくれるリードの質が上がり、商談はしやすくなっています。ただ、開発部への依頼フローが..."
+                                            placeholder="例：マーケ部のリードの質が上がり商談しやすいです。一方で開発部への依頼フローに時間がかかっています。"
                                         />
-                                        <div className={`absolute bottom-4 right-4 text-[10px] font-bold ${kpiImprovement.length >= 100 ? "text-teal" : "text-red-400"}`}>
-                                            {kpiImprovement.length} / 100文字以上
+                                        <div className={`absolute bottom-4 right-4 text-[10px] font-bold ${kpiImprovement.length >= 20 ? "text-teal" : "text-slate-400"}`}>
+                                            {kpiImprovement.length} / 20文字以上
                                         </div>
                                     </div>
                                 </div>
@@ -457,8 +462,8 @@ const progress = questions.length > 0 ? Math.round((Object.keys(answers).length 
                             <div className="text-center pt-8 pb-4">
                                 <button
                                     type="submit"
-                                    disabled={isSubmitting || Object.keys(answers).length < questions.length || !department || (axes.length > 0 && !axisId) || kpiImprovement.length < 100}
-                                    className={`px-14 py-4 rounded-full font-black text-[13px] transition-all ${isSubmitting || Object.keys(answers).length < questions.length || !department || (axes.length > 0 && !axisId) || kpiImprovement.length < 100
+                                    disabled={isSubmitting || Object.keys(answers).length < questions.length || !department || (axes.length > 0 && !axisId) || kpiImprovement.length < 20}
+                                    className={`px-14 py-4 rounded-full font-black text-[13px] transition-all ${isSubmitting || Object.keys(answers).length < questions.length || !department || (axes.length > 0 && !axisId) || kpiImprovement.length < 20
                                         ? "bg-slate-200 text-slate-400 cursor-not-allowed"
                                         : "bg-teal text-white shadow-lg hover:scale-105"
                                         }`}

@@ -14,7 +14,8 @@ import {
     FileText,
     MessageSquare,
     ClipboardList,
-    HelpCircle
+    HelpCircle,
+    Send
 } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { toast } from "sonner";
@@ -31,6 +32,26 @@ export default function VoiceCheckPage() {
     const [voiceCheckStats, setVoiceCheckStats] = useState<Record<string, number>>({});
     const [copied, setCopied] = useState(false);
     const [copiedTemplate, setCopiedTemplate] = useState(false);
+    const [reminding, setReminding] = useState(false);
+
+    // 未回答者へのリマインド送信（回答率0%を見ても打つ手が無い問題への導線 / U4）
+    const handleRemind = async () => {
+        if (reminding) return;
+        setReminding(true);
+        try {
+            const res = await fetch("/api/settings/remind-voice-check", { method: "POST" });
+            if (res.ok) {
+                toast.success("未回答者にリマインドを送信しました。");
+            } else {
+                const data = await res.json().catch(() => ({}));
+                toast.error(data.error === "Forbidden" ? "リマインド送信は管理者のみ可能です。" : "リマインドの送信に失敗しました。");
+            }
+        } catch {
+            toast.error("リマインドの送信に失敗しました。");
+        } finally {
+            setReminding(false);
+        }
+    };
 
     useEffect(() => {
         async function loadData() {
@@ -257,6 +278,19 @@ export default function VoiceCheckPage() {
                                     <p className="text-xs text-slate-500">{new Date().getFullYear()}年{new Date().getMonth() + 1}月の回答進捗を確認できます。</p>
                                 </div>
                                 <div className="flex items-end gap-6">
+                                    <button
+                                        onClick={handleRemind}
+                                        disabled={reminding}
+                                        className={cn(
+                                            "inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-[12px] font-black transition-all",
+                                            reminding
+                                                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                                                : "bg-teal/10 text-teal border border-teal/20 hover:bg-teal/20"
+                                        )}
+                                    >
+                                        <Send className="w-3.5 h-3.5" />
+                                        {reminding ? "送信中..." : "未回答者にリマインド"}
+                                    </button>
                                     <div className="text-right">
                                         <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">回答期限まで</div>
                                         <div className="text-2xl font-black text-slate-800 tabular-nums flex items-baseline gap-1">
