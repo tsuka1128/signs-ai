@@ -13,12 +13,22 @@ function SparkLineImpl({ data, color = "#10B981", height = 50, width = 200 }: Sp
     // gradient id を一意化（従来は "areaGradient" 固定で、同一ページ内の全 SparkLine が衝突していた）
     const gradientId = useId();
 
+    // データが無ければ描画しない（Math.min(...[]) が Infinity になり NaN 座標を生むのを防ぐ）
+    if (!data || data.length === 0) {
+        return <div className="w-full" style={{ height }} />;
+    }
+
     const mn = Math.min(...data) * 0.95;
     const mx = Math.max(...data) * 1.05;
+    // 全値が同じ（例: 全月0でフラット）だと mx-mn=0 で 0除算→NaN→線が消える。中央水平線を描く。
+    const range = mx - mn;
+    const yFor = (v: number) => (range === 0 ? height / 2 : height - ((v - mn) / range) * height);
+    // 単一点のとき i/(length-1) が 0/0=NaN になるのを防ぐ
+    const denomX = data.length > 1 ? data.length - 1 : 1;
 
     const points = data.map((v, i) => {
-        const x = (i / (data.length - 1)) * width;
-        const y = height - ((v - mn) / (mx - mn)) * height;
+        const x = (i / denomX) * width;
+        const y = yFor(v);
         return `${x},${y}`;
     }).join(" ");
 
@@ -26,7 +36,7 @@ function SparkLineImpl({ data, color = "#10B981", height = 50, width = 200 }: Sp
 
     const lastPoint = {
         x: width,
-        y: height - ((data[data.length - 1] - mn) / (mx - mn)) * height
+        y: yFor(data[data.length - 1])
     };
 
     return (

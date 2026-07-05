@@ -62,6 +62,10 @@ interface HomeOverviewProps {
     riskLevel: string;
     responseRate: number;
     responseCount: number;
+    /** responseRate/responseCount が実際に属する月 (YYYY-MM)。ラベルの月ズレ防止用。 */
+    surveyMonth?: string | null;
+    /** 表示中の集計が当月でなく過去月フォールバックか */
+    surveyIsStale?: boolean;
     recentInsights: any[];
     actions: any[];
     onSectionChange?: (id: string) => void;
@@ -82,6 +86,8 @@ function HomeOverviewImpl({
     riskLevel,
     responseRate,
     responseCount,
+    surveyMonth,
+    surveyIsStale,
     recentInsights,
     actions,
     onSectionChange,
@@ -110,6 +116,14 @@ function HomeOverviewImpl({
     const now = new Date();
     const currentYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     const monthLabel = `${now.getFullYear()}年${now.getMonth() + 1}月`;
+
+    // 回答率/回答数が実際に属する月のラベル。当月データが無く過去月にフォールバックしている場合、
+    // 「当月」と表示するのは嘘になるため、実データの月を明示する（例: 6月実績・当月集計中）。
+    const surveyMonthNum = surveyMonth ? parseInt(surveyMonth.split("-")[1], 10) : null;
+    const surveyPeriodLabel = surveyMonth
+        ? (surveyIsStale ? `${surveyMonthNum}月実績・当月集計中` : surveyMonth)
+        : currentYM;
+    const responseCountLabel = surveyIsStale && surveyMonthNum ? `${surveyMonthNum}月の回答` : "今月の回答";
 
     // 今月の経営課題（最新1件）。useDashboardData には無いためここで取得。
     useEffect(() => {
@@ -445,12 +459,12 @@ function HomeOverviewImpl({
                             </div>
                             <div className="flex items-end gap-3">
                                 <span className="text-4xl font-black text-slate-800 tracking-tighter">{responseRate}%</span>
-                                <span className="text-[13px] text-slate-400 font-bold mb-1">回答率（{currentYM}）</span>
+                                <span className="text-[13px] text-slate-400 font-bold mb-1">回答率（{surveyPeriodLabel}）</span>
                             </div>
                             <div className="h-2 bg-slate-100 rounded-full overflow-hidden mt-3">
                                 <div className="h-full rounded-full bg-teal transition-all duration-1000" style={{ width: `${Math.min(responseRate, 100)}%` }} />
                             </div>
-                            <p className="text-[11px] text-slate-400 font-bold mt-2">今月の回答 {responseCount}件</p>
+                            <p className="text-[11px] text-slate-400 font-bold mt-2">{responseCountLabel} {responseCount}件</p>
                         </section>
                     )}
 

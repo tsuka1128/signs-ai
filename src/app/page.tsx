@@ -178,6 +178,8 @@ export default function DashboardPage() {
                 riskLevel={aiContent?.risk_level || "low"}
                 responseRate={allSurveyData.responseRate}
                 responseCount={allSurveyData.responseCount}
+                surveyMonth={allSurveyData.month}
+                surveyIsStale={allSurveyData.isStale}
                 recentInsights={state.realAiInsights}
                 actions={state.realActionItems}
                 onSectionChange={setSec}

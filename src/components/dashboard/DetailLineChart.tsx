@@ -12,6 +12,8 @@ interface DetailLineChartProps {
     color?: string;
     height?: number;
     pulseHistory?: number[];
+    /** true のとき値0の月を「未計測」として線を切る（体温/偏差など。KPIでは0が正当値なので既定false） */
+    gapAtZero?: boolean;
 }
 
 export function DetailLineChart({
@@ -23,6 +25,7 @@ export function DetailLineChart({
     color = "#10B981",
     height = 140,
     pulseHistory = [],
+    gapAtZero = false,
 }: DetailLineChartProps) {
     const width = 600;
     const padding = { top: 20, right: 30, bottom: 35, left: 30 };
@@ -39,17 +42,45 @@ export function DetailLineChart({
     const max = Math.max(dataMax, targetMax, 5);
     const range = max - min || 1;
 
-    // 全月分の座標を計算
+    // 全月分の座標を計算（gapAtZero のとき v<=0 は「未計測」= gap 扱い）
+    const baseY = padding.top + chartHeight;
     const points = data.map((v, i) => {
         const x = padding.left + (data.length > 1 ? (i / (data.length - 1)) * chartWidth : 0.5 * chartWidth);
-        const y = padding.top + chartHeight - ((v - min) / range) * chartHeight;
-        return { x, y, v };
+        const y = baseY - ((v - min) / range) * chartHeight;
+        const gap = gapAtZero && (v == null || v <= 0);
+        return { x, y, v, gap };
     });
 
-    const pathData = points.length > 0 ? points.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(" ") : "";
-    const areaData = points.length > 0
-        ? `${pathData} L ${points[points.length - 1].x} ${padding.top + chartHeight} L ${points[0].x} ${padding.top + chartHeight} Z`
-        : "";
+    let pathData = "";
+    let areaData = "";
+    if (gapAtZero) {
+        // 未計測月で線・エリアを分断する（床を這って急騰する見え方を防ぐ／connectNulls相当）
+        const lineSeg: string[] = [];
+        let started = false;
+        points.forEach((p) => {
+            if (p.gap) { started = false; return; }
+            lineSeg.push(started ? `L ${p.x} ${p.y}` : `M ${p.x} ${p.y}`);
+            started = true;
+        });
+        pathData = lineSeg.join(" ");
+
+        // エリアは連続した計測区間ごとに閉じる
+        let seg: { x: number; y: number }[] = [];
+        const flush = () => {
+            if (seg.length > 0) {
+                const d = seg.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(" ");
+                areaData += `${d} L ${seg[seg.length - 1].x} ${baseY} L ${seg[0].x} ${baseY} Z `;
+                seg = [];
+            }
+        };
+        points.forEach((p) => { if (p.gap) flush(); else seg.push({ x: p.x, y: p.y }); });
+        flush();
+    } else {
+        pathData = points.length > 0 ? points.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(" ") : "";
+        areaData = points.length > 0
+            ? `${pathData} L ${points[points.length - 1].x} ${baseY} L ${points[0].x} ${baseY} Z`
+            : "";
+    }
 
     // 目標ラインの座標を計算
     const targetPoints = targetData.map((v, i) => {
@@ -181,8 +212,9 @@ export function DetailLineChart({
                     strokeLinejoin="round"
                 />
 
-                {/* 各月のデータポイントを描画 */}
+                {/* 各月のデータポイントを描画（gapAtZero のとき未計測月はマーカーも出さない） */}
                 {points.map((p, i) => (
+                    p.gap ? null : (
                     <g key={i}>
                         <circle
                             cx={p.x}
@@ -194,6 +226,7 @@ export function DetailLineChart({
                             className="transition-all duration-200"
                         />
                     </g>
+                    )
                 ))}
 
                 {/* X-Axis Labels */}

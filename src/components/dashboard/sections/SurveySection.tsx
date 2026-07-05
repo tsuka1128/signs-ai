@@ -204,6 +204,7 @@ export function SurveySection({
                                 }
                                 targetData={chartMode === 'deviation' ? Array(monthLabels.length).fill(50) : undefined}
                                 height={140}
+                                gapAtZero
                             />
                         </div>
                     </div>
