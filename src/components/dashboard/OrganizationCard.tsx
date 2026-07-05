@@ -5,6 +5,7 @@ import { WeatherIcon } from "@/components/ui/WeatherIcon";
 import { Arrow } from "@/components/ui/Arrow";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils/index";
+import { Snowflake, CheckCircle2, CircleDashed, AlertTriangle, CalendarDays, MessageSquareText } from "lucide-react";
 
 interface KpiItem {
     name: string;
@@ -28,7 +29,7 @@ interface OrganizationCardProps {
 
 function OrganizationCardImpl({ name, head, pulse, weather, arrow, kpis, laborCostPerHead, isStale, dataMonth, deptInsight }: OrganizationCardProps) {
     const isNone = pulse === 0;
-    const risk = isNone ? "none" : pulse < 2.5 ? "overheat" : pulse >= 3.5 ? "stable" : "caution";
+    const risk = isNone ? "none" : pulse < 2.5 ? "cold" : pulse >= 3.5 ? "stable" : "caution";
     const pulseColorClass = isNone ? "text-slate-300" : pulse >= 3.5 ? "text-emerald-500" : pulse >= 2.5 ? "text-amber-500" : "text-rose-500";
 
     // 代表KPIと補助KPIの分離ロジック
@@ -43,10 +44,10 @@ function OrganizationCardImpl({ name, head, pulse, weather, arrow, kpis, laborCo
     return (
         <div className={cn(
             "rounded-2xl overflow-hidden border transition-all duration-200",
-            risk === "overheat" ? "bg-rose-50/20 border-rose-100 shadow-sm" : "bg-white border-slate-100 shadow-sm hover:shadow-md"
+            risk === "cold" ? "bg-rose-50/20 border-rose-100 shadow-sm" : "bg-white border-slate-100 shadow-sm hover:shadow-md"
         )}>
             {/* Header section */}
-            <div className={cn("flex items-center gap-4 px-5 py-4 border-b", risk === "overheat" ? "border-rose-50" : "border-slate-50")}>
+            <div className={cn("flex items-center gap-4 px-5 py-4 border-b", risk === "cold" ? "border-rose-50" : "border-slate-50")}>
                 <div className="flex items-center gap-3 min-w-[100px]">
                     <WeatherIcon type={isNone ? "cloud" : weather} size={32} className={isNone ? "opacity-20 grayscale" : ""} />
                     <div>
@@ -74,18 +75,21 @@ function OrganizationCardImpl({ name, head, pulse, weather, arrow, kpis, laborCo
 
                 <Badge className={cn(
                     "border-none text-[10px] font-bold px-3 py-1",
-                    risk === "overheat" ? "bg-rose-100 text-rose-500" :
+                    risk === "cold" ? "bg-rose-100 text-rose-500" :
                         risk === "stable" ? "bg-emerald-100 text-emerald-500" :
                             risk === "none" ? "bg-slate-100 text-slate-400" : "bg-amber-100 text-amber-500"
                 )}>
-                    {risk === "overheat" ? "🔥 オーバーヒート" :
-                        risk === "stable" ? "✅ 適温" :
-                            risk === "none" ? "😶 未計測" : "⚠️ 要注意"}
+                    <span className="inline-flex items-center gap-1">
+                        {risk === "cold" ? <><Snowflake className="w-3 h-3" /> 低体温（要ケア）</> :
+                            risk === "stable" ? <><CheckCircle2 className="w-3 h-3" /> 適温</> :
+                                risk === "none" ? <><CircleDashed className="w-3 h-3" /> 未計測</> :
+                                    <><AlertTriangle className="w-3 h-3" /> 要注意</>}
+                    </span>
                 </Badge>
                 {/* 前月データ参照中バッジ */}
                 {isStale && dataMonth && (
-                    <Badge className="border border-slate-200 bg-slate-50 text-slate-400 text-[9px] font-bold px-2 py-1">
-                        📅 {dataMonth}参照
+                    <Badge className="border border-slate-200 bg-slate-50 text-slate-400 text-[9px] font-bold px-2 py-1 inline-flex items-center gap-1">
+                        <CalendarDays className="w-3 h-3" /> {dataMonth}参照
                     </Badge>
                 )}
             </div>
@@ -276,8 +280,8 @@ function ObservationComment({ pulse, primaryAch }: { pulse: number; primaryAch: 
 
     return (
         <div className="px-5 py-3 border-t border-slate-50">
-            <p className="text-[13px] text-slate-400 font-medium leading-relaxed">
-                💬 {text}
+            <p className="text-[13px] text-slate-400 font-medium leading-relaxed inline-flex items-start gap-1.5">
+                <MessageSquareText className="w-3.5 h-3.5 mt-0.5 shrink-0" /> <span>{text}</span>
             </p>
         </div>
     );

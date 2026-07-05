@@ -40,7 +40,8 @@ export function SurveySection({
     customQuestions,
     displayDepts,
 }: SurveySectionProps) {
-    const [chartMode, setChartMode] = useState<'pulse' | 'deviation'>('pulse');
+    // 偏差値ビューは撤去（少数テナントでは統計的に無意味／VC1）。体温スコア固定。
+    const [chartMode] = useState<'pulse' | 'deviation'>('pulse');
     const [feedbackSent, setFeedbackSent] = useState<'accurate' | 'inaccurate' | null>(null);
 
     const handleFeedback = async (type: 'accurate' | 'inaccurate') => {
@@ -55,7 +56,6 @@ export function SurveySection({
             }),
         });
     };
-    const surveyViewId = (orgView === "product" || orgView === "dept" || orgView === "all") ? "all" : orgView;
 
     return (
         <div className="space-y-8 animate-fadeIn">
@@ -103,7 +103,7 @@ export function SurveySection({
                 />
             ) : (
                 <>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
                         <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">現在の回答率</span>
                         <div className="flex items-baseline gap-2">
@@ -140,21 +140,8 @@ export function SurveySection({
                             {data.pulse >= 3.5 ? "非常に良好なコンディションです。" : data.pulse >= 2.5 ? "一部に課題が見られます。" : "早急な対話と対策が必要です。"}
                         </p>
                     </div>
-                    <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hidden md:block">
-                        <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">全社偏差値</span>
-                        <div className="flex items-baseline gap-2">
-                            <span className={cn(
-                                "text-3xl font-black tabular-nums tracking-tighter",
-                                (data as any).deviation >= 55 ? "text-blue-500" : (data as any).deviation >= 45 ? "text-slate-600" : "text-rose-500"
-                            )}>
-                                {(data as any).deviation?.toFixed(1) || '50.0'}
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase">/ 100</span>
-                        </div>
-                        <p className="mt-3 text-[10px] text-slate-400 font-bold leading-tight">
-                            {(data as any).deviation >= 55 ? "全社平均を上回る高水準です。" : (data as any).deviation >= 45 ? "全社平均並みの水準です。" : "全社平均を下回る傾向にあります。"}
-                        </p>
-                    </div>
+                    {/* 「全社偏差値 50.0/100」は撤去（偏差値は/100尺度でなく、少数テナントでは統計的に無意味／VC1・D16）。
+                        部署ごとの全社比は各設問カードの「全社比」バッジで表現する。 */}
                 </div>
 
                     {/* Pulse History Chart */}
@@ -169,29 +156,6 @@ export function SurveySection({
                                     継続的なストレスや熱量の変化をモニタリング
                                 </p>
                             </div>
-                            
-                            {surveyViewId !== "all" && (
-                                <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
-                                    <button
-                                        onClick={() => setChartMode('pulse')}
-                                        className={cn(
-                                            "px-3 py-1.5 text-[10px] font-black rounded-lg transition-all",
-                                            chartMode === 'pulse' ? "bg-white text-teal shadow-sm" : "text-slate-400 hover:text-slate-600"
-                                        )}
-                                    >
-                                        スコア
-                                    </button>
-                                    <button
-                                        onClick={() => setChartMode('deviation')}
-                                        className={cn(
-                                            "px-3 py-1.5 text-[10px] font-black rounded-lg transition-all",
-                                            chartMode === 'deviation' ? "bg-white text-blue-500 shadow-sm" : "text-slate-400 hover:text-slate-600"
-                                        )}
-                                    >
-                                        偏差値
-                                    </button>
-                                </div>
-                            )}
                         </div>
 
                         <div className="h-40 w-full pt-4">
