@@ -138,12 +138,18 @@ function OrganizationCardImpl({ name, head, pulse, weather, arrow, kpis, laborCo
                                         </div>
                                     </>
                                 ) : (
-                                    /* 達成率なし（目標未設定）は実績値のみ表示 */
-                                    <div className="text-2xl font-black text-slate-700 tabular-nums leading-tight">
-                                        {primaryKpi.val && !primaryKpi.val.startsWith("-") ? primaryKpi.val : (
-                                            <span className="text-slate-300 text-base font-bold">データなし</span>
-                                        )}
-                                    </div>
+                                    /* 達成率なし: 実績値あり=「目標未設定」／レコード無し=「今月未入力」を区別（赤にしない） */
+                                    primaryKpi.val && !primaryKpi.val.startsWith("-") ? (
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-2xl font-black text-slate-700 tabular-nums leading-tight">{primaryKpi.val}</span>
+                                            <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-md shrink-0">目標未設定</span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-2xl font-black text-slate-300 tabular-nums leading-tight">—</span>
+                                            <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-md shrink-0">今月未入力</span>
+                                        </div>
+                                    )
                                 )}
                             </div>
 

@@ -652,7 +652,9 @@ export function useDashboardData(
                         return {
                             name: def.name,
                             val: rec ? `${(rec.value || 0).toLocaleString()}${def.unit || ''}` : `-${def.unit || ''}`,
-                            ach: (rec && rec.target_value && rec.target_value > 0) ? Math.round((rec.value / rec.target_value) * 100) : 0,
+                            // レコード無し/目標未設定は達成率「0%（赤）」ではなく null（未入力/目標未設定）扱いにする。
+                            // 0 を返すと未入力KPIが特大roseで氾濫してしまう（D1）。
+                            ach: (rec && rec.target_value && rec.target_value > 0) ? Math.round((rec.value / rec.target_value) * 100) : null,
                             type: "stack"
                         };
                     }).slice(0, 3) as any[],
@@ -840,7 +842,8 @@ export function useDashboardData(
                     return {
                         name: def.name,
                         val: `${(rec.value || 0).toLocaleString()}${def.unit || ''}`,
-                        ach: (rec.target_value && rec.target_value > 0) ? Math.round((rec.value / rec.target_value) * 100) : 0,
+                        // 目標未設定は 0%（赤）ではなく null（目標未設定）扱いに（D1）
+                        ach: (rec.target_value && rec.target_value > 0) ? Math.round((rec.value / rec.target_value) * 100) : null,
                         type: "stack",
                         isPrimary: def.id === company?.secondary_axis_size_kpi_id
                     };
