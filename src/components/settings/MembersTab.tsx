@@ -683,7 +683,7 @@ export const MembersTab = ({
                                             </td>
                                             <td className="px-6 py-5">
                                                 <span className="inline-flex px-3 py-1 rounded-full text-[10px] font-black bg-slate-100 text-slate-500">
-                                                    {USER_ROLES.find(r => r.value === u.role)?.label?.split('（')[0] ?? u.role}
+                                                    {u.role === 'super_admin' ? '運営' : (USER_ROLES.find(r => r.value === u.role)?.label?.split('（')[0] ?? u.role)}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-5">

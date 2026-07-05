@@ -40,13 +40,13 @@ export function SurveyQuestionCard({ question, hint, score, prevScore, deviation
                                 Custom
                             </span>
                         )}
-                        {deviationDiff !== undefined && (
+                        {/* 全社比の乖離。±0.5未満は誤差レベルなので非表示（裸の「0.0」が浮くのを防ぐ） */}
+                        {deviationDiff !== undefined && Math.abs(deviationDiff) >= 0.5 && (
                             <span className={cn(
                                 "text-[9px] font-black px-1.5 py-0.5 rounded-md tabular-nums",
-                                deviationDiff > 0 ? "bg-blue-50 text-blue-500" : 
-                                deviationDiff < 0 ? "bg-rose-50 text-rose-500" : "bg-slate-50 text-slate-400"
+                                deviationDiff > 0 ? "bg-blue-50 text-blue-500" : "bg-rose-50 text-rose-500"
                             )}>
-                                {deviationDiff > 0 ? '+' : ''}{deviationDiff.toFixed(1)}
+                                全社比 {deviationDiff > 0 ? '+' : ''}{deviationDiff.toFixed(1)}
                             </span>
                         )}
                     </div>
