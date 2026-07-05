@@ -6,9 +6,20 @@
  */
 
 /** デフォルト値の定数定義 */
-const DEFAULT_MODEL = "claude-sonnet-4-5";
+// 現行世代の Sonnet。廃止済みモデル(claude-3-7-sonnet 等)や1世代前(claude-sonnet-4-5)からの移行先。
+// より高精度が必要なら DB(system_settings.default_model) で claude-opus-4-8 を指定可能。
+const DEFAULT_MODEL = "claude-sonnet-5";
 const DEFAULT_TEMPERATURE = 0.3;
 const DEFAULT_MAX_TOKENS = 1024;
+
+/**
+ * temperature/top_p/top_k を受け付けるのは旧世代モデルのみ。
+ * 現行世代（Opus 4.7/4.8・Sonnet 5・Fable 5 等）は sampling パラメータが削除されており、
+ * 送信すると 400 invalid_request_error になる。旧世代モデルにのみ temperature を送る。
+ */
+function modelAcceptsSampling(model: string): boolean {
+    return /claude-3|claude-2|claude-sonnet-4-5|claude-sonnet-4-0|claude-opus-4-1|claude-opus-4-0|claude-haiku-4-5/.test(model);
+}
 
 interface GenerateOptions {
     /** システムプロンプト（ベースプロンプト + スロット別プロンプトを結合して渡す） */
@@ -51,9 +62,13 @@ export async function generateAIInsight(prompt: string, options?: GenerateOption
     const requestBody: any = {
         model,
         max_tokens: maxTokens,
-        temperature,
         messages: [{ role: "user", content: prompt }],
     };
+
+    // 旧世代モデルのみ temperature を付与（現行世代に送ると 400 になるため）
+    if (modelAcceptsSampling(model)) {
+        requestBody.temperature = temperature;
+    }
 
     if (systemPrompt) {
         requestBody.system = systemPrompt;
@@ -76,5 +91,19 @@ export async function generateAIInsight(prompt: string, options?: GenerateOption
     }
 
     const data = await response.json();
-    return data.content[0].text;
+
+    // 応答形状を検証してからテキストを取り出す。
+    // stop_reason が "max_tokens" 等で content が空/形状変化した場合や tool_use ブロック混在時に
+    // data.content[0].text を無条件参照するとクラッシュするため、text ブロックを明示的に探す。
+    const textBlock = Array.isArray(data?.content)
+        ? data.content.find((b: any) => b?.type === "text" && typeof b.text === "string")
+        : null;
+
+    if (!textBlock?.text) {
+        throw new Error(
+            `Claude API returned no text content (stop_reason: ${data?.stop_reason ?? "unknown"})`
+        );
+    }
+
+    return textBlock.text as string;
 }
