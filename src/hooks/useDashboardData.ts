@@ -458,6 +458,7 @@ export function useDashboardData(
             voiceTopics: finalVoiceTopics as any[],
             isStale,
             dataMonth,
+            month: targetMonth, // 回答率/スコアが実際に属する月(YYYY-MM)。ラベルの月ズレ防止に使う。
             deviation,
             questionDeviations,
             allOrgsStats: latestStats // 全社比較用（最新分のみ渡す）

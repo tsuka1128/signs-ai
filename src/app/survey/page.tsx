@@ -250,6 +250,7 @@ export default function SurveyDashboard() {
                             <DetailLineChart
                                 data={monthPulseData}
                                 labels={monthLabels}
+                                gapAtZero
                             />
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
