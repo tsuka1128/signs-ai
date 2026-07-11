@@ -472,8 +472,8 @@ export default function AdminPlansPage() {
             </div>
             
             <footer className="text-center pt-8">
-                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">
-                    Signs AI Administration Framework — v2.0
+                <p className="text-[10px] font-black text-slate-300 tracking-[0.2em]">
+                    Signs AI 運営管理
                 </p>
             </footer>
         </main>

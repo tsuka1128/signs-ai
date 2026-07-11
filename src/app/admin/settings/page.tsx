@@ -207,7 +207,7 @@ export default function AdminSettingsPage() {
                         </div>
                         <h1 className="text-3xl font-black text-slate-900 tracking-tight">システム設定</h1>
                     </div>
-                    <p className="text-slate-500 font-medium font-mono text-sm">/ SERVICE_LEVEL_CONFIGURATION</p>
+                    <p className="text-slate-500 font-medium text-sm">サービス全体の設定</p>
                 </div>
             </header>
 
