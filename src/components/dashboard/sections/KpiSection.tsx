@@ -6,7 +6,7 @@ import { KpiSummaryCard } from "@/components/dashboard/KpiSummaryCard";
 import { DetailLineChart } from "@/components/dashboard/DetailLineChart";
 import { KpiDisplayData } from "@/types/dashboard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { BarChart3, TrendingDown, TrendingUp } from "lucide-react";
+import { BarChart3, TrendingDown, TrendingUp, Flag } from "lucide-react";
 import { HelpLink } from "@/components/ui/HelpLink";
 import { cn } from "@/lib/utils/index";
 import {
@@ -217,11 +217,11 @@ export function KpiSection({
                                                         <p className="text-slate-300 mb-2">過去13ヶ月のKPI達成率の平均から、目標値の難易度が適切かを自動判定します。</p>
                                                         <div className="space-y-1.5">
                                                             <div className="flex items-start gap-2">
-                                                                <span className="text-violet-400 font-black shrink-0">⚑ 低すぎる可能性</span>
+                                                                <span className="text-violet-400 font-black shrink-0 inline-flex items-center gap-1"><Flag className="w-3 h-3" /> 低すぎる可能性</span>
                                                                 <span className="text-slate-400">平均達成率が115%超。目標がチャレンジングでない可能性。</span>
                                                             </div>
                                                             <div className="flex items-start gap-2">
-                                                                <span className="text-rose-400 font-black shrink-0">⚑ 高すぎる可能性</span>
+                                                                <span className="text-rose-400 font-black shrink-0 inline-flex items-center gap-1"><Flag className="w-3 h-3" /> 高すぎる可能性</span>
                                                                 <span className="text-slate-400">平均達成率が65%未満。体温への影響も要確認。</span>
                                                             </div>
                                                             <div className="flex items-start gap-2">
@@ -261,12 +261,16 @@ export function KpiSection({
                                                     )}
                                                 </td>
                                                 <td className="py-5 px-4">
-                                                    <span className={cn(
-                                                        "text-sm font-black tabular-nums tracking-tighter",
-                                                        (d.kpiAch || 0) >= 100 ? "text-emerald-500" : (d.kpiAch || 0) >= 80 ? "text-slate-700" : "text-rose-500"
-                                                    )}>
-                                                        {d.kpiAch || 0}%
-                                                    </span>
+                                                    {d.hasKpiData ? (
+                                                        <span className={cn(
+                                                            "text-sm font-black tabular-nums tracking-tighter",
+                                                            (d.kpiAch || 0) >= 100 ? "text-emerald-500" : (d.kpiAch || 0) >= 80 ? "text-slate-700" : "text-rose-500"
+                                                        )}>
+                                                            {d.kpiAch || 0}%
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[11px] font-bold text-slate-300">未入力</span>
+                                                    )}
                                                 </td>
                                                 <td className="py-5 px-4 text-center">
                                                     <span className={cn(
@@ -277,39 +281,42 @@ export function KpiSection({
                                                     </span>
                                                 </td>
 
-                                                {/* コンディション診断 */}
+                                                {/* コンディション診断（KPI実績が無い部署は診断不能なので「—」） */}
                                                 <td className="py-5 px-4">
+                                                    {d.hasKpiData ? (
                                                     <div className="relative group/quality inline-block">
-                                                        <span className={`text-[11px] font-black px-3.5 py-1.5 rounded-full cursor-help shadow-sm border border-white ${qMeta.bg} ${qMeta.color}`}>
-                                                            {qMeta.icon} {qMeta.label}
+                                                        <span className={`text-[11px] font-bold px-3 py-1 rounded-full cursor-help ${qMeta.bg} ${qMeta.color}`}>
+                                                            {qMeta.label}
                                                         </span>
                                                         <div className="absolute bottom-full left-0 mb-3 w-64 p-5 bg-slate-800 text-white text-[13px] rounded-2xl shadow-2xl hidden group-hover/quality:block z-[60] leading-relaxed font-medium animate-in fade-in zoom-in-95">
-                                                            <div className="font-black mb-1.5 border-b border-slate-700 pb-1.5 flex items-center gap-2">
-                                                                <span>{qMeta.icon}</span>
-                                                                <span>{qMeta.label}</span>
+                                                            <div className="font-black mb-1.5 border-b border-slate-700 pb-1.5">
+                                                                {qMeta.label}
                                                             </div>
                                                             {qMeta.description}
                                                         </div>
                                                     </div>
+                                                    ) : (
+                                                        <span className="text-[11px] font-bold text-slate-300">—</span>
+                                                    )}
                                                 </td>
 
                                                 {/* 設定健全性 */}
                                                 <td className="py-5 px-4">
-                                                    {setHealth !== "optimal" ? (
+                                                    {d.hasKpiData && setHealth !== "optimal" ? (
                                                         <div className="relative group/sethealth inline-block">
                                                             <span className={`text-[11px] font-black cursor-help flex items-center gap-1.5 ${shMeta.color}`}>
-                                                                <span className="text-base">⚑</span> {shMeta.label}
+                                                                <Flag className="w-3 h-3" /> {shMeta.label}
                                                             </span>
                                                             <div className="absolute bottom-full left-0 mb-3 w-64 p-5 bg-slate-800 text-white text-[13px] rounded-2xl shadow-2xl hidden group-hover/sethealth:block z-[60] leading-relaxed font-medium animate-in fade-in zoom-in-95">
                                                                 <div className="font-black mb-1.5 border-b border-slate-700 pb-1.5 flex items-center gap-2">
-                                                                    <span>⚑</span>
+                                                                    <Flag className="w-3.5 h-3.5" />
                                                                     <span>{shMeta.label}</span>
                                                                 </div>
                                                                 {shMeta.description}
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        <span className="text-[11px] font-bold text-slate-300">適正</span>
+                                                        <span className="text-[11px] font-bold text-slate-300">{d.hasKpiData ? "適正" : "—"}</span>
                                                     )}
                                                 </td>
                                             </tr>
@@ -333,10 +340,11 @@ export function KpiSection({
                                 <thead>
                                     <tr className="bg-slate-50/50">
                                         <th className="sticky left-0 z-10 bg-slate-50 py-4 px-8 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 min-w-[140px]">部署</th>
-                                        {fullMonthLabels.map((label, i) => (
+                                        {/* 最新月を左端に（経営者は「今」を最初に見たいため反転） */}
+                                        {[...fullMonthLabels].reverse().map((label, i) => (
                                             <th key={i} className={cn(
                                                 "py-4 px-3 text-[10px] font-black text-center border-b border-slate-100 whitespace-nowrap min-w-[72px]",
-                                                i === fullMonthLabels.length - 1 ? "text-teal" : "text-slate-400"
+                                                i === 0 ? "text-teal" : "text-slate-400"
                                             )}>{label}</th>
                                         ))}
                                     </tr>
@@ -347,7 +355,7 @@ export function KpiSection({
                                             <td className="sticky left-0 z-10 bg-white/95 py-4 px-8">
                                                 <span className="text-sm font-black text-slate-700">{d.name}</span>
                                             </td>
-                                            {(d.kpiAchHistory as number[]).map((ach, i) => (
+                                            {[...(d.kpiAchHistory as number[])].reverse().map((ach, i) => (
                                                 <td key={i} className="py-4 px-3 text-center">
                                                     {ach > 0 ? (
                                                         <span className={cn(
