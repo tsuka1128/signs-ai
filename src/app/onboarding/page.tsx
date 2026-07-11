@@ -146,7 +146,8 @@ function OnboardingContent() {
         const hash = window.location.hash.slice(1);
         const params = new URLSearchParams(hash);
         // 新しいハッシュ指定に加え、既存メールリンク互換のためにクエリパラメータも確認
-        const token = params.get("token") || searchParams.get("token");
+        // invite_token と token の両方に対応
+        const token = params.get("invite_token") || searchParams.get("invite_token") || params.get("token") || searchParams.get("token");
 
         if (token && !state.invitationToken) {
             setState(prev => ({
@@ -456,39 +457,40 @@ function OnboardingContent() {
                 {/* Step 1: 企業名 / 招待 */}
                 {step === 1 && (
                     <div className="space-y-6 animate-fadeIn">
-                        <div className="space-y-3">
-                            <h2 className="text-lg font-black text-slate-800">始め方を選択してください</h2>
-                            <div className="grid grid-cols-2 gap-3">
-                                <button
-                                    onClick={() => !state.invitationToken && setState(s => ({ ...s, mode: "create" }))}
-                                    disabled={!!state.invitationToken}
-                                    className={cn(
-                                        "p-4 rounded-2xl border-2 text-left transition-all",
-                                        state.mode === "create"
-                                            ? "border-teal-500 bg-teal-50/50"
-                                            : "border-slate-100 bg-white hover:border-slate-200",
-                                        state.invitationToken && "opacity-50 cursor-not-allowed grayscale"
-                                    )}
-                                >
-                                    <div className="text-xl mb-1">新規作成</div>
-                                    <div className="text-sm font-bold text-slate-700">新しい組織を作成</div>
-                                    <div className="text-[10px] text-slate-400 mt-1">会社を新しくセットアップします</div>
-                                </button>
-                                <button
-                                    onClick={() => setState(s => ({ ...s, mode: "join" }))}
-                                    className={cn(
-                                        "p-4 rounded-2xl border-2 text-left transition-all",
-                                        state.mode === "join"
-                                            ? "border-teal-500 bg-teal-50/50"
-                                            : "border-slate-100 bg-white hover:border-slate-200"
-                                    )}
-                                >
-                                    <div className="text-xl mb-1">参加</div>
-                                    <div className="text-sm font-bold text-slate-700">招待を受けて参加</div>
-                                    <div className="text-[10px] text-slate-400 mt-1">招待コード・リンクをお持ちの方</div>
-                                </button>
+                        {/* 招待コードが無いときだけ、始め方の選択トグルを表示する */}
+                        {!state.invitationToken && (
+                            <div className="space-y-3">
+                                <h2 className="text-lg font-black text-slate-800">始め方を選択してください</h2>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        onClick={() => setState(s => ({ ...s, mode: "create" }))}
+                                        className={cn(
+                                            "p-4 rounded-2xl border-2 text-left transition-all",
+                                            state.mode === "create"
+                                                ? "border-teal-500 bg-teal-50/50"
+                                                : "border-slate-100 bg-white hover:border-slate-200"
+                                        )}
+                                    >
+                                        <div className="text-xl mb-1">新規作成</div>
+                                        <div className="text-sm font-bold text-slate-700">新しい組織を作成</div>
+                                        <div className="text-[10px] text-slate-400 mt-1">会社を新しくセットアップします</div>
+                                    </button>
+                                    <button
+                                        onClick={() => setState(s => ({ ...s, mode: "join" }))}
+                                        className={cn(
+                                            "p-4 rounded-2xl border-2 text-left transition-all",
+                                            state.mode === "join"
+                                                ? "border-teal-500 bg-teal-50/50"
+                                                : "border-slate-100 bg-white hover:border-slate-200"
+                                        )}
+                                    >
+                                        <div className="text-xl mb-1">参加</div>
+                                        <div className="text-sm font-bold text-slate-700">招待を受けて参加</div>
+                                        <div className="text-[10px] text-slate-400 mt-1">招待コード・リンクをお持ちの方</div>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {state.mode === "create" ? (
                             <div className="space-y-4 pt-2">
