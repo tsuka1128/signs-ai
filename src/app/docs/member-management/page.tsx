@@ -11,7 +11,9 @@ import {
     Building,
     Copy,
     Trash2,
-    HelpCircle
+    HelpCircle,
+    Thermometer,
+    Lightbulb
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils/index";
@@ -83,7 +85,7 @@ export default function MemberManagementPage() {
                         <div className="bg-white rounded-3xl border border-slate-50 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] overflow-hidden hidden md:block select-none pointer-events-none relative z-10 w-full max-w-[400px] justify-self-end">
                             <div className="bg-white px-6 py-5 text-center">
                                 <div className="inline-flex items-center gap-2">
-                                    <span className="text-sm">🌡️</span>
+                                    <Thermometer className="w-4 h-4 text-slate-500" aria-hidden />
                                     <span className="text-[13px] font-black text-slate-800 tracking-tight">初期設定</span>
                                 </div>
                             </div>
@@ -217,7 +219,7 @@ export default function MemberManagementPage() {
                             <div className="flex items-center gap-2 text-teal-600 font-bold text-xs mb-2 uppercase tracking-widest">
                                 <Mail className="w-3.5 h-3.5" /> 再送
                             </div>
-                            <p className="text-[13px] text-slate-500 font-medium leading-relaxed">招待を再定義し、メンバーに通知を促します。</p>
+                            <p className="text-[13px] text-slate-500 font-medium leading-relaxed">招待を再送信し、メンバーに通知を促します。</p>
                         </div>
                         <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm">
                             <div className="flex items-center gap-2 text-rose-500 font-bold text-xs mb-2 uppercase tracking-widest">
@@ -254,9 +256,10 @@ export default function MemberManagementPage() {
                         管理者が招待メールを送信すると、対象のメンバーにリンクが記載されたメールが届きます。<br className="hidden lg:block"/>
                         メンバーがそのリンク（またはコピーされたURL）からログインを完了すると、<strong>参加モード</strong>のオンボーディング画面が表示されます。
                     </div>
-                    <div className="bg-blue-50/50 border border-blue-100/50 rounded-2xl p-4 mt-2">
+                    <div className="bg-blue-50/50 border border-blue-100/50 rounded-2xl p-4 mt-2 flex gap-2">
+                        <Lightbulb className="w-4 h-4 text-blue-700 shrink-0 mt-0.5" aria-hidden />
                         <p className="text-[11px] text-blue-700 font-bold leading-relaxed">
-                            💡 招待URL経由でアクセスした場合、ログイン・新規登録画面で「招待トークン」が自動的に引き継がれるため、メンバーは迷わずに正しい組織へ参加できます。
+                            招待リンク（招待コードを含むURL）経由でアクセスした場合、ログイン・新規登録画面で招待コードが自動的に引き継がれるため、メンバーは迷わずに正しい組織へ参加できます。
                         </p>
                     </div>
                 </div>
@@ -284,7 +287,7 @@ export default function MemberManagementPage() {
                         <div className="bg-white rounded-3xl border border-slate-50 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] overflow-hidden hidden md:block select-none pointer-events-none relative z-10 w-full max-w-[400px] justify-self-end">
                             <div className="bg-white px-6 py-5 text-center">
                                 <div className="inline-flex items-center gap-2">
-                                    <span className="text-sm">🌡️</span>
+                                    <Thermometer className="w-4 h-4 text-slate-500" aria-hidden />
                                     <span className="text-[13px] font-black text-slate-800 tracking-tight">初期設定</span>
                                 </div>
                             </div>
@@ -332,83 +335,35 @@ export default function MemberManagementPage() {
                         </div>
                     </div>
                     <div className="text-[15px] text-slate-600 font-medium leading-loose pt-2 max-w-3xl">
-                        AIが分析結果やアクション提案をSlackへ自動通知し、担当者へ直接メンション（@）を飛ばすための設定です。<br className="hidden md:block"/>
-                        この機能を利用するには、<strong>①通知先チャンネル（Webhook）の設定</strong> と <strong>②各ユーザーのID登録</strong> の2つのステップが必要です。
+                        担当者へ確実にメンション（@）を飛ばすため、各メンバーの Slack User ID を登録します。<br className="hidden md:block"/>
+                        通知先チャンネル（Webhook）の設定など、Slack連携の全体像とセットアップ手順は<Link href="/docs/slack-integration" className="text-indigo-600 font-bold hover:underline">「Slackアプリを準備する」</Link>をご覧ください。
                     </div>
                 </div>
 
-                <div className="space-y-12">
-                    {/* Simplified Slack Section */}
-                    <div className="bg-white border border-slate-200 p-8 lg:p-12 rounded-[2.5rem] shadow-[0_15px_50px_-12px_rgba(0,0,0,0.05)] relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none group-hover:scale-110 transition-transform duration-700">
-                            <Slack className="w-48 h-48" />
-                        </div>
-                        
-                        <div className="grid lg:grid-cols-2 gap-12 items-center relative z-10">
-                            <div className="space-y-8">
-                                <div>
-                                    <h3 id="slack-channel" className="text-2xl font-black text-slate-800 mb-4 tracking-tight">ステップ1：通知先Slackチャンネルの連携</h3>
-                                    <p className="text-[15px] text-slate-600 font-medium leading-relaxed">
-                                        Signs AIが分析結果やアクション提案を送信するための「受け口」として、Slackアプリ（Incoming Webhook）を設定します。この設定は組織全体で一度行えば完了です。
-                                    </p>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-3 text-slate-700">
-                                        <div className="w-6 h-6 rounded-full bg-teal-100/80 text-teal-800 flex items-center justify-center text-[11px] font-black">1</div>
-                                        <span className="text-[14px] font-bold tracking-tight">通知を受け取りたいSlackチャンネルの決定</span>
-                                    </div>
-                                    <div className="flex items-center gap-3 text-slate-700">
-                                        <div className="w-6 h-6 rounded-full bg-teal-100/80 text-teal-800 flex items-center justify-center text-[11px] font-black">2</div>
-                                        <span className="text-[14px] font-bold tracking-tight">Webhook URLの発行と登録</span>
-                                    </div>
-                                    <div className="pt-2">
-                                        <Link 
-                                            href="/docs/slack-integration" 
-                                            className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-2xl text-[13px] font-black hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 group/btn"
-                                        >
-                                            Slackアプリの準備手順を詳しく見る
-                                            <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                                        </Link>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-8 lg:border-l lg:border-slate-100 lg:pl-12">
-                                <div>
-                                    <h3 id="slack-userid" className="text-2xl font-black text-slate-800 mb-4 tracking-tight">ステップ2：各メンバーの User ID 登録</h3>
-                                    <p className="text-[15px] text-slate-600 font-medium leading-relaxed">
-                                        特定の担当者へ確実にメンション（@通知）を飛ばすための設定です。各メンバーのプロフィールから取得できる「メンバーID」をSigns AIに登録します。
-                                    </p>
-                                </div>
-
-                                <div className="p-6 bg-slate-50 border border-slate-100 rounded-[2rem] space-y-4">
-                                    <div className="flex items-center gap-3">
-                                        <Search className="w-5 h-5 text-indigo-500" />
-                                        <span className="text-sm font-black text-slate-800">ユーザーIDの見つけ方</span>
-                                    </div>
-                                    <ol className="text-[13px] text-slate-600 space-y-2 font-bold ml-1">
-                                        <li>1. 該当メンバーのプロフィールを表示</li>
-                                        <li>2. 「その他 ⋯ 」＞「メンバーIDをコピー」</li>
-                                        <li>3. Signs AIのメンバー編集画面で貼り付け</li>
-                                    </ol>
-                                </div>
-                            </div>
-                        </div>
+                <div className="bg-white border border-slate-200 p-8 lg:p-12 rounded-[2.5rem] shadow-[0_15px_50px_-12px_rgba(0,0,0,0.05)] relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none group-hover:scale-110 transition-transform duration-700">
+                        <Slack className="w-48 h-48" />
                     </div>
-                </div>
 
-                {/* Hint section */}
-                <div className="p-8 bg-[#1e293b] text-white rounded-[2rem] flex flex-col sm:flex-row gap-6 mt-12 shadow-xl items-start">
-                    <div className="p-3 bg-white/10 rounded-2xl h-fit border border-white/10 shrink-0">
-                        <Slack className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                        <h3 id="importance" className="text-[16px] font-black mb-3 text-white tracking-tight">なぜ個人宛のメンションが重要か？</h3>
-                        <p className="text-[14.5px] text-slate-300 leading-relaxed font-medium">
-                            AIが分析を通じて有用なアクション（施策）を提案しても、全体チャンネルにただ通知されるだけでは「誰かがやるだろう」という傍観者効果が働き、誰も対応せずに終わってしまう傾向があります。<br className="hidden lg:block"/>
-                            Signs AIでは対象部署の担当チームメンバーに対し、Slack User IDを通じて確実にメンション（@）を飛ばすことで、「自分ごと」としてアクションの実行とPDCAサイクルを促す仕組みを実現しています。
-                        </p>
+                    <div className="space-y-8 relative z-10 max-w-2xl">
+                        <div>
+                            <h3 id="slack-userid" className="text-2xl font-black text-slate-800 mb-4 tracking-tight">各メンバーの User ID 登録</h3>
+                            <p className="text-[15px] text-slate-600 font-medium leading-relaxed">
+                                特定の担当者へ確実にメンション（@通知）を飛ばすための設定です。各メンバーのプロフィールから取得できる「メンバーID」をSigns AIに登録します。
+                            </p>
+                        </div>
+
+                        <div className="p-6 bg-slate-50 border border-slate-100 rounded-[2rem] space-y-4">
+                            <div className="flex items-center gap-3">
+                                <Search className="w-5 h-5 text-indigo-500" />
+                                <span className="text-sm font-black text-slate-800">ユーザーIDの見つけ方</span>
+                            </div>
+                            <ol className="text-[13px] text-slate-600 space-y-2 font-bold ml-1">
+                                <li>1. 該当メンバーのプロフィールを表示</li>
+                                <li>2. 「その他 ⋯ 」＞「メンバーIDをコピー」</li>
+                                <li>3. Signs AIの「設定」→「メンバー」タブで対象メンバーを編集し、Slack User ID欄に貼り付け</li>
+                            </ol>
+                        </div>
                     </div>
                 </div>
             </section>

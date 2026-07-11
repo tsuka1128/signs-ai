@@ -14,7 +14,10 @@ import {
     AlertTriangle,
     Lightbulb,
     Maximize2,
-    Compass
+    Compass,
+    Sprout,
+    Star,
+    Rocket
 } from "lucide-react";
 import { ScatterPlot } from "@/components/dashboard/ScatterPlot";
 
@@ -150,9 +153,9 @@ export default function BubbleChartGuidePage() {
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">Time Lapse</span>
+                            <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">軌跡（動く地図）</span>
                             <div className="flex items-center bg-slate-100/80 p-0.5 rounded-full z-20">
-                                {[{ id: "default", label: "現在" }, { id: "1m", label: "1ヶ月前" }, { id: "3m", label: "3ヶ月前" }, { id: "6m", label: "6ヶ月前" }, { id: "12m", label: "1年前" }].map((t) => (
+                                {[{ id: "default", label: "現在" }, { id: "1m", label: "1ヶ月前" }, { id: "3m", label: "3ヶ月前" }, { id: "6m", label: "6ヶ月前" }, { id: "12m", label: "12ヶ月前" }].map((t) => (
                                     <button 
                                         key={t.id} 
                                         onClick={() => setGuideMonth(t.id)} 
@@ -175,7 +178,8 @@ export default function BubbleChartGuidePage() {
                     </div>
                 </div>
                 <p className="text-sm text-slate-500 font-medium text-center">
-                    ▲ 実際の画面と同様に、マウスオーバーやタイムラプス切り替え（上部のボタン）をお試しいただけます
+                    ▲ 実際の画面と同様に、マウスオーバーや時点の切り替え（上部のボタン）をお試しいただけます。<br className="hidden md:block" />
+                    このデモでは軌跡（動く地図）を常時表示していますが、本番環境では履歴が12ヶ月に満たない場合は軌跡が表示されません。
                 </p>
             </section>
 
@@ -191,10 +195,10 @@ export default function BubbleChartGuidePage() {
                             <h3 id="vertical-axis" className="text-lg font-black text-slate-900">縦軸：一人当たり生産性</h3>
                         </div>
                         <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                            各部署のKPI実績を人数で割った<strong>効率性の指標</strong>です。上に位置する部署ほど、少ない人員で大きな成果を出していることを示します。
+                            KPIの達成度合いを、組織の体温（エンゲージメント）で補正した<strong>成果の質の指標</strong>です。上に位置する部署ほど、高い体温を保ちながら着実に成果を出していることを示します。
                         </p>
                         <div className="bg-blue-50 text-blue-700 rounded-xl px-4 py-3 text-xs font-bold">
-                            計算式：KPI達成率 × 体温係数
+                            計算式：KPI達成率 ×（体温スコア ÷ 3.0）
                         </div>
                     </div>
                     <div className="p-6 bg-white border-2 border-slate-100 rounded-[28px] shadow-sm space-y-3">
@@ -217,11 +221,11 @@ export default function BubbleChartGuidePage() {
                         <Target className="w-5 h-5 text-teal" />
                     </div>
                     <div>
-                        <h3 id="bubbles" className="text-sm font-black text-slate-900 mb-1">円（バブル）のサイズと波紋</h3>
+                        <h3 id="bubbles" className="text-sm font-black text-slate-900 mb-1">円（バブル）のサイズと色</h3>
                         <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                            バブルの大きさは<strong>KPI達成率</strong>を表しています。大きな円ほど達成度が高い部署です。
-                            KPIが100%を達成している部署の周囲には、波紋（リップル）アニメーションが表示されます。
-                            また、色は「組織の体温（晴れ・曇り・雨）」などの直感的な指標を反映しています。
+                            バブルの大きさは<strong>KPI達成率</strong>を表しています（上位プランでは人件費を反映します）。大きな円ほど達成度が高い部署です。
+                            KPIが100%を達成している部署の周囲には、波紋（リップル）アニメーションが表示されます。<br/>
+                            また、色は「組織の体温（晴れ・曇り・雨）」を反映しています。<strong>灰色</strong>は体温が未取得の状態（回答者が3名未満の場合を含む）を示します。
                         </p>
                     </div>
                 </div>
@@ -264,7 +268,7 @@ export default function BubbleChartGuidePage() {
                                 <span className="text-[10px] font- medium text-amber-600 leading-tight">新規事業やR&Dなどの投資フェーズ</span>
                             </div>
                             <div className="bg-rose-50 border-2 border-rose-100 rounded-[24px] p-4 flex flex-col items-center justify-center text-center">
-                                <span className="font-black text-xl mb-1 text-rose-800">肥大化 (OVERWEIGHT)</span>
+                                <span className="font-black text-xl mb-1 text-rose-800">要テコ入れ (OVERWEIGHT)</span>
                                 <span className="text-xs font-bold text-rose-600 mb-1">多人数 × 低生産性</span>
                                 <span className="text-[10px] font-medium text-rose-600 leading-tight">調整コスト増大による改善必須領域</span>
                             </div>
@@ -275,7 +279,7 @@ export default function BubbleChartGuidePage() {
                 <div className="space-y-5">
                     {/* SEED */}
                     <div className="flex flex-col md:flex-row gap-5 p-6 md:p-8 bg-white border border-slate-200 rounded-[28px] shadow-[0_2px_12px_rgba(0,0,0,0.03)] relative">
-                        <div className="w-12 h-12 shrink-0 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-2xl border border-amber-100">🌱</div>
+                        <div className="w-12 h-12 shrink-0 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center border border-amber-100"><Sprout className="w-6 h-6" aria-hidden /></div>
                         <div className="space-y-4 w-full">
                             <div>
                                 <h3 id="seed" className="text-xl font-black text-slate-800 mb-1">種まき (SEED)</h3>
@@ -286,10 +290,10 @@ export default function BubbleChartGuidePage() {
                                 </div>
                             </div>
                             <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                                新規事業や立ち上げフェーズのチームです。このフェーズでは、まずは<strong>生産性向上（PIONEERへの移動）に集中する</strong>ことが鉄則です。生産性が低いまま人員を増やすと、OVERWEIGHT（肥大化）に直行してしまうため、少人数のうちに「勝ちパターン」を見つけることが最重要になります。
+                                新規事業や立ち上げフェーズの、投資段階にあるチームです。このフェーズでは、まずは<strong>生産性向上（PIONEERへの移動）に集中する</strong>ことが鉄則です。生産性が低いまま人員を増やすと、OVERWEIGHT（要テコ入れ）に直行してしまうため、少人数のうちに「勝ちパターン」を見つけることが最重要になります。
                             </p>
                             <div className="bg-amber-50/50 rounded-xl px-4 py-3 text-xs font-bold text-amber-800 border border-amber-100 flex gap-3 items-start">
-                                <span className="shrink-0 text-base leading-none">💡</span>
+                                <Lightbulb className="w-4 h-4 shrink-0 text-amber-500 mt-0.5" aria-hidden />
                                 <p className="leading-relaxed">アクション：まずは生産性向上に必要なボトルネックを特定し、業務プロセスの構築とPMF（プロダクトフィット）に集中する。</p>
                             </div>
                         </div>
@@ -297,7 +301,7 @@ export default function BubbleChartGuidePage() {
 
                     {/* PIONEER */}
                     <div className="flex flex-col md:flex-row gap-5 p-6 md:p-8 bg-white border border-slate-200 rounded-[28px] shadow-[0_2px_12px_rgba(0,0,0,0.03)] relative">
-                        <div className="w-12 h-12 shrink-0 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl border border-emerald-100">⭐</div>
+                        <div className="w-12 h-12 shrink-0 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center border border-emerald-100"><Star className="w-6 h-6" aria-hidden /></div>
                         <div className="space-y-4 w-full">
                             <div>
                                 <h3 id="pioneer" className="text-xl font-black text-slate-800 mb-1">開拓者 (PIONEER)</h3>
@@ -311,7 +315,7 @@ export default function BubbleChartGuidePage() {
                                 少人数で高い成果を出している、組織の理想形となるチームです。SEEDから着実に成長し、自律的な高効率組織となった状態です。この「高生産性・高体温」のカルチャーや業務の仕組みが確立された状態で初めて、<strong>採用を強化し SCALE（拡大期）へと移行する</strong>準備が整います。
                             </p>
                             <div className="bg-emerald-50/50 rounded-xl px-4 py-3 text-xs font-bold text-emerald-800 border border-emerald-100 flex gap-3 items-start">
-                                <span className="shrink-0 text-base leading-none">💡</span>
+                                <Lightbulb className="w-4 h-4 shrink-0 text-emerald-500 mt-0.5" aria-hidden />
                                 <p className="leading-relaxed">アクション：成功要因（カルチャー、ツール、仕組み）を言語化し、拡大に向けたオンボーディングの土台としてマニュアル化する。</p>
                             </div>
                         </div>
@@ -319,7 +323,7 @@ export default function BubbleChartGuidePage() {
 
                     {/* SCALE */}
                     <div className="flex flex-col md:flex-row gap-5 p-6 md:p-8 bg-white border border-slate-200 rounded-[28px] shadow-[0_2px_12px_rgba(0,0,0,0.03)] relative">
-                        <div className="w-12 h-12 shrink-0 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl border border-blue-100">🚀</div>
+                        <div className="w-12 h-12 shrink-0 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center border border-blue-100"><Rocket className="w-6 h-6" aria-hidden /></div>
                         <div className="space-y-4 w-full">
                             <div>
                                 <h3 id="scale" className="text-xl font-black text-slate-800 mb-1">拡大期 (SCALE)</h3>
@@ -330,10 +334,10 @@ export default function BubbleChartGuidePage() {
                                 </div>
                             </div>
                             <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                                PIONEERで確立された高い生産性を維持したまま、人員拡大に成功している組織の主力部隊です。この状態をいかに長く維持するかが企業収益の鍵となります。人数増加に伴うコミュニケーションコストの増大やサイロ化によって生産性が落ち、OVERWEIGHTへ転落しないよう監視が必要です。
+                                PIONEERで確立された高い生産性を維持したまま、人員拡大に成功している組織の主力部隊です。この状態をいかに長く維持するかが企業収益の鍵となります。人数増加に伴うコミュニケーションコストの増大やサイロ化によって生産性が落ち、OVERWEIGHT（要テコ入れ）へ転落しないよう監視が必要です。
                             </p>
                             <div className="bg-blue-50/50 rounded-xl px-4 py-3 text-xs font-bold text-blue-800 border border-blue-100 flex gap-3 items-start">
-                                <span className="shrink-0 text-base leading-none">💡</span>
+                                <Lightbulb className="w-4 h-4 shrink-0 text-blue-500 mt-0.5" aria-hidden />
                                 <p className="leading-relaxed">アクション：中間管理職の育成や、1on1の充実などによるエンゲージメント維持施策を強化し、大所帯ならではの組織疲労を予防する。</p>
                             </div>
                         </div>
@@ -341,10 +345,10 @@ export default function BubbleChartGuidePage() {
 
                     {/* OVERWEIGHT */}
                     <div className="flex flex-col md:flex-row gap-5 p-6 md:p-8 bg-white border border-slate-200 rounded-[28px] shadow-[0_2px_12px_rgba(0,0,0,0.03)] relative">
-                        <div className="w-12 h-12 shrink-0 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-2xl border border-rose-100">⚠️</div>
+                        <div className="w-12 h-12 shrink-0 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center border border-rose-100"><AlertTriangle className="w-6 h-6" aria-hidden /></div>
                         <div className="space-y-4 w-full">
                             <div>
-                                <h3 id="overweight" className="text-xl font-black text-slate-800 mb-1">肥大化 (OVERWEIGHT)</h3>
+                                <h3 id="overweight" className="text-xl font-black text-slate-800 mb-1">要テコ入れ (OVERWEIGHT)</h3>
                                 <div className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 text-slate-600 px-3 py-1 rounded-lg text-xs font-bold tracking-tight">
                                     <span className="text-rose-500">右下エリア</span>
                                     <span>|</span>
@@ -355,16 +359,16 @@ export default function BubbleChartGuidePage() {
                                 人員に対するリターンが見合っておらず、構造的な改善が必要なリスク領域です。<strong>「生産性が低いSEEDの状態で無理に人員を増やしてしまった」</strong>、あるいは<strong>「SCALEから組織規模が拡大しすぎて生産性が落ちてしまった」</strong>結果として行き着く状態です。
                             </p>
                             <div className="bg-rose-50/50 rounded-xl px-4 py-3 text-xs font-bold text-rose-800 border border-rose-100 flex gap-3 items-start">
-                                <span className="shrink-0 text-base leading-none">💡</span>
+                                <Lightbulb className="w-4 h-4 shrink-0 text-rose-500 mt-0.5" aria-hidden />
                                 <p className="leading-relaxed">アクション：採用を一旦ストップし、業務の棚卸しと構造的改善を実施する。場合によってはPIONEERレベルの少人数チームに分割する等の抜本的対策を検討する。</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Growth Steps */}
+                {/* Growth Steps (summary + link) */}
                 <div className="p-8 bg-white border border-slate-200 rounded-[32px] mx-auto shadow-sm mt-8">
-                    <div className="space-y-6">
+                    <div className="space-y-5">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-teal-50 border border-teal-100 rounded-xl flex items-center justify-center">
                                 <Compass className="w-5 h-5 text-teal-600" />
@@ -374,38 +378,15 @@ export default function BubbleChartGuidePage() {
                             </h3>
                         </div>
                         <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
-                            組織をスケールさせる際、むやみに人員を増やすのは危険です。<br/>
-                            <strong>「まずは生産性を高め（上へ移動）、高い生産性を維持したまま人員を拡大する（右へ移動）」</strong>のが鉄則です。
+                            組織をスケールさせる際、むやみに人員を増やすのは危険です。<strong>「まずは生産性を高め（上へ移動）、高い生産性を維持したまま人員を拡大する（右へ移動）」</strong>のが鉄則です。理想的な成長パスは <strong className="text-amber-600">SEED（種まき）</strong> → <strong className="text-emerald-600">PIONEER（開拓者）</strong> → <strong className="text-blue-600">SCALE（拡大期）</strong> の順にたどります。
                         </p>
-                        
-                        <div className="flex flex-col gap-4 text-sm text-slate-700 font-medium relative mt-6">
-                            <div className="absolute left-[15px] top-6 bottom-6 w-0.5 bg-slate-200" />
-                            
-                            <div className="flex items-start gap-5 relative z-10">
-                                <div className="w-8 h-8 rounded-full bg-amber-100 border-2 border-white flex items-center justify-center text-amber-600 font-black text-xs shrink-0 shadow-sm mt-1">1</div>
-                                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 w-full">
-                                    <p>まずは <strong className="text-amber-600">SEED（種まき）</strong> からスタートし、業務プロセスを磨いて事業の「勝ちパターン」を見つける</p>
-                                </div>
-                            </div>
-                            
-                            <div className="flex items-start gap-5 relative z-10">
-                                <div className="w-8 h-8 rounded-full bg-emerald-100 border-2 border-white flex items-center justify-center text-emerald-600 font-black text-xs shrink-0 shadow-sm mt-1">2</div>
-                                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 w-full">
-                                    <p>組織体温を高めて生産性を向上させ、安定して高い成果を出せる <strong className="text-emerald-600">開拓者 (PIONEER)</strong> へと引き上げる</p>
-                                </div>
-                            </div>
-                            
-                            <div className="flex items-start gap-5 relative z-10">
-                                <div className="w-8 h-8 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center text-blue-600 font-black text-xs shrink-0 shadow-sm mt-1">3</div>
-                                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 w-full">
-                                    <p>強力なカルチャーと仕組みが確立された高生産性の状態のまま人員を拡大し、<strong className="text-blue-600">拡大期 (SCALE)</strong> へ移行する</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <p className="text-sm text-slate-600 font-medium leading-relaxed pt-2">
-                            この理想的な成長パス（SEED ➔ PIONEER ➔ SCALE）を描けているか、あるいは生産性の低いまま人員を増やしてしまい OVERWEIGHT に陥っていないかを、タイムラプスを利用して定期的に検証することが重要です。
-                        </p>
+                        <Link
+                            href="/docs/growth-steps"
+                            className="inline-flex items-center gap-2 text-sm font-black text-teal-600 hover:text-teal-700 transition-colors"
+                        >
+                            詳しくは「マトリックスが示す成長の軌跡」を読む
+                            <ArrowRight className="w-4 h-4" />
+                        </Link>
                     </div>
                 </div>
             </section>
@@ -494,11 +475,11 @@ export default function BubbleChartGuidePage() {
                 </div>
                 <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
                     <h3 id="timelapse" className="text-sm font-black text-slate-900 mb-2 flex items-center gap-2">
-                        <Lightbulb className="w-4 h-4 text-slate-400" />
-                        タイムラプスで何が見えるのか？
+                        <Lightbulb className="w-4 h-4 text-slate-400" aria-hidden />
+                        軌跡（動く地図）で何が見えるのか？
                     </h3>
                     <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                        上記のデモ上部にあるボタンで過去に遡ることができます。バブルが時間の経過とともに<strong>どう移動したか（左上へ向かっているか等）</strong>や、<strong>サイズがどう変化したか</strong>を追跡することで、組織の変化のトレンドを的確に捉えることができます。
+                        上記のデモ上部にあるボタンで過去に遡ることができます。バブルが時間の経過とともに<strong>どう移動したか（左上へ向かっているか等）</strong>や、<strong>サイズがどう変化したか</strong>を追跡することで、組織の変化のトレンドを的確に捉えることができます。なお本番環境では、履歴が12ヶ月に満たない場合は軌跡は表示されません。
                     </p>
                 </div>
             </section>

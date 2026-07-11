@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, MessageSquareHeart, Shield, Clock, ListChecks, PenLine, Send } from "lucide-react";
+import { ArrowRight, MessageSquareHeart, Shield, Clock, ListChecks, PenLine, Send, Check, Lightbulb, CalendarDays, Bell, AlertTriangle } from "lucide-react";
 
 /**
  * ボイスチェック（アンケート）回答ガイド
@@ -32,7 +32,7 @@ export default function VoiceCheckPage() {
                     ボイスチェックとは？
                 </h2>
                 <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                    ボイスチェックは、組織のメンバー一人ひとりが「今、現場でどう感じているか」を伝えるための<strong>匿名アンケート</strong>です。回答は毎月1回で、11の設問に5段階評価で答え、自由記述で声を届けます。
+                    ボイスチェックは、組織のメンバー一人ひとりが「今、現場でどう感じているか」を伝えるための<strong>匿名アンケート</strong>です。回答は毎月1回で、標準11問＋カスタム最大3問（最大14問）に5段階評価で答え、自由記述で声を届けます。
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="p-5 bg-teal-50/50 border border-teal-100/50 rounded-2xl text-center space-y-2">
@@ -66,20 +66,25 @@ export default function VoiceCheckPage() {
                     </p>
                     <ul className="space-y-2 text-sm font-medium text-slate-300">
                         <li className="flex items-start gap-2">
-                            <span className="text-emerald-400 mt-0.5">✓</span>
+                            <Check className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" aria-hidden />
                             個人の回答は管理者にも表示されません
                         </li>
                         <li className="flex items-start gap-2">
-                            <span className="text-emerald-400 mt-0.5">✓</span>
+                            <Check className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" aria-hidden />
                             結果は部署単位の平均スコアとしてのみ表示されます
                         </li>
                         <li className="flex items-start gap-2">
-                            <span className="text-emerald-400 mt-0.5">✓</span>
+                            <Check className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" aria-hidden />
                             自由記述は部署の回答として集約され、個人は特定できません
                         </li>
+                        <li className="flex items-start gap-2">
+                            <Check className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" aria-hidden />
+                            回答者が3名未満の集計は非表示（「集計中」扱い）となり、ダッシュボードに個人が特定される形では表示されません
+                        </li>
                     </ul>
-                    <p className="text-xs text-slate-400 font-bold mt-4">
-                        💡 安心して率直な声をお聞かせください。この仕組みがあるから、本当の課題が見えてきます。
+                    <p className="text-xs text-slate-400 font-bold mt-4 flex items-start gap-2">
+                        <Lightbulb className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" aria-hidden />
+                        安心して率直な声をお聞かせください。この仕組みがあるから、本当の課題が見えてきます。
                     </p>
                 </div>
             </section>
@@ -107,9 +112,9 @@ export default function VoiceCheckPage() {
                     <div className="flex flex-col md:flex-row gap-5 p-6 bg-white border border-slate-200 rounded-[28px] shadow-sm">
                         <div className="w-12 h-12 shrink-0 bg-slate-100 text-slate-600 rounded-2xl flex items-center justify-center text-xl font-black border border-slate-200">2</div>
                         <div className="space-y-3 w-full">
-                            <h3 id="flow-step2" className="text-lg font-black text-slate-800">11の設問への5段階評価</h3>
+                            <h3 id="flow-step2" className="text-lg font-black text-slate-800">設問への5段階評価</h3>
                             <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                                「最近1ヶ月の状況について」11の質問に、<strong>1（全くない）〜 5（強く想う）</strong>の5段階で回答します。直感で答えてください。正解・不正解はありません。
+                                「最近1ヶ月の状況について」の各設問（標準11問＋カスタム最大3問）に、<strong>あてはまらない(1) → あてはまる(5)</strong>の5段階で回答します。直感で答えてください。正解・不正解はありません。
                             </p>
                             <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-2">
                                 <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">設問の例</div>
@@ -127,12 +132,13 @@ export default function VoiceCheckPage() {
                     <div className="flex flex-col md:flex-row gap-5 p-6 bg-white border border-slate-200 rounded-[28px] shadow-sm">
                         <div className="w-12 h-12 shrink-0 bg-slate-100 text-slate-600 rounded-2xl flex items-center justify-center text-xl font-black border border-slate-200">3</div>
                         <div className="space-y-3 w-full">
-                            <h3 id="flow-step3" className="text-lg font-black text-slate-800">KPI改善に関する記述（管理者が設定した文字数以上）</h3>
+                            <h3 id="flow-step3" className="text-lg font-black text-slate-800">KPI改善に関する記述</h3>
                             <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                                「KPI達成・成長のために、改善すると良さそうな点」を<strong>所定の文字数以上</strong>の自由記述で回答します。最低文字数は管理者がシステム設定から変更できます（デフォルト: 20文字）。
+                                「KPI達成・成長のために、改善すると良さそうな点」を自由記述で回答します。最低文字数は<strong>20文字</strong>です（管理者がシステム設定から変更できます）。
                             </p>
-                            <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 text-xs font-bold text-amber-800">
-                                ⚠️ この欄は必須です。設定された最低文字数を超えないと送信ボタンが有効になりません。
+                            <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 text-xs font-bold text-amber-800 flex items-start gap-2">
+                                <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" aria-hidden />
+                                この欄は必須です。最低文字数（20文字）に達しないと送信ボタンが有効になりません。
                             </div>
                             <p className="text-xs text-slate-500 font-medium leading-relaxed">
                                 例：「マーケ部が集めてくれるリードの質が上がり、商談はしやすくなっています。ただ、開発部への依頼フローが複雑で、お客様への提案スピードが落ちている場面があります。」
@@ -207,11 +213,11 @@ export default function VoiceCheckPage() {
                         <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">配布のタイミング</div>
                         <ul className="text-xs text-slate-600 font-medium space-y-2">
                             <li className="flex items-start gap-2">
-                                <span className="text-teal mt-0.5">📅</span>
+                                <CalendarDays className="w-4 h-4 text-teal mt-0.5 shrink-0" aria-hidden />
                                 毎月1日〜5日頃に Slack チャンネルやメールで共有するのがおすすめです
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-teal mt-0.5">🔔</span>
+                                <Bell className="w-4 h-4 text-teal mt-0.5 shrink-0" aria-hidden />
                                 Slack連携を設定済みの場合、自動通知で配布を効率化できます
                             </li>
                         </ul>

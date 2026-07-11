@@ -16,7 +16,7 @@ export default function PolicyGuidePage() {
                     「組織方針」の登録
                 </h1>
                 <p className="text-base text-slate-600 font-medium leading-relaxed max-w-2xl mt-4">
-                    Signs AIの最大の特徴は、一般的なAIデータ分析ツールと異なり、**あなたの会社の文脈（コンテキスト）**を理解して分析できる点にあります。その心臓部となるのが「組織方針」の登録機能です。
+                    Signs AIの最大の特徴は、一般的なAIデータ分析ツールと異なり、<strong>あなたの会社の文脈（コンテキスト）</strong>を理解して分析できる点にあります。その心臓部となるのが「組織方針」の登録機能です。
                 </p>
             </section>
 
@@ -171,35 +171,50 @@ export default function PolicyGuidePage() {
     );
 }
 
-function PolicySampleCard() {
-    const [copied, setCopied] = useState(false);
-    
-    const sampleText = `# 組織方針 v1.0
+// 表示とコピーで内容がズレないよう、サンプル方針文を単一の定数に統合
+const CURRENT_STATE_LINES = [
+    "- フェーズ: 成長加速期",
+    "- 現在の優先順位: 顧客満足度の向上 ＞ 拡大スピード",
+    "- 組織の目標: 全員が自律的に動き、顧客価値を最大化する組織の構築",
+];
+
+const KPI_GUIDE_LINES = [
+    "1. 売上高: 短期的なハックによる達成は不要。持続可能な成長カーブを重視する。",
+    "2. 売上総利益率: プロダクト価値の源泉。ここが0.5%でも下落したら、コスト構造か競合環境に異常があると判断。",
+    "3. 新規獲得数: ターゲット属性との一致を重視。無理な獲得による将来のチャーンリスクは避ける。",
+    "4. チャーンレート: 1.5%を超えたら緊急事態。プロダクトかCSの体制に即座にメスを入れる。",
+    "5. 一人当たり生産性: 採用が進む中でも、この数字が維持・向上している限りはアクセルを踏み続ける。",
+    "6. 短期離職率: 数字そのものより、その裏にある「オンボーディング不全」の兆候をAIに拾わせたい。",
+    "7. 内定承諾率: 我々のブランド力のバロメーター。低下は選考体験の劣化とみなす。",
+    "8. eNPS: 組織の基礎体力。極端な悪化は半年後の離職増加を予見するため、最重要先行指標とする。",
+];
+
+const NOTES_LINES = [
+    "- 部門間の情報の不透明性を排除する",
+    "- 「現場の声」が経営・意思決定に反映されている状態を維持する",
+];
+
+const KEYWORDS_LINE = "- 粗利率, 競合, 売上, 失注, 営業利益, 新卒, 開発";
+
+const POLICY_SAMPLE_TEXT = `# 組織方針 v1.0
 
 ## 組織の現在地
-- フェーズ: 成長加速期
-- 現在の優先順位: 顧客満足度の向上 ＞ 拡大スピード
-- 組織の目標: 全員が自律的に動き、顧客価値を最大化する組織の構築
+${CURRENT_STATE_LINES.join("\n")}
 
 ## KPIの解釈ガイド
-1. 売上高: 短期的なハックによる達成は不要。持続可能な成長カーブを重視する。
-2. 売上総利益率: プロダクト価値の源泉。ここが0.5%でも下落したら、コスト構造か競合環境に異常があると判断。
-3. 新規獲得数: ターゲット属性との一致を重視。無理な獲得による将来のチャーンリスクは避ける。
-4. チャーンレート: 1.5%を超えたら緊急事態。プロダクトかCSの体制に即座にメスを入れる。
-5. 一人当たり生産性: 採用が進む中でも、この数字が維持・向上している限りはアクセルを踏み続ける。
-6. 短期離職率: 数字そのものより、その裏にある「オンボーディング不全」の兆候をAIに拾わせたい。
-7. 内定承諾率: 我々のブランド力のバロメーター。低下は選考体験の劣化とみなす。
-8. eNPS: 組織の基礎体力。極端な悪化は半年後の離職増加を予見するため、最重要先行指標とする。
+${KPI_GUIDE_LINES.join("\n")}
 
 ## 組織の注意点
-- 部門間の情報の不透明性を排除する
-- 「現場の声」が経営・意思決定に反映されている状態を維持する
+${NOTES_LINES.join("\n")}
 
 ## 気になるキーワード（カンマ区切り）
-- 粗利率,競合,売上,失注,営業利益,新卒,開発`;
+${KEYWORDS_LINE}`;
+
+function PolicySampleCard() {
+    const [copied, setCopied] = useState(false);
 
     const handleCopy = () => {
-        navigator.clipboard.writeText(sampleText);
+        navigator.clipboard.writeText(POLICY_SAMPLE_TEXT);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
@@ -249,9 +264,9 @@ function PolicySampleCard() {
                             ## 組織の現在地
                         </p>
                         <div className="pl-6 space-y-1 font-bold">
-                            <p>- フェーズ: 成長加速期</p>
-                            <p>- 現在の優先順位: 顧客満足度の向上 ＞ 拡大スピード</p>
-                            <p>- 組織の目標: 全員が自律的に動き、顧客価値を最大化する組織の構築</p>
+                            {CURRENT_STATE_LINES.map((line, i) => (
+                                <p key={i}>{line}</p>
+                            ))}
                         </div>
                     </div>
 
@@ -261,14 +276,9 @@ function PolicySampleCard() {
                             ## KPIの解釈ガイド
                         </p>
                         <div className="pl-6 space-y-2 text-slate-400 font-bold">
-                            <p>1. 売上高: 短期的なハックによる達成は不要。持続可能な成長カーブを重視する。</p>
-                            <p>2. 売上総利益率: プロダクト価値の源泉。ここが0.5%でも下落したら即報告。</p>
-                            <p>3. 新規獲得数: ターゲット属性との一致を重視。無理な獲得によるチャーンは避ける。</p>
-                            <p>4. チャーンレート: 1.5%を超えたら緊急事態。体制に即座にメスを入れる。</p>
-                            <p>5. 一人当たり生産性: 採用が進む中でも、この数字が維持されていることを絶対条件とする。</p>
-                            <p>6. 短期離職率: 数字そのものより、その裏にある「不全」の兆候を拾いたい。</p>
-                            <p>7. 内定承諾率: 我々のブランド力のバロメーター。低下は選考体験の劣化とみなす。</p>
-                            <p>8. eNPS: 組織の基礎体力。離職の先行指標として最重要視する。</p>
+                            {KPI_GUIDE_LINES.map((line, i) => (
+                                <p key={i}>{line}</p>
+                            ))}
                         </div>
                     </div>
 
@@ -278,8 +288,9 @@ function PolicySampleCard() {
                             ## 組織の注意点
                         </p>
                         <div className="pl-6 space-y-1 font-bold">
-                            <p>- 部門間の情報の不透明性を排除する</p>
-                            <p>- 「現場の声」が経営・意思決定に反映されている状態を維持する</p>
+                            {NOTES_LINES.map((line, i) => (
+                                <p key={i}>{line}</p>
+                            ))}
                         </div>
                     </div>
 
@@ -289,7 +300,7 @@ function PolicySampleCard() {
                             ## 気になるキーワード
                         </p>
                         <div className="pl-6 font-bold">
-                            <p className="text-slate-400">- 粗利率, 競合, 売上, 失注, 営業利益, 新卒, 開発</p>
+                            <p className="text-slate-400">{KEYWORDS_LINE}</p>
                         </div>
                     </div>
                 </div>
@@ -299,9 +310,6 @@ function PolicySampleCard() {
                 <div className="flex items-center gap-2.5">
                     <div className="w-3 h-3 rounded-full bg-teal-500 animate-pulse shadow-[0_0_10px_rgba(20,184,166,0.5)]" />
                     <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">Semantic Context Ready</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black text-teal-400 bg-teal/10 px-3 py-1.5 rounded-full border border-teal-500/20 shadow-sm">AI Analysis Quality: Premium</span>
                 </div>
             </div>
         </div>

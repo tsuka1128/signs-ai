@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Rocket, Building2, Users, Target, FileText, Sparkles, CheckCircle2, UserPlus } from "lucide-react";
+import { ArrowRight, Rocket, Building2, Users, Target, FileText, Sparkles, CheckCircle2, UserPlus, Handshake, Lightbulb } from "lucide-react";
 
 /**
  * 初回セットアップガイド
@@ -40,13 +40,14 @@ export default function GettingStartedPage() {
                             <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center">
                                 <Building2 className="w-5 h-5 text-teal-500" />
                             </div>
-                            <h3 id="create-new" className="text-lg font-black text-slate-900">🏢 新規作成</h3>
+                            <h3 id="create-new" className="text-lg font-black text-slate-900 flex items-center gap-2"><Building2 className="w-4 h-4 text-slate-500" aria-hidden />新規作成</h3>
                         </div>
                         <p className="text-sm text-slate-600 font-medium leading-relaxed">
                             あなたが組織の<strong>最初の管理者</strong>となり、企業情報・部署・KPI・組織方針をゼロから設定します。
                         </p>
-                        <div className="bg-teal/5 border border-teal/10 rounded-xl px-4 py-3 text-xs font-bold text-teal-800">
-                            💡 経営企画・人事担当者・組織の責任者が選択するモードです
+                        <div className="bg-teal/5 border border-teal/10 rounded-xl px-4 py-3 text-xs font-bold text-teal-800 flex items-start gap-2">
+                            <Lightbulb className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" aria-hidden />
+                            <span>経営企画・人事担当者・組織の責任者が選択するモードです</span>
                         </div>
                     </div>
                     <div className="p-6 bg-white border-2 border-slate-100 rounded-[28px] shadow-sm space-y-3">
@@ -54,13 +55,14 @@ export default function GettingStartedPage() {
                             <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
                                 <UserPlus className="w-5 h-5 text-indigo-500" />
                             </div>
-                            <h3 id="join-existing" className="text-lg font-black text-slate-900">🤝 招待で参加</h3>
+                            <h3 id="join-existing" className="text-lg font-black text-slate-900 flex items-center gap-2"><Handshake className="w-4 h-4 text-slate-500" aria-hidden />招待で参加</h3>
                         </div>
                         <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                            管理者から受け取った<strong>招待トークン（コード）</strong>を入力し、既存の組織に参加します。所属部署と担当領域を選ぶだけで完了します。
+                            管理者から受け取った<strong>招待コード</strong>を入力し、既存の組織に参加します。所属部署と担当領域を選ぶだけで完了します。
                         </p>
-                        <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 text-xs font-bold text-indigo-800">
-                            💡 招待メールや Slack で共有されたリンクからアクセスすると自動で選択されます
+                        <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 text-xs font-bold text-indigo-800 flex items-start gap-2">
+                            <Lightbulb className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" aria-hidden />
+                            <span>招待メールや Slack で共有された招待リンクからアクセスすると自動で選択されます</span>
                         </div>
                     </div>
                 </div>
@@ -96,8 +98,9 @@ export default function GettingStartedPage() {
                             <p className="text-sm text-slate-600 font-medium leading-relaxed">
                                 組織内の部署（営業部、開発部、マーケティング部など）を登録します。ここで登録した部署が、マトリックスや体温分析の単位となります。
                             </p>
-                            <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 text-xs font-bold text-amber-800">
-                                💡 最低1つの部署を登録してください。部署名は後から変更・追加できます。
+                            <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 text-xs font-bold text-amber-800 flex items-start gap-2">
+                                <Lightbulb className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" aria-hidden />
+                                <span>最低1つの部署を登録してください。部署名は後から変更・追加できます。</span>
                             </div>
                         </div>
                     </div>

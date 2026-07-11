@@ -8,47 +8,44 @@ const path = require('path');
  * 全文検索用の JSON インデックスを作成します。
  */
 
-const DOCS_MENU = [
-    {
-        category: "はじめに",
-        items: [
-            { title: "Signs AIとは？", href: "/docs/introduction", icon: "BookOpen" },
-            { title: "初回セットアップガイド", href: "/docs/getting-started", icon: "Rocket" },
-        ]
-    },
-    {
-        category: "設定と連携",
-        items: [
-            { title: "KPIの設定と入力", href: "/docs/kpi-setup", icon: "BarChart3" },
-            { title: "組織方針の登録", href: "/docs/policy-guide", icon: "Target" },
-            { title: "Slackアプリを準備する", href: "/docs/slack-integration", icon: "MessageSquare" },
-            { title: "メンバーの招待・管理", href: "/docs/member-management", icon: "Users" },
-        ]
-    },
-    {
-        category: "日常の運用",
-        items: [
-            { title: "ボイスチェック回答ガイド", href: "/docs/voice-check", icon: "MessageSquareHeart" },
-            { title: "KPI実績の入力方法", href: "/docs/kpi-input", icon: "Table2" },
-            { title: "ダッシュボードの見方", href: "/docs/dashboard-guide", icon: "LayoutDashboard" },
-        ]
-    },
-    {
-        category: "分析と改善",
-        items: [
-            { title: "組織改善のPDCAサイクル", href: "/docs/pdca-guide", icon: "Target" },
-            { title: "アクション管理の使い方", href: "/docs/action-guide", icon: "CheckSquare" },
-            { title: "マトリックスの見方", href: "/docs/bubble-chart-guide", icon: "BarChart3" },
-            { title: "マトリックスが示す成長の軌跡", href: "/docs/growth-steps", icon: "TrendingUp" },
-        ]
-    },
-    {
-        category: "サポート",
-        items: [
-            { title: "FAQ / トラブルシューティング", href: "/docs/faq", icon: "HelpCircle" },
-        ]
+/**
+ * ドキュメントのページ一覧は src/lib/docs-menu.ts を単一ソースとして参照する。
+ * （以前はこのスクリプトに別の配列をハードコードしており、docs-menu.ts に追加した
+ *  ページ（flow / hr-strategy-guide / labor-cost-guide 等）が検索対象から漏れていた。）
+ * docs-menu.ts は lucide アイコンを import する TS/TSX のため require できないので、
+ * テキストをパースして {category, items:[{title, href, icon}]} を復元する。
+ */
+function loadDocsMenu() {
+    const menuPath = path.join(process.cwd(), 'src/lib/docs-menu.ts');
+    const src = fs.readFileSync(menuPath, 'utf8');
+
+    // グループ見出し（title: "..." の直後に items: [ が続くもの）
+    const groupRe = /title:\s*"([^"]+)"\s*,\s*items\s*:\s*\[/g;
+    // 各アイテム（title / href / icon を持つ）
+    const itemRe = /title:\s*"([^"]+)"\s*,\s*href:\s*"([^"]+)"\s*,\s*icon:\s*([A-Za-z0-9_]+)/g;
+
+    const groupMarks = [];
+    let g;
+    while ((g = groupRe.exec(src)) !== null) {
+        groupMarks.push({ category: g[1], index: g.index });
     }
-];
+
+    const byCategory = new Map();
+    let it;
+    while ((it = itemRe.exec(src)) !== null) {
+        const itemIndex = it.index;
+        let category = "その他";
+        for (const gm of groupMarks) {
+            if (gm.index < itemIndex) category = gm.category; else break;
+        }
+        if (!byCategory.has(category)) byCategory.set(category, []);
+        byCategory.get(category).push({ title: it[1], href: it[2], icon: it[3] });
+    }
+
+    return [...byCategory.entries()].map(([category, items]) => ({ category, items }));
+}
+
+const DOCS_MENU = loadDocsMenu();
 
 /**
  * テキストからタグやJSXの波括弧等を除去してクリーンアップする
