@@ -413,6 +413,12 @@ function OnboardingContent() {
                 </div>
                 <h1 className="text-2xl font-black text-slate-800 tracking-tighter">初期設定</h1>
                 <p className="text-sm text-slate-400 font-medium mt-1">あなたの組織に体温を設定します</p>
+                <a
+                    href="/logout"
+                    className="inline-block mt-3 text-xs font-bold text-slate-400 underline underline-offset-2 hover:text-slate-600 transition-colors"
+                >
+                    別のアカウントでログインし直す
+                </a>
             </div>
 
             {/* ステップバー */}
