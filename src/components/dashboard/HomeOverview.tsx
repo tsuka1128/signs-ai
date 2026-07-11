@@ -7,9 +7,8 @@ import { normalizeMonth } from "@/lib/utils/date";
 import { MainInsightCard } from "@/components/dashboard/MainInsightCard";
 import { OrganizationCard } from "@/components/dashboard/OrganizationCard";
 import { SparkLine } from "@/components/dashboard/SparkLine";
-import { QuickAccessGrid } from "@/components/dashboard/home/QuickAccessGrid";
+import { NextActionSection } from "@/components/dashboard/home/NextActionSection";
 import { Badge } from "@/components/ui/Badge";
-import { usePlanFeatures } from "@/hooks/usePlanFeatures";
 import { getWeatherFromPulse } from "@/lib/logic/kpi-engine";
 import { cn } from "@/lib/utils/index";
 import {
@@ -94,8 +93,6 @@ function HomeOverviewImpl({
 }: HomeOverviewProps) {
     const router = useRouter();
     const supabase = useMemo(() => createClient(), []);
-    const { canUse } = usePlanFeatures();
-    const isPro = canUse("labor_analytics");
 
     const [currentFocus, setCurrentFocus] = useState<FocusEntry | null>(null);
 
@@ -409,7 +406,16 @@ function HomeOverviewImpl({
 
                 {/* ===== 右：サイドレール ===== */}
                 <div className="space-y-6">
-                    <QuickAccessGrid userRole={userRole} isPro={isPro} onSectionChange={onSectionChange} />
+                    <NextActionSection
+                        userRole={userRole}
+                        company={company}
+                        displayDepts={displayDepts}
+                        responseRate={responseRate}
+                        surveyMonth={surveyMonth}
+                        surveyIsStale={surveyIsStale}
+                        recentInsights={recentInsights}
+                        onSectionChange={onSectionChange}
+                    />
 
                     {/* アクション（マネージャー以上） */}
                     {isManagerUp(userRole) && (
