@@ -79,8 +79,10 @@ function RegisterForm() {
             setError(null);
 
             // 招待トークンがある場合、確認メールのリンクに引き継ぐ
+            // パラメータ名 token は Supabase Auth メール確認用の token パラメータと衝突して
+            // 上書きされてしまうため、自前のクエリには invite_token を使用します。
             const redirectTo = inviteCode.trim()
-                ? `${getBaseURL()}/auth/callback?token=${encodeURIComponent(inviteCode.trim())}`
+                ? `${getBaseURL()}/auth/callback?invite_token=${encodeURIComponent(inviteCode.trim())}`
                 : undefined;
 
             await signUpWithEmail(email, password, redirectTo);

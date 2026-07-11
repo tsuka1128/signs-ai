@@ -38,7 +38,17 @@ export async function GET(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser();
 
-    const token = searchParams.get("token");
+    // 招待トークンの取得。Supabaseのメール確認用 token パラメータとの衝突を避けるため、
+    // 自前で引き渡す invite_token を優先します。後方互換のため token も拾いますが、
+    // メール確認用トークン（UUIDやMD5等の短いハッシュ）と混同されないよう、
+    // 招待トークン（SHA256: 64文字）相当の十分な長さがある場合のみ採用します。
+    let token = searchParams.get("invite_token");
+    if (!token) {
+        const rawToken = searchParams.get("token");
+        if (rawToken && rawToken.length >= 60) {
+            token = rawToken;
+        }
+    }
 
     if (user) {
         const { data: profile } = await supabase
