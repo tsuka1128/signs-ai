@@ -29,6 +29,8 @@ interface ScatterPlotProps {
     yAxisMode: "kpi" | "productivity";
     month?: string;
     showTrajectory?: boolean;
+    /** 拡大モーダル内に一緒に表示する操作パネル（Y軸/タイムラプス/フィルタ等）。拡大中も操作できるようにする。 */
+    controls?: React.ReactNode;
 }
 
 // 体温4状態の配色（落ち着いたトーン）
@@ -81,7 +83,8 @@ export function ScatterPlot({
     sizeKpiName = "KPI達成率", 
     yAxisMode,
     month = "default",
-    showTrajectory = true
+    showTrajectory = true,
+    controls
 }: ScatterPlotProps) {
     const [hoveredId, setHoveredId] = useState<string | null>(null);
     const W = 680;
@@ -477,7 +480,7 @@ export function ScatterPlot({
             {/* モーダル表示 */}
             {isModalOpen && mounted && createPortal(
                 <div className="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setIsModalOpen(false)}>
-                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4 md:p-6 relative shadow-2xl touch-pan-y" onClick={e => e.stopPropagation()}>
+                    <div className={cn("bg-white rounded-2xl w-full max-h-[90vh] overflow-y-auto p-4 md:p-6 relative shadow-2xl touch-pan-y", controls ? "max-w-5xl" : "max-w-2xl")} onClick={e => e.stopPropagation()}>
                         <div className="flex items-start justify-between mb-4">
                             <div>
                                 <h3 className="text-sm md:text-base font-black text-slate-800 px-1">
@@ -489,13 +492,21 @@ export function ScatterPlot({
                             </div>
                             <button
                                 onClick={() => setIsModalOpen(false)}
-                                className="bg-slate-100 text-slate-600 p-2 rounded-full hover:bg-slate-200 transition-colors"
+                                className="bg-slate-100 text-slate-600 p-2 rounded-full hover:bg-slate-200 transition-colors shrink-0"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
                             </button>
                         </div>
-                        <div className="w-full mx-auto" style={{ minWidth: 'min(100%, 600px)' }}>
-                            {renderChart()}
+                        {/* 拡大中も操作できるよう、操作パネルをモーダル内に同居させる */}
+                        <div className="flex flex-col lg:flex-row gap-6 items-start">
+                            <div className="flex-1 w-full min-w-0">
+                                {renderChart()}
+                            </div>
+                            {controls && (
+                                <div className="w-full lg:w-[260px] shrink-0">
+                                    {controls}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>,
