@@ -235,6 +235,33 @@ export function MatrixSection({
                                 yAxisMode={deptYAxisMode}
                                 month={deptHasHistory ? deptMonth : "default"}
                                 showTrajectory={deptHasHistory && showDeptTrajectory}
+                                controls={
+                                    <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 space-y-4">
+                                        <div className="space-y-1.5">
+                                            <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">Y軸モード:</span>
+                                            <div className="flex bg-slate-100/60 p-0.5 rounded-xl text-[11px] font-bold shadow-inner">
+                                                <button onClick={() => setDeptYAxisMode("kpi")} className={cn("flex-1 text-center py-1 px-1.5 rounded-lg transition-all font-black tracking-tight", deptYAxisMode === "kpi" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600")}>成果 (達成率)</button>
+                                                <button onClick={() => setDeptYAxisMode("productivity")} className={cn("flex-1 text-center py-1 px-1.5 rounded-lg transition-all font-black tracking-tight", deptYAxisMode === "productivity" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600")}>組織 (生産性)</button>
+                                            </div>
+                                        </div>
+                                        {deptHasHistory && (
+                                            <div className="space-y-1.5">
+                                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">タイムラプス:</span>
+                                                <div className="flex flex-wrap gap-1 bg-slate-100/60 p-1 rounded-xl">
+                                                    {[{ id: "default", label: "現在" }, { id: "1m", label: "1ヶ月前" }, { id: "3m", label: "3ヶ月前" }, { id: "6m", label: "6ヶ月前" }, { id: "12m", label: "12ヶ月前" }].map((t) => (
+                                                        <button key={t.id} onClick={() => setDeptMonth(t.id)} className={cn("flex-1 min-w-[38px] text-center py-1 px-1.5 rounded-lg transition-all text-[11px] font-black tracking-tighter whitespace-nowrap", deptMonth === t.id ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600")}>{t.label}</button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {deptHasHistory && (
+                                            <label className="flex items-center gap-2 cursor-pointer text-[11px] font-black text-slate-500 uppercase tracking-wider select-none">
+                                                <input type="checkbox" checked={showDeptTrajectory} onChange={(e) => setShowDeptTrajectory(e.target.checked)} className="rounded border-slate-200 text-teal focus:ring-teal w-3 h-3 cursor-pointer accent-teal-600" />
+                                                <span>軌跡（動く地図）を表示</span>
+                                            </label>
+                                        )}
+                                    </div>
+                                }
                             />
                         </div>
 
@@ -443,6 +470,33 @@ export function MatrixSection({
                                 yAxisMode={axisYAxisMode}
                                 month={axisHasHistory ? axisMonth : "default"}
                                 showTrajectory={axisHasHistory && showAxisTrajectory}
+                                controls={
+                                    <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 space-y-4">
+                                        <div className="space-y-1.5">
+                                            <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">Y軸モード:</span>
+                                            <div className="flex bg-slate-100/60 p-0.5 rounded-xl text-[11px] font-bold shadow-inner">
+                                                <button onClick={() => setAxisYAxisMode("kpi")} className={cn("flex-1 text-center py-1 px-1.5 rounded-lg transition-all font-black tracking-tight", axisYAxisMode === "kpi" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600")}>成果 (達成率)</button>
+                                                <button onClick={() => setAxisYAxisMode("productivity")} className={cn("flex-1 text-center py-1 px-1.5 rounded-lg transition-all font-black tracking-tight", axisYAxisMode === "productivity" ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600")}>組織 (生産性)</button>
+                                            </div>
+                                        </div>
+                                        {axisHasHistory && (
+                                            <div className="space-y-1.5">
+                                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">タイムラプス:</span>
+                                                <div className="flex flex-wrap gap-1 bg-slate-100/60 p-1 rounded-xl">
+                                                    {[{ id: "default", label: "現在" }, { id: "1m", label: "1ヶ月前" }, { id: "3m", label: "3ヶ月前" }, { id: "6m", label: "6ヶ月前" }, { id: "12m", label: "12ヶ月前" }].map((t) => (
+                                                        <button key={t.id} onClick={() => setAxisMonth(t.id)} className={cn("flex-1 min-w-[38px] text-center py-1 px-1.5 rounded-lg transition-all text-[11px] font-black tracking-tighter whitespace-nowrap", axisMonth === t.id ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600")}>{t.label}</button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {axisHasHistory && (
+                                            <label className="flex items-center gap-2 cursor-pointer text-[11px] font-black text-slate-500 uppercase tracking-wider select-none">
+                                                <input type="checkbox" checked={showAxisTrajectory} onChange={(e) => setShowAxisTrajectory(e.target.checked)} className="rounded border-slate-200 text-teal focus:ring-teal w-3 h-3 cursor-pointer accent-teal-600" />
+                                                <span>軌跡（動く地図）を表示</span>
+                                            </label>
+                                        )}
+                                    </div>
+                                }
                             />
                         </div>
 

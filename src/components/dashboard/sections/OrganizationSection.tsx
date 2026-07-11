@@ -4,7 +4,7 @@ import { TabBar } from "@/components/ui/TabBar";
 import { AxisComparisonSection } from "@/components/dashboard/AxisComparisonSection";
 import { OrganizationCard } from "@/components/dashboard/OrganizationCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Users } from "lucide-react";
+import { Users, CheckCircle2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 
 interface OrganizationSectionProps {
@@ -69,13 +69,13 @@ export function OrganizationSection({
                     {/* 部署別状態カウント */}
                     <div className="flex items-center gap-3">
                         {stableCount > 0 && (
-                            <span className="text-[11px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
-                                ✅ 適温 {stableCount}部署
+                            <span className="text-[11px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full inline-flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" /> 適温 {stableCount}部署
                             </span>
                         )}
                         {cautionCount > 0 && (
-                            <span className="text-[11px] font-black text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full">
-                                ⚠️ 注目 {cautionCount}部署
+                            <span className="text-[11px] font-black text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full inline-flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3" /> 注目 {cautionCount}部署
                             </span>
                         )}
                     </div>
