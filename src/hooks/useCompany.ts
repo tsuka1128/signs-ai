@@ -73,7 +73,13 @@ export function useCompany() {
                 setIsImpersonating(usedImpersonation);
 
                 if (!targetId) {
-                    if (!usedImpersonation && !pathname?.startsWith('/onboarding') && !pathname?.startsWith('/form')) {
+                    // super_admin は自身の company_id を持たない設計のため、
+                    // なりすまし対象未選択の場合は「新規会社作成」ではなく管理画面へ誘導する
+                    if (userData?.role === 'super_admin') {
+                        if (!pathname?.startsWith('/admin') && !pathname?.startsWith('/form')) {
+                            router.push("/admin");
+                        }
+                    } else if (!usedImpersonation && !pathname?.startsWith('/onboarding') && !pathname?.startsWith('/form')) {
                         router.push("/onboarding");
                     }
                     setLoading(false);
