@@ -2,9 +2,29 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Download, Share2, Check } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Share2,
+  Check,
+  BarChart3,
+  Users,
+  FileText,
+  Blocks,
+  type LucideIcon,
+} from "lucide-react";
 import { decks, getDeck, type Deck, type Slide } from "../_data/proposals";
 import { SlideBlocks } from "./SlideBlocks";
+import { SlideVisual } from "./SlideVisuals";
+
+/** Deck.icon（lucide名）→ コンポーネント解決 */
+const DECK_ICONS: Record<string, LucideIcon> = { BarChart3, Users, FileText, Blocks };
+
+function DeckIcon({ name, size = 16 }: { name: string; size?: number }) {
+  const Icon = DECK_ICONS[name] ?? BarChart3;
+  return <Icon size={size} strokeWidth={2.5} />;
+}
 
 const DEFAULT_DECK = decks[0];
 
@@ -182,14 +202,14 @@ export default function DeckHub() {
                   }
                 >
                   <span
-                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-lg transition-all"
+                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl transition-all"
                     style={
                       isActive
-                        ? { background: d.accent, boxShadow: `0 4px 12px ${d.accent}55` }
-                        : { background: "#F1F5F9" }
+                        ? { background: d.accent, boxShadow: `0 4px 12px ${d.accent}55`, color: "#fff" }
+                        : { background: "#F1F5F9", color: "#64748b" }
                     }
                   >
-                    {d.icon}
+                    <DeckIcon name={d.icon} size={16} />
                   </span>
                   <span className="min-w-0">
                     <span
@@ -306,7 +326,7 @@ export default function DeckHub() {
                     }`}
                     style={isActive ? { background: d.accent } : undefined}
                   >
-                    <span className="flex-shrink-0">{d.icon}</span>
+                    <span className="flex-shrink-0"><DeckIcon name={d.icon} size={12} /></span>
                     <span className="truncate">{d.category}</span>
                   </button>
                 );
@@ -420,6 +440,16 @@ export default function DeckHub() {
               <h2 className="mb-4 text-[18px] font-extrabold leading-snug text-slate-900">
                 {current.title}
               </h2>
+              {current.visual && (
+                <div
+                  className="mb-4 flex items-center justify-center rounded-xl px-4 py-5"
+                  style={{
+                    background: `linear-gradient(155deg, ${deck.accent} 0%, ${deck.accent}dd 60%, ${deck.accent}99 100%)`,
+                  }}
+                >
+                  <SlideVisual visual={current.visual} accent={deck.accent} />
+                </div>
+              )}
               <SlideBlocks blocks={current.blocks} accent={deck.accent} />
             </motion.div>
           </div>
@@ -650,15 +680,17 @@ function LeftPanel({
       <div className="absolute -top-12 -right-12 h-40 w-40 rounded-full bg-white/[0.07]" />
       <div className="absolute -bottom-8 -left-8 h-28 w-28 rounded-full bg-white/[0.04]" />
 
-      {/* ゴースト番号（背景） */}
-      <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
-        <span
-          className="font-black text-white leading-none tabular-nums select-none"
-          style={{ fontSize: 148, opacity: 0.07, letterSpacing: "-0.04em" }}
-        >
-          {String(slideIndex + 1).padStart(2, "0")}
-        </span>
-      </div>
+      {/* ゴースト番号（背景・ビジュアル未指定時のみ） */}
+      {!slide.visual && (
+        <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
+          <span
+            className="font-black text-white leading-none tabular-nums select-none"
+            style={{ fontSize: 148, opacity: 0.07, letterSpacing: "-0.04em" }}
+          >
+            {String(slideIndex + 1).padStart(2, "0")}
+          </span>
+        </div>
+      )}
 
       {/* コンテンツ */}
       <div className="relative flex h-full flex-col justify-between px-7 py-6">
@@ -674,24 +706,28 @@ function LeftPanel({
           </span>
         </div>
 
-        {/* 中央: スライドタイトル */}
-        <div className="flex flex-1 items-center py-4">
-          <h3
-            className="font-extrabold text-white leading-snug line-clamp-4"
-            style={{ fontSize: "clamp(13px, 1.55vw, 19px)" }}
-          >
-            {slide.title}
-          </h3>
+        {/* 中央: ビジュアル（指定時）またはスライドタイトル */}
+        <div className="flex min-h-0 flex-1 items-center py-4">
+          {slide.visual ? (
+            <SlideVisual visual={slide.visual} accent={deck.accent} />
+          ) : (
+            <h3
+              className="font-extrabold text-white leading-snug line-clamp-4"
+              style={{ fontSize: "clamp(13px, 1.55vw, 19px)" }}
+            >
+              {slide.title}
+            </h3>
+          )}
         </div>
 
         {/* 下部: デッキ情報 + 進捗 */}
         <div>
           <div className="mb-3 flex items-center gap-2">
             <div
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-sm"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-white"
               style={{ background: "rgba(255,255,255,0.15)" }}
             >
-              {deck.icon}
+              <DeckIcon name={deck.icon} size={13} />
             </div>
             <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase tracking-widest text-white/75 truncate">
@@ -746,13 +782,13 @@ function ThumbnailButton({
     >
       <div style={{ width: 108, height: 61 }} className="flex">
         <div
-          className="flex flex-shrink-0 items-center justify-center text-sm"
+          className="flex flex-shrink-0 items-center justify-center text-white"
           style={{
             width: "42%",
             background: `linear-gradient(145deg, ${accent}ee, ${accent}66)`,
           }}
         >
-          {icon}
+          <DeckIcon name={icon} size={13} />
         </div>
         <div className="flex flex-1 flex-col justify-center bg-white px-1.5 py-1.5">
           <p className="text-[5.5px] font-bold leading-tight text-slate-900 line-clamp-2">
