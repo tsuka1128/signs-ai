@@ -183,7 +183,7 @@ export function NextActionSection({
             )}
 
             {/* アクションカード */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
                 {actions.map((a) => (
                     <div
                         key={a.id}
