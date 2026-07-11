@@ -1475,7 +1475,355 @@ const featureTour: Deck = {
   ],
 };
 
-export const decks: Deck[] = [executive, hr, whitepaper, featureTour];
+/* ════════════════════════════════════════════════════════
+ *  DECK 5 ── セキュリティ・信頼性
+ *  ・実装済みの統制（RLS / 匿名性3名未満 / 権限 / 基盤）に忠実
+ * ════════════════════════════════════════════════════════ */
+const securityTrust: Deck = {
+  id: "security-trust",
+  category: "セキュリティ",
+  persona: "情報システム・管理部門",
+  personaEn: "Security & Trust",
+  role: "セキュリティ・信頼性のご説明",
+  title: "セキュリティと信頼性",
+  subtitle: "従業員の本音を、安全に預かる。",
+  tagline: "匿名性・テナント分離・権限管理——現場に安心して配れる設計",
+  accent: "#0F766E",
+  icon: "Shield",
+  slides: [
+    {
+      kicker: "01 ／ なぜ信頼設計か",
+      title: "扱うのは、組織で最もデリケートな情報",
+      visual: { kind: "brand", title: "従業員の本音を、安全に預かる。", sub: "安心が、正しいデータの前提になる" },
+      blocks: [
+        {
+          type: "lead",
+          text: "Signs AI が扱うのは、KPIの数字だけではありません。「現場が今どう感じているか」という、組織で最も繊細な情報です。",
+        },
+        {
+          type: "bullets",
+          items: [
+            { text: "従業員は「正直に答えて大丈夫か」を常に気にしている" },
+            { text: "経営が知りたいのは個人の意見ではなく、組織の傾向" },
+            { text: "情シス・管理部門は「データがどう守られるか」の説明責任を負う" },
+          ],
+        },
+        {
+          type: "callout",
+          tone: "accent",
+          text: "だからこそ匿名性・データ分離・権限管理を最優先で設計しています。現場が安心して本音を書ける状態こそ、正しいデータの前提です。",
+        },
+      ],
+    },
+    {
+      kicker: "02 ／ 匿名性",
+      title: "回答者3名未満は、集計を表示しない",
+      visual: { kind: "bigstat", value: "3名未満", label: "は集計を非開示", sub: "個人特定リスクを仕組みで排除" },
+      blocks: [
+        {
+          type: "lead",
+          text: "回答者が3名に満たない集計は、体温スコアも内訳も表示しません。個人が特定されるリスクを、運用ではなく仕組みで排除します。",
+        },
+        {
+          type: "bullets",
+          items: [
+            { label: "3名未満は非開示", text: "部署・領域・全社いずれの集計も、回答者3名未満なら「未計測」として扱う" },
+            { label: "個人回答は出さない", text: "経営・管理者に見えるのは常に集計された傾向。個々の回答を氏名に紐付けて表示しない" },
+            { label: "完全匿名で収集", text: "ボイスチェックは誰が何を答えたかを紐付けずに集める" },
+          ],
+        },
+        {
+          type: "callout",
+          tone: "accent",
+          text: "「正直に書いても大丈夫」という安心が、回答率と本音の質を決めます。匿名性は思いやりであると同時に、データ精度の根幹です。",
+        },
+      ],
+    },
+    {
+      kicker: "03 ／ テナント分離",
+      title: "他社のデータには、技術的に触れられない",
+      visual: {
+        kind: "flow",
+        inputs: [
+          { tag: "認証", label: "ログイン" },
+          { tag: "会社ID", label: "所属を判定" },
+          { tag: "RLS", label: "行レベル制御" },
+        ],
+        core: "get_my_company_id()",
+        output: "自社データのみ返す",
+      },
+      blocks: [
+        {
+          type: "lead",
+          text: "他社のデータはもちろん、アプリのバグや設定ミスがあっても、権限のない情報はデータベースが根本から返しません。",
+        },
+        {
+          type: "paragraph",
+          text: "すべてのテーブルに行レベルセキュリティ(RLS)を適用し、ログインユーザーの所属会社ID(get_my_company_id())に一致するデータ以外は、データベース層で遮断します。「アプリで絞り込む」のではなく「DBが物理的に分ける」多層防御です。",
+        },
+        {
+          type: "callout",
+          tone: "accent",
+          text: "テナント分離をアプリ任せにせず、データベース層で担保。これが「他社に見えない」の技術的な裏付けです。",
+        },
+      ],
+    },
+    {
+      kicker: "04 ／ 権限管理",
+      title: "役割ごとに、見える範囲を分ける",
+      blocks: [
+        {
+          type: "lead",
+          text: "「全員が全部見える」のではなく、役割に応じて必要な情報だけを届けます。",
+        },
+        {
+          type: "table",
+          headers: ["ロール", "主に見えるもの"],
+          rows: [
+            ["経営 (executive)", "全社・全部署の傾向とAI提言"],
+            ["部門長 (manager)", "自部署の状態と、取るべき打ち手"],
+            ["現場 (player)", "自身の回答と、関わる範囲の情報"],
+            ["管理者 (admin)", "組織・メンバー・設定の管理"],
+          ],
+        },
+        {
+          type: "callout",
+          tone: "accent",
+          text: "情報の広がりをロールでコントロール。センシティブな組織課題が、必要以上に共有されることを防ぎます。",
+        },
+      ],
+    },
+    {
+      kicker: "05 ／ 基盤・通信・AI",
+      title: "基盤・通信・AIも、企業利用の標準保護",
+      visual: {
+        kind: "statgrid",
+        items: [
+          { value: "東京", label: "国内リージョンで運用 (Vercel)" },
+          { value: "TLS", label: "全通信を暗号化 (HTTPS)" },
+          { value: "非使用", label: "入力データのAI学習利用" },
+          { value: "SOC 2", label: "準拠クラウド基盤で運用" },
+        ],
+      },
+      blocks: [
+        {
+          type: "lead",
+          text: "運用基盤・通信・AIのすべてで、企業利用に足る標準的な保護を採用しています。",
+        },
+        {
+          type: "bullets",
+          items: [
+            { label: "国内リージョン", text: "アプリケーションは東京リージョンで運用" },
+            { label: "通信の暗号化", text: "すべての通信を HTTPS / TLS で保護" },
+            { label: "AIと学習", text: "分析は Claude API を利用。入力データがAIの学習に使われることはありません" },
+            { label: "クラウド基盤", text: "SOC 2 準拠のクラウド (Supabase / Vercel) 上で運用" },
+          ],
+        },
+      ],
+    },
+    {
+      kicker: "06 ／ Closing",
+      title: "安心して、現場にURLを配れる",
+      visual: { kind: "brand", title: "現場に、安心して配れる。", sub: "Signs AI — セキュリティと信頼性" },
+      blocks: [
+        {
+          type: "lead",
+          text: "匿名性・テナント分離・権限管理。従業員の本音という最も大切なデータを、守りながら価値に変えます。",
+        },
+        {
+          type: "callout",
+          tone: "accent",
+          title: "組織に体温を。安全に。",
+          text: "「安心して現場に配れる」こと自体が、組織診断の成否を分けます。信頼設計は、Signs AI の機能のひとつです。",
+        },
+      ],
+    },
+  ],
+};
+
+/* ════════════════════════════════════════════════════════
+ *  DECK 6 ── よくあるご質問（反論処理）
+ * ════════════════════════════════════════════════════════ */
+const faqObjections: Deck = {
+  id: "faq-objections",
+  category: "よくある質問",
+  persona: "検討中のご担当者",
+  personaEn: "FAQ & Objections",
+  role: "導入前のよくあるご質問",
+  title: "よくあるご質問",
+  subtitle: "その疑問に、先回りで。",
+  tagline: "導入前によくいただく質問と、私たちの正直な答え",
+  accent: "#7C3AED",
+  icon: "HelpCircle",
+  slides: [
+    {
+      kicker: "01 ／ はじめに",
+      title: "検討時の疑問に、正直にお答えします",
+      visual: { kind: "brand", title: "その疑問に、先回りで。", sub: "できること・前提・限界を、はっきりと" },
+      blocks: [
+        {
+          type: "lead",
+          text: "「本当に使いこなせる?」「効果は出る?」——検討時によくいただく質問に、正直にお答えします。",
+        },
+        {
+          type: "paragraph",
+          text: "Signs AI は魔法のツールではありません。できること・前提・限界をはっきりお伝えした上で、ご判断いただければと考えています。",
+        },
+      ],
+    },
+    {
+      kicker: "02 ／ 差別化",
+      title: "「サーベイやBIと、何が違うの?」",
+      blocks: [
+        {
+          type: "lead",
+          text: "すでにサーベイもBIも入れている——その上で、Signs AI は役割が重なりません。",
+        },
+        {
+          type: "steps",
+          items: [
+            { tag: "サーベイ", title: "測って終わり", desc: "状態は点数化するが、原因や打ち手までは示さない" },
+            { tag: "BI・分析", title: "数字だけ", desc: "結果は見えるが、その背景にある人の状態は捉えられない" },
+            { tag: "Signs AI", title: "なぜ ＋ 次の一手", desc: "KPIと現場の声を統合し、原因の解明と打ち手の提言まで踏み込む" },
+          ],
+        },
+        {
+          type: "callout",
+          tone: "accent",
+          text: "既存ツールが「可視化」で止まるのに対し、Signs AI は「原因と打ち手」まで担います。",
+        },
+      ],
+    },
+    {
+      kicker: "03 ／ 運用",
+      title: "「サーベイ疲れで、続かないのでは?」",
+      visual: {
+        kind: "cycle",
+        items: [
+          { tag: "月初", label: "KPI入力", desc: "前月実績を記録（数分）" },
+          { tag: "月中", label: "ボイスチェック配布", desc: "匿名回答・3〜5分" },
+          { tag: "月末", label: "AI診断", desc: "提言まで自動生成" },
+        ],
+        note: "毎月くり返す・月1〜2時間",
+      },
+      blocks: [
+        {
+          type: "lead",
+          text: "最も多いご懸念です。だからこそ「続けられる設計」を最優先にしています。",
+        },
+        {
+          type: "bullets",
+          items: [
+            { label: "回答は3〜5分", text: "標準11問＋任意のカスタム設問。匿名で負担が少ない" },
+            { label: "運用は月1〜2時間", text: "KPI入力とURL配布のみ。分析はAIが自動化する" },
+            { label: "リマインドも自動", text: "Slack連携で回答の催促・結果共有まで自動化できる" },
+          ],
+        },
+        {
+          type: "callout",
+          tone: "accent",
+          text: "負担が重ければ、どんな良いツールも止まります。「続けられること」そのものが機能です。",
+        },
+      ],
+    },
+    {
+      kicker: "04 ／ 効果測定",
+      title: "「導入効果を、数字で説明できる?」",
+      blocks: [
+        {
+          type: "lead",
+          text: "「やった感」ではなく「効いたかどうか」を、数字で語れるようにします。",
+        },
+        {
+          type: "bullets",
+          items: [
+            { label: "施策の前後で比較", text: "研修や制度変更の実施月を記録し、前後のKPI×体温の変化を追える" },
+            { label: "兆候を早期に捉える", text: "「数字は良いが温度が下がった」等の危険信号を見逃さない" },
+            { label: "経営に報告できる形に", text: "「あの施策は翌月に体温を改善した」と根拠を持って言える" },
+          ],
+        },
+        {
+          type: "callout",
+          tone: "accent",
+          text: "人・組織への投資の費用対効果を、感覚ではなく時系列の数字で示せます。",
+        },
+      ],
+    },
+    {
+      kicker: "05 ／ 回答の質",
+      title: "「そもそも、現場が本音を書く?」",
+      blocks: [
+        {
+          type: "lead",
+          text: "本音が集まらなければ意味がない。だから匿名性を徹底しています。",
+        },
+        {
+          type: "bullets",
+          items: [
+            { label: "完全匿名", text: "誰が何を書いたかを紐付けずに収集する" },
+            { label: "3名未満は非開示", text: "少人数の集計は表示しないため、特定される心配がない" },
+            { label: "声が届く実感", text: "回答が組織の変化につながることで、書く意味が生まれる" },
+          ],
+        },
+        {
+          type: "callout",
+          tone: "accent",
+          text: "匿名性の担保は、優しさであると同時にデータ精度の前提です。詳しくは「セキュリティと信頼性」もご覧ください。",
+        },
+      ],
+    },
+    {
+      kicker: "06 ／ 導入",
+      title: "「導入は大変? どれくらいで始まる?」",
+      visual: { kind: "bigstat", value: "70日間", label: "無料トライアル", sub: "Standard全機能・カード登録不要" },
+      blocks: [
+        {
+          type: "lead",
+          text: "「入れてから考える」で大丈夫。まず自社の組織体温を測るところから始められます。",
+        },
+        {
+          type: "bullets",
+          items: [
+            { label: "初期設定は最短当日", text: "会社・部署・KPIを登録すれば、その日から開始できる" },
+            { label: "まず70日間無料", text: "Standard全機能を無料で試せる。カード登録は不要" },
+            { label: "伴走サポート", text: "トライアル中は設定のヒアリングと活用支援を行う" },
+          ],
+        },
+        {
+          type: "callout",
+          tone: "accent",
+          text: "70日間、実データで効果を確かめてからご判断いただけます。",
+        },
+      ],
+    },
+    {
+      kicker: "07 ／ AIへの信頼",
+      title: "「AIの診断は、信用できる?」",
+      visual: { kind: "brand", title: "決めるのは、いつも人。", sub: "Signs AI — その疑問に、先回りで。" },
+      blocks: [
+        {
+          type: "lead",
+          text: "AIは「考える材料」を最速で用意する参謀です。誤診を恐れる前に、役割を明確にしています。",
+        },
+        {
+          type: "bullets",
+          items: [
+            { label: "自社の文脈を学習", text: "経営方針や指標定義(Policy)を投入するほど、診断が自社に最適化される" },
+            { label: "判断を代替しない", text: "AIは仮説と打ち手を提示する。最終判断は必ず人が行う前提" },
+            { label: "根拠が見える", text: "提言が体温・KPI・方針のどこに基づくかを併せて示す" },
+          ],
+        },
+        {
+          type: "callout",
+          tone: "accent",
+          text: "AIが材料を用意し、決めるのは経営と現場。だからこそ、安心して意思決定に使えます。",
+        },
+      ],
+    },
+  ],
+};
+
+export const decks: Deck[] = [executive, hr, whitepaper, featureTour, securityTrust, faqObjections];
 
 export const decksByCategory: { category: string; decks: Deck[] }[] = decks.reduce(
   (acc, deck) => {

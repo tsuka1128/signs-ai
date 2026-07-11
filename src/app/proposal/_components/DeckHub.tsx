@@ -12,6 +12,8 @@ import {
   Users,
   FileText,
   Blocks,
+  Shield,
+  HelpCircle,
   type LucideIcon,
 } from "lucide-react";
 import { decks, getDeck, type Deck, type Slide } from "../_data/proposals";
@@ -19,7 +21,7 @@ import { SlideBlocks } from "./SlideBlocks";
 import { SlideVisual } from "./SlideVisuals";
 
 /** Deck.icon（lucide名）→ コンポーネント解決 */
-const DECK_ICONS: Record<string, LucideIcon> = { BarChart3, Users, FileText, Blocks };
+const DECK_ICONS: Record<string, LucideIcon> = { BarChart3, Users, FileText, Blocks, Shield, HelpCircle };
 
 function DeckIcon({ name, size = 16 }: { name: string; size?: number }) {
   const Icon = DECK_ICONS[name] ?? BarChart3;
