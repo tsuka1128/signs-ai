@@ -41,7 +41,7 @@ export default function KpiSetupPage() {
                         <ul className="space-y-3 list-none pl-0 text-sm text-slate-600 font-medium">
                             <li className="flex items-center gap-2">
                                 <Settings className="w-4 h-4 text-slate-400" />
-                                <span>「設定」→「KPI全般設定」タブを開きます。</span>
+                                <span>「設定」→「KPI」タブを開きます。</span>
                             </li>
                             <li className="flex items-center gap-2">
                                 <Plus className="w-4 h-4 text-slate-400" />
@@ -64,17 +64,15 @@ export default function KpiSetupPage() {
                 </div>
                 <div className="pl-11 space-y-4">
                     <p className="text-slate-600 font-medium leading-relaxed">
-                        定義したKPIに基づき、毎月実績値を入力します。
+                        定義したKPIに基づき、「設定」→「KPI」タブ、または /kpi（KPI入力）画面から毎月の実績値を入力します。未入力の項目は「0」ではなく「空欄」のまま保存すると、AIがデータ欠損として適切に処理します。
                     </p>
-                    <div className="p-6 bg-white border border-slate-200 rounded-[32px] shadow-sm">
-                        <h4 className="text-sm font-black text-slate-900 mb-3">入力フロー</h4>
-                        <ol className="space-y-2 list-decimal pl-5 text-sm text-slate-600 font-medium">
-                            <li>ヘッダーの「KPI入力」またはメニューの「月次実績入力」を選択。</li>
-                            <li>対象の月（yyyy-mm）が正しいか確認。</li>
-                            <li>各項目に数値を入力します。未入力の項目は「0」ではなく「空欄」のまま保存すると、AIがデータ欠損として適切に処理します。</li>
-                            <li>「保存」ボタンを押すと即座にダッシュボードに反映されます。</li>
-                        </ol>
-                    </div>
+                    <Link
+                        href="/docs/kpi-input"
+                        className="inline-flex items-center gap-2 text-sm font-black text-teal hover:gap-3 transition-all"
+                    >
+                        詳しくは「KPI実績の入力方法」をご覧ください
+                        <ArrowRight className="w-4 h-4" />
+                    </Link>
                 </div>
             </section>
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Table2, Lock, Unlock, Save, Layers, Info } from "lucide-react";
+import { ArrowRight, Table2, Lock, Unlock, Save, Layers, Info, Settings, BarChart3, CalendarDays, Target, AlertTriangle } from "lucide-react";
 
 /**
  * KPI実績の入力方法ガイド
@@ -35,7 +35,7 @@ export default function KpiInputPage() {
                     <div className="p-6 bg-white border-2 border-slate-100 rounded-[28px] shadow-sm space-y-3">
                         <div className="flex items-center gap-2">
                             <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
-                                <span className="text-lg">⚙️</span>
+                                <Settings className="w-5 h-5 text-slate-500" aria-hidden />
                             </div>
                             <h3 className="text-sm font-black text-slate-800">KPI設定（設定画面）</h3>
                         </div>
@@ -43,13 +43,13 @@ export default function KpiInputPage() {
                             <strong>指標の定義</strong>を行う場所。KPIの名前・単位・担当部署を登録します。
                         </p>
                         <div className="text-xs text-slate-400 font-bold">
-                            アクセス: 設定 → KPIタブ
+                            アクセス: 設定 → KPI タブ
                         </div>
                     </div>
                     <div className="p-6 bg-teal-50/50 border-2 border-teal-100/50 rounded-[28px] shadow-sm space-y-3">
                         <div className="flex items-center gap-2">
                             <div className="w-10 h-10 bg-teal-100 rounded-xl flex items-center justify-center">
-                                <span className="text-lg">📊</span>
+                                <BarChart3 className="w-5 h-5 text-teal-600" aria-hidden />
                             </div>
                             <h3 className="text-sm font-black text-teal-800">KPI一括入力（本ページ）</h3>
                         </div>
@@ -57,7 +57,7 @@ export default function KpiInputPage() {
                             <strong>毎月の実績値と目標値</strong>を入力する場所。定義済みのKPIに対して数値を記録します。
                         </p>
                         <div className="text-xs text-teal-600 font-bold">
-                            アクセス: ダッシュボードヘッダーのメニュー → KPI入力
+                            アクセス: /kpi（KPI入力）画面
                         </div>
                     </div>
                 </div>
@@ -86,7 +86,7 @@ export default function KpiInputPage() {
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-slate-500 font-black shrink-0">過去列</span>
-                                <span>— 直近12ヶ月分の履歴を左スクロールで確認可能</span>
+                                <span>— 直近13ヶ月分の履歴を左スクロールで確認可能</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-slate-500 font-black shrink-0">各セル</span>
@@ -351,8 +351,9 @@ export default function KpiInputPage() {
                         <p className="text-xs text-teal-700 font-medium">テーブル右上のロックアイコンをクリックすると、過去月の数値も編集可能になります。</p>
                     </div>
                 </div>
-                <div className="bg-amber-50 border border-amber-100 rounded-xl px-5 py-4 text-xs font-bold text-amber-800">
-                    ⚠️ 過去実績を編集すると、ダッシュボードのKPI推移グラフやマトリックスの過去時点データにも反映されます。意図しない変更にご注意ください。
+                <div className="bg-amber-50 border border-amber-100 rounded-xl px-5 py-4 text-xs font-bold text-amber-800 flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" aria-hidden />
+                    過去実績を編集すると、ダッシュボードのKPI推移グラフやマトリックスの過去時点データにも反映されます。意図しない変更にご注意ください。
                 </div>
             </section>
 
@@ -385,19 +386,19 @@ export default function KpiInputPage() {
                     </h2>
                     <ul className="space-y-3 text-sm font-medium text-slate-300">
                         <li className="flex items-start gap-2">
-                            <span className="text-teal-400 mt-0.5">📅</span>
+                            <CalendarDays className="w-4 h-4 text-teal-400 mt-0.5 shrink-0" aria-hidden />
                             <span>毎月月初（1日〜5日）に前月分の実績をまとめて入力</span>
                         </li>
                         <li className="flex items-start gap-2">
-                            <span className="text-teal-400 mt-0.5">🎯</span>
+                            <Target className="w-4 h-4 text-teal-400 mt-0.5 shrink-0" aria-hidden />
                             <span>目標値は四半期の始めにまとめて設定し、月ごとの微調整のみ行う</span>
                         </li>
                         <li className="flex items-start gap-2">
-                            <span className="text-teal-400 mt-0.5">📊</span>
+                            <BarChart3 className="w-4 h-4 text-teal-400 mt-0.5 shrink-0" aria-hidden />
                             <span>ボイスチェックの回答が集まった後にKPIを入力すると、ダッシュボードで体温×KPIの相関が確認可能</span>
                         </li>
                         <li className="flex items-start gap-2">
-                            <span className="text-teal-400 mt-0.5">💾</span>
+                            <Save className="w-4 h-4 text-teal-400 mt-0.5 shrink-0" aria-hidden />
                             <span>入力途中でも保存可能。こまめな保存がおすすめです</span>
                         </li>
                     </ul>

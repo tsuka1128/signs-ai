@@ -42,9 +42,9 @@ export default function IntroductionPage() {
                 </div>
                 <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
                     <Users className="w-6 h-6 text-teal mb-3" />
-                    <h3 id="voice" className="text-lg font-black text-slate-900 mb-2">定性（Voice）</h3>
+                    <h3 id="voice" className="text-lg font-black text-slate-900 mb-2">定性（ボイスチェック）</h3>
                     <p className="text-sm text-slate-500 leading-relaxed font-medium">
-                        独自の11の質問により、現場の「本音」や「ボトルネック」をスコア化します。
+                        標準11問＋カスタム最大3問（最大14問）により、現場の「本音」や「ボトルネック」をスコア化します。
                     </p>
                 </div>
             </div>

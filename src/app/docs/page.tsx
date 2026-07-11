@@ -6,6 +6,8 @@ import {
     ChevronRight,
     Sparkles,
     Zap,
+    Workflow,
+    Crown,
     Database,
     Brain,
     CheckCircle2,
@@ -94,6 +96,38 @@ export default function DocsPage() {
                     <h3 className="text-lg font-black text-slate-900 mb-2">KPI設定</h3>
                     <p className="text-sm text-slate-500 leading-relaxed mb-4">
                         組織の定量指標（KPI）を定義し、月次の実績を入力するフローを学習します。
+                    </p>
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-teal">
+                        詳しく見る <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                </Link>
+
+                <Link
+                    href="/docs/flow"
+                    className="group p-6 bg-white border border-slate-100 rounded-[32px] shadow-sm hover:shadow-xl hover:border-teal/30 hover:-translate-y-1 transition-all duration-300"
+                >
+                    <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-teal group-hover:text-white transition-colors">
+                        <Workflow className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-lg font-black text-slate-900 mb-2">使い方の全体像（月次サイクル）</h3>
+                    <p className="text-sm text-slate-500 leading-relaxed mb-4">
+                        KPI入力からボイスチェック、AI診断、改善アクションまで。毎月どう回すのかを1枚で掴めます。
+                    </p>
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-teal">
+                        詳しく見る <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                </Link>
+
+                <Link
+                    href="/docs/hr-strategy-guide"
+                    className="group p-6 bg-white border border-slate-100 rounded-[32px] shadow-sm hover:shadow-xl hover:border-teal/30 hover:-translate-y-1 transition-all duration-300"
+                >
+                    <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-teal group-hover:text-white transition-colors">
+                        <Crown className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-lg font-black text-slate-900 mb-2">Pro機能（人事戦略・人件費）</h3>
+                    <p className="text-sm text-slate-500 leading-relaxed mb-4">
+                        人事戦略インサイトと人件費ROI分析。組織の状態を「打ち手」と「投資対効果」に接続します。
                     </p>
                     <div className="flex items-center gap-1.5 text-xs font-bold text-teal">
                         詳しく見る <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />

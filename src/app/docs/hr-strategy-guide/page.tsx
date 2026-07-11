@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Crown, AlertTriangle, TrendingUp, Brain, BarChart3, PieChart } from "lucide-react";
+import { ArrowRight, Crown, AlertTriangle, TrendingUp, Brain, BarChart3, PieChart, Search, Target } from "lucide-react";
 
 export default function HrStrategyGuidePage() {
     return (
@@ -71,7 +71,7 @@ export default function HrStrategyGuidePage() {
                     エンゲージメントドライバー分析
                 </h2>
                 <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                    11設問のスコアと部署KPI達成率の相関を計算し、<strong>「何がKPIに影響しているか」を数値で可視化</strong>します。改善するとKPIに直結する設問を上位に表示しているため、上から順に対応を検討してください。
+                    標準11問＋カスタム最大3問（最大14問）のスコアと部署KPI達成率の相関を計算し、<strong>「何がKPIに影響しているか」を数値で可視化</strong>します。改善するとKPIに直結する設問を上位に表示しているため、上から順に対応を検討してください。
                 </p>
 
                 {/* バーの読み方 */}
@@ -129,31 +129,31 @@ export default function HrStrategyGuidePage() {
                             {
                                 situation: "「意思決定の速さ」が -0.9 で上位に出ている",
                                 decision: "現場は意思決定が速いと感じているのに、KPIが低い部署ほどそう答えている → 現場の判断ではなく、承認プロセスや経営判断のボトルネックを疑う。制度・権限委譲の見直しを検討。",
-                                icon: "🔍",
+                                icon: Search,
                                 color: "bg-rose-50 border-rose-100",
                             },
                             {
                                 situation: "「目標への集中」が +0.8 で1位に出ている",
                                 decision: "目標が明確な部署ほどKPIが高い傾向が明確。全社で目標設定の質を揃える施策（OKR導入・1on1での目標確認）が最もROIの高い打ち手。",
-                                icon: "🎯",
+                                icon: Target,
                                 color: "bg-teal-50 border-teal-100",
                             },
                             {
                                 situation: "上位がすべて負の相関（-）で埋まっている",
                                 decision: "組織全体として「頑張っているのに成果が出ない」状態。個人の努力ではなく構造的な問題（目標設定の不整合・人員過多または過少・外部要因）を経営レベルで検討する必要がある。",
-                                icon: "⚠️",
+                                icon: AlertTriangle,
                                 color: "bg-amber-50 border-amber-100",
                             },
                             {
                                 situation: "先月と今月で順位が大きく変わった設問がある",
                                 decision: "1ヶ月で相関が変動した場合、施策の効果か異変の兆候かどちらかです。その設問と同時期に実施した施策・組織変更・人事異動と照らし合わせて原因を特定してください。",
-                                icon: "📊",
+                                icon: BarChart3,
                                 color: "bg-blue-50 border-blue-100",
                             },
                         ].map((item, i) => (
                             <div key={i} className={`rounded-xl border px-5 py-4 ${item.color}`}>
                                 <p className="text-sm font-black text-slate-700 mb-2 flex items-center gap-2">
-                                    <span>{item.icon}</span>
+                                    <item.icon className="w-4 h-4 text-slate-500" aria-hidden />
                                     {item.situation}
                                 </p>
                                 <p className="text-sm text-slate-600 font-medium leading-relaxed pl-6">

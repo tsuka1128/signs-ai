@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Compass, AlertTriangle, Lightbulb, Zap, Calendar, User, ArrowRight } from 'lucide-react';
+import { BookOpen, Compass, AlertTriangle, Lightbulb, Zap, Calendar, User, ArrowRight, Sprout, Star, Rocket } from 'lucide-react';
 
 export default function GrowthStepsPage() {
     return (
@@ -21,7 +21,7 @@ export default function GrowthStepsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
-                        <span>2026年3月</span>
+                        <span>2026年7月</span>
                     </div>
                 </div>
             </header>
@@ -51,7 +51,7 @@ export default function GrowthStepsPage() {
                         <div className="w-12 h-12 shrink-0 bg-white text-amber-500 rounded-xl flex items-center justify-center text-xl font-black border border-amber-200 shadow-sm">1</div>
                         <div className="space-y-2">
                             <h3 id="seed" className="text-lg font-black text-amber-900 flex items-center gap-2">
-                                🌱 SEED (種まき)
+                                <Sprout className="w-5 h-5 text-amber-500" aria-hidden /> SEED (種まき)
                             </h3>
                             <p className="text-sm text-amber-800 leading-relaxed font-medium">
                                 まずは少人数チームのまま、泥臭く顧客ニーズを満たすビジネスプロセス（PMF）を極限まで磨き込みます。この未熟な投資段階ではまだ生産性が低くても問題ありません。
@@ -63,7 +63,7 @@ export default function GrowthStepsPage() {
                         <div className="w-12 h-12 shrink-0 bg-white text-emerald-500 rounded-xl flex items-center justify-center text-xl font-black border border-emerald-200 shadow-sm">2</div>
                         <div className="space-y-2">
                             <h3 id="pioneer" className="text-lg font-black text-emerald-900 flex items-center gap-2">
-                                ⭐ PIONEER (開拓者)
+                                <Star className="w-5 h-5 text-emerald-500" aria-hidden /> PIONEER (開拓者)
                             </h3>
                             <p className="text-sm text-emerald-800 leading-relaxed font-medium">
                                 業務の仕組み化と熱量の高いカルチャーが定着し、少ない人数でも高い生産性を出せる「勝ちパターン（理想のチーム）」へ引き上げます。ここで初めて「拡大の準備」が整います。
@@ -75,7 +75,7 @@ export default function GrowthStepsPage() {
                         <div className="w-12 h-12 shrink-0 bg-white text-blue-500 rounded-xl flex items-center justify-center text-xl font-black border border-blue-200 shadow-sm">3</div>
                         <div className="space-y-2">
                             <h3 id="scale" className="text-lg font-black text-blue-900 flex items-center gap-2">
-                                🚀 SCALE (拡大期)
+                                <Rocket className="w-5 h-5 text-blue-500" aria-hidden /> SCALE (拡大期)
                             </h3>
                             <p className="text-sm text-blue-800 leading-relaxed font-medium">
                                 PIONEERで確立した高生産性の仕組みをコピー＆ペーストするように採用を強化し、品質を落とさずに一気に組織規模を拡大します。
@@ -85,12 +85,12 @@ export default function GrowthStepsPage() {
                 </div>
 
                 <p>
-                    マトリックスにおける<strong>「タイムラプス機能」</strong>は、まさに自社のそれぞれの部署がこの<strong>「SEED ➔ PIONEER ➔ SCALE」</strong>という健全な軌跡を描けているかを追跡するために存在します。
+                    マトリックスにおける<strong>「軌跡（動く地図）」</strong>は、まさに自社のそれぞれの部署がこの<strong>「SEED ➔ PIONEER ➔ SCALE」</strong>という健全な軌跡を描けているかを追跡するために存在します。
                 </p>
 
                 <h2 id="traps" className="flex items-center gap-3 text-2xl font-black text-slate-900 border-b border-slate-200 pb-4 mt-16 mb-6">
                     <AlertTriangle className="w-6 h-6 text-rose-500" />
-                    陥りやすい罠：ブルックスの法則と「肥大化」
+                    陥りやすい罠：ブルックスの法則と「要テコ入れ」
                 </h2>
                 
                 <p>
@@ -104,12 +104,12 @@ export default function GrowthStepsPage() {
 
                 <p>
                     新しいメンバーへの教育コストが重くのしかかり、コミュニケーションパスは爆発的に増加します。さらに仕組み化されていないがゆえに属人的なミスが多発することで、<strong>一人当たりの生産性はむしろ低下</strong>してしまいます。<br/>
-                    これこそが、Signs AIが最も警戒すべきと定義している<strong>「OVERWEIGHT（肥大化）」</strong>の状態です。
+                    これこそが、Signs AIが最も警戒すべきと定義している<strong>「OVERWEIGHT（要テコ入れ）」</strong>の状態です。
                 </p>
 
                 <div className="not-prose bg-rose-50 border border-rose-100 rounded-2xl p-6 mt-8 mb-12">
                     <h4 className="font-black text-rose-900 flex items-center gap-2 mb-2">
-                        💡 OVERWEIGHTにならないための軌道修正
+                        <Lightbulb className="w-5 h-5 text-rose-500" aria-hidden /> OVERWEIGHTにならないための軌道修正
                     </h4>
                     <p className="text-sm text-rose-800 leading-relaxed font-medium">
                         バブルチャートで自部署が「右下（多人数×低生産性）」へ移動し始めている兆候が見えたら、<strong>直ちに採用や拡大スピードを落としてください。</strong>まずは業務の棚卸しやプロセスの自動化、オンボーディングの再構築にフルコミットし、ふたたび「PIONEER」や「SCALE」へ力強く引き上げる努力が最優先となります。
@@ -123,7 +123,7 @@ export default function GrowthStepsPage() {
                 </h2>
 
                 <p>
-                    ここまで王道アプローチを解説しましたが、ビジネスの世界にはこのセオリーを完全に無視した**「効率や生産性は赤字でもいいから、とにかく人間を集めまくって巨大化すべき（いきなり OVERWEIGHT や SCALE を目指す）」**という逆張りの戦略も存在します。
+                    ここまで王道アプローチを解説しましたが、ビジネスの世界にはこのセオリーを完全に無視した<strong>「効率や生産性は赤字でもいいから、とにかく人間を集めまくって巨大化すべき（いきなり OVERWEIGHT や SCALE を目指す）」</strong>という逆張りの戦略も存在します。
                 </p>
 
                 <div className="not-prose grid gap-4 my-8">

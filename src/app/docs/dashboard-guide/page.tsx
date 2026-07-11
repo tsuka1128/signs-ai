@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, LayoutDashboard, BarChart3, Building2, Thermometer, ListTodo, FileText, Grid3X3, Brain } from "lucide-react";
+import { ArrowRight, LayoutDashboard, BarChart3, Building2, Thermometer, ListTodo, FileText, Grid3X3, Brain, Sun, Cloud, CloudRain, Lightbulb } from "lucide-react";
 
 /**
  * ダッシュボードの見方ガイド
@@ -83,10 +83,10 @@ export default function DashboardGuidePage() {
             <section className="space-y-6">
                 <h2 id="matrix-section" className="text-2xl font-black text-slate-900">マトリックスセクション</h2>
                 <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                    人員数（X軸）× 組織体温（Y軸）の散布図で、各部署・担当領域のポジションを可視化します。バブルの大きさはKPI達成率を反映しています。
+                    各部署・担当領域のポジションを4つの視点で同時に可視化する散布図です。<strong>X軸＝人数（所属リソース）</strong>、<strong>Y軸＝KPI達成率または一人当たり生産性（切替可能）</strong>、<strong>バブルの色＝組織体温</strong>（灰色は体温未取得＝回答者3名未満を含む）、<strong>バブルの大きさ＝KPI達成率</strong>（Proプランでは人件費）を表します。
                 </p>
                 <div className="bg-teal-50/50 border border-teal-100/50 rounded-xl px-5 py-4 text-xs font-bold text-teal-800">
-                    詳しい読み方は「<Link href="/docs/bubble-chart-guide" className="underline">マトリックスの見方</Link>」をご覧ください。タイムラプス機能で、過去12ヶ月の変遷も確認できます。
+                    詳しい読み方は「<Link href="/docs/bubble-chart-guide" className="underline">マトリックスの見方</Link>」をご覧ください。「軌跡（動く地図）」で過去の変遷も確認できます（履歴が12ヶ月分に満たない間は表示されません）。
                 </div>
                 <div className="bg-white border border-slate-200 rounded-[28px] p-6 space-y-3">
                     <h3 id="matrix-switch" className="text-base font-black text-slate-800">表示の切り替え</h3>
@@ -101,7 +101,7 @@ export default function DashboardGuidePage() {
                         </li>
                         <li className="flex items-start gap-2">
                             <span className="text-teal font-black">時点</span>
-                            <span>— 「最新」「1ヶ月前」「3ヶ月前」「6ヶ月前」「12ヶ月前」で比較可能</span>
+                            <span>— 「最新」「1ヶ月前」「3ヶ月前」「6ヶ月前」「12ヶ月前」で比較可能（推移表は直近13ヶ月分）</span>
                         </li>
                     </ul>
                 </div>
@@ -144,7 +144,7 @@ export default function DashboardGuidePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="p-5 bg-white border border-slate-200 rounded-2xl space-y-2">
                         <div className="text-sm font-black text-slate-800">体温スコア</div>
-                        <p className="text-xs text-slate-600 font-medium">ボイスチェックの平均スコア（1〜5）。4.0以上で晴れ、3.0以上で曇り、3.0未満で雨のアイコンが表示されます。</p>
+                        <p className="text-xs text-slate-600 font-medium">ボイスチェックの平均スコア（1〜5）。4.0以上で晴れ、3.0以上で曇り、3.0未満で雨のアイコン（天気メタファ）が表示されます。回答者が3名未満の場合は体温未取得（「集計中」「未計測」）となります。</p>
                     </div>
                     <div className="p-5 bg-white border border-slate-200 rounded-2xl space-y-2">
                         <div className="text-sm font-black text-slate-800">KPI達成率</div>
@@ -152,7 +152,7 @@ export default function DashboardGuidePage() {
                     </div>
                     <div className="p-5 bg-white border border-slate-200 rounded-2xl space-y-2">
                         <div className="text-sm font-black text-slate-800">人員数</div>
-                        <p className="text-xs text-slate-600 font-medium">「回答者数 / 所属人数」の形式で、回答率も把握できます。</p>
+                        <p className="text-xs text-slate-600 font-medium">「回答者数 / 所属人数」の形式で、回答率も把握できます。回答者が3名未満の場合、体温は非表示（「集計中」扱い）となり個人は特定されません。</p>
                     </div>
                     <div className="p-5 bg-white border border-slate-200 rounded-2xl space-y-2">
                         <div className="text-sm font-black text-slate-800">推移グラフ</div>
@@ -165,30 +165,30 @@ export default function DashboardGuidePage() {
             <section className="space-y-6">
                 <h2 id="org-temperature" className="text-2xl font-black text-slate-900">組織の体温セクション</h2>
                 <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                    ボイスチェックの11設問を、設問ごとのスコアとして表示します。<strong>前月との比較（↑↓）</strong>も確認でき、どの設問のスコアが改善・悪化しているかが一目で分かります。
+                    ボイスチェックの各設問（標準11問＋カスタム最大3問）を、設問ごとのスコアとして表示します。<strong>前月との比較（↑↓）</strong>も確認でき、どの設問のスコアが改善・悪化しているかが一目で分かります。
                 </p>
                 <div className="bg-white border border-slate-200 rounded-[28px] p-6 space-y-3">
                     <h3 id="score-meaning" className="text-base font-black text-slate-800">スコアの目安</h3>
                     <div className="space-y-2">
                         <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
-                            <span className="text-lg font-black text-emerald-500">晴れ</span>
+                            <Sun className="w-5 h-5 text-emerald-500 shrink-0" aria-hidden />
                             <div>
-                                <span className="text-sm font-black text-emerald-700">4.0 以上</span>
+                                <span className="text-sm font-black text-emerald-700">晴れ（4.0 以上）</span>
                                 <span className="text-xs text-emerald-600 font-medium ml-2">良好 — 前向きなエネルギーが維持されている</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-100 rounded-xl">
-                            <span className="text-lg font-black text-amber-500">曇り</span>
+                            <Cloud className="w-5 h-5 text-amber-500 shrink-0" aria-hidden />
                             <div>
-                                <span className="text-sm font-black text-amber-700">3.0 〜 3.9</span>
+                                <span className="text-sm font-black text-amber-700">曇り（3.0 〜 3.9）</span>
                                 <span className="text-xs text-amber-600 font-medium ml-2">注意 — 兆候を確認し、対策を検討すべき</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 p-3 bg-rose-50 border border-rose-100 rounded-xl">
-                            <span className="text-lg font-black text-rose-500">雨</span>
+                            <CloudRain className="w-5 h-5 text-rose-500 shrink-0" aria-hidden />
                             <div>
-                                <span className="text-sm font-black text-rose-700">3.0 未満</span>
-                                <span className="text-xs text-rose-600 font-medium ml-2">警告 — 早急なアクションが必要</span>
+                                <span className="text-sm font-black text-rose-700">雨（3.0 未満）</span>
+                                <span className="text-xs text-rose-600 font-medium ml-2">低体温（要ケア） — 早急なアクションが必要</span>
                             </div>
                         </div>
                     </div>
@@ -219,8 +219,9 @@ export default function DashboardGuidePage() {
                 <p className="text-sm text-slate-600 font-medium leading-relaxed">
                     AIインサイトカードの下に表示される<strong>部署タブ</strong>（全社、営業部、マーケティング部 など）をタップすると、ダッシュボード全体がその部署のデータに絞り込まれます。
                 </p>
-                <div className="bg-indigo-50/50 border border-indigo-100/50 rounded-xl px-5 py-4 text-xs font-bold text-indigo-800">
-                    💡 各部署の具体的な診断テキストや「AI方針翻訳（全社方針がその部署にどう適用されるかの解説）」は、<strong>組織サマリー</strong>セクションの各部署カード下部にて確認できます。
+                <div className="bg-indigo-50/50 border border-indigo-100/50 rounded-xl px-5 py-4 text-xs font-bold text-indigo-800 flex items-start gap-2">
+                    <Lightbulb className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" aria-hidden />
+                    各部署の具体的な診断テキストや「AI方針翻訳（全社方針がその部署にどう適用されるかの解説）」は、<strong>組織サマリー</strong>セクションの各部署カード下部にて確認できます。
                 </div>
             </section>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { Lightbulb } from "lucide-react";
 
 const CSS = `
   .flow-root {
@@ -399,7 +400,10 @@ export default function DocsFlowPage() {
                             <div className="flow-panel-heading">{panel.heading}</div>
                             <div className="flow-panel-body" style={{ whiteSpace: "pre-line" }}>{panel.body}</div>
                             {panel.note && (
-                                <div className="flow-panel-note">💡 {panel.note}</div>
+                                <div className="flow-panel-note" style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
+                                    <Lightbulb className="w-4 h-4 text-slate-500" aria-hidden style={{ flexShrink: 0, marginTop: 2 }} />
+                                    <span>{panel.note}</span>
+                                </div>
                             )}
                             {panel.links && panel.links.length > 0 && (
                                 <div className="flow-panel-links">
@@ -479,7 +483,7 @@ export default function DocsFlowPage() {
                             </div>
                             <div className="flow-nodes">
                                 <Node nodeKey="s2_slack-remind" panelId="slack-remind" color="n-gray"  title="Slack 通知受信"   sub="未回答メンバーへ DM"     selectedKey={selectedKey} onSelect={handleSelect} />
-                                <Node nodeKey="s2_surveyres"    panelId="surveyres"    color="n-coral" title="ボイスチェック回答" sub="11 問のまとめ・組織の体温" selectedKey={selectedKey} onSelect={handleSelect} />
+                                <Node nodeKey="s2_surveyres"    panelId="surveyres"    color="n-coral" title="ボイスチェック回答" sub="11 問＋カスタム設問・組織の体温" selectedKey={selectedKey} onSelect={handleSelect} />
                                 <Node nodeKey="s2_surveyanswer" panelId="surveyanswer" color="n-coral" title="各問の回答"        sub="1〜5 のスコア"            selectedKey={selectedKey} onSelect={handleSelect} />
                             </div>
                         </div>

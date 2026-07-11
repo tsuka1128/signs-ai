@@ -24,15 +24,21 @@ export default function SlackIntegrationPage() {
                     <ArrowRight className="w-3 h-3" />
                     <span className="text-slate-900">Slack Integration</span>
                 </nav>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#4A154B] text-white rounded-full text-xs font-bold tracking-tight mb-2">
-                    <Slack className="w-3.5 h-3.5" />
-                    External Integration
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#4A154B] text-white rounded-full text-xs font-bold tracking-tight">
+                        <Slack className="w-3.5 h-3.5" />
+                        Slack連携
+                    </div>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-600 rounded-full text-[10px] font-black tracking-widest uppercase">
+                        <ShieldCheck className="w-3.5 h-3.5" aria-hidden />
+                        Standardプラン以上
+                    </div>
                 </div>
                 <h1 className="text-3xl md:text-4xl font-black text-slate-900 leading-tight tracking-tight">
                     Slackアプリを準備する
                 </h1>
                 <p className="text-base text-slate-600 font-medium leading-relaxed max-w-2xl mt-4">
-                    Signs AIからの通知をワークスペースで受け取るための、Incoming Webhookの設定手順を解説します。
+                    Signs AIからの通知をワークスペースで受け取るための、Incoming Webhookの設定手順を解説します。この機能はStandardプラン以上でご利用いただけます。
                 </p>
             </section>
 
@@ -42,7 +48,7 @@ export default function SlackIntegrationPage() {
                     <div className="w-10 h-10 bg-white rounded-2xl shadow-sm flex items-center justify-center">
                         <MessageSquare className="w-5 h-5 text-[#4A154B]" />
                     </div>
-                    <h3 id="benefit-realtime" className="font-black text-slate-800 tracking-tight">リアルタイムな兆兆の把握</h3>
+                    <h3 id="benefit-realtime" className="font-black text-slate-800 tracking-tight">リアルタイムな兆候の把握</h3>
                     <p className="text-sm text-slate-600 font-medium leading-relaxed">
                         ダッシュボードを開かなくても、組織の「温まり」や「冷え」の兆候をSlackでいち早く受け取れます。
                     </p>
@@ -209,7 +215,7 @@ export default function SlackIntegrationPage() {
                                         </li>
                                         <li className="flex gap-3">
                                             <span className="font-black text-slate-300 italic">02.</span>
-                                            <span><strong>「外部連携 / Slack」</strong>タブを選択します。</span>
+                                            <span><strong>「Slack連携」</strong>タブを選択します。</span>
                                         </li>
                                         <li className="flex gap-3">
                                             <span className="font-black text-slate-300 italic">03.</span>
@@ -217,7 +223,7 @@ export default function SlackIntegrationPage() {
                                         </li>
                                         <li className="flex gap-3 border-t border-slate-50 pt-4">
                                             <span className="font-black text-slate-300 italic">04.</span>
-                                            <span className="text-teal-700 font-bold">「テスト送信」を行い、自分のSlackに通知が届くか確認してください。</span>
+                                            <span className="text-teal-700 font-bold">「接続テスト」を行い、指定したチャンネルに通知が届くか確認してください。</span>
                                         </li>
                                     </ol>
                                 </div>
