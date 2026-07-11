@@ -216,7 +216,7 @@ function LoginForm() {
                 <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-slate-800 hover:bg-slate-900 active:scale-[0.98] text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-slate-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-teal hover:bg-teal/90 active:scale-[0.98] text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-teal-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {loading ? (
                         <span className="w-5 h-5 border-2 border-slate-600 border-t-white rounded-full animate-spin inline-block align-middle mr-2" />
@@ -264,19 +264,7 @@ function LoginForm() {
             </button>
 
             <div className="space-y-4 pt-4 border-t border-slate-50">
-                <div className="space-y-1.5 px-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                        招待コード / デモコード（任意）
-                    </label>
-                    <input
-                        type="text"
-                        value={inviteCode}
-                        onChange={(e) => setInviteCode(e.target.value)}
-                        placeholder="例: TAION"
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-100 bg-slate-50/50 text-slate-700 font-bold text-xs focus:outline-none focus:ring-2 focus:ring-teal-400/20 focus:bg-white transition-all text-center tracking-widest placeholder:text-slate-200"
-                    />
-                </div>
-
+                {/* 招待/デモコードの手動入力欄は撤去（招待・営業URLの ?token= から自動反映される / VC4） */}
                 <div className="text-center">
                     <Link
                         href={inviteCode.trim() ? `/register?token=${encodeURIComponent(inviteCode.trim())}` : "/register"}

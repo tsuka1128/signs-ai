@@ -35,12 +35,12 @@ export function ReportSection({ sections, generatedAt, leadMessage }: ReportSect
                     <div>
                         <h2 className="text-2xl font-black text-slate-900 tracking-tight">AI 組織診断レポート</h2>
                         <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
-                            Deep Analysis Report — {generatedAt || "2026年4月度"}
+                            AI詳細分析レポート — {generatedAt || "2026年4月度"}
                         </p>
                     </div>
                 </div>
                 <div className="hidden sm:block">
-                    <Badge className="bg-teal text-white font-black px-3 py-1">PREMIUM ANALYSIS</Badge>
+                    <Badge className="bg-teal text-white font-black px-3 py-1">AI詳細分析</Badge>
                 </div>
             </div>
 
@@ -116,11 +116,8 @@ export function ReportSection({ sections, generatedAt, leadMessage }: ReportSect
             <div className="pt-12 text-center space-y-4 pb-20">
                 <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
                 <div className="flex flex-col items-center gap-2">
-                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.3em]">
-                        Intelligence Report Architecture
-                    </p>
                     <p className="text-[11px] text-slate-500 font-bold bg-slate-100 px-4 py-1.5 rounded-full">
-                        KPI Engine v2.0 × Semantic Layer Analysis
+                        KPI × 組織体温 × 組織方針を統合して分析しています
                     </p>
                 </div>
             </div>
