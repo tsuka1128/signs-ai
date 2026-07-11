@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signUpWithEmail } from "@/lib/auth";
-import { getBaseURL, validatePassword } from "@/lib/utils/index";
+import { getBaseURL, validatePassword, cn } from "@/lib/utils/index";
 import { Eye, EyeOff } from "lucide-react";
 
 function RegisterForm() {
@@ -50,12 +50,17 @@ function RegisterForm() {
             const supabase = createClient();
             const { data } = await supabase
                 .from("invitations")
-                .select("companies(name)")
+                .select("email, companies(name)")
                 .eq("token", token)
                 .eq("status", "pending")
                 .gt("expires_at", new Date().toISOString())
                 .maybeSingle();
-            if (!cancelled) setInviteCompanyName((data as any)?.companies?.name ?? null);
+            if (!cancelled && data) {
+                setInviteCompanyName((data as any)?.companies?.name ?? null);
+                if (data.email) {
+                    setEmail(data.email);
+                }
+            }
         })();
         return () => { cancelled = true; };
     }, [inviteCode]);
@@ -170,7 +175,13 @@ function RegisterForm() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="your@email.com"
-                                className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50/50 text-slate-700 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/20 focus:bg-white transition-all placeholder:text-slate-300"
+                                readOnly={!!inviteCompanyName}
+                                className={cn(
+                                    "w-full px-4 py-3 rounded-xl border border-slate-100 text-sm font-bold transition-all placeholder:text-slate-300",
+                                    inviteCompanyName
+                                        ? "bg-slate-100 text-slate-400 cursor-not-allowed select-none"
+                                        : "bg-slate-50/50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-400/20 focus:bg-white"
+                                )}
                             />
                         </div>
 
