@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { ScatterPlot, colors, getDotColor, getMovementDirection } from "@/components/dashboard/ScatterPlot";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { AreaChart, Lightbulb, TrendingUp, Users, Target, Shield, HelpCircle } from "lucide-react";
+import { AreaChart, Lightbulb, TrendingUp, Users, Target, Shield, HelpCircle, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { getWeatherFromPulse } from "@/lib/logic/kpi-engine";
 
@@ -171,6 +171,19 @@ export function MatrixSection({
         return axisScatterData.filter(d => !excludedAxisIds.includes(d.id));
     }, [axisScatterData, excludedAxisIds]);
 
+    // VC2: タイムラプス/軌跡は履歴が十分に溜まるまで隠す（データが薄いと過去月が空で「幽霊矢印」になるため）。
+    // pulse または head の実データがある月数を数え、閾値未満ならタイムラプス・軌跡UIを非表示にする。
+    const MIN_MONTHS_FOR_TIMELAPSE = 12;
+    const countMonthsWithData = (items: any[]) => {
+        let count = 0;
+        for (let i = 0; i < 13; i++) {
+            if (items.some((d) => ((d.pulseHistory?.[i] ?? 0) > 0) || ((d.headHistory?.[i] ?? 0) > 0))) count++;
+        }
+        return count;
+    };
+    const deptHasHistory = useMemo(() => countMonthsWithData(deptScatterData) >= MIN_MONTHS_FOR_TIMELAPSE, [deptScatterData]);
+    const axisHasHistory = useMemo(() => countMonthsWithData(axisScatterData) >= MIN_MONTHS_FOR_TIMELAPSE, [axisScatterData]);
+
     const displayDeptSizeKpiName = deptSizeBase === "labor" ? "人件費の大きさ" : sizeKpiName;
     const displayAxisSizeKpiName = axisSizeBase === "labor" ? "人件費の大きさ" : sizeKpiName;
 
@@ -188,14 +201,14 @@ export function MatrixSection({
                             <h3 className="text-sm font-black text-slate-800 tracking-tight">部署マトリックス</h3>
                             <span className="text-[8px] bg-emerald-50 text-emerald-600 font-bold px-2 py-0.5 rounded-full border border-emerald-100">規模 × 成果 × 健康</span>
                         </div>
-                        <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">X: メンバー数 ｜ Y: {deptYAxisMode === "kpi" ? "KPI達成率" : "一人当たり生産性"} ｜ 色: 組織体温</p>
+                        <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">X: メンバー数 ｜ Y: {deptYAxisMode === "kpi" ? "KPI達成率" : "一人当たり生産性"} ｜ 色: 組織体温（灰 = 体温未取得）</p>
                     </div>
                 </div>
 
                 {/* 自動結論 ＆ AI解説テキスト */}
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs leading-relaxed space-y-2">
                     <div className="flex items-start gap-2">
-                        <span className="text-sm shrink-0">📊</span>
+                        <BarChart3 className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                         <div>
                             <p className="font-black text-slate-800">{deptAutoInsight}</p>
                             {/* AIの matrix_insight.dept 解釈テキストを併置 (過去データ互換対応) */}
@@ -220,8 +233,8 @@ export function MatrixSection({
                                 isProduct={false}
                                 sizeKpiName={displayDeptSizeKpiName}
                                 yAxisMode={deptYAxisMode}
-                                month={deptMonth}
-                                showTrajectory={showDeptTrajectory}
+                                month={deptHasHistory ? deptMonth : "default"}
+                                showTrajectory={deptHasHistory && showDeptTrajectory}
                             />
                         </div>
 
@@ -252,11 +265,12 @@ export function MatrixSection({
                                 </div>
                             </div>
 
-                            {/* タイムラプス */}
+                            {/* タイムラプス（履歴12ヶ月分が溜まるまでは非表示：幽霊矢印の防止 / VC2） */}
+                            {deptHasHistory && (
                             <div className="space-y-1.5">
                                 <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">タイムラプス:</span>
                                 <div className="flex flex-wrap gap-1 bg-slate-100/60 p-1 rounded-xl">
-                                    {[{ id: "default", label: "現在" }, { id: "1m", label: "1m前" }, { id: "3m", label: "3m前" }, { id: "6m", label: "6m前" }, { id: "12m", label: "1年前" }].map((t) => (
+                                    {[{ id: "default", label: "現在" }, { id: "1m", label: "1ヶ月前" }, { id: "3m", label: "3ヶ月前" }, { id: "6m", label: "6ヶ月前" }, { id: "12m", label: "12ヶ月前" }].map((t) => (
                                         <button
                                             key={t.id}
                                             onClick={() => setDeptMonth(t.id)}
@@ -270,9 +284,11 @@ export function MatrixSection({
                                     ))}
                                 </div>
                             </div>
+                            )}
 
                             {/* 軌跡とサイズ重視 */}
                             <div className="flex flex-col gap-2">
+                                {deptHasHistory && (
                                 <label className="flex items-center gap-2 cursor-pointer text-[11px] font-black text-slate-500 uppercase tracking-wider select-none">
                                     <input
                                         type="checkbox"
@@ -282,6 +298,7 @@ export function MatrixSection({
                                     />
                                     <span>軌跡（動く地図）を表示</span>
                                 </label>
+                                )}
 
                                 {hasLaborData && (
                                     <div className="flex items-center justify-between border-t border-slate-100/80 pt-2 mt-1">
@@ -393,14 +410,14 @@ export function MatrixSection({
                                 <h3 className="text-sm font-black text-slate-800 tracking-tight">{secondaryAxisName}マトリックス</h3>
                                 <span className="text-[8px] bg-teal-50 text-teal-600 font-bold px-2 py-0.5 rounded-full border border-teal-100">規模 × 成果 × 健康</span>
                             </div>
-                            <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">X: 領域人数 ｜ Y: {axisYAxisMode === "kpi" ? "KPI達成率" : "一人当たり生産性"} ｜ 色: 組織体温</p>
+                            <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">X: 領域人数 ｜ Y: {axisYAxisMode === "kpi" ? "KPI達成率" : "一人当たり生産性"} ｜ 色: 組織体温（灰 = 体温未取得）</p>
                         </div>
                     </div>
 
                     {/* 自動結論 ＆ AI解説テキスト */}
                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs leading-relaxed space-y-2">
                         <div className="flex items-start gap-2">
-                            <span className="text-sm shrink-0">🎯</span>
+                            <Target className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                             <div>
                                 <p className="font-black text-slate-800">{axisAutoInsight}</p>
                                 {/* AIの matrix_insight.axis 解釈テキストを併置 (過去データ互換対応) */}
@@ -424,8 +441,8 @@ export function MatrixSection({
                                 isProduct={true}
                                 sizeKpiName={displayAxisSizeKpiName}
                                 yAxisMode={axisYAxisMode}
-                                month={axisMonth}
-                                showTrajectory={showAxisTrajectory}
+                                month={axisHasHistory ? axisMonth : "default"}
+                                showTrajectory={axisHasHistory && showAxisTrajectory}
                             />
                         </div>
 
@@ -456,11 +473,12 @@ export function MatrixSection({
                                 </div>
                             </div>
 
-                            {/* タイムラプス */}
+                            {/* タイムラプス（履歴12ヶ月分が溜まるまでは非表示：幽霊矢印の防止 / VC2） */}
+                            {axisHasHistory && (
                             <div className="space-y-1.5">
                                 <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">タイムラプス:</span>
                                 <div className="flex flex-wrap gap-1 bg-slate-100/60 p-1 rounded-xl">
-                                    {[{ id: "default", label: "現在" }, { id: "1m", label: "1m前" }, { id: "3m", label: "3m前" }, { id: "6m", label: "6m前" }, { id: "12m", label: "1年前" }].map((t) => (
+                                    {[{ id: "default", label: "現在" }, { id: "1m", label: "1ヶ月前" }, { id: "3m", label: "3ヶ月前" }, { id: "6m", label: "6ヶ月前" }, { id: "12m", label: "12ヶ月前" }].map((t) => (
                                         <button
                                             key={t.id}
                                             onClick={() => setAxisMonth(t.id)}
@@ -474,9 +492,11 @@ export function MatrixSection({
                                     ))}
                                 </div>
                             </div>
+                            )}
 
                             {/* 軌跡とサイズ重視 */}
                             <div className="flex flex-col gap-2">
+                                {axisHasHistory && (
                                 <label className="flex items-center gap-2 cursor-pointer text-[11px] font-black text-slate-500 uppercase tracking-wider select-none">
                                     <input
                                         type="checkbox"
@@ -486,6 +506,7 @@ export function MatrixSection({
                                     />
                                     <span>軌跡（動く地図）を表示</span>
                                 </label>
+                                )}
 
                                 {hasLaborData && (
                                     <div className="flex items-center justify-between border-t border-slate-100/80 pt-2 mt-1">
