@@ -33,11 +33,39 @@ export type Block =
   /** 関連データ・連携チップ群（TECH STACK 相当） */
   | { type: "chips"; label?: string; items: string[] };
 
+/**
+ * 左パネルに描画するビジュアル。
+ * 指定があるスライドは、ゴースト番号＋タイトル再掲の代わりに図解を表示する。
+ * （SlideVisuals.tsx でレンダリング。白系配色・静的CSSのみ）
+ */
+export type Visual =
+  | {
+      kind: "quadrant";
+      xLabel: string;
+      yLabel: string;
+      /** 表示順: 左上 → 右上 → 左下 → 右下 */
+      cells: { sub: string; title: string; emph?: boolean }[];
+    }
+  | { kind: "bigstat"; value: string; label: string; sub?: string }
+  | { kind: "statgrid"; items: { value: string; label: string }[] }
+  | {
+      kind: "bars";
+      items: { label: string; value: number; highlight?: boolean }[];
+      max?: number;
+      suffix?: string;
+      note?: string;
+    }
+  | { kind: "flow"; inputs: { tag: string; label: string }[]; core: string; output: string }
+  | { kind: "cycle"; items: { tag: string; label: string; desc?: string }[]; note?: string }
+  | { kind: "brand"; title: string; sub?: string };
+
 export interface Slide {
   kicker: string;
   title: string;
   /** 左パネルの実画像URL（未指定時はグラデーション＋アイコンのプレースホルダー） */
   image?: string;
+  /** 左パネルの図解（image より優先度低・未指定時はゴースト番号） */
+  visual?: Visual;
   blocks: Block[];
 }
 
@@ -51,6 +79,7 @@ export interface Deck {
   subtitle: string;
   tagline: string;
   accent: string;
+  /** lucide-react のアイコン名（DeckHub の DECK_ICONS でコンポーネントに解決） */
   icon: string;
   slides: Slide[];
 }
@@ -68,7 +97,7 @@ const executive: Deck = {
   subtitle: "組織に体温を。",
   tagline: "数字の裏側にある「組織の状態」を、経営の意思決定に",
   accent: "#38B2AC",
-  icon: "📊",
+  icon: "BarChart3",
   slides: [
     {
       kicker: "01 ／ 課題提起",
@@ -119,6 +148,17 @@ const executive: Deck = {
     {
       kicker: "03 ／ 見えること①",
       title: "「組織の温度」と「KPI」を重ねると、打ち手が変わる",
+      visual: {
+        kind: "quadrant",
+        xLabel: "KPI（成果） → 高",
+        yLabel: "組織の温度 → 高",
+        cells: [
+          { sub: "温度 高 × KPI 低", title: "打ち手を見直す" },
+          { sub: "温度 高 × KPI 高", title: "強みを横展開" },
+          { sub: "温度 低 × KPI 低", title: "立て直しが先" },
+          { sub: "温度 低 × KPI 高", title: "疲弊のサイン", emph: true },
+        ],
+      },
       blocks: [
         {
           type: "table",
@@ -141,6 +181,17 @@ const executive: Deck = {
     {
       kicker: "04 ／ 見えること②",
       title: "経営が最も知りたいのは、部署ごとの「生産性」",
+      visual: {
+        kind: "bars",
+        max: 140,
+        items: [
+          { label: "営業1課（5名）", value: 132, highlight: true },
+          { label: "CS部（5名）", value: 96 },
+          { label: "開発部（5名）", value: 88 },
+          { label: "営業2課（5名）", value: 74, highlight: true },
+        ],
+        note: "一人当たり生産性の対目標比（イメージ）。同じ人数でも、部署の成果はここまで変わる。",
+      },
       blocks: [
         {
           type: "lead",
@@ -164,25 +215,39 @@ const executive: Deck = {
     {
       kicker: "05 ／ エビデンス",
       title: "組織の状態は、業績を動かす「経営変数」です",
+      visual: {
+        kind: "statgrid",
+        items: [
+          { value: "+18%", label: "生産性（上位 vs 下位組織）" },
+          { value: "+23%", label: "収益性" },
+          { value: "▲81%", label: "欠勤率" },
+          { value: "8%", label: "日本のエンゲージメント率" },
+        ],
+      },
       blocks: [
         {
-          type: "metrics",
-          items: [
-            { value: "+18%", label: "生産性（上位 vs 下位組織）" },
-            { value: "+23%", label: "収益性" },
-            { value: "▲81%", label: "欠勤率" },
-            { value: "8%", label: "日本のエンゲージメント率（世界最低水準）" },
-          ],
+          type: "lead",
+          text: "組織の状態が良い企業群は、業績で明確に上回る——これは感覚論ではなく、統計です。",
         },
         {
           type: "paragraph",
-          text: "Gallupの大規模なメタ分析によれば、組織の状態が良好な企業群は、そうでない企業群に比べ生産性・収益性で明確に上回ります。一方、日本のエンゲージメント率は世界最低水準にあり、裏を返せば、ここには大きな改善余地が残されています。",
+          text: "Gallupの大規模なメタ分析によれば、組織の状態が良好な企業群は、そうでない企業群に比べ生産性・収益性で明確に上回ります。一方、日本のエンゲージメント率は8%と世界最低水準。裏を返せば、日本企業にはここに世界で最も大きな改善余地が残されています。",
+        },
+        {
+          type: "callout",
+          tone: "accent",
+          text: "「組織の状態」は福利厚生の話ではなく、生産性・収益性を直接動かす経営変数です。測らない理由は、ありません。",
         },
       ],
     },
     {
       kicker: "06 ／ ビジョン",
       title: "Signs AI のビジョン：組織に体温を。",
+      visual: {
+        kind: "brand",
+        title: "組織に体温を。",
+        sub: "数字と熱量を、同じ画面で。",
+      },
       blocks: [
         {
           type: "lead",
@@ -201,6 +266,16 @@ const executive: Deck = {
     {
       kicker: "07 ／ 仕組み",
       title: "Signs AI とは何か——3つのデータの統合",
+      visual: {
+        kind: "flow",
+        inputs: [
+          { tag: "KPI", label: "定量データ" },
+          { tag: "Voice", label: "現場の声" },
+          { tag: "Policy", label: "経営方針" },
+        ],
+        core: "AI 統合分析",
+        output: "「なぜ」と「次の一手」",
+      },
       blocks: [
         {
           type: "steps",
@@ -282,37 +357,43 @@ const executive: Deck = {
     {
       kicker: "10 ／ 運用",
       title: "運用は、無理なく続けられる設計です",
+      visual: {
+        kind: "cycle",
+        items: [
+          { tag: "月初", label: "KPI入力", desc: "前月実績を記録（数分）" },
+          { tag: "月中", label: "ボイスチェック配布", desc: "匿名回答・3〜5分" },
+          { tag: "月末", label: "AI診断", desc: "各層向けの提言を自動生成" },
+        ],
+        note: "毎月くり返す・月1〜2時間",
+      },
       blocks: [
         {
-          type: "steps",
+          type: "lead",
+          text: "月初にKPIを入れ、月中に現場へアンケートを配り、月末にAIが診断する。それだけです。",
+        },
+        {
+          type: "bullets",
           items: [
-            {
-              tag: "STEP 1",
-              title: "KPI入力",
-              desc: "月次実績をWeb画面またはスプレッドシートで記録（数分）",
-            },
-            {
-              tag: "STEP 2",
-              title: "アンケート配布",
-              desc: "URLを現場へ配布。回答は匿名で数分",
-            },
-            {
-              tag: "STEP 3",
-              title: "AI診断",
-              desc: "「集計を実行」で、各層向けの提言が自動で生成されます",
-            },
+            { label: "入力の負担", text: "KPIはWeb画面またはスプレッドシートで数分。回答は匿名で3〜5分" },
+            { label: "分析の負担", text: "ゼロ。「集計を実行」を押せば、各層向けの提言まで自動生成" },
+            { label: "続ける工夫", text: "Slack連携で回答リマインドと診断共有まで自動化" },
           ],
         },
         {
           type: "callout",
           tone: "accent",
-          text: "月あたりおよそ1〜2時間。専任の担当者がいなくても、継続的に組織の状態を捉えられます。",
+          text: "月あたりおよそ1〜2時間。専任の担当者がいなくても、継続的に組織の状態を捉えられます。組織診断は「続けられるか」がすべてです。",
         },
       ],
     },
     {
       kicker: "11 ／ Closing",
       title: "経営の皆様へ",
+      visual: {
+        kind: "brand",
+        title: "その組織は、成果を出せる状態にあるか。",
+        sub: "Signs AI — 組織に体温を。",
+      },
       blocks: [
         {
           type: "lead",
@@ -341,7 +422,7 @@ const hr: Deck = {
   subtitle: "組織を強くする人事へ。",
   tagline: "人事の貢献を、組織の変化として可視化する",
   accent: "#4F46E5",
-  icon: "👥",
+  icon: "Users",
   slides: [
     {
       kicker: "01 ／ 課題",
@@ -417,6 +498,17 @@ const hr: Deck = {
     {
       kicker: "05 ／ 経営と同じ言語",
       title: "「組織の温度」と「KPI」で、人事の打ち手を決める",
+      visual: {
+        kind: "quadrant",
+        xLabel: "KPI（成果） → 高",
+        yLabel: "組織の温度 → 高",
+        cells: [
+          { sub: "温度 高 × KPI 低", title: "業務設計を支援" },
+          { sub: "温度 高 × KPI 高", title: "採用・育成の基準に" },
+          { sub: "温度 低 × KPI 低", title: "組織開発が先" },
+          { sub: "温度 低 × KPI 高", title: "離職予防を急ぐ", emph: true },
+        ],
+      },
       blocks: [
         {
           type: "table",
@@ -457,25 +549,44 @@ const hr: Deck = {
     {
       kicker: "07 ／ エビデンス",
       title: "組織の状態は、会社の利益に直結する",
+      visual: {
+        kind: "statgrid",
+        items: [
+          { value: "+23%", label: "収益性（上位 vs 下位組織）" },
+          { value: "+18%", label: "生産性" },
+          { value: "▲43%", label: "離職率（最大）" },
+          { value: "8%", label: "日本のエンゲージメント率" },
+        ],
+      },
       blocks: [
         {
-          type: "metrics",
-          items: [
-            { value: "+23%", label: "収益性（上位 vs 下位組織）" },
-            { value: "+18%", label: "生産性" },
-            { value: "▲43%", label: "離職率（最大）" },
-            { value: "8%", label: "日本のエンゲージメント率（世界最低水準）" },
-          ],
+          type: "lead",
+          text: "組織を強くする人事の仕事は、そのまま経営の利益に結びついています。",
         },
         {
           type: "paragraph",
-          text: "Gallupの大規模なメタ分析によれば、組織の状態が良好な企業群は、収益性・生産性で明確に上回り、離職率は大きく下がります。組織を強くする人事の仕事は、そのまま経営の利益に結びついています。",
+          text: "Gallupの大規模なメタ分析によれば、組織の状態が良好な企業群は、収益性・生産性で明確に上回り、離職率は大きく下がります。離職を1人防ぐだけで、採用・育成コストの数百万円が守られます。",
+        },
+        {
+          type: "callout",
+          tone: "accent",
+          text: "「エンゲージメント向上」を福利厚生の言葉ではなく、利益の言葉で経営に語れるようになります。",
         },
       ],
     },
     {
       kicker: "08 ／ 仕組み",
       title: "声・数字・方針の複雑さを、AIが読み解く",
+      visual: {
+        kind: "flow",
+        inputs: [
+          { tag: "Voice", label: "現場の声" },
+          { tag: "KPI", label: "定量データ" },
+          { tag: "Policy", label: "会社の方針" },
+        ],
+        core: "AI 統合分析",
+        output: "次に手を打つべき場所",
+      },
       blocks: [
         {
           type: "steps",
@@ -507,45 +618,70 @@ const hr: Deck = {
     {
       kicker: "09 ／ 運用",
       title: "運用は、無理なく続けられる設計です",
+      visual: {
+        kind: "cycle",
+        items: [
+          { tag: "月初", label: "KPI入力", desc: "前月実績を記録（数分）" },
+          { tag: "月中", label: "ボイスチェック配布", desc: "匿名回答・3〜5分" },
+          { tag: "月末", label: "AI診断", desc: "診断と提言を自動生成" },
+        ],
+        note: "毎月くり返す・月1〜2時間",
+      },
       blocks: [
         {
-          type: "steps",
+          type: "lead",
+          text: "サーベイ疲れを起こさない。それが継続的な組織観測の絶対条件です。",
+        },
+        {
+          type: "bullets",
           items: [
-            { tag: "月初", title: "KPI入力", desc: "前月の売上・成果などを記録（数分）" },
-            { tag: "月中", title: "アンケート配布", desc: "URLを配布。回答は匿名で3〜5分" },
-            { tag: "月末", title: "AI診断", desc: "集計を実行すると、診断と提言が生成されます" },
+            { label: "回答者", text: "匿名・3〜5分。設問は標準11問＋自社カスタム最大3問" },
+            { label: "運用者", text: "KPI入力とURL配布のみ。リマインドはSlack連携で自動化" },
+            { label: "分析", text: "ゼロ。「集計を実行」で診断と提言まで自動生成" },
           ],
         },
         {
           type: "callout",
           tone: "accent",
-          text: "運用工数は月あたりおよそ1〜2時間。専任の担当者がいなくても、継続的に組織の状態を捉えられます。",
+          text: "運用工数は月あたりおよそ1〜2時間。専任の担当者がいなくても、人事が一人でも回せる設計です。",
         },
       ],
     },
     {
       kicker: "10 ／ はじめ方",
       title: "まずは、自社の組織の体温を測ることから",
+      visual: {
+        kind: "bigstat",
+        value: "70日間",
+        label: "無料トライアル",
+        sub: "Standard全機能・カード登録不要",
+      },
       blocks: [
         {
           type: "table",
           headers: ["プラン", "月額", "こんな段階に"],
           rows: [
-            ["Free（30日間）", "無料", "まず組織の現状を知りたい"],
-            ["Standard", "5万円", "部署ごとに課題を深掘りしたい"],
-            ["Pro", "10万円", "全社で経営と連動させたい"],
+            ["Free トライアル", "0円（70日間）", "Standard全機能をまるごと体験"],
+            ["Team", "3万円", "小規模チームでまず始めたい"],
+            ["Standard", "10万円", "部署ごとに課題を深掘りしたい"],
+            ["Pro", "30万円〜", "人件費ROIまで、経営と連動させたい"],
           ],
         },
         {
           type: "callout",
           tone: "accent",
-          text: "まずはFreeで、現状を可視化するところから。数ヶ月続けることで、どこが冷えているか、どの施策が効いたかが、数字で見えてきます。",
+          text: "まずは70日間のトライアルで、現状を可視化するところから。2〜3回の月次サイクルを回せば、どこが冷えているか、どの施策が効いたかが、数字で見えてきます。",
         },
       ],
     },
     {
       kicker: "11 ／ Closing",
       title: "人事は、経営の利益に最も近い部門です",
+      visual: {
+        kind: "brand",
+        title: "人事を、戦略部門へ。",
+        sub: "Signs AI — 組織に体温を。",
+      },
       blocks: [
         {
           type: "lead",
@@ -574,7 +710,7 @@ const whitepaper: Deck = {
   subtitle: "定型業務は消える。組織を動かす人事は残る。",
   tagline: "Gallup・経済産業省・矢野経済研究所ほか一次データに基づく調査レポート",
   accent: "#0EA5E9",
-  icon: "📄",
+  icon: "FileText",
   slides: [
     {
       kicker: "01 ／ 序論",
@@ -599,19 +735,23 @@ const whitepaper: Deck = {
     {
       kicker: "02 ／ 世界の危機",
       title: "従業員エンゲージメントは、世界規模で後退している",
+      visual: {
+        kind: "statgrid",
+        items: [
+          { value: "20%", label: "世界の従業員エンゲージメント率（2025）" },
+          { value: "4,380億ドル", label: "低下による世界経済の損失（推計）" },
+          { value: "34%", label: "「人生で開花している」と答えた人" },
+          { value: "12年で2度目", label: "グローバル指標が前年から下落" },
+        ],
+      },
       blocks: [
         {
-          type: "metrics",
-          items: [
-            { value: "20%", label: "世界の従業員エンゲージメント率（2025）" },
-            { value: "438億$", label: "エンゲージメント低下による世界経済の損失" },
-            { value: "34%", label: "「人生で開花している」と答えた人の割合" },
-            { value: "12年で2度目", label: "グローバル指標が前年から下落" },
-          ],
+          type: "lead",
+          text: "世界の従業員エンゲージメント率は23%→21%→20%と低下。過去12年で2度目の前年割れだ。",
         },
         {
           type: "paragraph",
-          text: "世界の従業員エンゲージメント率は23%→21%→20%と低下し、過去12年で2度目の前年割れを記録。この低下による世界経済への損失は438億ドルと試算される。マネージャー層の落ち込みが特に顕著だ。",
+          text: "この低下による世界経済への損失は4,380億ドル（約65兆円）と試算される。とりわけマネージャー層の落ち込みが顕著で、チームを支える中間層から先に消耗が進んでいる。",
         },
         {
           type: "callout",
@@ -623,19 +763,20 @@ const whitepaper: Deck = {
     {
       kicker: "03 ／ 日本の現在地",
       title: "日本のエンゲージメント率は、世界最低水準",
+      visual: {
+        kind: "bigstat",
+        value: "8%",
+        label: "日本の従業員エンゲージメント率",
+        sub: "世界平均 20%・東アジア平均 18%",
+      },
       blocks: [
         {
-          type: "metrics",
-          items: [
-            { value: "8%", label: "日本の従業員エンゲージメント率" },
-            { value: "18%", label: "東アジア地域の平均" },
-            { value: "39%", label: "前日に強いストレスを経験した人" },
-            { value: "31%", label: "「人生で開花している」（世界34%）" },
-          ],
+          type: "lead",
+          text: "日本のエンゲージメント率は8%。世界平均20%・東アジア18%を大きく下回る、世界最低水準だ。",
         },
         {
           type: "paragraph",
-          text: "日本のエンゲージメント率は8%で、世界平均20%・東アジア18%を大きく下回る最低水準。ストレス・ウェルビーイング指標も世界平均より悪い。裏を返せば、日本企業にはエンゲージメント改善の伸びしろが世界で最も大きい。",
+          text: "前日に強いストレスを経験した人は39%、「人生で開花している」と答えた人は31%（世界34%）と、ストレス・ウェルビーイング指標も世界平均より悪い。裏を返せば、日本企業にはエンゲージメント改善の伸びしろが世界で最も大きく残されている。",
         },
         {
           type: "callout",
@@ -647,6 +788,17 @@ const whitepaper: Deck = {
     {
       kicker: "04 ／ 影響度マップ",
       title: "人事5業務のAI影響度マップ（2026年版）",
+      visual: {
+        kind: "bars",
+        items: [
+          { label: "労務管理", value: 85 },
+          { label: "採用業務", value: 75 },
+          { label: "人材育成・研修", value: 50 },
+          { label: "評価・配置・異動", value: 40 },
+          { label: "組織開発・人事戦略", value: 10, highlight: true },
+        ],
+        note: "AI影響度（代替されやすさ）。組織開発だけが、AIに置き換わらない。",
+      },
       blocks: [
         {
           type: "table",
@@ -689,6 +841,12 @@ const whitepaper: Deck = {
     {
       kicker: "06 ／ 残る業務",
       title: "組織開発という、価値の源泉（AI影響度10%）",
+      visual: {
+        kind: "bigstat",
+        value: "10%",
+        label: "組織開発・人事戦略のAI影響度",
+        sub: "5業務の中で、最もAIに代替されない領域",
+      },
       blocks: [
         {
           type: "lead",
@@ -708,19 +866,23 @@ const whitepaper: Deck = {
     {
       kicker: "07 ／ 構造データ",
       title: "440万人余剰と339万人不足——橋を架けるのは人事",
+      visual: {
+        kind: "statgrid",
+        items: [
+          { value: "440万人", label: "2040年 事務系の余剰（経産省）" },
+          { value: "339万人", label: "2040年 AI・データ人材の不足" },
+          { value: "5,000人", label: "みずほFG 配置転換（10年スパン）" },
+          { value: "16万人", label: "事務派遣大手3社の育成計画" },
+        ],
+      },
       blocks: [
         {
-          type: "metrics",
-          items: [
-            { value: "440万人", label: "2040年 事務系の余剰（経産省）" },
-            { value: "339万人", label: "2040年 AI・データ人材の不足" },
-            { value: "5,000人", label: "みずほFG 配置転換（10年スパン）" },
-            { value: "16万人", label: "事務派遣大手3社の「AIを使う側」育成計画" },
-          ],
+          type: "lead",
+          text: "余剰と不足は表裏一体。リスキリングで橋を架けられる距離にある。",
         },
         {
           type: "paragraph",
-          text: "経産省「未来人材ビジョン」は2040年に事務系440万人余剰、AI・データ人材339万人不足と推計。両者は表裏一体で、リスキリングで橋を架けられる距離だ。みずほFGの5,000人は即時リストラではなく10年スパンの配置転換であり、その配置先設計・リスキリング・新ポジション創出こそ人事の仕事である。",
+          text: "経産省「未来人材ビジョン」は2040年に事務系440万人余剰、AI・データ人材339万人不足と推計する。みずほFGの5,000人は即時リストラではなく10年スパンの配置転換であり、その配置先設計・リスキリング・新ポジション創出こそ人事の仕事である。",
         },
         {
           type: "callout",
@@ -821,6 +983,11 @@ const whitepaper: Deck = {
     {
       kicker: "12 ／ Signs AI",
       title: "このレポートが示した課題を、解決するために。",
+      visual: {
+        kind: "brand",
+        title: "組織に体温を。",
+        sub: "Signs AI — 70日間無料トライアル",
+      },
       blocks: [
         {
           type: "lead",
@@ -872,7 +1039,7 @@ const featureTour: Deck = {
   subtitle: "組織の体温を、すべての機能で。",
   tagline: "KPI・現場の声・経営方針を統合する10の機能",
   accent: "#F43F5E",
-  icon: "🧩",
+  icon: "Blocks",
   slides: [
     {
       kicker: "01 ／ KPI管理",
@@ -959,6 +1126,17 @@ const featureTour: Deck = {
     {
       kicker: "03 ／ 可視化",
       title: "マトリックス分析（温度×KPI）",
+      visual: {
+        kind: "quadrant",
+        xLabel: "KPI達成率 → 高",
+        yLabel: "組織の温度 → 高",
+        cells: [
+          { sub: "温度 高 × KPI 低", title: "打ち手を見直す" },
+          { sub: "温度 高 × KPI 高", title: "強みを横展開" },
+          { sub: "温度 低 × KPI 低", title: "立て直しが先" },
+          { sub: "温度 低 × KPI 高", title: "疲弊のサイン", emph: true },
+        ],
+      },
       blocks: [
         {
           type: "meta",
@@ -1041,6 +1219,16 @@ const featureTour: Deck = {
     {
       kicker: "05 ／ AI診断",
       title: "AI組織診断・アクション",
+      visual: {
+        kind: "flow",
+        inputs: [
+          { tag: "KPI", label: "定量データ" },
+          { tag: "Voice", label: "現場の声" },
+          { tag: "Policy", label: "経営方針" },
+        ],
+        core: "AI 統合分析",
+        output: "役割別の提言",
+      },
       blocks: [
         {
           type: "meta",
