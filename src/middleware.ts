@@ -13,14 +13,18 @@ export async function middleware(request: NextRequest) {
     const hostname = request.headers.get("host");
 
     // ドメインを統一（Canonical Redirect）
-    // 本番環境かつ、プライマリドメイン(NEXT_PUBLIC_CANONICAL_DOMAIN)以外からのアクセスの場合に実施
+    // 本番デプロイのみで、プライマリドメイン(NEXT_PUBLIC_CANONICAL_DOMAIN)以外からのアクセス時に実施。
+    // 判定は NODE_ENV ではなく VERCEL_ENV を使う。Vercelのプレビュービルドも NODE_ENV=production で
+    // 動くため、NODE_ENV で判定すると全プレビューURL(*.vercel.app)が本番へ301転送されプレビューが
+    // 機能しなくなる。VERCEL_ENV==='production' は本番デプロイのみ。加えて *.vercel.app は明示除外する。
     const canonicalDomain = process.env.NEXT_PUBLIC_CANONICAL_DOMAIN;
     if (
-        process.env.NODE_ENV === "production" && 
+        process.env.VERCEL_ENV === "production" &&
         canonicalDomain &&
-        hostname && 
+        hostname &&
         hostname !== canonicalDomain &&
-        !hostname.includes("localhost")
+        !hostname.includes("localhost") &&
+        !hostname.endsWith(".vercel.app")
     ) {
         return NextResponse.redirect(`https://${canonicalDomain}${pathname}${request.nextUrl.search}`, 301);
     }
