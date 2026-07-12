@@ -124,7 +124,9 @@ export function useSettingsData() {
                 let count = 0;
                 deptKpis.forEach(def => {
                     const rec = monthRecs.find(r => r.kpi_definition_id === def.id);
-                    if (rec && rec.target_value !== null) {
+                    // rec.value が null（実績未入力）の月は「未入力」として集計から除外する。
+                    // 0として計算すると達成率0%が紛れ込み、平均が不当に下がる。
+                    if (rec && rec.value !== null && rec.target_value !== null) {
                         const ach = calculateAchievementRate(rec.value, rec.target_value, def.is_higher_better !== false);
                         if (ach !== null) { totalAch += ach; count++; }
                     }

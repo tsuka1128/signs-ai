@@ -1,6 +1,6 @@
 "use client";
 
-import { TrendingUp, TrendingDown, Brain, Target, Thermometer, Shield, AlertTriangle, Lightbulb } from "lucide-react";
+import { TrendingUp, TrendingDown, Brain, Target, Thermometer, Shield, AlertTriangle, Lightbulb, Rocket } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { Badge } from "@/components/ui/Badge";
 
@@ -17,13 +17,19 @@ interface ReportSectionProps {
     sections: DeepReportSection[];
     generatedAt?: string;
     leadMessage?: string;
+    /** AI分析が一度でも実行済みか。false の場合は各セクションの偽ローディング文言の代わりに実行導線を出す */
+    hasReport?: boolean;
+    /** 現在のユーザーがAI分析の実行操作を行える権限か（管理者以上） */
+    canRunAnalyze?: boolean;
+    isAnalyzing?: boolean;
+    onRunAnalyze?: () => void;
 }
 
 /**
  * AI組織診断レポート セクション
  * ダッシュボードのメインエリアに直接レンダリングされる形式のレポート
  */
-export function ReportSection({ sections, generatedAt, leadMessage }: ReportSectionProps) {
+export function ReportSection({ sections, generatedAt, leadMessage, hasReport = true, canRunAnalyze = false, isAnalyzing = false, onRunAnalyze }: ReportSectionProps) {
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
             {/* Page Title / Header */}
@@ -35,7 +41,7 @@ export function ReportSection({ sections, generatedAt, leadMessage }: ReportSect
                     <div>
                         <h2 className="text-2xl font-black text-slate-900 tracking-tight">AI 組織診断レポート</h2>
                         <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
-                            AI詳細分析レポート — {generatedAt || "2026年4月度"}
+                            AI詳細分析レポート — {generatedAt || "未生成"}
                         </p>
                     </div>
                 </div>
@@ -44,6 +50,38 @@ export function ReportSection({ sections, generatedAt, leadMessage }: ReportSect
                 </div>
             </div>
 
+            {!hasReport ? (
+                /* 未実行時: 「分析中です...」という終わらない偽ローディングの代わりに、明確な実行導線を出す */
+                <div className="bg-white rounded-[32px] p-10 border border-slate-100 shadow-sm text-center space-y-5">
+                    <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto">
+                        <Brain className="w-7 h-7 text-slate-300" />
+                    </div>
+                    <div className="space-y-1.5">
+                        <h3 className="text-base font-black text-slate-800">AI組織診断はまだ実行されていません</h3>
+                        <p className="text-sm text-slate-500 font-medium max-w-md mx-auto leading-relaxed">
+                            KPI・ボイスチェック・組織方針のデータをもとに、総評から具体的な提言までをAIが生成します。
+                        </p>
+                    </div>
+                    {canRunAnalyze ? (
+                        <button
+                            onClick={onRunAnalyze}
+                            disabled={isAnalyzing}
+                            className={cn(
+                                "inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl font-black text-sm transition-all shadow-lg",
+                                isAnalyzing
+                                    ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+                                    : "bg-teal text-white hover:bg-teal/90 shadow-teal/20"
+                            )}
+                        >
+                            {isAnalyzing ? "分析を生成中..." : "今すぐAI分析を実行する"}
+                            {!isAnalyzing && <Rocket className="w-4 h-4" />}
+                        </button>
+                    ) : (
+                        <p className="text-xs text-slate-400 font-bold">実行は管理者にご依頼ください。</p>
+                    )}
+                </div>
+            ) : (
+            <>
             {/* Lead Message */}
             <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-teal/5 rounded-full -mr-16 -mt-16 blur-3xl transition-all group-hover:bg-teal/10" />
@@ -121,6 +159,8 @@ export function ReportSection({ sections, generatedAt, leadMessage }: ReportSect
                     </p>
                 </div>
             </div>
+            </>
+            )}
         </div>
     );
 }

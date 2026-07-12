@@ -312,6 +312,10 @@ export default function DashboardPage() {
                 {/* ②-2. 全社固定 ReportSection */}
                 <ReportSection
                   generatedAt={latestAi ? new Date(latestAi.created_at).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : ""}
+                  hasReport={!!latestAi}
+                  canRunAnalyze={userRole === "super_admin" || userRole === "admin"}
+                  isAnalyzing={state.isAnalyzing}
+                  onRunAnalyze={handlers.handleRunAnalyze}
                   sections={[
                     {
                       id: "executive-summary",
