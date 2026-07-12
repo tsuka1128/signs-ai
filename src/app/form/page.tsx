@@ -210,6 +210,11 @@ function SurveyFormContent() {
                     setHasAnswered(true);
                     return;
                 }
+                // トライアル期限切れの企業（submit_survey_response 内で拒否）
+                if (submitErr.message?.includes('trial_expired')) {
+                    toast.error("このアンケートの受付は現在停止されています。運営元にお問い合わせください。");
+                    return;
+                }
                 throw submitErr;
             }
 

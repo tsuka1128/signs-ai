@@ -1,71 +1,60 @@
 "use client";
 
 import React from "react";
-import { usePlanFeatures } from "@/hooks/usePlanFeatures";
-import { Lock, Rocket, MessageCircle } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { usePlanFeatures } from "@/hooks/usePlanFeatures";
+import { AlertTriangle, Rocket, MessageCircle } from "lucide-react";
 
+/**
+ * トライアル期限切れの通知バナー。
+ *
+ * 以前は全画面ロック（データの閲覧も含めて完全に停止）していたが、
+ * 実際の書き込み制限はDB(RLS)で行っており閲覧は引き続き可能なため、
+ * UIも「閲覧は可能・新規保存はできない」という実態に合わせ、
+ * 非ブロッキングのバナーに変更した。
+ */
 export function TrialGuard({ children }: { children: React.ReactNode }) {
     const { isTrial, trialDaysRemaining, loading, planName } = usePlanFeatures();
-    const [isVisible, setIsVisible] = useState(false);
 
-    // 期限切れかどうかの判定
     const isExpired = isTrial && (trialDaysRemaining === null || trialDaysRemaining <= 0);
 
-    useEffect(() => {
-        if (!isExpired || loading) return;
-        setIsVisible(true);
-    }, [isExpired, loading]);
+    if (loading || !isExpired) return <>{children}</>;
 
-    // 常時 children を表示（その上にガードを被せる）
-    // ただし、表示状態（isVisible）になるまではガードを出さない
-    if (!isVisible) return <>{children}</>;
-
-    // トライアル終了時の表示
     return (
-        <div className="relative">
-            {children}
-            <div className="fixed inset-0 z-[9999] bg-slate-900/40 backdrop-blur-xl flex items-center justify-center p-6 text-center animate-in fade-in duration-1000">
-            <div className="max-w-md w-full bg-white rounded-[40px] p-10 shadow-2xl relative overflow-hidden animate-in zoom-in duration-300">
-                {/* 装飾 */}
-                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-rose-500 via-amber-500 to-rose-500" />
-                
-                <div className="w-20 h-20 bg-rose-50 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-inner shadow-rose-200">
-                    <Lock className="w-10 h-10 text-rose-500" />
+        <div className="space-y-4">
+            <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="flex items-start gap-3 flex-1">
+                    <div className="w-9 h-9 rounded-xl bg-rose-100 flex items-center justify-center shrink-0">
+                        <AlertTriangle className="w-5 h-5 text-rose-500" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-black text-slate-800">
+                            トライアル期間（70日間）が終了しました
+                        </p>
+                        <p className="text-xs text-slate-500 font-bold mt-0.5 leading-relaxed">
+                            閲覧は引き続き可能ですが、KPI・アンケート回答など新規データの保存はできません。ご契約後、すぐに再開できます。
+                        </p>
+                    </div>
                 </div>
-
-                <h2 className="text-2xl font-black text-slate-800 mb-4 tracking-tight">
-                    トライアル期間（70日間）が終了しました
-                </h2>
-                <p className="text-sm text-slate-500 font-bold leading-relaxed mb-10">
-                    ご試用ありがとうございました。現在、データの閲覧および機能の利用が一時的に停止されています。
-                    引き続きご利用いただくには、プランのご契約が必要です。
-                </p>
-
-                <div className="space-y-4">
-                    <Link 
+                <div className="flex gap-2 shrink-0">
+                    <Link
                         href="/marketing#pricing"
-                        className="w-full py-4 bg-teal-500 text-white rounded-2xl font-black shadow-lg shadow-teal-200 hover:bg-teal-600 transition-all flex items-center justify-center gap-2 group"
+                        className="flex items-center gap-1.5 px-4 py-2.5 bg-teal-500 text-white rounded-xl font-black text-xs shadow-sm hover:bg-teal-600 transition-all whitespace-nowrap"
                     >
-                        <Rocket className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                        プラン契約の詳細を確認する
+                        <Rocket className="w-3.5 h-3.5" />
+                        プランを見る
                     </Link>
-                    {/* TODO: 本番用の問い合わせリンク（またはフォーム）を後で設定する */}
-                    <button 
-                        className="w-full py-4 bg-white border-2 border-slate-100 text-slate-600 rounded-2xl font-black hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
-                        onClick={() => window.open('/marketing#contact', '_blank')}
+                    <a
+                        href="mailto:info@signs-ai.jp?subject=トライアル終了後のプラン契約について"
+                        className="flex items-center gap-1.5 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-black text-xs hover:bg-slate-50 transition-all whitespace-nowrap"
                     >
-                        <MessageCircle className="w-5 h-5" />
-                        担当者に問い合わせる
-                    </button>
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        問い合わせる
+                    </a>
                 </div>
-
-                <p className="mt-8 text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                    Signs AI — {planName}
-                </p>
             </div>
-        </div>
+            {children}
+            <p className="sr-only">Signs AI — {planName}</p>
         </div>
     );
 }

@@ -15,7 +15,6 @@ const MatrixSection = dynamic(() => import("@/components/dashboard/sections/Matr
 const ActionSection = dynamic(() => import("@/components/dashboard/sections/ActionSection").then(m => ({ default: m.ActionSection })), { ssr: false });
 const SemanticSection = dynamic(() => import("@/components/dashboard/sections/SemanticSection").then(m => ({ default: m.SemanticSection })), { ssr: false });
 const ReportSection = dynamic(() => import("@/components/dashboard/sections/ReportSection").then(m => ({ default: m.ReportSection })), { ssr: false });
-import { TrialGuard } from "@/components/layout/TrialGuard";
 import { cn } from "@/lib/utils/index";
 import { Target, Thermometer, Shield, AlertTriangle, Lightbulb } from "lucide-react";
 import { PlanGate } from "@/components/ui/PlanGate";
@@ -159,7 +158,6 @@ export default function DashboardPage() {
       hasLaborData={state.hasLaborData}
       fullWidth={sec === "home"}
     >
-      <TrialGuard>
         <div className="space-y-10">
           {sec === "home" && (
             <div className="animate-fadeIn">
@@ -443,7 +441,6 @@ export default function DashboardPage() {
           )}
           </div>
         </div>
-      </TrialGuard>
     </AppLayout>
   );
 }

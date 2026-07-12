@@ -534,7 +534,7 @@ export default function KpiInputPage() {
             if (error.code === "23505") {
                 userMessage = "データが重複しています。ページを再読み込みしてから再度お試しください。";
             } else if (error.code === "42501") {
-                userMessage = "保存する権限がありません。管理者にお問い合わせください。";
+                userMessage = "保存できませんでした。権限が無いか、トライアル期間が終了している可能性があります。管理者にお問い合わせください。";
             }
 
             setSaveError(userMessage);
