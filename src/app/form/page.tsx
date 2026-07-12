@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { createClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils/index";
 import { toast } from "sonner";
+import { AlertTriangle } from "lucide-react";
 
 // 型定義
 interface Question {
@@ -51,6 +52,7 @@ function SurveyFormContent() {
     const [kpiImprovement, setKpiImprovement] = useState("");
     const [freeComment, setFreeComment] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [unansweredHighlight, setUnansweredHighlight] = useState<string | null>(null);
 
     // 回答状況のチェックとデータ取得
     useEffect(() => {
@@ -136,13 +138,17 @@ function SurveyFormContent() {
 
         if (!department) return toast.error("所属部署を選択してください。");
         if (Object.keys(answers).length < questions.length) {
-            // スクロールで未回答の設問に誘導
+            // スクロールで未回答の設問に誘導し、一時的に赤枠でハイライトする
             const firstUnanswered = questions.find(q => !answers[q.id]);
             if (firstUnanswered) {
                 const el = document.getElementById(`question-${firstUnanswered.id}`);
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setUnansweredHighlight(firstUnanswered.id);
+                    window.setTimeout(() => setUnansweredHighlight(null), 2000);
+                }
             }
-            return toast.success("すべての5段階評価に回答してください。");
+            return toast.error("すべての5段階評価に回答してください。");
         }
         if (kpiImprovement.length < 20) {
             return toast.error("Step 3は20文字以上で入力してください。");
@@ -156,28 +162,47 @@ function SurveyFormContent() {
             const dbRecordedMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
             // ── フィンガープリントの生成（匿名性を保ちつつ端末を識別） ──
-            const fingerprint = typeof window !== "undefined" 
-                ? btoa(unescape(encodeURIComponent(navigator.userAgent + screen.width + (screen.orientation?.type || "")))) 
+            // UA+画面幅だけでは同一機種の別デバイス（同モデルの社給スマホ等）が衝突するため、
+            // 端末ごとにランダムなsaltを1つ発行してlocalStorageに永続化し、混ぜ込む。
+            // salt自体は個人と紐付かないランダム値であり匿名性には影響しない。
+            const getDeviceSalt = () => {
+                const key = "signs_ai_device_salt";
+                let salt = localStorage.getItem(key);
+                if (!salt) {
+                    salt = typeof crypto !== "undefined" && crypto.randomUUID
+                        ? crypto.randomUUID()
+                        : `${Date.now()}-${Math.random()}`;
+                    localStorage.setItem(key, salt);
+                }
+                return salt;
+            };
+
+            const fingerprint = typeof window !== "undefined"
+                ? btoa(unescape(encodeURIComponent(navigator.userAgent + screen.width + (screen.orientation?.type || "") + getDeviceSalt())))
                 : null;
 
-            // 1. response 保存
-            const { data: response, error: rErr } = await supabase
-                .from('survey_responses')
-                .insert({
-                    company_id: resolvedCompanyId,
-                    department_id: department,
-                    axis_id: axisId || null,
-                    recorded_month: dbRecordedMonth,
-                    free_comment: freeComment,
-                    cross_dept_feedback: kpiImprovement, // KPI改善案をこちらに格納
-                    fingerprint: fingerprint
-                })
-                .select()
-                .single();
+            // response + answers を単一トランザクションのRPCで保存する。
+            // 片方だけ保存されて回答スコアが失われる（かつ再送信が「回答済み」と誤判定される）事故を防ぐ。
+            const answerPayload = Object.entries(answers).map(([qId, score]) => ({
+                question_id: qId,
+                score: score
+            }));
 
-            if (rErr) {
-                // 重複エラー（UNIQUE制約違反）の判定
-                if (rErr.code === '23505') {
+            const { error: submitErr } = await supabase.rpc('submit_survey_response', {
+                p_company_id: resolvedCompanyId,
+                p_department_id: department,
+                p_axis_id: axisId || null,
+                p_recorded_month: dbRecordedMonth,
+                p_free_comment: freeComment,
+                p_cross_dept_feedback: kpiImprovement, // KPI改善案をこちらに格納
+                p_fingerprint: fingerprint,
+                p_answers: answerPayload
+            });
+
+            if (submitErr) {
+                // 重複エラー（UNIQUE制約違反）の判定。トランザクション全体がロールバックされるため、
+                // このケースでは response・answers ともに保存されていないことが保証されている。
+                if (submitErr.code === '23505') {
                     toast.success("今月は既に回答済みです。ご協力ありがとうございました！");
                     if (resolvedCompanyId) {
                         localStorage.setItem(`signs_ai_answered_${resolvedCompanyId}_${currentMonthPart}`, "true");
@@ -185,23 +210,10 @@ function SurveyFormContent() {
                     setHasAnswered(true);
                     return;
                 }
-                throw rErr;
+                throw submitErr;
             }
 
-            // 2. answers 保存
-            const answerData = Object.entries(answers).map(([qId, score]) => ({
-                response_id: response.id,
-                question_id: qId,
-                score: score
-            }));
-
-            const { error: aErr } = await supabase
-                .from('survey_answers')
-                .insert(answerData);
-
-            if (aErr) throw aErr;
-
-            // 3. 成功処理
+            // 成功処理
             if (resolvedCompanyId) {
                 localStorage.setItem(`signs_ai_answered_${resolvedCompanyId}_${currentMonthPart}`, "true");
             }
@@ -240,7 +252,7 @@ function SurveyFormContent() {
     if (error) {
         return (
             <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
-                <div className="text-4xl mb-4">⚠️</div>
+                <AlertTriangle className="w-10 h-10 text-amber-500 mb-4" />
                 <h1 className="text-xl font-bold text-slate-800 mb-2">エラーが発生しました</h1>
                 <p className="text-sm text-slate-500 mb-6">{error}</p>
                 <Link href="/" className="text-teal font-bold underline">ダッシュボードへ</Link>
@@ -311,9 +323,11 @@ const progress = questions.length > 0 ? Math.round((Object.keys(answers).length 
                             組織のより良い環境づくりや、組織方針の改善に活用されます。<br />
                             ひと息ついて、今日も良い1日を！
                         </p>
-                        <div className="pt-8 border-t border-slate-100/60 mt-8 relative z-10">
-                            <button onClick={resetDemo} className="text-xs text-slate-400 hover:text-slate-600 underline font-bold">リセット（再入力）</button>
-                        </div>
+                        {process.env.NODE_ENV !== "production" && (
+                            <div className="pt-8 border-t border-slate-100/60 mt-8 relative z-10">
+                                <button onClick={resetDemo} className="text-xs text-slate-400 hover:text-slate-600 underline font-bold">リセット（再入力・開発用）</button>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="relative">
@@ -379,7 +393,14 @@ const progress = questions.length > 0 ? Math.round((Object.keys(answers).length 
 
                                 <div className="space-y-10">
                                     {questions.map((q, index) => (
-                                        <div key={q.id} id={`question-${q.id}`} className="group">
+                                        <div
+                                            key={q.id}
+                                            id={`question-${q.id}`}
+                                            className={cn(
+                                                "group rounded-2xl transition-all duration-300",
+                                                unansweredHighlight === q.id && "ring-2 ring-rose-300 ring-offset-4"
+                                            )}
+                                        >
                                             <div className="mb-5">
                                                 <p className="text-[14px] font-bold text-slate-700 leading-relaxed mb-1.5">
                                                     <span className="text-slate-300 mr-2 font-medium">Q{index + 1}.</span>

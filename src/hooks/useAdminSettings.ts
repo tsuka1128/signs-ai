@@ -352,7 +352,7 @@ export function useAdminSettings(companyId: string) {
                 const mainRow = [monthDisplay, 'メイン', '全社'];
                 for (const kpi of kpis) {
                     const rec = recordMap.get(`${kpi.id}__${monthFull}__main`);
-                    mainRow.push(rec ? rec.value.toString() : "");
+                    mainRow.push(rec && rec.value != null ? rec.value.toString() : "");
                     mainRow.push(rec && rec.target_value != null ? rec.target_value.toString() : "");
                 }
                 csvRows.push(mainRow.join(','));
@@ -365,7 +365,7 @@ export function useAdminSettings(companyId: string) {
                     const axisRow = [monthDisplay, axisName, axis.name];
                     for (const kpi of kpis) {
                         const rec = recordMap.get(`${kpi.id}__${monthFull}__${axis.id}`);
-                        axisRow.push(rec ? rec.value.toString() : "");
+                        axisRow.push(rec && rec.value != null ? rec.value.toString() : "");
                         axisRow.push(rec && rec.target_value != null ? rec.target_value.toString() : "");
                     }
                     csvRows.push(axisRow.join(','));

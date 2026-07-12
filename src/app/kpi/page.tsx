@@ -481,7 +481,7 @@ export default function KpiInputPage() {
         recs?.forEach(r => {
             const axisKey = r.axis_id || 'main';
             initialEditValues[`${r.recorded_month}_${r.kpi_definition_id}_${axisKey}`] = {
-                value: String(r.value),
+                value: r.value !== null ? String(r.value) : "",
                 target: r.target_value !== null ? String(r.target_value) : ""
             };
         });
@@ -510,7 +510,9 @@ export default function KpiInputPage() {
                     recorded_month: month,
                     axis_id: axisId,
                     department_id: deptId,
-                    value: Number(data.value || 0),
+                    // 実績が未入力の場合は 0 ではなく null で保存する。
+                    // 0 にすると「目標だけ設定した月」が偽の達成率0%として集計に伝播するため。
+                    value: data.value !== "" ? Number(data.value) : null,
                     target_value: data.target !== "" ? Number(data.target) : null
                 });
             }

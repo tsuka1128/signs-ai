@@ -356,7 +356,8 @@ export async function POST(req: Request) {
                 kpi_summary: monthKpis.map(r => {
                     const def = kpiDefs.data?.find(d => d.id === r.kpi_definition_id);
                     const polarity = def?.is_higher_better !== false ? "最大化目標" : "最小化目標";
-                    return `${def?.name || 'KPI'}: ${r.value}${def?.unit || ''} (目標: ${r.target_value}${def?.unit || ''}, 評価基準: ${polarity})`;
+                    const valueLabel = r.value !== null && r.value !== undefined ? `${r.value}${def?.unit || ''}` : "未入力";
+                    return `${def?.name || 'KPI'}: ${valueLabel} (目標: ${r.target_value}${def?.unit || ''}, 評価基準: ${polarity})`;
                 }),
                 question_scores: questionScores
             };
@@ -488,7 +489,8 @@ export async function POST(req: Request) {
                 kpi_count: deptKpis?.length,
                 kpi_details: deptKpis?.map(r => {
                     const def = kpiDefs.data?.find(def => def.id === r.kpi_definition_id);
-                    return `${def?.name}: ${r.value}${def?.unit} (目標: ${r.target_value}${def?.unit})`;
+                    const valueLabel = r.value !== null && r.value !== undefined ? `${r.value}${def?.unit}` : "未入力";
+                    return `${def?.name}: ${valueLabel} (目標: ${r.target_value}${def?.unit})`;
                 }),
                 voice_comments: comments
             };
