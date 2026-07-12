@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { ScatterPlot } from "@/components/dashboard/ScatterPlot";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 const CATEGORIES = [
   { id: "hiring", label: "採用 (Hiring)", color: "bg-teal-50 text-teal-600 border-teal-100" },
@@ -48,6 +49,7 @@ const formatNumberWithCommas = (value: string): string => {
 };
 
 export default function HrCampaignsPage() {
+  useDocumentTitle("施策キャンペーン");
   const router = useRouter();
   const { company, supabase, isImpersonating, userRole, userDepartmentId } = useCompany();
   const { state, derived } = useDashboardData(company, supabase, isImpersonating, userRole, userDepartmentId);

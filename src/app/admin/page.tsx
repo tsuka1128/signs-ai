@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils/index";
 import { PlanDetailsModal } from "@/components/admin/PlanDetailsModal";
 import { AnimatePresence } from "framer-motion";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 interface Stats {
     companyCount: number;
@@ -25,6 +26,7 @@ interface Stats {
 }
 
 export default function AdminDashboardPage() {
+    useDocumentTitle("管理ダッシュボード");
     const { supabase, loading: authLoading } = useAdmin();
     const [stats, setStats] = useState<Stats | null>(null);
     const [loading, setLoading] = useState(true);

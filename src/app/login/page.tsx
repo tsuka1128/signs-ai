@@ -15,8 +15,10 @@ import { getBaseURL } from "@/lib/utils/index";
 
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 function LoginForm() {
+    useDocumentTitle("ログイン");
     const router = useRouter();
     const searchParams = useSearchParams();
     const [email, setEmail] = useState("");

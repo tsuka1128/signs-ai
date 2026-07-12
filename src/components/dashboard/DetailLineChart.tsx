@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { calcKpiQuality, KPI_QUALITY_META } from "@/lib/logic/kpi-engine";
+import { calcKpiQuality, KPI_QUALITY_META, PULSE_GOOD_THRESHOLD, PULSE_WATCH_THRESHOLD } from "@/lib/logic/kpi-engine";
 
 interface DetailLineChartProps {
     data: number[];
@@ -159,8 +159,8 @@ export function DetailLineChart({
                     const barW = chartWidth / Math.max(1, pulseHistory.length - 1);
                     
                     // 背景色の選定
-                    const bgColor = pulse >= 3.8 ? "#D1FAE5"  // 緑: 高体温
-                                  : pulse >= 3.0 ? "#FEF9C3"  // 黄: 普通
+                    const bgColor = pulse >= PULSE_GOOD_THRESHOLD ? "#D1FAE5"  // 緑: 高体温
+                                  : pulse >= PULSE_WATCH_THRESHOLD ? "#FEF9C3"  // 黄: 普通
                                   : "#FEE2E2";                 // 赤: 低体温
                     
                     return (

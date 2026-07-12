@@ -6,6 +6,7 @@ import { OrganizationCard } from "@/components/dashboard/OrganizationCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Users, CheckCircle2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils/index";
+import { PULSE_GOOD_THRESHOLD, PULSE_WATCH_THRESHOLD } from "@/lib/logic/kpi-engine";
 
 interface OrganizationSectionProps {
     secondaryAxisName: string;
@@ -25,12 +26,13 @@ export function OrganizationSection({
     aiContent
 }: OrganizationSectionProps) {
     // displayDepts から計算
-    const avgPulse = displayDepts.filter(d => d.pulse > 0).length > 0
-        ? (displayDepts.filter(d => d.pulse > 0).reduce((s, d) => s + d.pulse, 0) / displayDepts.filter(d => d.pulse > 0).length).toFixed(1)
-        : "-";
+    const avgPulseNum = displayDepts.filter(d => d.pulse > 0).length > 0
+        ? displayDepts.filter(d => d.pulse > 0).reduce((s, d) => s + d.pulse, 0) / displayDepts.filter(d => d.pulse > 0).length
+        : null;
+    const avgPulse = avgPulseNum !== null ? avgPulseNum.toFixed(1) : "-";
 
-    const stableCount  = displayDepts.filter(d => d.pulse >= 3.5).length;
-    const cautionCount = displayDepts.filter(d => d.pulse > 0 && d.pulse < 3.5).length;
+    const stableCount  = displayDepts.filter(d => d.pulse >= PULSE_GOOD_THRESHOLD).length;
+    const cautionCount = displayDepts.filter(d => d.pulse > 0 && d.pulse < PULSE_GOOD_THRESHOLD).length;
 
     // 全KPIの平均達成率（null除外）
     const achRates = displayDepts.flatMap(d => (d.kpis || []).map((k: any) => k.ach)).filter((v: any) => v !== null && v !== undefined);
@@ -46,7 +48,10 @@ export function OrganizationSection({
                     {/* 全社平均体温 */}
                     <div className="flex items-center gap-2">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">全社平均体温</span>
-                        <span className="text-lg font-black text-emerald-500 tabular-nums">{avgPulse}</span>
+                        <span className={cn(
+                            "text-lg font-black tabular-nums",
+                            avgPulseNum === null ? "text-slate-400" : avgPulseNum >= PULSE_GOOD_THRESHOLD ? "text-emerald-500" : avgPulseNum >= PULSE_WATCH_THRESHOLD ? "text-amber-500" : "text-rose-500"
+                        )}>{avgPulse}</span>
                         <span className="text-[10px] text-slate-300 font-bold">/5.0</span>
                     </div>
 

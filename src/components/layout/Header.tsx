@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase";
 import { Menu, X, Bell, CheckCircle2, ChevronDown, LogOut, UserCog } from "lucide-react";
 import { useNotifications, Notification } from "@/hooks/useNotifications";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface HeaderProps {
     isMobile?: boolean;
@@ -117,8 +118,9 @@ export function Header({ isMobile, onMobileMenuClick }: HeaderProps) {
             <header className="h-16 flex items-center justify-between px-6 bg-white border-b border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] sticky top-0 z-50">
             <div className="flex items-center gap-4">
                 {/* Mobile Menu Trigger */}
-                <button 
+                <button
                     onClick={onMobileMenuClick}
+                    aria-label="メニューを開く"
                     className="p-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-xl lg:hidden transition-colors"
                 >
                     <Menu className="w-5 h-5" />
@@ -136,8 +138,11 @@ export function Header({ isMobile, onMobileMenuClick }: HeaderProps) {
 
             <div className="flex items-center gap-4 relative">
                 <div className="relative">
-                    <button 
+                    <button
                         onClick={() => setShowNotifications(!showNotifications)}
+                        aria-label="通知"
+                        aria-haspopup="true"
+                        aria-expanded={showNotifications}
                         className={`p-2 transition-colors relative rounded-xl ${showNotifications ? 'bg-slate-100 text-slate-600' : 'text-slate-400 hover:text-slate-600'}`}
                     >
                         <Bell className="w-4.5 h-4.5" />
@@ -217,6 +222,9 @@ export function Header({ isMobile, onMobileMenuClick }: HeaderProps) {
                 <div className="relative">
                     <button
                         onClick={() => setShowUserMenu(!showUserMenu)}
+                        aria-label="アカウントメニュー"
+                        aria-haspopup="true"
+                        aria-expanded={showUserMenu}
                         className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-slate-50 transition-colors group"
                     >
                         <div className="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-black text-[10px] shrink-0">
@@ -276,7 +284,7 @@ export function Header({ isMobile, onMobileMenuClick }: HeaderProps) {
                 <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
                     <div className="p-8 border-b border-slate-100 flex items-center justify-between">
                         <h3 className="text-xl font-black text-slate-800 tracking-tighter">プロフィール設定</h3>
-                        <button onClick={() => setShowProfileModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                        <button onClick={() => setShowProfileModal(false)} aria-label="閉じる" className="p-2 hover:bg-slate-100 rounded-full transition-colors">
                             <X className="w-5 h-5 text-slate-400" />
                         </button>
                     </div>
@@ -334,17 +342,25 @@ export function Header({ isMobile, onMobileMenuClick }: HeaderProps) {
                         <button
                             onClick={async () => {
                                 setProfileSaving(true);
-                                const res = await fetch("/api/profile", {
-                                    method: "PATCH",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify(profileForm),
-                                });
-                                if (res.ok) {
-                                    setDeptName(depts.find(d => d.id === profileForm.department_id)?.name ?? null);
-                                    setAxisName(axes.find(a => a.id === profileForm.axis_id)?.name ?? null);
-                                    setShowProfileModal(false);
+                                try {
+                                    const res = await fetch("/api/profile", {
+                                        method: "PATCH",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify(profileForm),
+                                    });
+                                    if (res.ok) {
+                                        setDeptName(depts.find(d => d.id === profileForm.department_id)?.name ?? null);
+                                        setAxisName(axes.find(a => a.id === profileForm.axis_id)?.name ?? null);
+                                        setShowProfileModal(false);
+                                        toast.success("プロフィールを更新しました");
+                                    } else {
+                                        toast.error("プロフィールの保存に失敗しました");
+                                    }
+                                } catch {
+                                    toast.error("プロフィールの保存に失敗しました");
+                                } finally {
+                                    setProfileSaving(false);
                                 }
-                                setProfileSaving(false);
                             }}
                             disabled={profileSaving}
                             className="flex-[2] py-4 bg-teal text-white rounded-2xl font-black shadow-lg shadow-teal/20 hover:bg-teal-600 transition-all disabled:opacity-50"

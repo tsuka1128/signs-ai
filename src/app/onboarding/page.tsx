@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils/index";
 import { createClient } from "@/lib/supabase";
 import { Sun, Cloud, CloudRain, Check } from "lucide-react";
 import { KPI_UNIT_OPTIONS, DEFAULT_SEMANTIC_POLICY } from "@/lib/constants";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 /** 部署の入力フォーム */
 interface DeptInput {
@@ -59,6 +60,7 @@ interface OnboardingState {
 /** KPI 単位の候補 */
 
 function OnboardingContent() {
+    useDocumentTitle("初期設定");
     const router = useRouter();
     const searchParams = useSearchParams();
     const supabase = createClient();

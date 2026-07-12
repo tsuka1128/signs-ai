@@ -11,8 +11,10 @@ import { Loading } from "@/components/ui/Loading";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils/index";
 import { useCompany } from "@/hooks/useCompany";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 export default function HistoryPage() {
+    useDocumentTitle("通知・分析履歴");
     const router = useRouter();
     const { company, loading: authLoading, supabase, userRole } = useCompany();
     

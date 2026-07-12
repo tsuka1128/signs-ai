@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase";
 import { Building2, Save, ArrowLeft, Users, DollarSign, Wallet, HelpCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { HelpLink } from "@/components/ui/HelpLink";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 // 実績データの型
 interface ResourceRecord {
@@ -34,6 +35,7 @@ export default function LaborPage() {
 }
 
 function LaborInputContent() {
+  useDocumentTitle("人件費・人員入力");
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [companyId, setCompanyId] = useState<string | null>(null);

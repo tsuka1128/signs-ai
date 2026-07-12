@@ -19,12 +19,14 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { toast } from "sonner";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 /**
  * ボイスチェック運用ページ
  * アンケートの配布（URLコピー）と、部署ごとの回答状況（回答率）の確認、期限設定を行います。
  */
 export default function VoiceCheckPage() {
+    useDocumentTitle("ボイスチェック運用");
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [company, setCompany] = useState<any>(null);

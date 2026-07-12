@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils/index";
 import {
   calcKpiQuality, KPI_QUALITY_META, KpiQuality,
   calcKpiSetHealth, KPI_SET_HEALTH_META,
+  PULSE_GOOD_THRESHOLD, PULSE_WATCH_THRESHOLD,
 } from "@/lib/logic/kpi-engine";
 
 interface KpiSectionProps {
@@ -273,12 +274,16 @@ export function KpiSection({
                                                     )}
                                                 </td>
                                                 <td className="py-5 px-4 text-center">
-                                                    <span className={cn(
-                                                        "text-xs font-black px-2.5 py-1 rounded-lg shadow-sm",
-                                                        (d.pulse || 0) >= 3.8 ? "bg-emerald-50 text-emerald-600" : (d.pulse || 0) >= 3.0 ? "bg-amber-50 text-amber-600" : "bg-rose-50 text-rose-600"
-                                                    )}>
-                                                        {d.pulse || 0}
-                                                    </span>
+                                                    {d.pulse ? (
+                                                        <span className={cn(
+                                                            "text-xs font-black px-2.5 py-1 rounded-lg shadow-sm",
+                                                            d.pulse >= PULSE_GOOD_THRESHOLD ? "bg-emerald-50 text-emerald-600" : d.pulse >= PULSE_WATCH_THRESHOLD ? "bg-amber-50 text-amber-600" : "bg-rose-50 text-rose-600"
+                                                        )}>
+                                                            {d.pulse}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[11px] font-bold text-slate-300">未取得</span>
+                                                    )}
                                                 </td>
 
                                                 {/* コンディション診断（KPI実績が無い部署は診断不能なので「—」） */}

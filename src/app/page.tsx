@@ -22,7 +22,20 @@ import { DEFAULT_SURVEY_QUESTIONS, DEFAULT_SEMANTIC_POLICY } from "@/lib/constan
 import { useCompany } from "@/hooks/useCompany";
 import { Loading } from "@/components/ui/Loading";
 import { useDashboardData } from "@/hooks/useDashboardData";
-import { getWeatherFromPulse } from "@/lib/logic/kpi-engine";
+import { getWeatherFromPulse, PULSE_GOOD_THRESHOLD, PULSE_WATCH_THRESHOLD } from "@/lib/logic/kpi-engine";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+
+const SECTION_TITLES: Record<string, string> = {
+  home: "ダッシュボード",
+  matrix: "マトリックス",
+  finance: "人件費・生産性",
+  survey: "組織の体温",
+  kpi: "KPI推移",
+  report: "AI組織診断",
+  action: "アクション",
+  semantic: "組織方針",
+  org: "組織サマリー",
+};
 
 export default function DashboardPage() {
   const [tab, setTab] = useState<string>("all");
@@ -30,6 +43,7 @@ export default function DashboardPage() {
   const [matView, setMatView] = useState("dept");
   const [selKpi, setSelKpi] = useState("mrr");
   const [orgView, setOrgView] = useState("dept");
+  useDocumentTitle(SECTION_TITLES[sec] || "ダッシュボード");
 
   const { company, loading: authLoading, supabase, isImpersonating, userRole, userDepartmentId } = useCompany();
   const { state, derived, handlers } = useDashboardData(company, supabase, isImpersonating, userRole, userDepartmentId);
@@ -82,7 +96,7 @@ export default function DashboardPage() {
       text: deptInsight?.text || (() => {
         const d = derived.displayDepts.find((d: any) => d.id === dept.id);
         if (!d) return "AI分析を実行すると、この部署の専用メッセージが表示されます。";
-        const pulseLabel = d.pulse >= 4.0 ? "良好" : d.pulse >= 3.0 ? "標準的" : d.pulse > 0 ? "やや低め" : null;
+        const pulseLabel = d.pulse >= PULSE_GOOD_THRESHOLD ? "良好" : d.pulse >= PULSE_WATCH_THRESHOLD ? "標準的" : d.pulse > 0 ? "やや低め" : null;
         const kpiLabel = d.kpiAch >= 100 ? "KPI達成" : d.kpiAch > 0 ? `KPI達成率${d.kpiAch}%` : null;
         if (!pulseLabel) return "AI分析を実行すると、この部署の専用メッセージが表示されます。";
         return `現在「${dept.name}」の体温は${pulseLabel}な水準です。${kpiLabel ? kpiLabel + "。" : ""}AI分析を実行すると、方針を踏まえたより詳細な診断が表示されます。`;

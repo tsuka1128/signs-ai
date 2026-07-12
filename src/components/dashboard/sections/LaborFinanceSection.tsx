@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { TrendingUp, PieChart, Info, ArrowUpRight, Target, Coins, Users, Activity, Sun, Cloud, CloudRain } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { TabBar } from "@/components/ui/TabBar";
+import { PULSE_GOOD_THRESHOLD, PULSE_WATCH_THRESHOLD } from "@/lib/logic/kpi-engine";
 
 interface LaborFinanceSectionProps {
     laborRoi: number;
@@ -58,10 +59,6 @@ function QuadrantScatterPlot({ data, aiContent, avgLaborCostPerHead }: { data: a
     const H = 680;
     const PAD = { top: 60, right: 60, bottom: 80, left: 60 };
 
-    // 境界線（物理的な中央点）
-    const midX_coord = PAD.left + (W - PAD.left - PAD.right) / 2;
-    const midY_coord = PAD.top + (H - PAD.top - PAD.bottom) / 2;
-
     // データの抽出（Time Lapse 適用後）
     const histIndex = 12 - tlOffset;
     const displayData = data.map(d => ({
@@ -82,6 +79,13 @@ function QuadrantScatterPlot({ data, aiContent, avgLaborCostPerHead }: { data: a
 
     const getX = (cost: number) => PAD.left + ((cost - minCost) / (maxCost - minCost)) * (W - PAD.left - PAD.right);
     const getY = (pulse: number) => (H - PAD.bottom) - ((pulse - minPulse) / (maxPulse - minPulse)) * (H - PAD.top - PAD.bottom);
+
+    // 象限の境界線: X軸（総人件費）は図の物理的な中央、Y軸（体温）は
+    // PULSE_WATCH_THRESHOLD の実データ位置を使う。以前は両軸とも物理的な中央点を
+    // 使っており、下部の一覧（ideal/invest/caution/danger）が使う体温3.0の判定基準と
+    // ズレて「同じ体温の部署が視覚的には別の象限に見える」ことがあった。
+    const midX_coord = PAD.left + (W - PAD.left - PAD.right) / 2;
+    const midY_coord = Math.min(Math.max(getY(PULSE_WATCH_THRESHOLD), PAD.top), H - PAD.bottom);
 
     // 目盛り用の数値（4等分）
     const yTicks = [minPulse, minPulse + (maxPulse - minPulse) * 0.25, minPulse + (maxPulse - minPulse) * 0.5, minPulse + (maxPulse - minPulse) * 0.75, maxPulse];
@@ -229,10 +233,10 @@ function QuadrantScatterPlot({ data, aiContent, avgLaborCostPerHead }: { data: a
 
             {/* 象限解説 */}
             {(() => {
-                const ideal   = data.filter(d => d.pulse >= 3.0 && d.laborCostPerHead <= avgLaborCostPerHead);
-                const invest  = data.filter(d => d.pulse >= 3.0 && d.laborCostPerHead > avgLaborCostPerHead);
-                const caution = data.filter(d => d.pulse < 3.0 && d.laborCostPerHead <= avgLaborCostPerHead);
-                const danger  = data.filter(d => d.pulse < 3.0 && d.laborCostPerHead > avgLaborCostPerHead);
+                const ideal   = data.filter(d => d.pulse >= PULSE_WATCH_THRESHOLD && d.laborCostPerHead <= avgLaborCostPerHead);
+                const invest  = data.filter(d => d.pulse >= PULSE_WATCH_THRESHOLD && d.laborCostPerHead > avgLaborCostPerHead);
+                const caution = data.filter(d => d.pulse < PULSE_WATCH_THRESHOLD && d.laborCostPerHead <= avgLaborCostPerHead);
+                const danger  = data.filter(d => d.pulse < PULSE_WATCH_THRESHOLD && d.laborCostPerHead > avgLaborCostPerHead);
 
                 const lines: string[] = [];
                 if (ideal.length > 0)
@@ -320,9 +324,9 @@ export function LaborFinanceSection({
     }, [activeData, simDelta]);
 
     // AI提言用のグルーピング（データ平均ではなく基準値で判定）
-    const alertDepts = activeData.filter(d => d.pulse < 3.0 && d.laborCostPerHead > avgLaborCostPerHead);
-    const cautionDepts = activeData.filter(d => d.pulse < 3.0 && d.laborCostPerHead <= avgLaborCostPerHead);
-    const idealDepts = activeData.filter(d => d.pulse >= 3.0 && d.laborCostPerHead <= avgLaborCostPerHead);
+    const alertDepts = activeData.filter(d => d.pulse < PULSE_WATCH_THRESHOLD && d.laborCostPerHead > avgLaborCostPerHead);
+    const cautionDepts = activeData.filter(d => d.pulse < PULSE_WATCH_THRESHOLD && d.laborCostPerHead <= avgLaborCostPerHead);
+    const idealDepts = activeData.filter(d => d.pulse >= PULSE_WATCH_THRESHOLD && d.laborCostPerHead <= avgLaborCostPerHead);
 
     const tabs = [
         { id: 'dept', label: '部署別' },
@@ -445,7 +449,7 @@ export function LaborFinanceSection({
                         </thead>
                         <tbody className="text-xs font-bold">
                             {sortedData.map((d) => {
-                                const isLowPulse = d.pulse < 3.0;
+                                const isLowPulse = d.pulse < PULSE_WATCH_THRESHOLD;
                                 const isHighCost = d.laborCostPerHead > avgLaborCostPerHead;
                                 const isHighAch = d.kpiAch >= 100;
                                 
@@ -479,7 +483,7 @@ export function LaborFinanceSection({
                                         </td>
                                         <td className="px-4 py-4 text-center">
                                             <div className="flex items-center justify-center gap-1.5">
-                                                {d.pulse >= 4.0 ? <Sun className="w-3 h-3 text-amber-400" /> : d.pulse >= 3.0 ? <Cloud className="w-3 h-3 text-slate-300" /> : <CloudRain className="w-3 h-3 text-slate-400" />}
+                                                {d.pulse >= PULSE_GOOD_THRESHOLD ? <Sun className="w-3 h-3 text-amber-400" /> : d.pulse >= PULSE_WATCH_THRESHOLD ? <Cloud className="w-3 h-3 text-slate-300" /> : <CloudRain className="w-3 h-3 text-slate-400" />}
                                                 <span className={cn(isLowPulse ? "text-rose-500" : "text-slate-600")}>{d.pulse.toFixed(1)}</span>
                                             </div>
                                         </td>
