@@ -64,7 +64,9 @@ export type KpiQuality = "healthy" | "burnout" | "structural" | "potential";
 
 export function calcKpiQuality(kpiAch: number, pulse: number): KpiQuality {
   const achieved = kpiAch >= 100;
-  const healthy  = pulse >= 3.5;
+  // 体温の「良好」判定は色分けと同じ PULSE_GOOD_THRESHOLD に揃える。
+  // （同一カード内で「色は黄なのに診断は健全」という食い違いを防ぐ）
+  const healthy  = pulse >= PULSE_GOOD_THRESHOLD;
   if ( achieved &&  healthy) return "healthy";
   if ( achieved && !healthy) return "burnout";
   if (!achieved && !healthy) return "structural";
