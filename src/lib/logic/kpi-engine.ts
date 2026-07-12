@@ -1,7 +1,14 @@
 /**
  * KPI達成率の計算（最大化/最小化目標に対応）
  */
-export function calculateAchievementRate(actual: number, target: number, isHigherBetter: boolean = true): number | null {
+export function calculateAchievementRate(actual: number | null | undefined, target: number | null | undefined, isHigherBetter: boolean = true): number | null {
+    // 実績・目標のいずれかが未入力(null)なら「達成率なし」として母数から外す。
+    // kpi_records.value が NULL 許容になったため、ここでガードしないと
+    // 上振れKPIは (null/target)=0%、下振れKPIは (target/null)=Infinity として
+    // 誤って集計・グラフに混入する（全呼び出し元をここで一括保護する）。
+    if (actual === null || actual === undefined || target === null || target === undefined) {
+        return null;
+    }
     if (target <= 0) {
         // 目標が0の場合は、平均計算の母数から外す（オリジナル挙動の再現）
         return null;

@@ -197,7 +197,7 @@ export function calculateCampaignRoi(input: RoiInputData): CampaignRoiResult {
               r.kpi_definition_id &&
               revenueKpiIds.includes(r.kpi_definition_id)
           );
-          targetRevenue.push(revRecs.length > 0 ? revRecs.reduce((sum, r) => sum + r.value, 0) : null);
+          targetRevenue.push(revRecs.length > 0 ? revRecs.reduce((sum, r) => sum + (r.value ?? 0), 0) : null);
         } else {
           targetRevenue.push(null);
         }
@@ -226,7 +226,7 @@ export function calculateCampaignRoi(input: RoiInputData): CampaignRoiResult {
               r.kpi_definition_id &&
               revenueKpiIds.includes(r.kpi_definition_id)
           );
-          targetRevenue.push(revRecs.length > 0 ? revRecs.reduce((sum, r) => sum + r.value, 0) : null);
+          targetRevenue.push(revRecs.length > 0 ? revRecs.reduce((sum, r) => sum + (r.value ?? 0), 0) : null);
         } else {
           targetRevenue.push(null);
         }
@@ -279,7 +279,7 @@ export function calculateCampaignRoi(input: RoiInputData): CampaignRoiResult {
             r.kpi_definition_id &&
             revenueKpiIds.includes(r.kpi_definition_id)
         );
-        targetRevenue.push(revRecs.length > 0 ? revRecs.reduce((sum, r) => sum + r.value, 0) : null);
+        targetRevenue.push(revRecs.length > 0 ? revRecs.reduce((sum, r) => sum + (r.value ?? 0), 0) : null);
       } else {
         targetRevenue.push(null);
       }
@@ -486,7 +486,7 @@ export function calculateCampaignRoi(input: RoiInputData): CampaignRoiResult {
           r.kpi_definition_id &&
           revenueKpiIds.includes(r.kpi_definition_id)
       );
-      companyRevenues.push(allCompanyRevRecs.reduce((sum, r) => sum + r.value, 0));
+      companyRevenues.push(allCompanyRevRecs.reduce((sum, r) => sum + (r.value ?? 0), 0));
     }
 
     const companyBeforeRev = getAverage(companyRevenues, beforeRange);

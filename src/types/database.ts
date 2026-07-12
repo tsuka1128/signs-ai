@@ -100,7 +100,7 @@ export interface Database {
           department_id: string | null
           axis_id: string | null
           recorded_month: string
-          value: number
+          value: number | null
           target_value: number
           user_id: string | null
           created_at: string

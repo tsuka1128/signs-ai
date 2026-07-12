@@ -650,13 +650,13 @@ export function useDashboardData(
                     .map((def: any) => {
                         const rec = mRecs.find(r => r.kpi_definition_id === def.id && r.axis_id === null && (r.department_id === d.id || (r.department_id === null && def.owner_dept_id === d.id)));
                         // rec.value が null は「目標だけ設定して実績は未入力」の状態。実績0とは区別する。
-                        const hasValue = rec && rec.value !== null && rec.value !== undefined;
+                        const recVal = rec && rec.value != null ? rec.value : null;
                         return {
                             name: def.name,
-                            val: hasValue ? `${rec.value.toLocaleString()}${def.unit || ''}` : `-${def.unit || ''}`,
+                            val: recVal != null ? `${recVal.toLocaleString()}${def.unit || ''}` : `-${def.unit || ''}`,
                             // レコード無し/実績未入力/目標未設定は達成率「0%（赤）」ではなく null（未入力/目標未設定）扱いにする。
                             // 0 を返すと未入力KPIが特大roseで氾濫してしまう（D1）。
-                            ach: (hasValue && rec.target_value && rec.target_value > 0) ? Math.round((rec.value / rec.target_value) * 100) : null,
+                            ach: (recVal != null && rec!.target_value && rec!.target_value > 0) ? Math.round((recVal / rec!.target_value) * 100) : null,
                             type: "stack"
                         };
                     }).slice(0, 3) as any[],
@@ -842,12 +842,12 @@ export function useDashboardData(
                     const rec = mRecs.find(r => r.kpi_definition_id === def.id && r.axis_id === axis.id);
                     if (!rec) return null;
                     // rec.value が null は「目標だけ設定して実績は未入力」の状態。実績0とは区別する。
-                    const hasValue = rec.value !== null && rec.value !== undefined;
+                    const recVal = rec.value != null ? rec.value : null;
                     return {
                         name: def.name,
-                        val: hasValue ? `${rec.value.toLocaleString()}${def.unit || ''}` : `-${def.unit || ''}`,
+                        val: recVal != null ? `${recVal.toLocaleString()}${def.unit || ''}` : `-${def.unit || ''}`,
                         // 実績未入力/目標未設定は 0%（赤）ではなく null（未入力/目標未設定）扱いに（D1）
-                        ach: (hasValue && rec.target_value && rec.target_value > 0) ? Math.round((rec.value / rec.target_value) * 100) : null,
+                        ach: (recVal != null && rec.target_value && rec.target_value > 0) ? Math.round((recVal / rec.target_value) * 100) : null,
                         type: "stack",
                         isPrimary: def.id === company?.secondary_axis_size_kpi_id
                     };
