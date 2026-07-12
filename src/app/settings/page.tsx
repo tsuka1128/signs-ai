@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils/index";
 import { useSettingsData } from "@/hooks/useSettingsData";
 import { PlanGate } from "@/components/ui/PlanGate";
 import { usePlanFeatures } from "@/hooks/usePlanFeatures";
-import { TrialGuard } from "@/components/layout/TrialGuard";
 
 // Tab Components
 import { CompanyTab } from "@/components/settings/CompanyTab";
@@ -19,11 +18,12 @@ import { MembersTab } from "@/components/settings/MembersTab";
 import { IntegrationTab } from "@/components/settings/IntegrationTab";
 import { AITab } from "@/components/settings/AITab";
 import { SurveyTab } from "@/components/settings/SurveyTab";
+import { BillingTab } from "@/components/settings/BillingTab";
 
 // Modals
 import { MemberEditModal } from "@/components/settings/MemberEditModal";
 
-const VALID_TABS = ["company", "dept", "kpi", "axis", "ai", "survey", "users", "integration"] as const;
+const VALID_TABS = ["company", "dept", "kpi", "axis", "ai", "survey", "users", "integration", "billing"] as const;
 type TabId = typeof VALID_TABS[number];
 
 function SettingsContent() {
@@ -35,7 +35,7 @@ function SettingsContent() {
         : "company";
     const [activeTab, setActiveTab] = useState<TabId>(initialTab);
     const { state, handlers, userRole } = useSettingsData();
-    const { plan, limits } = usePlanFeatures();
+    const { plan, limits, planName, isTrial, trialDaysRemaining } = usePlanFeatures();
 
     // URL の ?tab= が変わったら追従（ドキュメントからの直接リンク対応）
     useEffect(() => {
@@ -57,7 +57,6 @@ function SettingsContent() {
 
     return (
         <AppLayout>
-            <TrialGuard>
                 <div className="space-y-8">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
@@ -79,7 +78,8 @@ function SettingsContent() {
                         { id: "ai", label: "AI分析" },
                         { id: "survey", label: "ボイスチェック" },
                         { id: "users", label: "メンバー" },
-                        { id: "integration", label: "Slack連携" }
+                        { id: "integration", label: "Slack連携" },
+                        { id: "billing", label: "プラン・契約" }
                     ].map(t => (
                         <button
                             key={t.id}
@@ -194,7 +194,7 @@ function SettingsContent() {
 
                     {activeTab === "integration" && (
                         <PlanGate feature="slack_integration" requiredPlan="Standard">
-                            <IntegrationTab 
+                            <IntegrationTab
                                 company={state.company}
                                 setCompany={handlers.setCompany}
                                 handleTestClientSlackWebhook={handlers.handleTestClientSlackWebhook}
@@ -204,6 +204,21 @@ function SettingsContent() {
                                 handleRemindKpi={handlers.handleRemindKpi}
                             />
                         </PlanGate>
+                    )}
+
+                    {activeTab === "billing" && (
+                        <BillingTab
+                            planName={planName}
+                            isTrial={isTrial}
+                            trialDaysRemaining={trialDaysRemaining}
+                            limits={limits}
+                            usage={{
+                                departments: state.depts.length,
+                                kpis: state.kpis.length,
+                                members: state.users.length,
+                                aiRunsUsed: state.company?.manual_ai_runs_used_this_month || 0,
+                            }}
+                        />
                     )}
 
                 </div>
@@ -225,7 +240,6 @@ function SettingsContent() {
                 />
             )}
                 </div>
-            </TrialGuard>
         </AppLayout>
     );
 }

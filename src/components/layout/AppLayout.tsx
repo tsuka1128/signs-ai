@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
+import { TrialGuard } from "./TrialGuard";
 import { cn } from "@/lib/utils/index";
 
 interface AppLayoutProps {
@@ -63,7 +64,10 @@ export function AppLayout({
                             "mx-auto px-5 py-8 animate-fadeIn",
                             fullWidth ? "max-w-full" : "max-w-5xl"
                         )}>
-                            {children}
+                            {/* トライアル期限切れバナー。全ページ共通で表示位置を一貫させる */}
+                            <TrialGuard>
+                                {children}
+                            </TrialGuard>
                         </div>
                     )}
                 </main>

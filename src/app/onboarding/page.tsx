@@ -467,7 +467,7 @@ function OnboardingContent() {
                         {!state.invitationToken && (
                             <div className="space-y-3">
                                 <h2 className="text-lg font-black text-slate-800">始め方を選択してください</h2>
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <button
                                         onClick={() => setState(s => ({ ...s, mode: "create" }))}
                                         className={cn(
@@ -493,6 +493,14 @@ function OnboardingContent() {
                                         <div className="text-xl mb-1">参加</div>
                                         <div className="text-sm font-bold text-slate-700">招待を受けて参加</div>
                                         <div className="text-[10px] text-slate-400 mt-1">招待コード・リンクをお持ちの方</div>
+                                    </button>
+                                    <button
+                                        onClick={() => setState(s => ({ ...s, mode: "join", invitationToken: "TAION" }))}
+                                        className="p-4 rounded-2xl border-2 border-dashed border-slate-200 bg-white hover:border-teal-300 hover:bg-teal-50/30 text-left transition-all"
+                                    >
+                                        <div className="text-xl mb-1">デモを見る</div>
+                                        <div className="text-sm font-bold text-slate-700">サンプルデータで体験</div>
+                                        <div className="text-[10px] text-slate-400 mt-1">会社作成不要。すぐに画面を見られます</div>
                                     </button>
                                 </div>
                             </div>

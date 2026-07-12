@@ -42,6 +42,34 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ message: "対象の組織を指定してください" }, { status: 400 });
     }
 
+    // ── プラン人数上限のチェック（super_adminのなりすまし操作は対象外） ──
+    // 既存メンバー数 + 保留中の招待数が上限に達している場合、招待自体を作成させない。
+    // 上限はプラン契約の根拠データになるため、UI表示だけでなくここで実効させる。
+    if (!isSuperAdmin) {
+        const { data: companyForLimit } = await supabase
+            .from("companies")
+            .select("plan_overrides, plans(max_headcount)")
+            .eq("id", effectiveCompanyId)
+            .single();
+
+        const overrides = (companyForLimit as any)?.plan_overrides || {};
+        const maxHeadcount = overrides.max_headcount ?? (companyForLimit as any)?.plans?.max_headcount ?? 20;
+
+        const [{ count: memberCount }, { count: pendingInviteCount }] = await Promise.all([
+            supabase.from("users").select("*", { count: "exact", head: true }).eq("company_id", effectiveCompanyId),
+            supabase.from("invitations").select("*", { count: "exact", head: true }).eq("company_id", effectiveCompanyId).eq("status", "pending"),
+        ]);
+
+        const currentTotal = (memberCount ?? 0) + (pendingInviteCount ?? 0);
+        if (currentTotal >= maxHeadcount) {
+            return NextResponse.json({
+                message: `現在のプランの人数上限（${maxHeadcount}名）に達しています。招待を続けるにはプランのアップグレードが必要です。`,
+                limitReached: true,
+                limit: maxHeadcount,
+            }, { status: 403 });
+        }
+    }
+
     // ── 招待レート制限（スパム防止） ──
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const { count: recentInvitesCount, error: countError } = await supabase
