@@ -215,7 +215,9 @@ function SettingsContent() {
                             usage={{
                                 departments: state.depts.length,
                                 kpis: state.kpis.length,
-                                members: state.users.length,
+                                // 人数上限の実効判定は「登録ユーザー数 + 保留中の招待数」で行うため、
+                                // 使用量バーも招待中を含めて表示する（満杯なのに残ありに見える齟齬を防ぐ）。
+                                members: state.users.length + state.invitations.length,
                                 aiRunsUsed: state.company?.manual_ai_runs_used_this_month || 0,
                             }}
                         />

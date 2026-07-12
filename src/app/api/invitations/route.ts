@@ -57,7 +57,9 @@ export async function POST(req: NextRequest) {
 
         const [{ count: memberCount }, { count: pendingInviteCount }] = await Promise.all([
             supabase.from("users").select("*", { count: "exact", head: true }).eq("company_id", effectiveCompanyId),
-            supabase.from("invitations").select("*", { count: "exact", head: true }).eq("company_id", effectiveCompanyId).eq("status", "pending"),
+            // 同一メールへの再招待は、この後の処理で既存 pending を cancel してから INSERT するため、
+            // カウントから除外する（上限ちょうどの会社での再招待が誤ってブロックされるのを防ぐ／RLS側の挙動と一致）。
+            supabase.from("invitations").select("*", { count: "exact", head: true }).eq("company_id", effectiveCompanyId).eq("status", "pending").neq("email", email.trim()),
         ]);
 
         const currentTotal = (memberCount ?? 0) + (pendingInviteCount ?? 0);
