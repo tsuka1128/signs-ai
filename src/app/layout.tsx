@@ -22,7 +22,10 @@ const notoNSansJP = Noto_Sans_JP({
 });
 
 export const metadata: Metadata = {
-  title: "Signs AI | 組織に体温を",
+  title: {
+    template: "%s | Signs AI",
+    default: "Signs AI | 組織に体温を",
+  },
   description: "KPIと現場の声を融合するAI経営参謀",
   robots: {
     index: false,

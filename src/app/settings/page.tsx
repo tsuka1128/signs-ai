@@ -19,12 +19,25 @@ import { IntegrationTab } from "@/components/settings/IntegrationTab";
 import { AITab } from "@/components/settings/AITab";
 import { SurveyTab } from "@/components/settings/SurveyTab";
 import { BillingTab } from "@/components/settings/BillingTab";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 // Modals
 import { MemberEditModal } from "@/components/settings/MemberEditModal";
 
 const VALID_TABS = ["company", "dept", "kpi", "axis", "ai", "survey", "users", "integration", "billing"] as const;
 type TabId = typeof VALID_TABS[number];
+
+const TAB_TITLES: Record<TabId, string> = {
+    company: "基本設定",
+    dept: "部署設定",
+    kpi: "KPI設定",
+    axis: "担当領域設定",
+    ai: "AI分析設定",
+    survey: "ボイスチェック設定",
+    users: "メンバー設定",
+    integration: "Slack連携設定",
+    billing: "プラン・契約",
+};
 
 function SettingsContent() {
     const router = useRouter();
@@ -34,6 +47,7 @@ function SettingsContent() {
         ? (tabParam as TabId)
         : "company";
     const [activeTab, setActiveTab] = useState<TabId>(initialTab);
+    useDocumentTitle(`設定 - ${TAB_TITLES[activeTab]}`);
     const { state, handlers, userRole } = useSettingsData();
     const { plan, limits, planName, isTrial, trialDaysRemaining } = usePlanFeatures();
 

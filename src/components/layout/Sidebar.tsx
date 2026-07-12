@@ -151,6 +151,7 @@ export function Sidebar({
             <Link
                 href={href}
                 onClick={() => setIsMobileOpen?.(false)}
+                aria-current={isActive ? "page" : undefined}
                 className={cn(
                     "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all group",
                     isActive

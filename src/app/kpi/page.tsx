@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils/index";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { HelpLink } from "@/components/ui/HelpLink";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 // KPI定義の型
 interface KpiDefinition {
@@ -198,6 +199,7 @@ function KpiTable({ title, axisId, isMain, kpiDefinitions, allMonths, editValues
 }
 
 export default function KpiInputPage() {
+    useDocumentTitle("KPI入力");
     const router = useRouter();
     const supabase = createClient();
     const [loading, setLoading] = useState(true);

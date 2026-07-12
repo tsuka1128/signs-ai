@@ -14,6 +14,7 @@ import {
 import { createClient } from "@/lib/supabase";
 import { DeptAiSummary, DeptActionPlan } from "@/types/database";
 import { resolveMonthlyHeadcounts } from "@/lib/headcount";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 import {
     Building2,
@@ -73,6 +74,7 @@ const formatYM = (ym?: string | null): string => {
 };
 
 export default function DeptDashboardPage() {
+    useDocumentTitle("部署マネジメント");
     const supabase = createClient();
     const router = useRouter();
 

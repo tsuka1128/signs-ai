@@ -7,8 +7,10 @@ import { Loading } from "@/components/ui/Loading";
 import { Lock, CalendarDays } from "lucide-react";
 import { useCompany } from "@/hooks/useCompany";
 import { MonthlyFocusTab } from "@/components/settings/MonthlyFocusTab";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 export default function MonthlyFocusPage() {
+    useDocumentTitle("今月の重点");
     const router = useRouter();
     const { company, loading, userRole } = useCompany();
 

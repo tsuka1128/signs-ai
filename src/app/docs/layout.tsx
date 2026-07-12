@@ -8,6 +8,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { DOCS_MENU } from "@/lib/docs-menu";
 import { useEffect, useState } from "react";
 import { useCompany } from "@/hooks/useCompany";
+import { DocsSearch } from "@/components/docs/DocsSearch";
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -81,6 +82,9 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
     if (isFullWidth) {
         return (
             <AppLayout bare hasLaborData={hasLaborData}>
+                <div className="px-6 md:px-12 pt-8 mx-auto max-w-4xl w-full flex justify-end">
+                    <DocsSearch />
+                </div>
                 {children}
                 <div className="px-6 md:px-12 pb-12 mx-auto max-w-4xl w-full">
                     {paginationAndFooter}
@@ -92,6 +96,9 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
     return (
         <AppLayout hasLaborData={hasLaborData}>
             <div className="mx-auto max-w-4xl">
+                <div className="mb-6 flex justify-end">
+                    <DocsSearch />
+                </div>
                 {children}
                 {paginationAndFooter}
             </div>

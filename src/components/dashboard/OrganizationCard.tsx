@@ -6,6 +6,7 @@ import { Arrow } from "@/components/ui/Arrow";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils/index";
 import { Snowflake, CheckCircle2, CircleDashed, AlertTriangle, CalendarDays, MessageSquareText } from "lucide-react";
+import { PULSE_GOOD_THRESHOLD, PULSE_WATCH_THRESHOLD } from "@/lib/logic/kpi-engine";
 
 interface KpiItem {
     name: string;
@@ -29,8 +30,8 @@ interface OrganizationCardProps {
 
 function OrganizationCardImpl({ name, head, pulse, weather, arrow, kpis, laborCostPerHead, isStale, dataMonth, deptInsight }: OrganizationCardProps) {
     const isNone = pulse === 0;
-    const risk = isNone ? "none" : pulse < 2.5 ? "cold" : pulse >= 3.5 ? "stable" : "caution";
-    const pulseColorClass = isNone ? "text-slate-300" : pulse >= 3.5 ? "text-emerald-500" : pulse >= 2.5 ? "text-amber-500" : "text-rose-500";
+    const risk = isNone ? "none" : pulse < PULSE_WATCH_THRESHOLD ? "cold" : pulse >= PULSE_GOOD_THRESHOLD ? "stable" : "caution";
+    const pulseColorClass = isNone ? "text-slate-300" : pulse >= PULSE_GOOD_THRESHOLD ? "text-emerald-500" : pulse >= PULSE_WATCH_THRESHOLD ? "text-amber-500" : "text-rose-500";
 
     // 代表KPIと補助KPIの分離ロジック
     const primaryKpi  = kpis[0] ?? null;
@@ -255,8 +256,8 @@ function ObservationComment({ pulse, primaryAch }: { pulse: number; primaryAch: 
 
     const achieved = primaryAch >= 100;
     const warming  = primaryAch >= 80;
-    const pulseHigh = pulse >= 3.8;
-    const pulseMid  = pulse >= 3.0;
+    const pulseHigh = pulse >= PULSE_GOOD_THRESHOLD;
+    const pulseMid  = pulse >= PULSE_WATCH_THRESHOLD;
 
     let text = "";
 

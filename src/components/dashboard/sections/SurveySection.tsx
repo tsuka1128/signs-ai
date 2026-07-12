@@ -8,6 +8,7 @@ import { SurveyHistoryData } from "@/types/dashboard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { FileQuestion, Lock, MessageCircle, TrendingUp, TrendingDown, MinusCircle, Sparkles, ThumbsUp, ThumbsDown } from "lucide-react";
+import { PULSE_GOOD_THRESHOLD, PULSE_WATCH_THRESHOLD } from "@/lib/logic/kpi-engine";
 
 import { useState } from "react";
 
@@ -130,14 +131,14 @@ export function SurveySection({
                         <div className="flex items-baseline gap-2">
                             <span className={cn(
                                 "text-3xl font-black tabular-nums tracking-tighter",
-                                data.pulse >= 3.5 ? "text-emerald-500" : data.pulse >= 2.5 ? "text-amber-500" : "text-rose-500"
+                                data.pulse >= PULSE_GOOD_THRESHOLD ? "text-emerald-500" : data.pulse >= PULSE_WATCH_THRESHOLD ? "text-amber-500" : "text-rose-500"
                             )}>
                                 {data.pulse.toFixed(1)}
                             </span>
                             <span className="text-[10px] text-slate-400 font-bold uppercase">/ 5.0</span>
                         </div>
                         <p className="mt-3 text-[10px] text-slate-400 font-bold leading-tight">
-                            {data.pulse >= 3.5 ? "非常に良好なコンディションです。" : data.pulse >= 2.5 ? "一部に課題が見られます。" : "早急な対話と対策が必要です。"}
+                            {data.pulse >= PULSE_GOOD_THRESHOLD ? "非常に良好なコンディションです。" : data.pulse >= PULSE_WATCH_THRESHOLD ? "一部に課題が見られます。" : "早急な対話と対策が必要です。"}
                         </p>
                     </div>
                     {/* 「全社偏差値 50.0/100」は撤去（偏差値は/100尺度でなく、少数テナントでは統計的に無意味／VC1・D16）。
@@ -162,8 +163,8 @@ export function SurveySection({
                             <DetailLineChart
                                 data={chartMode === 'pulse' ? data.pulseHistory : (data as any).deviationHistory}
                                 labels={monthLabels}
-                                color={chartMode === 'pulse' 
-                                    ? (data.pulse >= 3.5 ? "#10B981" : data.pulse >= 2.5 ? "#F59E0B" : "#EF4444")
+                                color={chartMode === 'pulse'
+                                    ? (data.pulse >= PULSE_GOOD_THRESHOLD ? "#10B981" : data.pulse >= PULSE_WATCH_THRESHOLD ? "#F59E0B" : "#EF4444")
                                     : "#3B82F6"
                                 }
                                 targetData={chartMode === 'deviation' ? Array(monthLabels.length).fill(50) : undefined}

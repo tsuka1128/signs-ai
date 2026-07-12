@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { OrganizationCard } from "@/components/dashboard/OrganizationCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { WeatherIcon } from "@/components/ui/WeatherIcon";
-import { calcKpiQuality, KPI_QUALITY_META } from "@/lib/logic/kpi-engine";
+import { calcKpiQuality, KPI_QUALITY_META, PULSE_GOOD_THRESHOLD, PULSE_WATCH_THRESHOLD } from "@/lib/logic/kpi-engine";
 import { ChevronDown, ChevronUp, Package } from "lucide-react";
 
 // 領域ごとのカラーパレット（最大8領域まで対応）
@@ -112,8 +112,8 @@ export function AxisComparisonSection({ axes, secondaryAxisName, aiContent }: Ax
                                 <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">体温</span>
                                 <span className={cn(
                                     "text-base font-black tabular-nums",
-                                    axis.pulse >= 3.8 ? "text-emerald-500" :
-                                    axis.pulse >= 3.0 ? "text-amber-500" :
+                                    axis.pulse >= PULSE_GOOD_THRESHOLD ? "text-emerald-500" :
+                                    axis.pulse >= PULSE_WATCH_THRESHOLD ? "text-amber-500" :
                                     axis.pulse > 0    ? "text-rose-500" : "text-slate-300"
                                 )}>
                                     {axis.pulse > 0 ? axis.pulse.toFixed(1) : "-"}

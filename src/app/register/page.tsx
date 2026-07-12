@@ -6,8 +6,10 @@ import Link from "next/link";
 import { signUpWithEmail } from "@/lib/auth";
 import { getBaseURL, validatePassword, cn } from "@/lib/utils/index";
 import { Eye, EyeOff } from "lucide-react";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 function RegisterForm() {
+    useDocumentTitle("新規登録");
     const router = useRouter();
     const searchParams = useSearchParams();
     const [email, setEmail] = useState("");

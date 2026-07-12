@@ -35,11 +35,19 @@ export function calculateProductivity(achievementRate: number, pulseScore: numbe
 }
 
 /**
+ * 体温の「良好」「要注意」の閾値（全画面共通）。
+ * 以前は画面ごとに 3.5/2.5、4.0/3.0、3.8/3.0 等バラバラで、同じ体温スコアが
+ * 画面によって緑になったり黄になったりしていたため、ここに一元化する。
+ */
+export const PULSE_GOOD_THRESHOLD = 3.8;
+export const PULSE_WATCH_THRESHOLD = 3.0;
+
+/**
  * 体温スコアから天気アイコンへの変換
  */
 export function getWeatherFromPulse(score: number): "sun" | "cloud" | "rain" {
-    if (score >= 3.8) return "sun";
-    if (score >= 3.0) return "cloud";
+    if (score >= PULSE_GOOD_THRESHOLD) return "sun";
+    if (score >= PULSE_WATCH_THRESHOLD) return "cloud";
     return "rain";
 }
 

@@ -16,12 +16,14 @@ import { useCompany } from "@/hooks/useCompany";
 import { Loading } from "@/components/ui/Loading";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FileQuestion } from "lucide-react";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 const questions = DEFAULT_SURVEY_QUESTIONS;
 
 // モックデータ定数を削除し、状態管理に移行
 
 export default function SurveyDashboard() {
+    useDocumentTitle("組織の体温");
     const router = useRouter();
     const [view, setView] = useState("all");
     const [depts, setDepts] = useState<any[]>([]);

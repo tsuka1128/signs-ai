@@ -11,6 +11,7 @@ import { DEFAULT_SURVEY_QUESTIONS } from "@/lib/constants";
 import { AlertTriangle, TrendingUp, Brain } from "lucide-react";
 import { cn } from "@/lib/utils/index";
 import { getLastNMonths, normalizeMonth } from "@/lib/utils/date";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 /** Pearson 相関係数（ローカル定義） */
 function pearson(xs: number[], ys: number[]): number {
@@ -45,6 +46,7 @@ const TAG_STYLE = {
 };
 
 export default function HrStrategyPage() {
+  useDocumentTitle("人事戦略");
   const { company, supabase, isImpersonating, userRole, userDepartmentId } = useCompany();
   const { state, derived } = useDashboardData(company, supabase, isImpersonating, userRole, userDepartmentId);
   const displayDepts = derived.displayDepts;
