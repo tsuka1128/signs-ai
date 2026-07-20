@@ -52,6 +52,20 @@ function getAutoInsight(data: any[], yAxisMode: "kpi" | "productivity", isAxis: 
     return `各${typeLabel}ともにリソースと成果のバランスは概ね良好に推移しています。`;
 }
 
+// タイムラプスのプリセット（id・表示ラベル・履歴配列インデックス）を単一ソース化。
+// 履歴配列は 13ヶ月分（index 0-12、index 12 が当月）。
+const TIMELAPSE_PRESETS = [
+    { id: "default", label: "現在", idx: 12 },
+    { id: "1m", label: "1ヶ月前", idx: 11 },
+    { id: "3m", label: "3ヶ月前", idx: 9 },
+    { id: "6m", label: "6ヶ月前", idx: 6 },
+    { id: "12m", label: "12ヶ月前", idx: 0 },
+];
+
+// 指定インデックスの月に実データ（体温 or 人数）が1件でもあるか。
+const hasDataAtIndex = (items: any[], idx: number) =>
+    items.some((d) => ((d.pulseHistory?.[idx] ?? 0) > 0) || ((d.headHistory?.[idx] ?? 0) > 0));
+
 export function MatrixSection({
     secondaryAxisName,
     sizeKpiName,
@@ -171,18 +185,21 @@ export function MatrixSection({
         return axisScatterData.filter(d => !excludedAxisIds.includes(d.id));
     }, [axisScatterData, excludedAxisIds]);
 
-    // VC2: タイムラプス/軌跡は履歴が十分に溜まるまで隠す（データが薄いと過去月が空で「幽霊矢印」になるため）。
-    // pulse または head の実データがある月数を数え、閾値未満ならタイムラプス・軌跡UIを非表示にする。
-    const MIN_MONTHS_FOR_TIMELAPSE = 12;
-    const countMonthsWithData = (items: any[]) => {
-        let count = 0;
-        for (let i = 0; i < 13; i++) {
-            if (items.some((d) => ((d.pulseHistory?.[i] ?? 0) > 0) || ((d.headHistory?.[i] ?? 0) > 0))) count++;
-        }
-        return count;
-    };
-    const deptHasHistory = useMemo(() => countMonthsWithData(deptScatterData) >= MIN_MONTHS_FOR_TIMELAPSE, [deptScatterData]);
-    const axisHasHistory = useMemo(() => countMonthsWithData(axisScatterData) >= MIN_MONTHS_FOR_TIMELAPSE, [axisScatterData]);
+    // VC2改: タイムラプスは「溜まっている分だけ」段階的に出す。
+    // 各プリセット月のインデックスに実データ（体温 or 人数）がある場合のみそのボタンを表示し、
+    // データの無い過去月への矢印（幽霊矢印）を防ぐ。「現在」は常に候補に含め、過去月が
+    // 1つも無ければタイムラプス・軌跡UIごと非表示にする（時系列比較の意味が無いため）。
+    const deptPresets = useMemo(
+        () => TIMELAPSE_PRESETS.filter((p) => p.id === "default" || hasDataAtIndex(deptScatterData, p.idx)),
+        [deptScatterData]
+    );
+    const axisPresets = useMemo(
+        () => TIMELAPSE_PRESETS.filter((p) => p.id === "default" || hasDataAtIndex(axisScatterData, p.idx)),
+        [axisScatterData]
+    );
+    // 過去月のプリセットが1つ以上ある（＝「現在」以外にも選べる）場合のみUIを出す。
+    const deptHasHistory = deptPresets.length > 1;
+    const axisHasHistory = axisPresets.length > 1;
 
     const displayDeptSizeKpiName = deptSizeBase === "labor" ? "人件費の大きさ" : sizeKpiName;
     const displayAxisSizeKpiName = axisSizeBase === "labor" ? "人件費の大きさ" : sizeKpiName;
@@ -205,12 +222,12 @@ export function MatrixSection({
                 </div>
             </div>
 
-            {/* タイムラプス（履歴12ヶ月分が溜まるまでは非表示：幽霊矢印の防止 / VC2） */}
+            {/* タイムラプス（溜まっている月のボタンだけ表示・過去月ゼロなら非表示：幽霊矢印の防止） */}
             {deptHasHistory && (
                 <div className="space-y-1.5">
                     <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">タイムラプス:</span>
                     <div className="flex flex-wrap gap-1 bg-slate-100/60 p-1 rounded-xl">
-                        {[{ id: "default", label: "現在" }, { id: "1m", label: "1ヶ月前" }, { id: "3m", label: "3ヶ月前" }, { id: "6m", label: "6ヶ月前" }, { id: "12m", label: "12ヶ月前" }].map((t) => (
+                        {deptPresets.map((t) => (
                             <button key={t.id} onClick={() => setDeptMonth(t.id)} className={cn("flex-1 min-w-[38px] text-center py-1 px-1.5 rounded-lg transition-all text-[11px] font-black tracking-tighter whitespace-nowrap", deptMonth === t.id ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600")}>{t.label}</button>
                         ))}
                     </div>
@@ -283,7 +300,7 @@ export function MatrixSection({
                 <div className="space-y-1.5">
                     <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">タイムラプス:</span>
                     <div className="flex flex-wrap gap-1 bg-slate-100/60 p-1 rounded-xl">
-                        {[{ id: "default", label: "現在" }, { id: "1m", label: "1ヶ月前" }, { id: "3m", label: "3ヶ月前" }, { id: "6m", label: "6ヶ月前" }, { id: "12m", label: "12ヶ月前" }].map((t) => (
+                        {axisPresets.map((t) => (
                             <button key={t.id} onClick={() => setAxisMonth(t.id)} className={cn("flex-1 min-w-[38px] text-center py-1 px-1.5 rounded-lg transition-all text-[11px] font-black tracking-tighter whitespace-nowrap", axisMonth === t.id ? "bg-white text-slate-800 shadow-sm" : "text-slate-400 hover:text-slate-600")}>{t.label}</button>
                         ))}
                     </div>
