@@ -173,7 +173,6 @@ export default function BubbleChartGuidePage() {
                             sizeKpiName="KPI達成率"
                             yAxisMode="productivity"
                             month={guideMonth}
-                            showTrajectory={true}
                         />
                     </div>
                 </div>

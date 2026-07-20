@@ -1218,7 +1218,6 @@ export default function HrCampaignsPage() {
                           data={scatterPlotData}
                           yAxisMode="productivity"
                           month="default"
-                          showTrajectory={true}
                         />
                       </div>
                     </div>

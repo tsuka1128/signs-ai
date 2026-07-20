@@ -76,13 +76,11 @@ export function MatrixSection({
 }: MatrixSectionProps) {
     const [deptSizeBase, setDeptSizeBase] = useState<"kpi" | "labor">("kpi");
     const [deptYAxisMode, setDeptYAxisMode] = useState<"kpi" | "productivity">("kpi");
-    const [showDeptTrajectory, setShowDeptTrajectory] = useState(true);
     const [deptMonth, setDeptMonth] = useState("default");
     const [excludedDeptIds, setExcludedDeptIds] = useState<string[]>([]);
 
     const [axisSizeBase, setAxisSizeBase] = useState<"kpi" | "labor">("kpi");
     const [axisYAxisMode, setAxisYAxisMode] = useState<"kpi" | "productivity">("kpi");
-    const [showAxisTrajectory, setShowAxisTrajectory] = useState(true);
     const [axisMonth, setAxisMonth] = useState("default");
     const [excludedAxisIds, setExcludedAxisIds] = useState<string[]>([]);
 
@@ -188,7 +186,7 @@ export function MatrixSection({
     // VC2改: タイムラプスは「溜まっている分だけ」段階的に出す。
     // 各プリセット月のインデックスに実データ（体温 or 人数）がある場合のみそのボタンを表示し、
     // データの無い過去月への矢印（幽霊矢印）を防ぐ。「現在」は常に候補に含め、過去月が
-    // 1つも無ければタイムラプス・軌跡UIごと非表示にする（時系列比較の意味が無いため）。
+    // 1つも無ければタイムラプスUIごと非表示にする（時系列比較の意味が無いため）。
     const deptPresets = useMemo(
         () => TIMELAPSE_PRESETS.filter((p) => p.id === "default" || hasDataAtIndex(deptScatterData, p.idx)),
         [deptScatterData]
@@ -208,7 +206,7 @@ export function MatrixSection({
     const deptAutoInsight = useMemo(() => getAutoInsight(filteredDeptScatterData, deptYAxisMode, false, secondaryAxisName), [filteredDeptScatterData, deptYAxisMode, secondaryAxisName]);
     const axisAutoInsight = useMemo(() => getAutoInsight(filteredAxisScatterData, axisYAxisMode, true, secondaryAxisName), [filteredAxisScatterData, axisYAxisMode, secondaryAxisName]);
 
-    // 操作パネル（Y軸モード / タイムラプス / 軌跡 / サイズ重視 / 凡例＆フィルタ）を単一ソース化。
+    // 操作パネル（Y軸モード / タイムラプス / サイズ重視 / 凡例＆フィルタ）を単一ソース化。
     // インラインの右パネルと、拡大モーダル内の controls の両方で同じ関数を使うことで、
     // モーダルでもフィルタ等が完全に連動する（stateを共有しているため）。
     const renderDeptControls = () => (
@@ -234,14 +232,8 @@ export function MatrixSection({
                 </div>
             )}
 
-            {/* 軌跡とサイズ重視 */}
+            {/* サイズ重視 */}
             <div className="flex flex-col gap-2">
-                {deptHasHistory && (
-                    <label className="flex items-center gap-2 cursor-pointer text-[11px] font-black text-slate-500 uppercase tracking-wider select-none">
-                        <input type="checkbox" checked={showDeptTrajectory} onChange={(e) => setShowDeptTrajectory(e.target.checked)} className="rounded border-slate-200 text-teal focus:ring-teal w-3 h-3 cursor-pointer accent-teal-600" />
-                        <span>軌跡（動く地図）を表示</span>
-                    </label>
-                )}
                 {hasLaborData && (
                     <div className="flex items-center justify-between border-t border-slate-100/80 pt-2 mt-1">
                         <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">サイズ重視:</span>
@@ -307,14 +299,8 @@ export function MatrixSection({
                 </div>
             )}
 
-            {/* 軌跡とサイズ重視 */}
+            {/* サイズ重視 */}
             <div className="flex flex-col gap-2">
-                {axisHasHistory && (
-                    <label className="flex items-center gap-2 cursor-pointer text-[11px] font-black text-slate-500 uppercase tracking-wider select-none">
-                        <input type="checkbox" checked={showAxisTrajectory} onChange={(e) => setShowAxisTrajectory(e.target.checked)} className="rounded border-slate-200 text-teal focus:ring-teal w-3 h-3 cursor-pointer accent-teal-600" />
-                        <span>軌跡（動く地図）を表示</span>
-                    </label>
-                )}
                 {hasLaborData && (
                     <div className="flex items-center justify-between border-t border-slate-100/80 pt-2 mt-1">
                         <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">サイズ重視:</span>
@@ -400,7 +386,6 @@ export function MatrixSection({
                                 sizeKpiName={displayDeptSizeKpiName}
                                 yAxisMode={deptYAxisMode}
                                 month={deptHasHistory ? deptMonth : "default"}
-                                showTrajectory={deptHasHistory && showDeptTrajectory}
                                 controls={renderDeptControls()}
                             />
                         </div>
@@ -462,7 +447,6 @@ export function MatrixSection({
                                 sizeKpiName={displayAxisSizeKpiName}
                                 yAxisMode={axisYAxisMode}
                                 month={axisHasHistory ? axisMonth : "default"}
-                                showTrajectory={axisHasHistory && showAxisTrajectory}
                                 controls={renderAxisControls()}
                             />
                         </div>

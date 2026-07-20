@@ -28,7 +28,6 @@ interface ScatterPlotProps {
     sizeKpiName?: string;
     yAxisMode: "kpi" | "productivity";
     month?: string;
-    showTrajectory?: boolean;
     /** 拡大モーダル内に一緒に表示する操作パネル（Y軸/タイムラプス/フィルタ等）。拡大中も操作できるようにする。 */
     controls?: React.ReactNode;
 }
@@ -83,7 +82,6 @@ export function ScatterPlot({
     sizeKpiName = "KPI達成率", 
     yAxisMode,
     month = "default",
-    showTrajectory = true,
     controls
 }: ScatterPlotProps) {
     const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -159,53 +157,6 @@ export function ScatterPlot({
         return positions;
     }, [data, yAxisMode, maxH, maxY, cx, cy]);
 
-    // 軌跡の算出ロジック（欠損月をスキップする安全な処理）
-    const trajectories = useMemo(() => {
-        if (!showTrajectory) return [];
-
-        const list: Array<{ id: string; points: Array<{ x: number; y: number }>; color: string }> = [];
-
-        data.forEach(d => {
-            const points: Array<{ x: number; y: number }> = [];
-            // 過去3ヶ月前から現在（終点）に向かう順で有効ステップを算出
-            const steps = [3, 2, 1, 0];
-
-            steps.forEach(s => {
-                const i = targetIdx - s;
-                if (i < 0) return;
-
-                const pulse = (d as any).pulseHistory?.[i] ?? 0;
-                const head = (d as any).headHistory?.[i] ?? 0;
-                const val = yAxisMode === "kpi"
-                    ? (d as any).kpiAchHistoryFilled?.[i] ?? (d as any).kpiAchHistory?.[i] ?? 0
-                    : (d as any).productivityHistoryFilled?.[i] ?? (d as any).productivityHistory?.[i] ?? 0;
-
-                // 回答なし (pulse === 0) または リソースなし (head === 0) の欠損月はスキップ
-                if (pulse === 0 || head === 0) return;
-
-                points.push({
-                    x: cx(head),
-                    y: cy(val)
-                });
-            });
-
-            if (points.length >= 2) {
-                const hasEnoughResponses = d.respondentsCount !== undefined ? d.respondentsCount >= 1 : d.pulse > 0;
-                const isGrayOut = !hasEnoughResponses || d.pulse === 0;
-                // 体温4状態に応じた淡色の軌跡カラー
-                const rawCol = isGrayOut ? "#64748B" : (d.weather === "sun" ? "#059669" : d.weather === "rain" ? "#DC2626" : "#D97706");
-
-                list.push({
-                    id: d.id,
-                    points,
-                    color: rawCol
-                });
-            }
-        });
-
-        return list;
-    }, [data, yAxisMode, targetIdx, showTrajectory, maxH, maxY, cx, cy]);
-
     const yLabelWord = yAxisMode === "kpi" ? "高達成" : "高生産性";
     const yLabelWordLow = yAxisMode === "kpi" ? "低達成" : "低生産性";
 
@@ -236,21 +187,6 @@ export function ScatterPlot({
     const renderChart = () => (
         <div className="relative w-full">
             <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto font-sans select-none relative">
-                {/* 軌跡の矢印マーカー定義 */}
-                <defs>
-                    <marker
-                        id="trajectory-arrow"
-                        viewBox="0 0 10 10"
-                        refX="8"
-                        refY="5"
-                        markerWidth="6"
-                        markerHeight="6"
-                        orient="auto-start-reverse"
-                    >
-                        <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#94A3B8" />
-                    </marker>
-                </defs>
-
                 {/* 象限の背景 */}
                 {quads.map((q, i) => (
                     <g key={i}>
@@ -266,26 +202,6 @@ export function ScatterPlot({
 
                 {/* 外枠 */}
                 <rect x={PAD.l} y={PAD.t} width={pw} height={ph} fill="none" stroke="#E2E8F0" strokeWidth={1.5} />
-
-                {/* 過去から現在地への軌跡（薄い点線＋矢印） */}
-                {showTrajectory && trajectories.map((t) => {
-                    const dAttr = t.points.map((p, idx) => `${idx === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
-                    return (
-                        <path
-                            key={`traj-${t.id}`}
-                            d={dAttr}
-                            fill="none"
-                            stroke={t.color}
-                            strokeWidth={1.5}
-                            strokeDasharray="4,3"
-                            opacity={0.35}
-                            markerEnd="url(#trajectory-arrow)"
-                            style={{
-                                transition: "d 900ms cubic-bezier(0.16, 1, 0.3, 1), stroke 300ms ease"
-                            }}
-                        />
-                    );
-                })}
 
                 {/* データプロット */}
                 {[...data].sort((a, b) => (a.id === hoveredId ? 1 : b.id === hoveredId ? -1 : 0)).map((d, i) => {
